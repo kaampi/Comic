@@ -6,12 +6,13 @@ type Pt={x:number;y:number};
 const point=(cx:number,cy:number,rx:number,ry:number,a:number):Pt=>({x:cx+Math.cos(a)*rx,y:cy+Math.sin(a)*ry});
 
 function speechPath(o:TextOverlay,style:string){
- const w=o.width,h=o.height,cx=w/2,cy=h/2,rx=w*.47,ry=h*.44;
+ const w=o.width,h=o.height,cx=w/2,cy=h/2;
+ const rx=w*(style==="wide"?.485:style==="tall"?.43:.47),ry=h*(style==="wide"?.36:style==="tall"?.485:.44);
  const tx=(o.tailX??o.x+w*.58)-o.x,ty=(o.tailY??o.y+h*1.12)-o.y;
  const angle=Math.atan2((ty-cy)/ry,(tx-cx)/rx),spread=Math.max(.13,Math.min(.28,.19+Math.hypot(tx-cx,ty-cy)/220));
  const a1=angle-spread,a2=angle+spread;
  // Stable organic radius variation: deterministic harmonics, never random between renders.
- const organic=(a:number)=>style==="oval"?1:style==="rounded"?1:1+.035*Math.sin(a*3+.7)+.022*Math.sin(a*5+1.8)+.012*Math.cos(a*7);
+ const organic=(a:number)=>style==="oval"?1:style==="rounded"?1:style==="wide"?1+.018*Math.sin(a*3+.4)+.012*Math.sin(a*5+1.2):style==="tall"?1+.025*Math.sin(a*3+1.1)+.015*Math.cos(a*5):1+.035*Math.sin(a*3+.7)+.022*Math.sin(a*5+1.8)+.012*Math.cos(a*7);
  const p=(a:number)=>{const r=organic(a);return {x:cx+Math.cos(a)*rx*r,y:cy+Math.sin(a)*ry*r};};
  const root1=p(a1),root2=p(a2),steps=40,pts:Pt[]=[];
  const sweep=(Math.PI*2-((a2-a1+Math.PI*4)%(Math.PI*2)))%(Math.PI*2);
