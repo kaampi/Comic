@@ -63,3 +63,22 @@ export const BUILTIN_STYLES: IllustrationStyle[] = [
 ["romance-6","Webtoon & manhwa romance","Romance","Modern webtoon and manhwa digital romance illustration, clean anime-inspired character design with soft blush highlights, crisp linework with soft gradient shading, warm soft glowing lighting, vibrant pastel palette of coral pink, warm gold, peach, and navy blue, sweet youthful YA romance aesthetic, textless, no text, no captions, no titles, no printed words, clean illustration without typography."]
 ].map(([id,name,genre,promptText]) => ({ id, name, genre, promptText }));
 export const STYLE_GENRES = [...new Set(BUILTIN_STYLES.map((style) => style.genre))];
+const CUSTOM_STYLES_KEY = "comicbook-ai.custom-styles";
+
+export function readCustomStyles(): IllustrationStyle[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CUSTOM_STYLES_KEY) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((item) =>
+      item && typeof item.id === "string" && typeof item.name === "string" &&
+      typeof item.promptText === "string" && typeof item.genre === "string"
+    ) : [];
+  } catch { return []; }
+}
+
+export function saveCustomStyles(styles: IllustrationStyle[]): void {
+  try { localStorage.setItem(CUSTOM_STYLES_KEY, JSON.stringify(styles)); } catch {}
+}
+
+export function createCustomStyleId(): string {
+  return "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+}
