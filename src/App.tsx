@@ -5,6 +5,7 @@ import { BUILTIN_STYLES, STYLE_GENRES, createCustomStyleId, readCustomStyles, sa
 import { createProject, readProjects, saveProjects, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
 import { PAGE_PRESETS, overlaps } from "./pageTemplates";
+import { parseStoryBookExport, type StoryBookImport } from "./storybookImport";
 
 type Panel = "styles" | "guide" | "settings" | "new-project" | null;
 type StyleDraft = { id?: string; name: string; genre: string; promptText: string };
@@ -34,6 +35,10 @@ export function App() {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [layoutStart, setLayoutStart] = useState<{x:number;y:number} | null>(null);
   const [appPageGrid, setAppPageGrid] = useState(readPageGridDefaults);
+  const [storyBookImport, setStoryBookImport] = useState<StoryBookImport | null>(null);
+  const [importError, setImportError] = useState("");
+  const [importCharacters, setImportCharacters] = useState(true);
+  const [importLocations, setImportLocations] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
@@ -133,6 +138,21 @@ export function App() {
     setSelectedPageId(null); setLayoutStart(null);
   };
   const movePage = (pageId:string,direction:-1|1) => updateActiveProject((project)=>{const pages=[...project.pages];const index=pages.findIndex((item)=>item.id===pageId),target=index+direction;if(index<0||target<0||target>=pages.length)return project;[pages[index],pages[target]]=[pages[target],pages[index]];return {...project,pages:pages.map((item,i)=>({...item,number:i+1}))};});
+  const readStoryBookFile = async (file: File) => {
+    setImportError("");
+    try { const parsed=parseStoryBookExport(await file.text()); setStoryBookImport(parsed); setNewTitle(parsed.title); }
+    catch (error) { setStoryBookImport(null); setImportError(error instanceof Error ? error.message : "Filen kunde inte läsas."); }
+  };
+  const createFromStoryBook = () => {
+    if (!storyBookImport || !newTitle.trim()) return;
+    const style=allStyles.find((item)=>item.id===newStyleId) ?? BUILTIN_STYLES[0];
+    const base=createProject(newTitle,"storybook",style);
+    const project: ComicProject={...base,pageDefaults:{...appPageGrid},source:{type:"storybook",textSnapshot:storyBookImport.text},
+      characters:importCharacters?storyBookImport.characters.map((item)=>({id:"character-"+crypto.randomUUID(),name:item.name,description:item.description,visualIdentity:item.description})):[],
+      locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),name:item.name,description:item.description,visualIdentity:item.description})):[]
+    };
+    const next=[project,...projects];setProjects(next);saveProjects(next);setActiveProjectId(project.id);setStoryBookImport(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
+  };
   const createNewProject = () => {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
@@ -245,11 +265,12 @@ export function App() {
               <fieldset><legend>Utgångsmaterial</legend>
                 <label><input type="radio" checked={newSource === "blank"} onChange={() => setNewSource("blank")} /> Börja från tomt projekt</label>
                 <label className="disabled-choice"><input type="radio" disabled /> Importera text/manus <small>nästa steg</small></label>
-                <label className="disabled-choice"><input type="radio" disabled /> Importera från StoryBook <small>nästa steg</small></label>
+                <label><input type="radio" checked={newSource === "storybook"} onChange={() => { setNewSource("storybook"); setStoryBookImport(null); setImportError(""); }} /> Importera från StoryBook</label>
               </fieldset>
+              {newSource === "storybook" ? <div className="storybook-import"><label className="file-picker">StoryBook-export (.json)<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookFile(file);}} /></label>{importError ? <p className="import-error">{importError}</p> : null}{storyBookImport ? <div className="import-review"><p className="eyebrow">GRANSKA IMPORT</p><strong>{storyBookImport.title}</strong><span>{storyBookImport.text.length} tecken · {storyBookImport.chapters.length} kapitel · {storyBookImport.characters.length} karaktärer · {storyBookImport.locations.length} platser</span><label><input type="checkbox" checked={importCharacters} onChange={(e)=>setImportCharacters(e.target.checked)} /> Kopiera karaktärer</label><label><input type="checkbox" checked={importLocations} onChange={(e)=>setImportLocations(e.target.checked)} /> Kopiera platser</label><p className="quiet">Importen skapar en fristående kopia i ComicBook AI. StoryBook-filen ändras inte.</p></div> : null}</div> : null}
               <label>Stillmall<select value={newStyleId} onChange={(e) => setNewStyleId(e.target.value)}>{allStyles.map((style) => <option key={style.id} value={style.id}>{style.genre} — {style.name}</option>)}</select></label>
               <div className="style-preview"><span className="style-genre">SNAPSHOT I PROJEKTET</span><p>{allStyles.find((style) => style.id === newStyleId)?.promptText}</p></div>
-              <div className="style-editor-actions"><button className="text-button" type="button" onClick={closePanel}>Avbryt</button><button className="primary-button" type="button" disabled={!newTitle.trim()} onClick={createNewProject}>Skapa projekt</button></div>
+              <div className="style-editor-actions"><button className="text-button" type="button" onClick={closePanel}>Avbryt</button><button className="primary-button" type="button" disabled={!newTitle.trim() || (newSource==="storybook" && !storyBookImport)} onClick={newSource==="storybook" ? createFromStoryBook : createNewProject}>{newSource==="storybook" ? "Importera och skapa projekt" : "Skapa projekt"}</button></div>
             </div></> : null}
           {panel === "guide" ? <><p className="eyebrow">GUIDE</p><h1>ComicBook AI Guide</h1><p className="lede">Guiden skriver vi senare. Den här platsen är förberedd för den.</p></> : null}
           {panel === "styles" ? <><p className="eyebrow">SYSTEM</p><h1>Stillmallar</h1><p className="lede">Globala visuella stilar som kan användas när ComicBook AI bygger bildprompter.</p>
