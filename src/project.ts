@@ -6,7 +6,7 @@ export type ProjectSource = "blank" | "text" | "storybook";
 
 export type OverlayType = "speech" | "thought" | "caption" | "sfx";
 export type BubbleStyle = "organic" | "wide" | "tall" | "oval" | "rounded" | "shout" | "whisper";
-export type TextOverlay = { id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number; fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number };
+export type TextOverlay = { id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number; fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle; tailEnabled?: boolean; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number };
 
 export type ComicProject = {
   format: 1;
@@ -50,7 +50,7 @@ export function readProjects(): ComicProject[] {
       panels: Array.isArray(p.panels) ? p.panels.map((item: any) => ({ ...item, characterIds: item.characterIds ?? [] })) : [],
       pages: Array.isArray(p.pages) ? p.pages.map((page: any) => ({
         ...page, gridColumns: page.gridColumns ?? 3, gridRows: page.gridRows ?? 5,
-        placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number").map((item:any)=>({...item,overlays:Array.isArray(item.overlays)?item.overlays:[]})) : []
+        placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number").map((item:any)=>({...item,overlays:Array.isArray(item.overlays)?item.overlays.map((overlay:any)=>({...overlay,tailEnabled:overlay.type==="speech"?(overlay.tailEnabled??true):overlay.tailEnabled})):[]})) : []
       })) : []
     })) : [];
   } catch { return []; }
