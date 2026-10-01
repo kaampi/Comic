@@ -17,7 +17,8 @@ function speechPath(o:TextOverlay,style:string){
  const r1=p(a1),r2=p(a2),sweep=((a1-a2)%tau+tau)%tau,steps=96;
  let d=`M ${r1.x.toFixed(2)} ${r1.y.toFixed(2)}`;
  // Integrated tapered tail. Quadratic controls keep both joins tangent-looking instead of triangular.
- const c1x=r1.x+(tx-r1.x)*.18,c1y=r1.y+(ty-r1.y)*.18,c2x=r2.x+(tx-r2.x)*.18,c2y=r2.y+(ty-r2.y)*.18;
+ const curve=(o.tailCurve??0)/100,dx=tx-cx,dy=ty-cy,len=Math.max(1,Math.hypot(dx,dy)),px=-dy/len,py=dx/len,bend=curve*Math.min(w,h)*.42;
+ const c1x=r1.x+(tx-r1.x)*.34+px*bend,c1y=r1.y+(ty-r1.y)*.34+py*bend,c2x=r2.x+(tx-r2.x)*.34+px*bend,c2y=r2.y+(ty-r2.y)*.34+py*bend;
  d+=` Q ${c1x.toFixed(2)} ${c1y.toFixed(2)} ${tx.toFixed(2)} ${ty.toFixed(2)} Q ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${r2.x.toFixed(2)} ${r2.y.toFixed(2)}`;
  for(let i=1;i<=steps;i++){const q=p(a2+sweep*i/steps);d+=` L ${q.x.toFixed(2)} ${q.y.toFixed(2)}`;}
  return d+" Z";
