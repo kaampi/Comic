@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { AI_MODES, type AiMode } from "./ai";
 import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, type Locale, type Theme } from "./settings";
-import { BUILTIN_STYLES, STYLE_GENRES } from "./stylesLibrary";
+import { BUILTIN_STYLES, STYLE_GENRES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
 
 type Panel = "styles" | "guide" | "settings" | null;
+type StyleDraft = { id?: string; name: string; genre: string; promptText: string };
 
 export function App() {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
@@ -13,6 +14,8 @@ export function App() {
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [styleGenre, setStyleGenre] = useState("Alla");
   const [styleQuery, setStyleQuery] = useState("");
+  const [customStyles, setCustomStyles] = useState<IllustrationStyle[]>(readCustomStyles);
+  const [styleDraft, setStyleDraft] = useState<StyleDraft | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
@@ -25,11 +28,20 @@ export function App() {
   }, [projectMenuOpen]);
 
   const closePanel = () => setPanel(null);
-  const visibleStyles = BUILTIN_STYLES.filter((style) => {
+  const allStyles = [...BUILTIN_STYLES, ...customStyles];
+  const visibleStyles = allStyles.filter((style) => {
     const genreMatch = styleGenre === "Alla" || style.genre === styleGenre;
     const q = styleQuery.trim().toLowerCase();
     return genreMatch && (!q || style.name.toLowerCase().includes(q) || style.promptText.toLowerCase().includes(q));
   });
+  const persistCustomStyles = (next: IllustrationStyle[]) => { setCustomStyles(next); saveCustomStyles(next); };
+  const saveDraft = () => {
+    if (!styleDraft || !styleDraft.name.trim() || !styleDraft.promptText.trim()) return;
+    const style: IllustrationStyle = { id: styleDraft.id ?? createCustomStyleId(), name: styleDraft.name.trim(), genre: styleDraft.genre.trim() || "Custom", promptText: styleDraft.promptText.trim() };
+    persistCustomStyles(styleDraft.id ? customStyles.map((item) => item.id === styleDraft.id ? style : item) : [...customStyles, style]);
+    setStyleDraft(null);
+  };
+  const duplicateStyle = (style: IllustrationStyle) => setStyleDraft({ name: style.name + " – kopia", genre: style.genre, promptText: style.promptText });
 
   return (
     <div className="app-shell">
@@ -74,8 +86,22 @@ export function App() {
           {panel === "guide" ? <><p className="eyebrow">GUIDE</p><h1>ComicBook AI Guide</h1><p className="lede">Guiden skriver vi senare. Den här platsen är förberedd för den.</p></> : null}
           {panel === "styles" ? <><p className="eyebrow">SYSTEM</p><h1>Stillmallar</h1><p className="lede">Globala visuella stilar som kan användas när ComicBook AI bygger bildprompter.</p>
               <div className="style-tools"><input value={styleQuery} onChange={(e) => setStyleQuery(e.target.value)} placeholder="Sök stillmall…" aria-label="Sök stillmall" />
-                <select value={styleGenre} onChange={(e) => setStyleGenre(e.target.value)} aria-label="Genre"><option>Alla</option>{STYLE_GENRES.map((genre) => <option key={genre}>{genre}</option>)}</select></div>
-              <div className="style-grid">{visibleStyles.map((style) => <article className="style-card" key={style.id}><span className="style-genre">{style.genre}</span><h2>{style.name}</h2><p>{style.promptText}</p></article>)}</div></> : null}
+                <select value={styleGenre} onChange={(e) => setStyleGenre(e.target.value)} aria-label="Genre"><option>Alla</option>{STYLE_GENRES.map((genre) => <option key={genre}>{genre}</option>)}<option>Custom</option></select>
+                <button className="primary-button" type="button" onClick={() => setStyleDraft({ name: "", genre: "Custom", promptText: "" })}>Ny stillmall</button></div>
+              {styleDraft ? <div className="style-editor">
+                <label>Namn<input value={styleDraft.name} onChange={(e) => setStyleDraft({ ...styleDraft, name: e.target.value })} /></label>
+                <label>Genre<input value={styleDraft.genre} onChange={(e) => setStyleDraft({ ...styleDraft, genre: e.target.value })} /></label>
+                <label>Prompt<textarea rows={6} value={styleDraft.promptText} onChange={(e) => setStyleDraft({ ...styleDraft, promptText: e.target.value })} /></label>
+                <div className="style-editor-actions"><button className="text-button" type="button" onClick={() => setStyleDraft(null)}>Avbryt</button><button className="primary-button" type="button" onClick={saveDraft}>Spara</button></div>
+              </div> : null}
+              <div className="style-grid">{visibleStyles.map((style) => {
+                const custom = style.id.startsWith("custom-");
+                return <article className="style-card" key={style.id}><span className="style-genre">{style.genre}{custom ? " · Egen" : " · Inbyggd"}</span><h2>{style.name}</h2><p>{style.promptText}</p>
+                  <div className="style-card-actions"><button className="text-button" type="button" onClick={() => duplicateStyle(style)}>Duplicera</button>
+                    {custom ? <><button className="text-button" type="button" onClick={() => setStyleDraft({ ...style })}>Redigera</button>
+                    <button className="text-button danger-button" type="button" onClick={() => persistCustomStyles(customStyles.filter((item) => item.id !== style.id))}>Radera</button></> : null}</div>
+                </article>;
+              })}</div></> : null}
           {panel === "settings" ? <><p className="eyebrow">SYSTEM</p><h1>Inställningar</h1><p className="lede">Välj hur ComicBook AI ska arbeta med bildgenerering.</p>
             <div className="ai-options" role="radiogroup" aria-label="AI-läge">{AI_MODES.map((mode) => (
               <button key={mode.id} type="button" className={aiMode === mode.id ? "ai-option is-selected" : "ai-option"} disabled={!mode.available}
