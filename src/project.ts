@@ -16,7 +16,7 @@ export type ComicProject = {
   locations: Array<{ id: string; name: string; description: string; visualIdentity: string }>;
   scenes: Array<{ id: string; title: string; sourceText: string; panelIds: string[] }>;
   panels: Array<{ id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string; characterIds: string[]; locationId?: string }>;
-  pages: Array<{ id: string; number: number; templateId: string; placements: Array<{ panelId: string; slot: number; readingOrder: number }> }>;
+  pages: Array<{ id: string; number: number; gridColumns: 3; gridRows: 5; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number }> }>;
 };
 
 const PROJECTS_KEY = "comicbook-ai.projects";
