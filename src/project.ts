@@ -12,11 +12,12 @@ export type ComicProject = {
   updatedAt: string;
   source: { type: ProjectSource; textSnapshot?: string };
   style: IllustrationStyle;
+  pageDefaults: { gridColumns: number; gridRows: number };
   characters: Array<{ id: string; name: string; description: string; visualIdentity: string }>;
   locations: Array<{ id: string; name: string; description: string; visualIdentity: string }>;
   scenes: Array<{ id: string; title: string; sourceText: string; panelIds: string[] }>;
   panels: Array<{ id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string; characterIds: string[]; locationId?: string }>;
-  pages: Array<{ id: string; number: number; gridColumns: 3; gridRows: 5; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number }> }>;
+  pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number }> }>;
 };
 
 const PROJECTS_KEY = "comicbook-ai.projects";
@@ -29,14 +30,24 @@ export function createProject(title: string, source: ProjectSource, style: Illus
   const now = new Date().toISOString();
   return {
     format: PROJECT_FORMAT, id: stableId("project"), title: title.trim(), createdAt: now, updatedAt: now,
-    source: { type: source, textSnapshot: "" }, style: { ...style }, characters: [], locations: [], scenes: [], panels: [], pages: []
+    source: { type: source, textSnapshot: "" }, style: { ...style }, pageDefaults: { gridColumns: 3, gridRows: 5 }, characters: [], locations: [], scenes: [], panels: [], pages: []
   };
 }
 
 export function readProjects(): ComicProject[] {
   try {
     const data = JSON.parse(localStorage.getItem(PROJECTS_KEY) ?? "[]");
-    return Array.isArray(data) ? data.filter((p) => p?.format === PROJECT_FORMAT && typeof p?.id === "string") : [];
+    return Array.isArray(data) ? data.filter((p) => p?.format === PROJECT_FORMAT && typeof p?.id === "string").map((p) => ({
+      ...p,
+      pageDefaults: p.pageDefaults ?? { gridColumns: 3, gridRows: 5 },
+      characters: Array.isArray(p.characters) ? p.characters.map((item: any) => ({ ...item, visualIdentity: item.visualIdentity ?? "" })) : [],
+      locations: Array.isArray(p.locations) ? p.locations.map((item: any) => ({ ...item, visualIdentity: item.visualIdentity ?? "" })) : [],
+      panels: Array.isArray(p.panels) ? p.panels.map((item: any) => ({ ...item, characterIds: item.characterIds ?? [] })) : [],
+      pages: Array.isArray(p.pages) ? p.pages.map((page: any) => ({
+        ...page, gridColumns: page.gridColumns ?? 3, gridRows: page.gridRows ?? 5,
+        placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number") : []
+      })) : []
+    })) : [];
   } catch { return []; }
 }
 
