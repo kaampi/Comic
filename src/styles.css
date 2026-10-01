@@ -442,3 +442,9 @@ h2 { margin: 0; font-size: 1.05rem; }
 .context-file-action { display: block; width: 100%; padding: .55rem .65rem; border-radius: 4px; color: var(--text); text-align: left; cursor: pointer; }
 .context-file-action:hover { background: var(--raised); }
 .context-file-action input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.panel-overlays { pointer-events: auto; overflow: visible; }
+.editable-overlay { pointer-events: all; }
+.overlay-drag-surface { cursor: move; }
+.overlay-resize-grip { fill: #fffdf7; stroke: #171411; stroke-width: 1; vector-effect: non-scaling-stroke; cursor: nwse-resize; }
+.overlay-tail-grip { fill: #fffdf7; stroke: #171411; stroke-width: 1; vector-effect: non-scaling-stroke; cursor: crosshair; }
