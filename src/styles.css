@@ -419,3 +419,18 @@ h2 { margin: 0; font-size: 1.05rem; }
 .menu-project-row .menu-item { flex: 1; min-width: 0; text-align: left; }
 .menu-delete-project { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 1.1rem; padding: .35rem .65rem; }
 .menu-delete-project:hover { color: var(--danger); }
+
+/* Direct page composition */
+.construction-grid { z-index: 1; user-select: none; touch-action: none; }
+.layout-panels { z-index: 2; pointer-events: none; }
+.drawn-panel { pointer-events: auto; }
+.panel-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; user-select: none; pointer-events: none; }
+.resize-handle { position: absolute; z-index: 5; width: 22px; height: 22px; padding: 0; border: 1px solid #27211b; border-radius: 50%; background: #f5f0e7; color: #27211b; cursor: pointer; opacity: 0; transition: opacity .12s; }
+.drawn-panel:hover .resize-handle { opacity: 1; }
+.resize-left { left: -4px; top: 50%; transform: translateY(-50%); }
+.resize-right { right: -4px; top: 50%; transform: translateY(-50%); }
+.resize-top { top: -4px; left: 50%; transform: translateX(-50%); }
+.resize-bottom { bottom: -4px; left: 50%; transform: translateX(-50%); }
+.panel-context-menu { position: fixed; z-index: 1000; min-width: 180px; padding: .35rem; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); box-shadow: var(--shadow); }
+.panel-context-menu button { display: block; width: 100%; padding: .55rem .65rem; border: 0; border-radius: 4px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.panel-context-menu button:hover { background: var(--raised); }
