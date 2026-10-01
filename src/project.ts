@@ -12,10 +12,10 @@ export type ComicProject = {
   updatedAt: string;
   source: { type: ProjectSource; textSnapshot?: string };
   style: IllustrationStyle;
-  characters: Array<{ id: string; name: string; description: string }>;
-  locations: Array<{ id: string; name: string; description: string }>;
+  characters: Array<{ id: string; name: string; description: string; visualIdentity: string }>;
+  locations: Array<{ id: string; name: string; description: string; visualIdentity: string }>;
   scenes: Array<{ id: string; title: string; sourceText: string; panelIds: string[] }>;
-  panels: Array<{ id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string }>;
+  panels: Array<{ id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string; characterIds: string[]; locationId?: string }>;
   pages: Array<{ id: string; number: number; panelIds: string[] }>;
 };
 
