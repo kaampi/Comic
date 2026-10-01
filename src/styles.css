@@ -436,3 +436,5 @@ h2 { margin: 0; font-size: 1.05rem; }
 .panel-context-menu button:hover { background: var(--raised); }
 
 .resize-handle:active { cursor: grabbing; }
+
+.native-image-picker { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; opacity: 0; }
