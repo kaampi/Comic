@@ -4,6 +4,7 @@ import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, type Locale, t
 import { BUILTIN_STYLES, STYLE_GENRES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
 import { createProject, readProjects, saveProjects, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
+import { PAGE_TEMPLATES } from "./pageTemplates";
 
 type Panel = "styles" | "guide" | "settings" | "new-project" | null;
 type StyleDraft = { id?: string; name: string; genre: string; promptText: string };
@@ -30,6 +31,7 @@ export function App() {
   const [newCharacterName, setNewCharacterName] = useState("");
   const [newLocationName, setNewLocationName] = useState("");
   const [copiedPanelId, setCopiedPanelId] = useState<string | null>(null);
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
@@ -86,6 +88,9 @@ export function App() {
     const prompt = buildPanelPrompt(project, panelId); if (!prompt) return;
     try { await navigator.clipboard.writeText(prompt); setCopiedPanelId(panelId); window.setTimeout(() => setCopiedPanelId((current) => current === panelId ? null : current), 1600); } catch {}
   };
+  const addPage = () => updateActiveProject((project) => ({ ...project, pages: [...project.pages, { id: "page-" + crypto.randomUUID(), number: project.pages.length + 1, templateId: PAGE_TEMPLATES[0].id, placements: [] }] }));
+  const setPageTemplate = (pageId: string, templateId: string) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, templateId, placements: page.placements.filter((placement) => placement.slot < (PAGE_TEMPLATES.find((t) => t.id === templateId)?.slots.length ?? 0)) } : page) }));
+  const setPageSlot = (pageId: string, slot: number, panelId: string) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => { if (page.id !== pageId) return page; const withoutSlot = page.placements.filter((p) => p.slot !== slot && p.panelId !== panelId); if (!panelId) return { ...page, placements: withoutSlot }; return { ...page, placements: [...withoutSlot, { panelId, slot, readingOrder: slot + 1 }].sort((a,b) => a.readingOrder - b.readingOrder) }; }) }));
   const createNewProject = () => {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
@@ -166,7 +171,17 @@ export function App() {
           {projectTab === "locations" ? <section className="library-workspace"><div className="section-heading"><div><p className="eyebrow">VISUELL KONTINUITET</p><h2>Platser</h2></div><div className="inline-add"><input value={newLocationName} onChange={(e) => setNewLocationName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addLocation()} placeholder="Platsens namn…" /><button className="primary-button" disabled={!newLocationName.trim()} onClick={addLocation}>Lägg till</button></div></div>
             <div className="entity-grid">{activeProject.locations.map((location) => <article className="entity-card" key={location.id}><input className="entity-name" value={location.name} onChange={(e) => updateLocation(location.id,{name:e.target.value})} /><label>Beskrivning<textarea rows={3} value={location.description} onChange={(e) => updateLocation(location.id,{description:e.target.value})} /></label><label>Visuellt ankare<textarea rows={5} value={location.visualIdentity} onChange={(e) => updateLocation(location.id,{visualIdentity:e.target.value})} placeholder="Arkitektur, material, färger, återkommande detaljer…" /></label></article>)}</div>
             {!activeProject.locations.length ? <p className="quiet">Inga platser ännu.</p> : null}</section> : null}
-          {projectTab === "pages" ? <section className="workspace-card"><p className="eyebrow">KOMMER HÄRNÄST</p><h2>Sidor</h2><p className="quiet">Sidplaneraren byggs efter att bildrutornas innehåll och kontinuitet är på plats.</p></section> : null}
+          {projectTab === "pages" ? <section className="page-workspace">
+            <aside className="page-sidebar"><div className="section-heading"><div><p className="eyebrow">ALBUM</p><h2>Sidor</h2></div><button className="primary-button" onClick={addPage}>Ny sida</button></div>
+              <div className="page-list">{activeProject.pages.map((page) => <button key={page.id} className={selectedPageId === page.id ? "page-nav is-selected" : "page-nav"} onClick={() => setSelectedPageId(page.id)}>Sida {page.number}<span>{PAGE_TEMPLATES.find((t) => t.id === page.templateId)?.name}</span></button>)}</div>
+            </aside>
+            {(() => { const page = activeProject.pages.find((item) => item.id === selectedPageId) ?? activeProject.pages[0]; if (!page) return <div className="workspace-card"><h2>Skapa första sidan</h2><p className="quiet">Lägg sedan in bildrutor från dina scener.</p><button className="primary-button" onClick={addPage}>Ny sida</button></div>;
+              const template = PAGE_TEMPLATES.find((item) => item.id === page.templateId) ?? PAGE_TEMPLATES[0];
+              return <div className="page-planner"><div className="section-heading"><div><p className="eyebrow">SIDA {page.number}</p><h2>Sidlayout</h2></div><label className="template-select">Mall<select value={page.templateId} onChange={(e) => setPageTemplate(page.id,e.target.value)}>{PAGE_TEMPLATES.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>
+                <div className="comic-page">{template.slots.map((slot,index) => { const placement = page.placements.find((p) => p.slot === index); const panel = placement ? activeProject.panels.find((p) => p.id === placement.panelId) : undefined; return <div className="page-slot" key={index} style={{gridColumn: slot.col + " / span " + slot.colSpan, gridRow: slot.row + " / span " + slot.rowSpan}}><span className="slot-order">{index+1}</span>{panel ? <div className="placed-panel"><strong>{panel.action || "Bildruta " + (panel.order ?? index+1)}</strong><small>{activeProject.scenes.find((s) => s.id === panel.sceneId)?.title}</small></div> : <span>Tom ruta</span>}</div>;})}</div>
+                <div className="slot-assignments"><h3>Placera bildrutor</h3>{template.slots.map((_,index) => <label key={index}>Ruta {index+1}<select value={page.placements.find((p) => p.slot === index)?.panelId ?? ""} onChange={(e) => setPageSlot(page.id,index,e.target.value)}><option value="">Tom</option>{activeProject.panels.map((panel) => <option key={panel.id} value={panel.id}>{activeProject.scenes.find((s) => s.id === panel.sceneId)?.title ?? "Scen"} — ruta {panel.order}</option>)}</select></label>)}</div>
+              </div>; })()}
+          </section> : null}
         </section> : <>
           <header className="home-brand"><p className="eyebrow">COMIC CREATION WORKSPACE</p><h1>Från berättelse<br />till seriealbum.</h1>
             <p className="lede">Planera bildrutor, bygg konsekventa bildprompter och skapa din serie utan att låsa projektet till en viss AI-tjänst.</p></header>
