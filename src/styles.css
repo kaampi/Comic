@@ -326,3 +326,8 @@ h2 { margin: 0; font-size: 1.05rem; }
 .panel-context > label { display: grid; gap: .3rem; }
 .panel-context select { padding: .45rem; border: 1px solid var(--border); border-radius: 5px; background: var(--paper); color: var(--text); }
 @media (max-width: 750px) { .entity-grid, .panel-context { grid-template-columns: 1fr; } .inline-add { flex-direction: column; } .inline-add input { min-width: 0; } }
+.prompt-preview { grid-column: 1/-1; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); }
+.prompt-preview summary { padding: .7rem; color: var(--ink); font-size: .8rem; font-weight: 700; cursor: pointer; }
+.prompt-preview pre { margin: 0; padding: .85rem; border-top: 1px solid var(--border-soft); white-space: pre-wrap; word-break: break-word; color: var(--text-dim); font-family: var(--font-mono); font-size: .75rem; line-height: 1.55; }
+.prompt-actions { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .7rem .85rem; border-top: 1px solid var(--border-soft); }
+@media (max-width: 600px) { .prompt-actions { align-items: stretch; flex-direction: column; } }
