@@ -377,3 +377,10 @@ h2 { margin: 0; font-size: 1.05rem; }
 .panel-number { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .panel-edit-actions { display: inline-flex; align-items: center; gap: .25rem; }
 .panel-edit-actions .text-button { font-size: .68rem; }
+.storybook-import { display: grid; gap: .65rem; padding: .75rem; border: 1px solid var(--border-soft); border-radius: 6px; background: var(--panel); }
+.file-picker { display: grid; gap: .4rem; }
+.file-picker input { padding: .45rem; border: 1px dashed var(--border); border-radius: 5px; background: var(--paper); color: var(--text-dim); }
+.import-review { display: grid; gap: .45rem; padding: .7rem; border-left: 3px solid var(--sage); background: var(--paper); }
+.import-review > span { color: var(--text-dim); font-size: .78rem; }
+.import-review label { display: flex; align-items: center; gap: .35rem; }
+.import-error { margin: 0; color: var(--danger); font-size: .8rem; }
