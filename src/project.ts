@@ -4,6 +4,9 @@ export const PROJECT_FORMAT = 1;
 
 export type ProjectSource = "blank" | "text" | "storybook";
 
+export type OverlayType = "speech" | "thought" | "caption" | "sfx";
+export type TextOverlay = { id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number; tailX?: number; tailY?: number };
+
 export type ComicProject = {
   format: 1;
   id: string;
@@ -17,7 +20,7 @@ export type ComicProject = {
   locations: Array<{ id: string; name: string; description: string; visualIdentity: string }>;
   scenes: Array<{ id: string; title: string; sourceText: string; panelIds: string[] }>;
   panels: Array<{ id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string; characterIds: string[]; locationId?: string }>;
-  pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number }> }>;
+  pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number; overlays: TextOverlay[] }> }>;
 };
 
 const PROJECTS_KEY = "comicbook-ai.projects";
@@ -45,7 +48,7 @@ export function readProjects(): ComicProject[] {
       panels: Array.isArray(p.panels) ? p.panels.map((item: any) => ({ ...item, characterIds: item.characterIds ?? [] })) : [],
       pages: Array.isArray(p.pages) ? p.pages.map((page: any) => ({
         ...page, gridColumns: page.gridColumns ?? 3, gridRows: page.gridRows ?? 5,
-        placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number") : []
+        placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number").map((item:any)=>({...item,overlays:Array.isArray(item.overlays)?item.overlays:[]})) : []
       })) : []
     })) : [];
   } catch { return []; }
