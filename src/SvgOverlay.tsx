@@ -7,18 +7,18 @@ const point=(cx:number,cy:number,rx:number,ry:number,a:number):Pt=>({x:cx+Math.c
 
 function speechPath(o:TextOverlay,style:string){
  const w=o.width,h=o.height,cx=w/2,cy=h/2;
- const rx=w*(style==="wide"?.485:style==="tall"?.43:.47),ry=h*(style==="wide"?.36:style==="tall"?.485:.44);
  const tx=(o.tailX??o.x+w*.58)-o.x,ty=(o.tailY??o.y+h*1.12)-o.y;
- const angle=Math.atan2((ty-cy)/ry,(tx-cx)/rx);
- const spread=Math.max(.13,Math.min(.25,.18+Math.hypot(tx-cx,ty-cy)/260));
- const a1=angle-spread,a2=angle+spread;
- const radius=(a:number)=>style==="oval"?1:style==="rounded"?1:style==="wide"?1+.018*Math.sin(a*3+.4)+.012*Math.sin(a*5+1.2):style==="tall"?1+.025*Math.sin(a*3+1.1)+.015*Math.cos(a*5):1+.035*Math.sin(a*3+.7)+.022*Math.sin(a*5+1.8)+.012*Math.cos(a*7);
- const p=(a:number)=>{const r=radius(a);return{x:cx+Math.cos(a)*rx*r,y:cy+Math.sin(a)*ry*r};};
- const root1=p(a1),root2=p(a2);
- // One continuous outline: root1 -> tail tip -> root2 -> around the outside back to root1.
- // Sampling many points keeps the curve visually smooth while avoiding self-crossing Bézier closures.
- const tau=Math.PI*2,sweep=((a1-a2)%tau+tau)%tau,steps=72;
- let d=`M ${root1.x.toFixed(2)} ${root1.y.toFixed(2)} L ${tx.toFixed(2)} ${ty.toFixed(2)} L ${root2.x.toFixed(2)} ${root2.y.toFixed(2)}`;
+ // Body proportions derived from the user-provided single-path SVG reference.
+ const rx=w*(style==="wide"?.49:style==="tall"?.43:.48),ry=h*(style==="wide"?.37:style==="tall"?.48:.43);
+ const angle=Math.atan2((ty-cy)/ry,(tx-cx)/rx),spread=.18;
+ const a1=angle-spread,a2=angle+spread,tau=Math.PI*2;
+ // Smooth superellipse-like body: broad top/bottom and softly tightened sides, matching the reference silhouette.
+ const p=(a:number)=>{const ca=Math.cos(a),sa=Math.sin(a),shape=1+.018*Math.cos(2*a)-.012*Math.cos(4*a);return{x:cx+ca*rx*shape,y:cy+sa*ry*(1-.012*Math.cos(2*a))};};
+ const r1=p(a1),r2=p(a2),sweep=((a1-a2)%tau+tau)%tau,steps=96;
+ let d=`M ${r1.x.toFixed(2)} ${r1.y.toFixed(2)}`;
+ // Integrated tapered tail. Quadratic controls keep both joins tangent-looking instead of triangular.
+ const c1x=r1.x+(tx-r1.x)*.18,c1y=r1.y+(ty-r1.y)*.18,c2x=r2.x+(tx-r2.x)*.18,c2y=r2.y+(ty-r2.y)*.18;
+ d+=` Q ${c1x.toFixed(2)} ${c1y.toFixed(2)} ${tx.toFixed(2)} ${ty.toFixed(2)} Q ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${r2.x.toFixed(2)} ${r2.y.toFixed(2)}`;
  for(let i=1;i<=steps;i++){const q=p(a2+sweep*i/steps);d+=` L ${q.x.toFixed(2)} ${q.y.toFixed(2)}`;}
  return d+" Z";
 }
