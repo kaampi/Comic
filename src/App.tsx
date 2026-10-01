@@ -407,7 +407,7 @@ export function App() {
             <div className="app-grid-setting"><h3>{tr("defaultGrid")}</h3><label>{tr("columns")} <input type="number" min="2" max="6" value={appPageGrid.gridColumns} onChange={(e)=>updateAppGrid(Number(e.target.value),appPageGrid.gridRows)} /></label><label>{tr("rows")} <input type="number" min="2" max="8" value={appPageGrid.gridRows} onChange={(e)=>updateAppGrid(appPageGrid.gridColumns,Number(e.target.value))} /></label></div><div className="ai-options" role="radiogroup" aria-label={tr("aiMode")}>{AI_MODES.map((mode) => (
               <button key={mode.id} type="button" className={aiMode === mode.id ? "ai-option is-selected" : "ai-option"} disabled={!mode.available}
                 aria-pressed={aiMode === mode.id} onClick={() => mode.available && setAiMode(mode.id)}>
-                <span><strong>{mode.label}</strong>{!mode.available ? <small>{tr("comingLater")}</small> : null}</span><span>{mode.description}</span>
+                <span><strong>{mode.id==="prompt"?tr("promptMode"):mode.id==="api"?tr("apiMode"):tr("localAi")}</strong>{!mode.available ? <small>{tr("comingLater")}</small> : null}</span><span>{mode.id==="prompt"?tr("promptModeDesc"):mode.id==="api"?tr("apiModeDesc"):tr("localAiDesc")}</span>
               </button>
             ))}</div></> : null}
         </article>
