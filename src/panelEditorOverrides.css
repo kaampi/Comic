@@ -1,0 +1,17 @@
+/* Sidor-vyn visar det färdiga resultatet. Bubblor och text redigeras i Panelredigeraren. */
+.placement-list .overlay-editor {
+  display: none;
+}
+
+.layout-panels .panel-overlays {
+  pointer-events: none;
+}
+
+.layout-panels .overlay-resize-grip,
+.layout-panels .overlay-tail-grip {
+  display: none;
+}
+
+.layout-panels .overlay-drag-surface {
+  cursor: default;
+}
