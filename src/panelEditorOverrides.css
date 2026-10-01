@@ -39,3 +39,14 @@
   flex:0 0 auto;
 }
 @media(max-width:900px){.panel-editor-header-actions{flex-wrap:wrap;justify-content:flex-end}.type-secondary-grid,.tail-settings-grid{grid-template-columns:1fr}}
+
+.panel-properties-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 12px;
+}
+.panel-properties-heading .eyebrow{
+  margin:0;
+}
