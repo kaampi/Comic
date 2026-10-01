@@ -172,6 +172,14 @@ export function App() {
     };
     const next=[project,...projects];setProjects(next);saveProjects(next);setActiveProjectId(project.id);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
   };
+  const deleteProject = (projectId:string) => {
+    const project=projects.find((item)=>item.id===projectId);
+    if(!project || !window.confirm(`Radera projektet "${project.title}"? Detta tar bort ComicBook AI:s lokala kopia och kan inte ångras. StoryBook-filer påverkas inte.`)) return;
+    const next=projects.filter((item)=>item.id!==projectId);
+    setProjects(next); saveProjects(next);
+    if(activeProjectId===projectId){setActiveProjectId(null);setSelectedSceneId(null);setSelectedPageId(null);setLayoutStart(null);setProjectTab("manus");}
+    setProjectMenuOpen(false);
+  };
   const createNewProject = () => {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
@@ -190,7 +198,7 @@ export function App() {
           <button className="text-button" type="button" aria-expanded={projectMenuOpen} onClick={() => setProjectMenuOpen((open) => !open)}>Projekt</button>
           {projectMenuOpen ? <div className="menu-panel" role="menu">
             <button role="menuitem" type="button" className="menu-item" onClick={() => { setPanel("new-project"); setProjectMenuOpen(false); }}>Nytt seriealbum</button>
-            {projects.length ? <><div className="menu-divider" />{projects.slice(0, 5).map((project) => <button key={project.id} role="menuitem" type="button" className="menu-item" onClick={() => { setActiveProjectId(project.id); setProjectMenuOpen(false); }}>{project.title}</button>)}</> : <><div className="menu-divider" /><span className="menu-empty">Inga senaste projekt ännu</span></>}
+            {projects.length ? <><div className="menu-divider" />{projects.slice(0, 5).map((project) => <div className="menu-project-row" key={project.id}><button role="menuitem" type="button" className="menu-item" onClick={() => { setActiveProjectId(project.id); setProjectMenuOpen(false); }}>{project.title}</button><button type="button" className="menu-delete-project" aria-label={`Radera ${project.title}`} title="Radera projekt" onClick={() => deleteProject(project.id)}>×</button></div>)}</> : <><div className="menu-divider" /><span className="menu-empty">Inga senaste projekt ännu</span></>}
             <div className="menu-divider" /><button role="menuitem" type="button" className="menu-item" onClick={() => { setActiveProjectId(null); setProjectMenuOpen(false); }}>Visa alla projekt</button>
           </div> : null}
         </div>
