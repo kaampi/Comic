@@ -414,3 +414,7 @@ h2 { margin: 0; font-size: 1.05rem; }
   .project-topbar button { white-space: nowrap; }
   .project-topbar-spacer { min-width: .5rem; }
 }
+.menu-project-row { display: flex; align-items: center; }
+.menu-project-row .menu-item { flex: 1; min-width: 0; text-align: left; }
+.menu-delete-project { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 1.1rem; padding: .35rem .65rem; }
+.menu-delete-project:hover { color: var(--danger); }
