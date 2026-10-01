@@ -252,3 +252,29 @@ h2 { margin: 0; font-size: 1.05rem; }
 .style-card-actions .text-button { padding: 0; font-size: .82rem; }
 .danger-button:hover { color: #d85b52; }
 @media (max-width: 700px) { .style-editor { grid-template-columns: 1fr; } .style-editor label:last-of-type, .style-editor-actions { grid-column: 1; } }
+.card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.project-list { display: grid; gap: .55rem; margin-top: 1rem; }
+.project-list button {
+  display: flex; justify-content: space-between; gap: 1rem; width: 100%; padding: .8rem;
+  border: 1px solid var(--border-soft); border-radius: 6px; background: var(--panel); color: var(--text); text-align: left; cursor: pointer;
+}
+.project-list button:hover { border-color: var(--ink); }
+.project-list span { color: var(--text-dim); font-size: .85rem; }
+.project-workspace { width: min(100%, 980px); margin: 0 auto; }
+.project-workspace > h1 { margin: .2rem 0; font-family: var(--font-prose); font-size: clamp(2.3rem, 6vw, 4.8rem); font-weight: 500; }
+.project-tabs { display: flex; gap: .3rem; margin: 1.5rem 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.project-tabs button { padding: .65rem .8rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--text-dim); cursor: pointer; }
+.project-tabs button.is-active { border-bottom-color: var(--ink); color: var(--text); }
+.new-project-form { display: grid; gap: 1rem; margin-top: 1.5rem; }
+.new-project-form > label { display: grid; gap: .4rem; color: var(--text-dim); font-size: .85rem; }
+.new-project-form input[type="text"], .new-project-form > label > input, .new-project-form select {
+  width: 100%; padding: .65rem .7rem; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); color: var(--text);
+}
+.new-project-form fieldset { display: grid; gap: .55rem; padding: .9rem; border: 1px solid var(--border-soft); border-radius: 7px; }
+.new-project-form legend { padding: 0 .3rem; color: var(--text-dim); font-size: .85rem; }
+.disabled-choice { color: var(--text-faint); }
+.disabled-choice small { margin-left: .35rem; }
+.style-preview { padding: .8rem; border-left: 2px solid var(--ink); background: var(--panel); }
+.style-preview p { margin: .35rem 0 0; color: var(--text-dim); font-size: .85rem; line-height: 1.5; }
+.primary-button:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 700px) { .card-heading, .project-list button { flex-direction: column; } }
