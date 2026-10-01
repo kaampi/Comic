@@ -15,3 +15,12 @@ export function readLocale(): Locale {
   return "en";
 }
 export function applyLocale(locale: Locale): void { document.documentElement.lang = locale; document.documentElement.dataset.locale = locale; try { localStorage.setItem(LOCALE_KEY, locale); } catch {} }
+export type PageGridDefaults = { gridColumns: number; gridRows: number };
+const PAGE_GRID_KEY = "comicbook-ai.page-grid";
+export function readPageGridDefaults(): PageGridDefaults {
+  try { const value = JSON.parse(localStorage.getItem(PAGE_GRID_KEY) ?? "null"); if (value && Number.isInteger(value.gridColumns) && Number.isInteger(value.gridRows)) return value; } catch {}
+  return { gridColumns: 3, gridRows: 5 };
+}
+export function savePageGridDefaults(value: PageGridDefaults): void {
+  try { localStorage.setItem(PAGE_GRID_KEY, JSON.stringify(value)); } catch {}
+}
