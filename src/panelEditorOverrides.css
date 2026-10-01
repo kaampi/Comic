@@ -50,3 +50,42 @@
 .panel-properties-heading .eyebrow{
   margin:0;
 }
+
+.panel-editor-dropzone{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:32px;
+  text-align:center;
+  cursor:pointer;
+  color:#b9aa99;
+  border:1px dashed rgba(185,170,153,.38);
+  background:rgba(255,255,255,.015);
+  z-index:1;
+}
+.panel-editor-dropzone:hover,
+.panel-editor-dropzone:focus-within{
+  color:#e7d9c9;
+  border-color:rgba(208,106,72,.72);
+  background:rgba(208,106,72,.045);
+}
+.panel-editor-dropzone input{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+.panel-editor-dropzone span{
+  max-width:34rem;
+  font-size:1rem;
+  font-weight:600;
+}
+.panel-editor-dropzone small{
+  color:inherit;
+  opacity:.7;
+}
