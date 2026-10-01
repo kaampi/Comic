@@ -438,3 +438,7 @@ h2 { margin: 0; font-size: 1.05rem; }
 .resize-handle:active { cursor: grabbing; }
 
 .native-image-picker { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; opacity: 0; }
+
+.context-file-action { display: block; width: 100%; padding: .55rem .65rem; border-radius: 4px; color: var(--text); text-align: left; cursor: pointer; }
+.context-file-action:hover { background: var(--raised); }
+.context-file-action input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
