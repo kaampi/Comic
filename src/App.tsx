@@ -4,7 +4,7 @@ import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, type Locale, t
 import { BUILTIN_STYLES, STYLE_GENRES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
 import { createProject, readProjects, saveProjects, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
-import { PAGE_TEMPLATES } from "./pageTemplates";
+import { PAGE_PRESETS, overlaps } from "./pageTemplates";
 
 type Panel = "styles" | "guide" | "settings" | "new-project" | null;
 type StyleDraft = { id?: string; name: string; genre: string; promptText: string };
@@ -32,6 +32,7 @@ export function App() {
   const [newLocationName, setNewLocationName] = useState("");
   const [copiedPanelId, setCopiedPanelId] = useState<string | null>(null);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [layoutStart, setLayoutStart] = useState<{x:number;y:number} | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
@@ -88,9 +89,23 @@ export function App() {
     const prompt = buildPanelPrompt(project, panelId); if (!prompt) return;
     try { await navigator.clipboard.writeText(prompt); setCopiedPanelId(panelId); window.setTimeout(() => setCopiedPanelId((current) => current === panelId ? null : current), 1600); } catch {}
   };
-  const addPage = () => updateActiveProject((project) => ({ ...project, pages: [...project.pages, { id: "page-" + crypto.randomUUID(), number: project.pages.length + 1, templateId: PAGE_TEMPLATES[0].id, placements: [] }] }));
-  const setPageTemplate = (pageId: string, templateId: string) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, templateId, placements: page.placements.filter((placement) => placement.slot < (PAGE_TEMPLATES.find((t) => t.id === templateId)?.slots.length ?? 0)) } : page) }));
-  const setPageSlot = (pageId: string, slot: number, panelId: string) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => { if (page.id !== pageId) return page; const withoutSlot = page.placements.filter((p) => p.slot !== slot && p.panelId !== panelId); if (!panelId) return { ...page, placements: withoutSlot }; return { ...page, placements: [...withoutSlot, { panelId, slot, readingOrder: slot + 1 }].sort((a,b) => a.readingOrder - b.readingOrder) }; }) }));
+  const addPage = () => updateActiveProject((project) => ({ ...project, pages: [...project.pages, { id: "page-" + crypto.randomUUID(), number: project.pages.length + 1, gridColumns: 3, gridRows: 5, placements: [] }] }));
+  const applyPreset = (pageId: string, presetId: string) => {
+    const preset = PAGE_PRESETS.find((item) => item.id === presetId); if (!preset) return;
+    updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: preset.panels.map((rect,index) => ({ id: "placement-" + crypto.randomUUID(), ...rect, readingOrder: index + 1 })) } : page) }));
+  };
+  const selectGridCell = (pageId: string, x: number, y: number) => {
+    if (!layoutStart) { setLayoutStart({x,y}); return; }
+    const rect = { x: Math.min(layoutStart.x,x), y: Math.min(layoutStart.y,y), width: Math.abs(x-layoutStart.x)+1, height: Math.abs(y-layoutStart.y)+1 };
+    setLayoutStart(null);
+    updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => {
+      if (page.id !== pageId || page.placements.some((item) => overlaps(item,rect))) return page;
+      return { ...page, placements: [...page.placements, { id:"placement-"+crypto.randomUUID(), ...rect, readingOrder: page.placements.length+1 }] };
+    }) }));
+  };
+  const setPlacementPanel = (pageId:string, placementId:string, panelId:string) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.map((item) => item.id === placementId ? { ...item, panelId: panelId || undefined } : item) } : page) }));
+  const removePlacement = (pageId:string, placementId:string) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.filter((item) => item.id !== placementId).map((item,index) => ({...item,readingOrder:index+1})) } : page) }));
+  const moveReadingOrder = (pageId:string, placementId:string, direction:-1|1) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => { if(page.id!==pageId)return page; const ordered=[...page.placements].sort((x,y)=>x.readingOrder-y.readingOrder); const index=ordered.findIndex((item)=>item.id===placementId); const target=index+direction; if(index<0||target<0||target>=ordered.length)return page; [ordered[index],ordered[target]]=[ordered[target],ordered[index]]; return {...page,placements:ordered.map((item,i)=>({...item,readingOrder:i+1}))}; }) }));
   const createNewProject = () => {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
@@ -173,13 +188,15 @@ export function App() {
             {!activeProject.locations.length ? <p className="quiet">Inga platser ännu.</p> : null}</section> : null}
           {projectTab === "pages" ? <section className="page-workspace">
             <aside className="page-sidebar"><div className="section-heading"><div><p className="eyebrow">ALBUM</p><h2>Sidor</h2></div><button className="primary-button" onClick={addPage}>Ny sida</button></div>
-              <div className="page-list">{activeProject.pages.map((page) => <button key={page.id} className={selectedPageId === page.id ? "page-nav is-selected" : "page-nav"} onClick={() => setSelectedPageId(page.id)}>Sida {page.number}<span>{PAGE_TEMPLATES.find((t) => t.id === page.templateId)?.name}</span></button>)}</div>
+              <div className="page-list">{activeProject.pages.map((page) => <button key={page.id} className={selectedPageId === page.id ? "page-nav is-selected" : "page-nav"} onClick={() => {setSelectedPageId(page.id);setLayoutStart(null);}}>Sida {page.number}<span>{page.placements.length} rutor</span></button>)}</div>
             </aside>
-            {(() => { const page = activeProject.pages.find((item) => item.id === selectedPageId) ?? activeProject.pages[0]; if (!page) return <div className="workspace-card"><h2>Skapa första sidan</h2><p className="quiet">Lägg sedan in bildrutor från dina scener.</p><button className="primary-button" onClick={addPage}>Ny sida</button></div>;
-              const template = PAGE_TEMPLATES.find((item) => item.id === page.templateId) ?? PAGE_TEMPLATES[0];
-              return <div className="page-planner"><div className="section-heading"><div><p className="eyebrow">SIDA {page.number}</p><h2>Sidlayout</h2></div><label className="template-select">Mall<select value={page.templateId} onChange={(e) => setPageTemplate(page.id,e.target.value)}>{PAGE_TEMPLATES.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>
-                <div className="comic-page">{template.slots.map((slot,index) => { const placement = page.placements.find((p) => p.slot === index); const panel = placement ? activeProject.panels.find((p) => p.id === placement.panelId) : undefined; return <div className="page-slot" key={index} style={{gridColumn: slot.col + " / span " + slot.colSpan, gridRow: slot.row + " / span " + slot.rowSpan}}><span className="slot-order">{index+1}</span>{panel ? <div className="placed-panel"><strong>{panel.action || "Bildruta " + (panel.order ?? index+1)}</strong><small>{activeProject.scenes.find((s) => s.id === panel.sceneId)?.title}</small></div> : <span>Tom ruta</span>}</div>;})}</div>
-                <div className="slot-assignments"><h3>Placera bildrutor</h3>{template.slots.map((_,index) => <label key={index}>Ruta {index+1}<select value={page.placements.find((p) => p.slot === index)?.panelId ?? ""} onChange={(e) => setPageSlot(page.id,index,e.target.value)}><option value="">Tom</option>{activeProject.panels.map((panel) => <option key={panel.id} value={panel.id}>{activeProject.scenes.find((s) => s.id === panel.sceneId)?.title ?? "Scen"} — ruta {panel.order}</option>)}</select></label>)}</div>
+            {(() => { const page = activeProject.pages.find((item) => item.id === selectedPageId) ?? activeProject.pages[0]; if (!page) return <div className="workspace-card"><h2>Skapa första sidan</h2><button className="primary-button" onClick={addPage}>Ny sida</button></div>;
+              return <div className="page-planner"><div className="section-heading"><div><p className="eyebrow">SIDA {page.number}</p><h2>Rita sidlayout</h2><p className="quiet">{layoutStart ? "Välj rutans motsatta hörn." : "Klicka första och sista cellen för att rama in en serieruta."}</p></div><select className="preset-select" defaultValue="" onChange={(e)=>{if(e.target.value)applyPreset(page.id,e.target.value);e.currentTarget.value="";}}><option value="">Använd preset…</option>{PAGE_PRESETS.map((preset)=><option key={preset.id} value={preset.id}>{preset.name}</option>)}</select></div>
+                <div className="layout-canvas">
+                  <div className="construction-grid">{Array.from({length:15},(_,i)=>{const x=i%3,y=Math.floor(i/3);return <button key={i} className={layoutStart?.x===x&&layoutStart?.y===y?"grid-cell is-start":"grid-cell"} onClick={()=>selectGridCell(page.id,x,y)} aria-label={`Kolumn ${x+1}, rad ${y+1}`} />;})}</div>
+                  <div className="layout-panels">{page.placements.map((placement)=>{const panel=placement.panelId?activeProject.panels.find((item)=>item.id===placement.panelId):undefined;return <div className="drawn-panel" key={placement.id} style={{gridColumn:`${placement.x+1} / span ${placement.width}`,gridRow:`${placement.y+1} / span ${placement.height}`}}><b>{placement.readingOrder}</b><span>{panel?.action || "Tom serieruta"}</span></div>;})}</div>
+                </div>
+                <div className="placement-list"><h3>Rutor och läsordning</h3>{page.placements.map((placement)=><div className="placement-row" key={placement.id}><strong>{placement.readingOrder}</strong><select value={placement.panelId??""} onChange={(e)=>setPlacementPanel(page.id,placement.id,e.target.value)}><option value="">Ingen bildruta vald</option>{activeProject.panels.map((panel)=><option key={panel.id} value={panel.id}>{activeProject.scenes.find((s)=>s.id===panel.sceneId)?.title??"Scen"} — ruta {panel.order}</option>)}</select><button className="text-button" disabled={placement.readingOrder===1} onClick={()=>moveReadingOrder(page.id,placement.id,-1)}>↑</button><button className="text-button" disabled={placement.readingOrder===page.placements.length} onClick={()=>moveReadingOrder(page.id,placement.id,1)}>↓</button><button className="text-button danger-button" onClick={()=>removePlacement(page.id,placement.id)}>Ta bort</button></div>)}</div>
               </div>; })()}
           </section> : null}
         </section> : <>
