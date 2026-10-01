@@ -16,18 +16,26 @@
   cursor: default;
 }
 
-/* Keep the speech-tail toggle on one line despite the global form label layout. */
-.panel-editor-tools label.tail-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  flex-direction: row;
-  gap: 8px;
-  width: auto;
+/* panel-properties-ui-v2 */
+.panel-editor-header-actions{display:flex;align-items:center;gap:10px}
+.panel-editor-tools>.eyebrow{margin:0 0 12px}
+.panel-editor-tools .selected-panel-tool{display:grid;gap:12px}
+.panel-editor-tools textarea{min-height:7.5rem;resize:vertical;white-space:pre-wrap}
+.type-secondary-grid,.tail-settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.panel-editor-tools .numeric-field{text-align:center}
+.panel-editor-tools label{gap:6px}
+.panel-editor-tools select{width:100%}
+.panel-editor-tools label.tail-toggle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-start;
+  flex-direction:row;
+  gap:8px;
+  width:auto;
 }
-
-.panel-editor-tools label.tail-toggle input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-  flex: 0 0 auto;
+.panel-editor-tools label.tail-toggle input[type="checkbox"]{
+  width:auto;
+  margin:0;
+  flex:0 0 auto;
 }
+@media(max-width:900px){.panel-editor-header-actions{flex-wrap:wrap;justify-content:flex-end}.type-secondary-grid,.tail-settings-grid{grid-template-columns:1fr}}
