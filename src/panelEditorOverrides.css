@@ -15,3 +15,19 @@
 .layout-panels .overlay-drag-surface {
   cursor: default;
 }
+
+/* Keep the speech-tail toggle on one line despite the global form label layout. */
+.panel-editor-tools label.tail-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: row;
+  gap: 8px;
+  width: auto;
+}
+
+.panel-editor-tools label.tail-toggle input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  flex: 0 0 auto;
+}
