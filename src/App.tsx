@@ -207,6 +207,16 @@ export function App() {
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? "Mörkt" : "Ljust"}</button>
         </div>
       </header>
+      {activeProject ? <nav className="project-topbar" aria-label="Aktivt serieprojekt">
+        <button className="project-title-button" type="button" onClick={() => setProjectTab("manus")}>{activeProject.title}</button>
+        <span className="project-topbar-spacer" />
+        <button type="button" onClick={() => setProjectTab("manus")}>Manus</button>
+        <button type="button" onClick={() => setProjectTab("characters")}>Karaktärer</button>
+        <button type="button" onClick={() => setProjectTab("locations")}>Platser</button>
+        <button type="button" onClick={() => setProjectTab("scenes")}>Bildrutor</button>
+        <button type="button" onClick={() => setProjectTab("pages")}>Sidor</button>
+        <button type="button" onClick={() => setPanel("styles")}>Bildstilar</button>
+      </nav> : null}
 
       <main className="home">
         {activeProject ? <section className="project-workspace">
