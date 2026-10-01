@@ -29,7 +29,7 @@ export function createProject(title: string, source: ProjectSource, style: Illus
   const now = new Date().toISOString();
   return {
     format: PROJECT_FORMAT, id: stableId("project"), title: title.trim(), createdAt: now, updatedAt: now,
-    source: { type: source }, style: { ...style }, characters: [], locations: [], scenes: [], panels: [], pages: []
+    source: { type: source, textSnapshot: "" }, style: { ...style }, characters: [], locations: [], scenes: [], panels: [], pages: []
   };
 }
 
