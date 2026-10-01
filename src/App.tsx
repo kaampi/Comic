@@ -3,6 +3,7 @@ import { AI_MODES, type AiMode } from "./ai";
 import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, type Locale, type Theme } from "./settings";
 import { BUILTIN_STYLES, STYLE_GENRES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
 import { createProject, readProjects, saveProjects, type ComicProject, type ProjectSource } from "./project";
+import { buildPanelPrompt } from "./promptBuilder";
 
 type Panel = "styles" | "guide" | "settings" | "new-project" | null;
 type StyleDraft = { id?: string; name: string; genre: string; promptText: string };
@@ -28,6 +29,7 @@ export function App() {
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [newCharacterName, setNewCharacterName] = useState("");
   const [newLocationName, setNewLocationName] = useState("");
+  const [copiedPanelId, setCopiedPanelId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
@@ -80,6 +82,10 @@ export function App() {
   const updateLocation = (id: string, patch: Partial<ComicProject["locations"][number]>) => updateActiveProject((project) => ({ ...project, locations: project.locations.map((item) => item.id === id ? { ...item, ...patch } : item) }));
   const togglePanelCharacter = (panelId: string, characterId: string) => updateActiveProject((project) => ({ ...project, panels: project.panels.map((panel) => panel.id !== panelId ? panel : { ...panel, characterIds: (panel.characterIds ?? []).includes(characterId) ? (panel.characterIds ?? []).filter((id) => id !== characterId) : [...(panel.characterIds ?? []), characterId] }) }));
   const setPanelLocation = (panelId: string, locationId: string) => updateActiveProject((project) => ({ ...project, panels: project.panels.map((panel) => panel.id === panelId ? { ...panel, locationId: locationId || undefined } : panel) }));
+  const copyPanelPrompt = async (project: ComicProject, panelId: string) => {
+    const prompt = buildPanelPrompt(project, panelId); if (!prompt) return;
+    try { await navigator.clipboard.writeText(prompt); setCopiedPanelId(panelId); window.setTimeout(() => setCopiedPanelId((current) => current === panelId ? null : current), 1600); } catch {}
+  };
   const createNewProject = () => {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
@@ -150,6 +156,7 @@ export function App() {
                   <label>Dialog<textarea rows={2} value={panel.dialogue} onChange={(e) => updatePanel(panel.id,"dialogue",e.target.value)} /></label>
                   <label>Berättartext<textarea rows={2} value={panel.narration} onChange={(e) => updatePanel(panel.id,"narration",e.target.value)} /></label>
                   <label>Bildinstruktion<textarea rows={3} value={panel.imagePrompt} onChange={(e) => updatePanel(panel.id,"imagePrompt",e.target.value)} placeholder="Komposition, utsnitt, kameravinkel…" /></label>
+                  <details className="prompt-preview"><summary>Färdig bildprompt</summary><pre>{buildPanelPrompt(activeProject,panel.id)}</pre><div className="prompt-actions"><span className="quiet">Byggs lokalt · inget skickas till en AI-tjänst</span><button className="primary-button" type="button" onClick={() => copyPanelPrompt(activeProject,panel.id)}>{copiedPanelId === panel.id ? "Kopierad" : "Kopiera prompt"}</button></div></details>
                 </article> : null) : <div className="empty-panels"><p>Scenen har inga bildrutor ännu.</p><button className="primary-button" onClick={() => addPanel(scene.id)}>Skapa första bildrutan</button></div>}</div>
               </div>; })()}
           </section> : null}
