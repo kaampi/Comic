@@ -42,7 +42,8 @@ export const UI = {
     createFirstScene:"Skapa din första scen under Manus.", noPanels:"Scenen har inga bildrutor ännu.", createFirstPanel:"Skapa första bildrutan",
     createFirstPage:"Skapa första sidan", dragLayout:"Dra över rutnätet för att skapa en serieruta. Dubbelklicka en ruta för textredigering.",
     dragSize:"Dra till önskad storlek och släpp.", usePreset:"Använd preset…", deleteImage:"Ta bort bild", deletePanel:"Ta bort panel",
-    uploadImage:"Ladda upp bild…", changeImage:"Byt bild…", noCharactersYet:"Inga karaktärer ännu.", noLocationsYet:"Inga platser ännu."
+    uploadImage:"Ladda upp bild…", changeImage:"Byt bild…", noCharactersYet:"Inga karaktärer ännu.", noLocationsYet:"Inga platser ännu.",
+    dropImage:"Släpp en bild här eller klicka för att välja från hårddisken", dropImageHint:"PNG, JPG eller WebP"
   },
   en: {
     project:"Project", newAlbum:"New comic album", noRecent:"No recent projects yet", showAll:"Show all projects",
@@ -85,7 +86,8 @@ export const UI = {
     createFirstScene:"Create your first scene under Manuscript.", noPanels:"This scene has no panels yet.", createFirstPanel:"Create first panel",
     createFirstPage:"Create first page", dragLayout:"Drag across the grid to create a comic panel. Double-click a panel to edit text.",
     dragSize:"Drag to the desired size and release.", usePreset:"Use preset…", deleteImage:"Remove image", deletePanel:"Remove panel",
-    uploadImage:"Upload image…", changeImage:"Change image…", noCharactersYet:"No characters yet.", noLocationsYet:"No locations yet."
+    uploadImage:"Upload image…", changeImage:"Change image…", noCharactersYet:"No characters yet.", noLocationsYet:"No locations yet.",
+    dropImage:"Drop image here or click to pick from hard drive", dropImageHint:"PNG, JPG or WebP"
   },
   nb: {
     project:"Prosjekt", newAlbum:"Nytt tegneseriealbum", noRecent:"Ingen nylige prosjekter ennå", showAll:"Vis alle prosjekter",
@@ -128,7 +130,8 @@ export const UI = {
     createFirstScene:"Opprett din første scene under Manus.", noPanels:"Scenen har ingen ruter ennå.", createFirstPanel:"Opprett første rute",
     createFirstPage:"Opprett første side", dragLayout:"Dra over rutenettet for å opprette en tegneserierute. Dobbeltklikk en rute for tekstredigering.",
     dragSize:"Dra til ønsket størrelse og slipp.", usePreset:"Bruk preset…", deleteImage:"Fjern bilde", deletePanel:"Fjern rute",
-    uploadImage:"Last opp bilde…", changeImage:"Bytt bilde…", noCharactersYet:"Ingen karakterer ennå.", noLocationsYet:"Ingen steder ennå."
+    uploadImage:"Last opp bilde…", changeImage:"Bytt bilde…", noCharactersYet:"Ingen karakterer ennå.", noLocationsYet:"Ingen steder ennå.",
+    dropImage:"Slipp et bilde her eller klikk for å velge fra harddisken", dropImageHint:"PNG, JPG eller WebP"
   }
 } as const;
 
