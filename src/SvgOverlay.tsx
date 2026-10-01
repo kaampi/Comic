@@ -2,21 +2,24 @@ import type { TextOverlay } from "./project";
 
 function lines(text:string,maxChars=24):string[]{const words=text.trim().split(/\s+/).filter(Boolean),out:string[]=[];let line="";for(const word of words){const next=line?line+" "+word:word;if(next.length>maxChars&&line){out.push(line);line=word}else line=next}if(line)out.push(line);return out.slice(0,7);}
 const common={fill:"#fffdf7",stroke:"#171411",strokeWidth:2,vectorEffect:"non-scaling-stroke" as const};
-type Pt={x:number;y:number};
-const point=(cx:number,cy:number,rx:number,ry:number,a:number):Pt=>({x:cx+Math.cos(a)*rx,y:cy+Math.sin(a)*ry});
 
 function speechPath(o:TextOverlay,style:string){
  const w=o.width,h=o.height,cx=w/2,cy=h/2;
  const tx=(o.tailX??o.x+w*.58)-o.x,ty=(o.tailY??o.y+h*1.12)-o.y;
- // Body proportions derived from the user-provided single-path SVG reference.
  const rx=w*(style==="wide"?.49:style==="tall"?.43:.48),ry=h*(style==="wide"?.37:style==="tall"?.48:.43);
  const angle=Math.atan2((ty-cy)/ry,(tx-cx)/rx),spread=.08+((o.tailRootWidth??50)/100)*.22;
  const a1=angle-spread,a2=angle+spread,tau=Math.PI*2;
- // Smooth superellipse-like body: broad top/bottom and softly tightened sides, matching the reference silhouette.
- const p=(a:number)=>{const ca=Math.cos(a),sa=Math.sin(a),round=(o.roundness??45)/100,organic=1+.055*Math.cos(2*a)-.032*Math.cos(4*a),shape=organic*(1-round)+round;return{x:cx+ca*rx*shape,y:cy+sa*ry*(1-.035*(1-round)*Math.cos(2*a))};};
+ // Rundning: 0 = boxig/superellips, 100 = oval.
+ const p=(a:number)=>{
+   const round=Math.max(0,Math.min(100,o.roundness??45))/100;
+   const exponent=2+(1-round)*18;
+   const ca=Math.cos(a),sa=Math.sin(a);
+   const sx=Math.sign(ca)*Math.pow(Math.abs(ca),2/exponent);
+   const sy=Math.sign(sa)*Math.pow(Math.abs(sa),2/exponent);
+   return{x:cx+sx*rx,y:cy+sy*ry};
+ };
  const r1=p(a1),r2=p(a2),sweep=((a1-a2)%tau+tau)%tau,steps=96;
  let d=`M ${r1.x.toFixed(2)} ${r1.y.toFixed(2)}`;
- // Integrated tapered tail. Quadratic controls keep both joins tangent-looking instead of triangular.
  const curve=(o.tailCurve??0)/100,dx=tx-cx,dy=ty-cy,len=Math.max(1,Math.hypot(dx,dy)),px=-dy/len,py=dx/len,bend=curve*Math.min(w,h)*.42;
  const c1x=r1.x+(tx-r1.x)*.34+px*bend,c1y=r1.y+(ty-r1.y)*.34+py*bend,c2x=r2.x+(tx-r2.x)*.34+px*bend,c2y=r2.y+(ty-r2.y)*.34+py*bend;
  d+=` Q ${c1x.toFixed(2)} ${c1y.toFixed(2)} ${tx.toFixed(2)} ${ty.toFixed(2)} Q ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${r2.x.toFixed(2)} ${r2.y.toFixed(2)}`;
@@ -28,7 +31,9 @@ function thoughtBody(w:number,h:number){return `M ${w*.08} ${h*.48} C ${w*.06} $
 function ThoughtTrail({o}:{o:TextOverlay}){if(o.tailX===undefined||o.tailY===undefined)return null;const tx=o.tailX-o.x,ty=o.tailY-o.y,cx=o.width*.5,cy=o.height*.72;return <>{[.38,.64,.86].map((t,i)=><circle key={i} cx={cx+(tx-cx)*t} cy={cy+(ty-cy)*t} r={[5,3.6,2.4][i]} {...common}/>)}</>;}
 
 export function SvgOverlay({overlay}:{overlay:TextOverlay}){
- const fontSize=overlay.fontSize??(overlay.type==="sfx"?20:12),textLines=lines(overlay.text,Math.max(6,Math.floor(overlay.width/(fontSize*.58)))),style=overlay.bubbleStyle??"organic",w=overlay.width,h=overlay.height;
+ const sizeValue=overlay.fontSize??(overlay.type==="sfx"?20:12);
+ const fontSize=sizeValue*.6;
+ const textLines=lines(overlay.text,Math.max(6,Math.floor(overlay.width/(fontSize*.58)))),style=overlay.bubbleStyle??"organic",w=overlay.width,h=overlay.height;
  return <g transform={`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>
   {overlay.type==="speech"?<path d={style==="shout"?shoutPath(overlay):speechPath(overlay,style)} {...common} strokeDasharray={style==="whisper"?"4 3":undefined}/>:null}
   {overlay.type==="thought"?<><path d={thoughtBody(w,h)} {...common}/><ThoughtTrail o={overlay}/></>:null}
