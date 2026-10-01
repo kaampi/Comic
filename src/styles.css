@@ -295,3 +295,19 @@ h2 { margin: 0; font-size: 1.05rem; }
 .scene-row span { color: var(--ink); font-size: .75rem; }
 .scene-row strong { font-size: .88rem; }
 @media (max-width: 850px) { .manuscript-workspace { grid-template-columns: 1fr; } .manuscript-editor { min-height: 360px; } }
+.scene-button { width: 100%; color: var(--text); background: transparent; text-align: left; cursor: pointer; }
+.scene-workspace { display: grid; grid-template-columns: 230px minmax(0,1fr); gap: 1rem; align-items: start; }
+.scene-navigator, .scene-editor { padding: 1rem; border: 1px solid var(--border-soft); border-radius: 8px; background: var(--paper); }
+.scene-nav-item { display: grid; grid-template-columns: 1.5rem 1fr; gap: .4rem; width: 100%; padding: .6rem; border: 0; border-radius: 5px; background: transparent; color: var(--text-dim); text-align: left; cursor: pointer; }
+.scene-nav-item span { color: var(--ink); font-size: .75rem; }
+.scene-nav-item:hover, .scene-nav-item.is-selected { background: var(--raised); color: var(--text); }
+.scene-title-input { width: min(520px,100%); padding: .2rem 0; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); font-family: var(--font-prose); font-size: 1.8rem; }
+.source-excerpt { display: grid; gap: .4rem; margin: 1rem 0; color: var(--text-dim); font-size: .8rem; }
+.source-excerpt textarea, .panel-editor textarea { width: 100%; padding: .65rem; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); resize: vertical; }
+.panel-list { display: grid; gap: .8rem; }
+.panel-editor { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; padding: 1rem; border: 1px solid var(--border-soft); border-radius: 7px; background: var(--panel); }
+.panel-number { grid-column: 1/-1; color: var(--ink); font-size: .7rem; font-weight: 700; letter-spacing: .1em; }
+.panel-editor label { display: grid; gap: .35rem; color: var(--text-dim); font-size: .78rem; }
+.panel-editor label:first-of-type, .panel-editor label:last-of-type { grid-column: 1/-1; }
+.empty-panels { padding: 2rem; border: 1px dashed var(--border); border-radius: 7px; text-align: center; color: var(--text-dim); }
+@media (max-width: 850px) { .scene-workspace { grid-template-columns: 1fr; } .panel-editor { grid-template-columns: 1fr; } .panel-editor label, .panel-editor label:first-of-type, .panel-editor label:last-of-type { grid-column: 1; } }
