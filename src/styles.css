@@ -394,3 +394,23 @@ h2 { margin: 0; font-size: 1.05rem; }
 .overlay-row > input { min-width: 0; padding: .35rem; background: var(--paper); color: var(--text); border: 1px solid var(--border); }
 .overlay-row label { display: flex; align-items: center; gap: .25rem; font-size: .68rem; color: var(--text-dim); }
 @media (max-width: 800px) { .overlay-row { grid-template-columns: 1fr; } }
+.project-topbar {
+  min-height: 2.35rem; display: flex; align-items: center; gap: 1.35rem;
+  padding: 0 .9rem; border-bottom: 1px solid var(--border-soft);
+  background: var(--paper);
+}
+.project-topbar button {
+  border: 0; background: transparent; color: var(--text-dim); cursor: pointer;
+  padding: .65rem 0; font: inherit; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+}
+.project-topbar button:hover { color: var(--text); }
+.project-topbar .project-title-button {
+  color: var(--text); font-family: Newsreader, Georgia, serif; font-size: 1rem;
+  letter-spacing: 0; text-transform: none; padding-right: 1rem;
+}
+.project-topbar-spacer { flex: 1; }
+@media (max-width: 850px) {
+  .project-topbar { overflow-x: auto; gap: 1rem; }
+  .project-topbar button { white-space: nowrap; }
+  .project-topbar-spacer { min-width: .5rem; }
+}
