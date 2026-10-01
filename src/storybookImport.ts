@@ -31,23 +31,38 @@ export function parseStoryBookExport(raw:string):StoryBookImport {
   const book=data.book ?? data.manuscript ?? data;
   const chapters=array(data.chapters ?? book.chapters).map((item)=>({
     id:str(item?.id), title:str(item?.title ?? item?.name)||"Kapitel",
-    text:str(item?.text ?? item?.content ?? item?.body)
+    text:str(item?.prose ?? item?.text ?? item?.content ?? item?.body)
   })).filter((item)=>item.text||item.title);
 
   const rawEntities=array(data.entities ?? book.entities);
+  const facts=array(data.facts ?? book.facts);
   const profiles=array(data.profiles ?? book.profiles);
   const kinds=new Map(array(data.entity_kinds ?? book.entity_kinds).map((x)=>[str(x?.entity_ref),str(x?.kind)]));
   const profileByRef=new Map(profiles.map((x)=>[str(x?.entity_ref),x]));
   const charsSource=array(data.characters ?? book.characters);
   const locSource=array(data.locations ?? data.places ?? book.locations ?? book.places);
+  const factRefs=new Map<string,{id:string;name:string;description:string}>();
+  for(const fact of facts){
+    const ref=str(fact?.entity_ref); if(!ref) continue;
+    const current=factRefs.get(ref)??{id:ref,name:str(fact?.entity_label)||ref,description:""};
+    if(!fact?.superseded_by && str(fact?.value)) current.description=[current.description,str(fact.value)].filter(Boolean).join("\n");
+    factRefs.set(ref,current);
+  }
   const inferredChars=rawEntities.filter((x)=>["characters","character","people","person"].includes(kinds.get(str(x?.id ?? x?.ref ?? x?.entity_ref))??str(x?.kind)));
   const inferredLocs=rawEntities.filter((x)=>["locations","location","places","place"].includes(kinds.get(str(x?.id ?? x?.ref ?? x?.entity_ref))??str(x?.kind)));
+  const locationRefs=new Set(inferredLocs.map((x)=>str(x?.id ?? x?.ref ?? x?.entity_ref)));
+  for(const [ref,kind] of kinds) if(["locations","location","places","place"].includes(kind)) locationRefs.add(ref);
+  const profileRefs=new Set(profiles.map((x)=>str(x?.entity_ref)).filter(Boolean));
+  const factCharacters=[...factRefs.values()].filter((x)=>profileRefs.has(x.id)&&!locationRefs.has(x.id));
+  const factLocations=[...factRefs.values()].filter((x)=>locationRefs.has(x.id));
 
-  const characters=(charsSource.length?charsSource:inferredChars).map((item)=>{
+  const characterSource=charsSource.length?charsSource:(inferredChars.length?inferredChars:factCharacters);
+  const characters=characterSource.map((item)=>{
     const ref=str(item?.entity_ref ?? item?.ref ?? item?.id); const p=profileByRef.get(ref) as any;
-    return {id:ref,name:entityName(item)||str(p?.name)||ref,description:entityDescription(item)||str(p?.personality ?? p?.looks),pronoun:str(item?.pronoun ?? p?.pronoun)||undefined,approximateAge:num(item?.approximateAge ?? p?.approximateAge)};
+    return {id:ref,name:entityName(item)||str(p?.name)||ref,description:entityDescription(item)||str((item as any)?.description)||str(p?.personality ?? p?.looks),pronoun:str(item?.pronoun ?? p?.pronoun)||undefined,approximateAge:num(item?.approximateAge ?? p?.approximateAge)};
   }).filter((x)=>x.name);
-  const locations=(locSource.length?locSource:inferredLocs).map((item)=>({id:str(item?.entity_ref ?? item?.ref ?? item?.id),name:entityName(item),description:entityDescription(item)})).filter((x)=>x.name);
+  const locationSource=locSource.length?locSource:(inferredLocs.length?inferredLocs:factLocations);
+  const locations=locationSource.map((item)=>({id:str(item?.entity_ref ?? item?.ref ?? item?.id),name:entityName(item)||str((item as any)?.name),description:entityDescription(item)||str((item as any)?.description)})).filter((x)=>x.name);
   const text=str(book.text ?? book.content ?? data.text ?? data.manuscript?.text) || chapters.map((x)=>x.text).join("\n\n");
   return {kind:data.kind,format:1,sourceBookId:str(book.id),title:str(book.title)||"Importerat StoryBook-manus",text,illustrationStyle:str(book.illustration_style),chapters,characters,locations};
 }
