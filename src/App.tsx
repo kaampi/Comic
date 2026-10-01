@@ -37,7 +37,8 @@ export function App() {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [layoutStart, setLayoutStart] = useState<{x:number;y:number} | null>(null);
   const [layoutEnd, setLayoutEnd] = useState<{x:number;y:number} | null>(null);
-  const [contextPlacement, setContextPlacement] = useState<{pageId:string;placementId:string;x:number;y:number}|null>(null);\n  const [panelEditor, setPanelEditor] = useState<{pageId:string;placementId:string}|null>(null);
+  const [contextPlacement, setContextPlacement] = useState<{pageId:string;placementId:string;x:number;y:number}|null>(null);
+  const [panelEditor, setPanelEditor] = useState<{pageId:string;placementId:string}|null>(null);
   const [appPageGrid, setAppPageGrid] = useState(readPageGridDefaults);
   const [storyBookImport, setStoryBookImport] = useState<StoryBookImport | null>(null);
   const [storyBookCards, setStoryBookCards] = useState<StoryBookCardsImport | null>(null);
