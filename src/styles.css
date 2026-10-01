@@ -474,3 +474,8 @@ h2 { margin: 0; font-size: 1.05rem; }
 .number-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .panel-tool-card input[type="number"]{width:100%;box-sizing:border-box}
 @media(max-width:1200px){.type-grid{grid-template-columns:1fr 1fr}.number-grid{grid-template-columns:1fr 1fr}}
+
+.overlay-selection-frame{fill:none;stroke:currentColor;stroke-width:.45;stroke-dasharray:2 1.5;opacity:.62;vector-effect:non-scaling-stroke;pointer-events:none}
+.panel-editor-empty-properties{padding:18px 0;color:var(--text)}
+.selected-panel-tool{border-top:0;padding-top:8px}
+.panel-editor-add-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
