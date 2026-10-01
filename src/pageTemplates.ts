@@ -1,25 +1,26 @@
-export type PageTemplate = {
-  id: string;
-  name: string;
-  slots: Array<{ col: number; row: number; colSpan: number; rowSpan: number }>;
-};
+export type LayoutRect = { x: number; y: number; width: number; height: number };
 
-export const PAGE_TEMPLATES: PageTemplate[] = [
-  { id: "four-equal", name: "4 lika rutor", slots: [
-    { col: 1, row: 1, colSpan: 2, rowSpan: 2 }, { col: 3, row: 1, colSpan: 2, rowSpan: 2 },
-    { col: 1, row: 3, colSpan: 2, rowSpan: 2 }, { col: 3, row: 3, colSpan: 2, rowSpan: 2 }
+export type PagePreset = { id: string; name: string; panels: LayoutRect[] };
+
+export const PAGE_PRESETS: PagePreset[] = [
+  { id: "four", name: "4 rutor", panels: [
+    { x:0,y:0,width:3,height:2 }, { x:0,y:2,width:1,height:3 },
+    { x:1,y:2,width:2,height:1 }, { x:1,y:3,width:2,height:2 }
   ]},
-  { id: "wide-plus-two", name: "Bred + två", slots: [
-    { col: 1, row: 1, colSpan: 4, rowSpan: 2 }, { col: 1, row: 3, colSpan: 2, rowSpan: 2 },
-    { col: 3, row: 3, colSpan: 2, rowSpan: 2 }
+  { id: "wide-two", name: "Bred + två", panels: [
+    { x:0,y:0,width:3,height:2 }, { x:0,y:2,width:1,height:3 }, { x:1,y:2,width:2,height:3 }
   ]},
-  { id: "hero-plus-three", name: "Stor + tre", slots: [
-    { col: 1, row: 1, colSpan: 3, rowSpan: 3 }, { col: 4, row: 1, colSpan: 1, rowSpan: 1 },
-    { col: 4, row: 2, colSpan: 1, rowSpan: 1 }, { col: 4, row: 3, colSpan: 1, rowSpan: 1 }
+  { id: "five", name: "5 rutor", panels: [
+    { x:0,y:0,width:2,height:2 }, { x:2,y:0,width:1,height:2 },
+    { x:0,y:2,width:1,height:3 }, { x:1,y:2,width:2,height:1 }, { x:1,y:3,width:2,height:2 }
   ]},
-  { id: "six-grid", name: "6 rutor", slots: [
-    { col: 1, row: 1, colSpan: 2, rowSpan: 1 }, { col: 3, row: 1, colSpan: 2, rowSpan: 1 },
-    { col: 1, row: 2, colSpan: 2, rowSpan: 1 }, { col: 3, row: 2, colSpan: 2, rowSpan: 1 },
-    { col: 1, row: 3, colSpan: 2, rowSpan: 1 }, { col: 3, row: 3, colSpan: 2, rowSpan: 1 }
+  { id: "six", name: "6 rutor", panels: [
+    { x:0,y:0,width:1,height:2 }, { x:1,y:0,width:2,height:2 },
+    { x:0,y:2,width:2,height:1 }, { x:2,y:2,width:1,height:1 },
+    { x:0,y:3,width:1,height:2 }, { x:1,y:3,width:2,height:2 }
   ]}
 ];
+
+export function overlaps(a: LayoutRect, b: LayoutRect): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
