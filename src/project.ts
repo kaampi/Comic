@@ -6,7 +6,7 @@ export type ProjectSource = "blank" | "text" | "storybook";
 
 export type OverlayType = "speech" | "thought" | "caption" | "sfx";
 export type BubbleStyle = "organic" | "wide" | "tall" | "oval" | "rounded" | "shout" | "whisper";
-export type TextOverlay = { id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number; fontSize?: number; bubbleStyle?: BubbleStyle; tailCurve?: number; tailX?: number; tailY?: number };
+export type TextOverlay = { id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number; fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number };
 
 export type ComicProject = {
   format: 1;
