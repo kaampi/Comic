@@ -10,10 +10,10 @@ function speechPath(o:TextOverlay,style:string){
  const tx=(o.tailX??o.x+w*.58)-o.x,ty=(o.tailY??o.y+h*1.12)-o.y;
  // Body proportions derived from the user-provided single-path SVG reference.
  const rx=w*(style==="wide"?.49:style==="tall"?.43:.48),ry=h*(style==="wide"?.37:style==="tall"?.48:.43);
- const angle=Math.atan2((ty-cy)/ry,(tx-cx)/rx),spread=.18;
+ const angle=Math.atan2((ty-cy)/ry,(tx-cx)/rx),spread=.08+((o.tailRootWidth??50)/100)*.22;
  const a1=angle-spread,a2=angle+spread,tau=Math.PI*2;
  // Smooth superellipse-like body: broad top/bottom and softly tightened sides, matching the reference silhouette.
- const p=(a:number)=>{const ca=Math.cos(a),sa=Math.sin(a),shape=1+.018*Math.cos(2*a)-.012*Math.cos(4*a);return{x:cx+ca*rx*shape,y:cy+sa*ry*(1-.012*Math.cos(2*a))};};
+ const p=(a:number)=>{const ca=Math.cos(a),sa=Math.sin(a),round=(o.roundness??45)/100,organic=1+.055*Math.cos(2*a)-.032*Math.cos(4*a),shape=organic*(1-round)+round;return{x:cx+ca*rx*shape,y:cy+sa*ry*(1-.035*(1-round)*Math.cos(2*a))};};
  const r1=p(a1),r2=p(a2),sweep=((a1-a2)%tau+tau)%tau,steps=96;
  let d=`M ${r1.x.toFixed(2)} ${r1.y.toFixed(2)}`;
  // Integrated tapered tail. Quadratic controls keep both joins tangent-looking instead of triangular.
@@ -33,6 +33,6 @@ export function SvgOverlay({overlay}:{overlay:TextOverlay}){
   {overlay.type==="speech"?<path d={style==="shout"?shoutPath(overlay):speechPath(overlay,style)} {...common} strokeDasharray={style==="whisper"?"4 3":undefined}/>:null}
   {overlay.type==="thought"?<><path d={thoughtBody(w,h)} {...common}/><ThoughtTrail o={overlay}/></>:null}
   {overlay.type==="caption"?<rect width={w} height={h} rx="2" {...common}/>:null}
-  <text x={w/2} y={h/2-(textLines.length-1)*fontSize*.575} textAnchor="middle" dominantBaseline="middle" fontFamily={overlay.type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif"} fontWeight={overlay.type==="sfx"?800:600} fontSize={fontSize} fill="#171411" stroke={overlay.type==="sfx"?"#fffdf7":"none"} strokeWidth={overlay.type==="sfx"?3:0} paintOrder="stroke">{textLines.map((line,i)=><tspan key={i} x={w/2} dy={i===0?0:fontSize*1.15}>{line}</tspan>)}</text>
+  <text x={w/2} y={h/2-(textLines.length-1)*fontSize*.575} textAnchor="middle" dominantBaseline="middle" fontFamily={overlay.fontFamily??(overlay.type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif")} fontWeight={overlay.fontWeight??(overlay.type==="sfx"?800:600)} fontSize={fontSize} fill="#171411" stroke={overlay.type==="sfx"?"#fffdf7":"none"} strokeWidth={overlay.type==="sfx"?3:0} paintOrder="stroke">{textLines.map((line,i)=><tspan key={i} x={w/2} dy={i===0?0:fontSize*1.15}>{line}</tspan>)}</text>
  </g>;
 }
