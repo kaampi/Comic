@@ -26,6 +26,8 @@ export function App() {
   const [sceneTitle, setSceneTitle] = useState("");
   const [projectTab, setProjectTab] = useState<ProjectTab>("manus");
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
+  const [newCharacterName, setNewCharacterName] = useState("");
+  const [newLocationName, setNewLocationName] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
@@ -66,12 +68,18 @@ export function App() {
   const addPanel = (sceneId: string) => {
     updateActiveProject((project) => {
       const scenePanels = project.panels.filter((panel) => panel.sceneId === sceneId);
-      const panel = { id: "panel-" + crypto.randomUUID(), sceneId, order: scenePanels.length + 1, action: "", dialogue: "", narration: "", imagePrompt: "" };
+      const panel = { id: "panel-" + crypto.randomUUID(), sceneId, order: scenePanels.length + 1, action: "", dialogue: "", narration: "", imagePrompt: "", characterIds: [], locationId: undefined };
       return { ...project, panels: [...project.panels, panel], scenes: project.scenes.map((scene) => scene.id === sceneId ? { ...scene, panelIds: [...scene.panelIds, panel.id] } : scene) };
     });
   };
   const updateScene = (sceneId: string, patch: { title?: string; sourceText?: string }) => updateActiveProject((project) => ({ ...project, scenes: project.scenes.map((scene) => scene.id === sceneId ? { ...scene, ...patch } : scene) }));
   const updatePanel = (panelId: string, field: "action" | "dialogue" | "narration" | "imagePrompt", value: string) => updateActiveProject((project) => ({ ...project, panels: project.panels.map((panel) => panel.id === panelId ? { ...panel, [field]: value } : panel) }));
+  const addCharacter = () => { if (!newCharacterName.trim()) return; updateActiveProject((project) => ({ ...project, characters: [...project.characters, { id: "character-" + crypto.randomUUID(), name: newCharacterName.trim(), description: "", visualIdentity: "" }] })); setNewCharacterName(""); };
+  const addLocation = () => { if (!newLocationName.trim()) return; updateActiveProject((project) => ({ ...project, locations: [...project.locations, { id: "location-" + crypto.randomUUID(), name: newLocationName.trim(), description: "", visualIdentity: "" }] })); setNewLocationName(""); };
+  const updateCharacter = (id: string, patch: Partial<ComicProject["characters"][number]>) => updateActiveProject((project) => ({ ...project, characters: project.characters.map((item) => item.id === id ? { ...item, ...patch } : item) }));
+  const updateLocation = (id: string, patch: Partial<ComicProject["locations"][number]>) => updateActiveProject((project) => ({ ...project, locations: project.locations.map((item) => item.id === id ? { ...item, ...patch } : item) }));
+  const togglePanelCharacter = (panelId: string, characterId: string) => updateActiveProject((project) => ({ ...project, panels: project.panels.map((panel) => panel.id !== panelId ? panel : { ...panel, characterIds: (panel.characterIds ?? []).includes(characterId) ? (panel.characterIds ?? []).filter((id) => id !== characterId) : [...(panel.characterIds ?? []), characterId] }) }));
+  const setPanelLocation = (panelId: string, locationId: string) => updateActiveProject((project) => ({ ...project, panels: project.panels.map((panel) => panel.id === panelId ? { ...panel, locationId: locationId || undefined } : panel) }));
   const createNewProject = () => {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
@@ -136,6 +144,8 @@ export function App() {
               return <div className="scene-editor"><div className="section-heading"><div><p className="eyebrow">SCEN</p><input className="scene-title-input" value={scene.title} onChange={(e) => updateScene(scene.id,{title:e.target.value})} /></div><button className="primary-button" onClick={() => addPanel(scene.id)}>Ny bildruta</button></div>
                 <label className="source-excerpt">Källtext<textarea rows={6} value={scene.sourceText} onChange={(e) => updateScene(scene.id,{sourceText:e.target.value})} placeholder="Klistra in det textavsnitt ur manuset som scenen bygger på…" /></label>
                 <div className="panel-list">{panels.length ? panels.map((panel,index) => panel ? <article className="panel-editor" key={panel.id}><div className="panel-number">RUTA {index+1}</div>
+                  <div className="panel-context"><fieldset><legend>Karaktärer i rutan</legend>{activeProject.characters.length ? activeProject.characters.map((character) => <label key={character.id}><input type="checkbox" checked={(panel.characterIds ?? []).includes(character.id)} onChange={() => togglePanelCharacter(panel.id,character.id)} /> {character.name}</label>) : <span className="quiet">Inga karaktärer skapade.</span>}</fieldset>
+                    <label>Plats<select value={panel.locationId ?? ""} onChange={(e) => setPanelLocation(panel.id,e.target.value)}><option value="">Ingen vald</option>{activeProject.locations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}</select></label></div>
                   <label>Handling<textarea rows={3} value={panel.action} onChange={(e) => updatePanel(panel.id,"action",e.target.value)} placeholder="Vad ser vi i rutan?" /></label>
                   <label>Dialog<textarea rows={2} value={panel.dialogue} onChange={(e) => updatePanel(panel.id,"dialogue",e.target.value)} /></label>
                   <label>Berättartext<textarea rows={2} value={panel.narration} onChange={(e) => updatePanel(panel.id,"narration",e.target.value)} /></label>
@@ -143,7 +153,13 @@ export function App() {
                 </article> : null) : <div className="empty-panels"><p>Scenen har inga bildrutor ännu.</p><button className="primary-button" onClick={() => addPanel(scene.id)}>Skapa första bildrutan</button></div>}</div>
               </div>; })()}
           </section> : null}
-          {projectTab === "characters" || projectTab === "locations" || projectTab === "pages" ? <section className="workspace-card"><p className="eyebrow">KOMMER HÄRNÄST</p><h2>{projectTab === "characters" ? "Karaktärer" : projectTab === "locations" ? "Platser" : "Sidor"}</h2><p className="quiet">Datamodellen är förberedd. Den här arbetsytan byggs i nästa steg.</p></section> : null}
+          {projectTab === "characters" ? <section className="library-workspace"><div className="section-heading"><div><p className="eyebrow">VISUELL KONTINUITET</p><h2>Karaktärer</h2></div><div className="inline-add"><input value={newCharacterName} onChange={(e) => setNewCharacterName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCharacter()} placeholder="Karaktärens namn…" /><button className="primary-button" disabled={!newCharacterName.trim()} onClick={addCharacter}>Lägg till</button></div></div>
+            <div className="entity-grid">{activeProject.characters.map((character) => <article className="entity-card" key={character.id}><input className="entity-name" value={character.name} onChange={(e) => updateCharacter(character.id,{name:e.target.value})} /><label>Berättelseroll / anteckningar<textarea rows={3} value={character.description} onChange={(e) => updateCharacter(character.id,{description:e.target.value})} /></label><label>Permanent visuell identitet<textarea rows={5} value={character.visualIdentity} onChange={(e) => updateCharacter(character.id,{visualIdentity:e.target.value})} placeholder="Ansikte, ålder, kroppsbyggnad, hår, bestående kännetecken…" /></label></article>)}</div>
+            {!activeProject.characters.length ? <p className="quiet">Inga karaktärer ännu.</p> : null}</section> : null}
+          {projectTab === "locations" ? <section className="library-workspace"><div className="section-heading"><div><p className="eyebrow">VISUELL KONTINUITET</p><h2>Platser</h2></div><div className="inline-add"><input value={newLocationName} onChange={(e) => setNewLocationName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addLocation()} placeholder="Platsens namn…" /><button className="primary-button" disabled={!newLocationName.trim()} onClick={addLocation}>Lägg till</button></div></div>
+            <div className="entity-grid">{activeProject.locations.map((location) => <article className="entity-card" key={location.id}><input className="entity-name" value={location.name} onChange={(e) => updateLocation(location.id,{name:e.target.value})} /><label>Beskrivning<textarea rows={3} value={location.description} onChange={(e) => updateLocation(location.id,{description:e.target.value})} /></label><label>Visuellt ankare<textarea rows={5} value={location.visualIdentity} onChange={(e) => updateLocation(location.id,{visualIdentity:e.target.value})} placeholder="Arkitektur, material, färger, återkommande detaljer…" /></label></article>)}</div>
+            {!activeProject.locations.length ? <p className="quiet">Inga platser ännu.</p> : null}</section> : null}
+          {projectTab === "pages" ? <section className="workspace-card"><p className="eyebrow">KOMMER HÄRNÄST</p><h2>Sidor</h2><p className="quiet">Sidplaneraren byggs efter att bildrutornas innehåll och kontinuitet är på plats.</p></section> : null}
         </section> : <>
           <header className="home-brand"><p className="eyebrow">COMIC CREATION WORKSPACE</p><h1>Från berättelse<br />till seriealbum.</h1>
             <p className="lede">Planera bildrutor, bygg konsekventa bildprompter och skapa din serie utan att låsa projektet till en viss AI-tjänst.</p></header>
