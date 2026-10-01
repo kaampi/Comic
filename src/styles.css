@@ -373,3 +373,7 @@ h2 { margin: 0; font-size: 1.05rem; }
 .grid-settings input, .app-grid-setting input { width: 3.8rem; padding: .35rem; border: 1px solid var(--border); border-radius: 4px; background: var(--paper); color: var(--text); }
 .app-grid-setting { margin: .8rem 0 1rem; }
 @media (max-width: 650px) { .grid-settings { grid-template-columns: 1fr; } }
+.edit-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .35rem; }
+.panel-number { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.panel-edit-actions { display: inline-flex; align-items: center; gap: .25rem; }
+.panel-edit-actions .text-button { font-size: .68rem; }
