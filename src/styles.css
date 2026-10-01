@@ -465,3 +465,12 @@ h2 { margin: 0; font-size: 1.05rem; }
 .panel-editor-stage .overlay-resize-grip { opacity: .72; }
 .panel-editor-stage .overlay-tail-grip { opacity: .72; }
 @media (max-width: 900px) { .panel-editor-layout { grid-template-columns: 1fr; grid-template-rows: minmax(0,1fr) auto; } .panel-editor-tools { border-left: 0; border-top: 1px solid var(--border); max-height: 34vh; } }
+
+.panel-editor-tools-head,.panel-tool-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.compact-button{padding:7px 10px;font-size:.82rem}
+.panel-tool-title{margin-bottom:2px}
+.danger-text{font-size:.78rem}
+.type-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 76px;gap:8px}
+.number-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.panel-tool-card input[type="number"]{width:100%;box-sizing:border-box}
+@media(max-width:1200px){.type-grid{grid-template-columns:1fr 1fr}.number-grid{grid-template-columns:1fr 1fr}}
