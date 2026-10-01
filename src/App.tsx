@@ -22,6 +22,7 @@ export function App() {
   const [newTitle, setNewTitle] = useState("");
   const [newSource, setNewSource] = useState<ProjectSource>("blank");
   const [newStyleId, setNewStyleId] = useState(BUILTIN_STYLES[0].id);
+  const [sceneTitle, setSceneTitle] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
@@ -49,6 +50,16 @@ export function App() {
   };
   const duplicateStyle = (style: IllustrationStyle) => setStyleDraft({ name: style.name + " – kopia", genre: style.genre, promptText: style.promptText });
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
+  const updateActiveProject = (update: (project: ComicProject) => ComicProject) => {
+    if (!activeProjectId) return;
+    const next = projects.map((project) => project.id === activeProjectId ? { ...update(project), updatedAt: new Date().toISOString() } : project);
+    setProjects(next); saveProjects(next);
+  };
+  const addScene = () => {
+    if (!sceneTitle.trim()) return;
+    updateActiveProject((project) => ({ ...project, scenes: [...project.scenes, { id: "scene-" + crypto.randomUUID(), title: sceneTitle.trim(), sourceText: "", panelIds: [] }] }));
+    setSceneTitle("");
+  };
   const createNewProject = () => {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
@@ -90,7 +101,23 @@ export function App() {
           <p className="eyebrow">SERIEPROJEKT</p><h1>{activeProject.title}</h1>
           <p className="lede">Stil: {activeProject.style.name}</p>
           <nav className="project-tabs" aria-label="Projektinnehåll"><button className="is-active">Manus</button><button>Karaktärer</button><button>Platser</button><button>Scener</button><button>Sidor</button></nav>
-          <section className="workspace-card"><h2>Projektet är redo.</h2><p className="quiet">Nästa steg är att lägga till källtext och bryta ned den i scener och bildrutor.</p></section>
+          <section className="manuscript-workspace">
+            <div className="manuscript-main">
+              <div className="section-heading"><div><p className="eyebrow">KÄLLTEXT</p><h2>Manus</h2></div>
+                <span className="save-state">Sparas lokalt</span></div>
+              <textarea className="manuscript-editor" value={activeProject.source.textSnapshot ?? ""}
+                onChange={(e) => updateActiveProject((project) => ({ ...project, source: { ...project.source, textSnapshot: e.target.value } }))}
+                placeholder="Klistra in eller skriv texten som ska adapteras till serie…" aria-label="Manus" />
+              <div className="manuscript-stats"><span>{(activeProject.source.textSnapshot ?? "").trim() ? (activeProject.source.textSnapshot ?? "").trim().split(/\s+/).length : 0} ord</span>
+                <span>{(activeProject.source.textSnapshot ?? "").length} tecken</span></div>
+            </div>
+            <aside className="scene-sidebar"><p className="eyebrow">SCENER</p><h2>Scenindelning</h2>
+              <p className="quiet">Skapa scener manuellt nu. Senare kan AI föreslå en indelning som du granskar innan något ändras.</p>
+              <div className="scene-add"><input value={sceneTitle} onChange={(e) => setSceneTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addScene()} placeholder="Scennamn…" />
+                <button className="primary-button" type="button" disabled={!sceneTitle.trim()} onClick={addScene}>Lägg till</button></div>
+              <div className="scene-list">{activeProject.scenes.length ? activeProject.scenes.map((scene, index) => <div className="scene-row" key={scene.id}><span>{index + 1}</span><strong>{scene.title}</strong></div>) : <p className="quiet">Inga scener ännu.</p>}</div>
+            </aside>
+          </section>
         </section> : <>
           <header className="home-brand"><p className="eyebrow">COMIC CREATION WORKSPACE</p><h1>Från berättelse<br />till seriealbum.</h1>
             <p className="lede">Planera bildrutor, bygg konsekventa bildprompter och skapa din serie utan att låsa projektet till en viss AI-tjänst.</p></header>
