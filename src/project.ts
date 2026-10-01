@@ -15,7 +15,7 @@ export type ComicProject = {
   characters: Array<{ id: string; name: string; description: string }>;
   locations: Array<{ id: string; name: string; description: string }>;
   scenes: Array<{ id: string; title: string; sourceText: string; panelIds: string[] }>;
-  panels: Array<{ id: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string }>;
+  panels: Array<{ id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string }>;
   pages: Array<{ id: string; number: number; panelIds: string[] }>;
 };
 
