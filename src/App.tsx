@@ -5,7 +5,7 @@ import { BUILTIN_STYLES, STYLE_GENRES, createCustomStyleId, readCustomStyles, sa
 import { createProject, readProjects, saveProjects, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
 import { PAGE_PRESETS, overlaps } from "./pageTemplates";
-import { parseStoryBookExport, type StoryBookImport } from "./storybookImport";
+import { parseStoryBookExport, parseStoryBookCards, cardMatchesBook, type StoryBookImport, type StoryBookCardsImport } from "./storybookImport";
 import { SvgOverlay } from "./SvgOverlay";
 import type { OverlayType } from "./project";
 
@@ -38,6 +38,7 @@ export function App() {
   const [layoutStart, setLayoutStart] = useState<{x:number;y:number} | null>(null);
   const [appPageGrid, setAppPageGrid] = useState(readPageGridDefaults);
   const [storyBookImport, setStoryBookImport] = useState<StoryBookImport | null>(null);
+  const [storyBookCards, setStoryBookCards] = useState<StoryBookCardsImport | null>(null);
   const [importError, setImportError] = useState("");
   const [importCharacters, setImportCharacters] = useState(true);
   const [importLocations, setImportLocations] = useState(true);
@@ -148,15 +149,28 @@ export function App() {
     try { const parsed=parseStoryBookExport(await file.text()); setStoryBookImport(parsed); setNewTitle(parsed.title); }
     catch (error) { setStoryBookImport(null); setImportError(error instanceof Error ? error.message : "Filen kunde inte läsas."); }
   };
+  const readStoryBookCardsFile = async (file: File) => {
+    setImportError("");
+    try { setStoryBookCards(parseStoryBookCards(await file.text())); }
+    catch (error) { setStoryBookCards(null); setImportError(error instanceof Error ? error.message : "Cards-filen kunde inte läsas."); }
+  };
   const createFromStoryBook = () => {
     if (!storyBookImport || !newTitle.trim()) return;
     const style=allStyles.find((item)=>item.id===newStyleId) ?? BUILTIN_STYLES[0];
     const base=createProject(newTitle,"storybook",style);
-    const project: ComicProject={...base,pageDefaults:{...appPageGrid},source:{type:"storybook",textSnapshot:storyBookImport.text},
-      characters:importCharacters?storyBookImport.characters.map((item)=>({id:"character-"+crypto.randomUUID(),name:item.name,description:item.description,visualIdentity:item.description})):[],
-      locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),name:item.name,description:item.description,visualIdentity:item.description})):[]
+    const importedCharacters=importCharacters?storyBookImport.characters.map((item)=>({id:"character-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:"",pronoun:item.pronoun,approximateAge:item.approximateAge})):[];
+    const portraits:Record<string,string>={};
+    if(storyBookCards) for(const character of importedCharacters){
+      const card=storyBookCards.characters.find((candidate)=>candidate.name.toLocaleLowerCase()===character.name.toLocaleLowerCase() && (!storyBookImport.sourceBookId || cardMatchesBook(candidate,storyBookImport.sourceBookId)));
+      if(card?.portraitDataUrl) portraits[character.id]=card.portraitDataUrl;
+      if(card){character.description=card.personality||character.description;character.visualIdentity=card.appearance||"";character.pronoun=card.pronoun??character.pronoun;character.approximateAge=card.approximateAge??character.approximateAge;}
+    }
+    const project: ComicProject={...base,pageDefaults:{...appPageGrid},source:{type:"storybook",textSnapshot:storyBookImport.text,storyBookId:storyBookImport.sourceBookId||undefined},references:{characterPortraits:portraits},
+      characters:importedCharacters,
+      locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:""})):[],
+      scenes:storyBookImport.chapters.filter((chapter)=>chapter.text).map((chapter)=>({id:"scene-"+crypto.randomUUID(),title:chapter.title,sourceText:chapter.text,panelIds:[]}))
     };
-    const next=[project,...projects];setProjects(next);saveProjects(next);setActiveProjectId(project.id);setStoryBookImport(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
+    const next=[project,...projects];setProjects(next);saveProjects(next);setActiveProjectId(project.id);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
   };
   const createNewProject = () => {
     if (!newTitle.trim()) return;
@@ -272,7 +286,7 @@ export function App() {
                 <label className="disabled-choice"><input type="radio" disabled /> Importera text/manus <small>nästa steg</small></label>
                 <label><input type="radio" checked={newSource === "storybook"} onChange={() => { setNewSource("storybook"); setStoryBookImport(null); setImportError(""); }} /> Importera från StoryBook</label>
               </fieldset>
-              {newSource === "storybook" ? <div className="storybook-import"><label className="file-picker">StoryBook-export (.json)<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookFile(file);}} /></label>{importError ? <p className="import-error">{importError}</p> : null}{storyBookImport ? <div className="import-review"><p className="eyebrow">GRANSKA IMPORT</p><strong>{storyBookImport.title}</strong><span>{storyBookImport.text.length} tecken · {storyBookImport.chapters.length} kapitel · {storyBookImport.characters.length} karaktärer · {storyBookImport.locations.length} platser</span><label><input type="checkbox" checked={importCharacters} onChange={(e)=>setImportCharacters(e.target.checked)} /> Kopiera karaktärer</label><label><input type="checkbox" checked={importLocations} onChange={(e)=>setImportLocations(e.target.checked)} /> Kopiera platser</label><p className="quiet">Importen skapar en fristående kopia i ComicBook AI. StoryBook-filen ändras inte.</p></div> : null}</div> : null}
+              {newSource === "storybook" ? <div className="storybook-import"><label className="file-picker">StoryBook-backup (.json)<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookFile(file);}} /></label>{storyBookImport ? <label className="file-picker">Cards-export – valfri (.json)<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookCardsFile(file);}} /></label> : null}{importError ? <p className="import-error">{importError}</p> : null}{storyBookImport ? <div className="import-review"><p className="eyebrow">GRANSKA IMPORT</p><strong>{storyBookImport.title}</strong><span>{storyBookImport.text.length} tecken · {storyBookImport.chapters.length} kapitel · {storyBookImport.characters.length} karaktärer · {storyBookImport.locations.length} platser</span>{storyBookCards ? <span>{storyBookCards.characters.filter((card)=>!storyBookImport.sourceBookId||cardMatchesBook(card,storyBookImport.sourceBookId)).length} Cards-karaktärer hittade · porträtt kopieras lokalt</span> : <span className="quiet">Du kan även välja en Cards-export för karaktärsporträtt.</span>}<label><input type="checkbox" checked={importCharacters} onChange={(e)=>setImportCharacters(e.target.checked)} /> Kopiera karaktärer</label><label><input type="checkbox" checked={importLocations} onChange={(e)=>setImportLocations(e.target.checked)} /> Kopiera platser</label><p className="quiet">Importen skapar en fristående kopia i ComicBook AI. StoryBook-filen ändras inte.</p></div> : null}</div> : null}
               <label>Stillmall<select value={newStyleId} onChange={(e) => setNewStyleId(e.target.value)}>{allStyles.map((style) => <option key={style.id} value={style.id}>{style.genre} — {style.name}</option>)}</select></label>
               <div className="style-preview"><span className="style-genre">SNAPSHOT I PROJEKTET</span><p>{allStyles.find((style) => style.id === newStyleId)?.promptText}</p></div>
               <div className="style-editor-actions"><button className="text-button" type="button" onClick={closePanel}>Avbryt</button><button className="primary-button" type="button" disabled={!newTitle.trim() || (newSource==="storybook" && !storyBookImport)} onClick={newSource==="storybook" ? createFromStoryBook : createNewProject}>{newSource==="storybook" ? "Importera och skapa projekt" : "Skapa projekt"}</button></div>
