@@ -6,6 +6,7 @@ import { createProject, readProjects, saveProjects, type ComicProject, type Proj
 
 type Panel = "styles" | "guide" | "settings" | "new-project" | null;
 type StyleDraft = { id?: string; name: string; genre: string; promptText: string };
+type ProjectTab = "manus" | "characters" | "locations" | "scenes" | "pages";
 
 export function App() {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
@@ -23,6 +24,8 @@ export function App() {
   const [newSource, setNewSource] = useState<ProjectSource>("blank");
   const [newStyleId, setNewStyleId] = useState(BUILTIN_STYLES[0].id);
   const [sceneTitle, setSceneTitle] = useState("");
+  const [projectTab, setProjectTab] = useState<ProjectTab>("manus");
+  const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
@@ -60,6 +63,15 @@ export function App() {
     updateActiveProject((project) => ({ ...project, scenes: [...project.scenes, { id: "scene-" + crypto.randomUUID(), title: sceneTitle.trim(), sourceText: "", panelIds: [] }] }));
     setSceneTitle("");
   };
+  const addPanel = (sceneId: string) => {
+    updateActiveProject((project) => {
+      const scenePanels = project.panels.filter((panel) => panel.sceneId === sceneId);
+      const panel = { id: "panel-" + crypto.randomUUID(), sceneId, order: scenePanels.length + 1, action: "", dialogue: "", narration: "", imagePrompt: "" };
+      return { ...project, panels: [...project.panels, panel], scenes: project.scenes.map((scene) => scene.id === sceneId ? { ...scene, panelIds: [...scene.panelIds, panel.id] } : scene) };
+    });
+  };
+  const updateScene = (sceneId: string, patch: { title?: string; sourceText?: string }) => updateActiveProject((project) => ({ ...project, scenes: project.scenes.map((scene) => scene.id === sceneId ? { ...scene, ...patch } : scene) }));
+  const updatePanel = (panelId: string, field: "action" | "dialogue" | "narration" | "imagePrompt", value: string) => updateActiveProject((project) => ({ ...project, panels: project.panels.map((panel) => panel.id === panelId ? { ...panel, [field]: value } : panel) }));
   const createNewProject = () => {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
@@ -100,24 +112,38 @@ export function App() {
         {activeProject ? <section className="project-workspace">
           <p className="eyebrow">SERIEPROJEKT</p><h1>{activeProject.title}</h1>
           <p className="lede">Stil: {activeProject.style.name}</p>
-          <nav className="project-tabs" aria-label="Projektinnehåll"><button className="is-active">Manus</button><button>Karaktärer</button><button>Platser</button><button>Scener</button><button>Sidor</button></nav>
-          <section className="manuscript-workspace">
+          <nav className="project-tabs" aria-label="Projektinnehåll">
+            {([["manus","Manus"],["characters","Karaktärer"],["locations","Platser"],["scenes","Scener"],["pages","Sidor"]] as const).map(([id,label]) => <button key={id} className={projectTab === id ? "is-active" : ""} onClick={() => setProjectTab(id)}>{label}</button>)}
+          </nav>
+          {projectTab === "manus" ? <section className="manuscript-workspace">
             <div className="manuscript-main">
-              <div className="section-heading"><div><p className="eyebrow">KÄLLTEXT</p><h2>Manus</h2></div>
-                <span className="save-state">Sparas lokalt</span></div>
-              <textarea className="manuscript-editor" value={activeProject.source.textSnapshot ?? ""}
-                onChange={(e) => updateActiveProject((project) => ({ ...project, source: { ...project.source, textSnapshot: e.target.value } }))}
-                placeholder="Klistra in eller skriv texten som ska adapteras till serie…" aria-label="Manus" />
-              <div className="manuscript-stats"><span>{(activeProject.source.textSnapshot ?? "").trim() ? (activeProject.source.textSnapshot ?? "").trim().split(/\s+/).length : 0} ord</span>
-                <span>{(activeProject.source.textSnapshot ?? "").length} tecken</span></div>
+              <div className="section-heading"><div><p className="eyebrow">KÄLLTEXT</p><h2>Manus</h2></div><span className="save-state">Sparas lokalt</span></div>
+              <textarea className="manuscript-editor" value={activeProject.source.textSnapshot ?? ""} onChange={(e) => updateActiveProject((project) => ({ ...project, source: { ...project.source, textSnapshot: e.target.value } }))} placeholder="Klistra in eller skriv texten som ska adapteras till serie…" aria-label="Manus" />
+              <div className="manuscript-stats"><span>{(activeProject.source.textSnapshot ?? "").trim() ? (activeProject.source.textSnapshot ?? "").trim().split(/\s+/).length : 0} ord</span><span>{(activeProject.source.textSnapshot ?? "").length} tecken</span></div>
             </div>
-            <aside className="scene-sidebar"><p className="eyebrow">SCENER</p><h2>Scenindelning</h2>
-              <p className="quiet">Skapa scener manuellt nu. Senare kan AI föreslå en indelning som du granskar innan något ändras.</p>
-              <div className="scene-add"><input value={sceneTitle} onChange={(e) => setSceneTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addScene()} placeholder="Scennamn…" />
-                <button className="primary-button" type="button" disabled={!sceneTitle.trim()} onClick={addScene}>Lägg till</button></div>
-              <div className="scene-list">{activeProject.scenes.length ? activeProject.scenes.map((scene, index) => <div className="scene-row" key={scene.id}><span>{index + 1}</span><strong>{scene.title}</strong></div>) : <p className="quiet">Inga scener ännu.</p>}</div>
+            <aside className="scene-sidebar"><p className="eyebrow">SCENER</p><h2>Scenindelning</h2><p className="quiet">Skapa scener manuellt och bearbeta dem sedan under fliken Scener.</p>
+              <div className="scene-add"><input value={sceneTitle} onChange={(e) => setSceneTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addScene()} placeholder="Scennamn…" /><button className="primary-button" type="button" disabled={!sceneTitle.trim()} onClick={addScene}>Lägg till</button></div>
+              <div className="scene-list">{activeProject.scenes.length ? activeProject.scenes.map((scene, index) => <button className="scene-row scene-button" key={scene.id} onClick={() => { setSelectedSceneId(scene.id); setProjectTab("scenes"); }}><span>{index + 1}</span><strong>{scene.title}</strong></button>) : <p className="quiet">Inga scener ännu.</p>}</div>
             </aside>
-          </section>
+          </section> : null}
+          {projectTab === "scenes" ? <section className="scene-workspace">
+            <aside className="scene-navigator"><div className="section-heading"><div><p className="eyebrow">SCENER</p><h2>Scenlista</h2></div></div>
+              {activeProject.scenes.map((scene,index) => <button key={scene.id} className={selectedSceneId === scene.id ? "scene-nav-item is-selected" : "scene-nav-item"} onClick={() => setSelectedSceneId(scene.id)}><span>{index+1}</span>{scene.title}</button>)}
+              {!activeProject.scenes.length ? <p className="quiet">Skapa din första scen under Manus.</p> : null}
+            </aside>
+            {(() => { const scene = activeProject.scenes.find((item) => item.id === selectedSceneId) ?? activeProject.scenes[0]; if (!scene) return <div className="workspace-card"><h2>Ingen scen vald</h2></div>;
+              const panels = scene.panelIds.map((id) => activeProject.panels.find((panel) => panel.id === id)).filter(Boolean);
+              return <div className="scene-editor"><div className="section-heading"><div><p className="eyebrow">SCEN</p><input className="scene-title-input" value={scene.title} onChange={(e) => updateScene(scene.id,{title:e.target.value})} /></div><button className="primary-button" onClick={() => addPanel(scene.id)}>Ny bildruta</button></div>
+                <label className="source-excerpt">Källtext<textarea rows={6} value={scene.sourceText} onChange={(e) => updateScene(scene.id,{sourceText:e.target.value})} placeholder="Klistra in det textavsnitt ur manuset som scenen bygger på…" /></label>
+                <div className="panel-list">{panels.length ? panels.map((panel,index) => panel ? <article className="panel-editor" key={panel.id}><div className="panel-number">RUTA {index+1}</div>
+                  <label>Handling<textarea rows={3} value={panel.action} onChange={(e) => updatePanel(panel.id,"action",e.target.value)} placeholder="Vad ser vi i rutan?" /></label>
+                  <label>Dialog<textarea rows={2} value={panel.dialogue} onChange={(e) => updatePanel(panel.id,"dialogue",e.target.value)} /></label>
+                  <label>Berättartext<textarea rows={2} value={panel.narration} onChange={(e) => updatePanel(panel.id,"narration",e.target.value)} /></label>
+                  <label>Bildinstruktion<textarea rows={3} value={panel.imagePrompt} onChange={(e) => updatePanel(panel.id,"imagePrompt",e.target.value)} placeholder="Komposition, utsnitt, kameravinkel…" /></label>
+                </article> : null) : <div className="empty-panels"><p>Scenen har inga bildrutor ännu.</p><button className="primary-button" onClick={() => addPanel(scene.id)}>Skapa första bildrutan</button></div>}</div>
+              </div>; })()}
+          </section> : null}
+          {projectTab === "characters" || projectTab === "locations" || projectTab === "pages" ? <section className="workspace-card"><p className="eyebrow">KOMMER HÄRNÄST</p><h2>{projectTab === "characters" ? "Karaktärer" : projectTab === "locations" ? "Platser" : "Sidor"}</h2><p className="quiet">Datamodellen är förberedd. Den här arbetsytan byggs i nästa steg.</p></section> : null}
         </section> : <>
           <header className="home-brand"><p className="eyebrow">COMIC CREATION WORKSPACE</p><h1>Från berättelse<br />till seriealbum.</h1>
             <p className="lede">Planera bildrutor, bygg konsekventa bildprompter och skapa din serie utan att låsa projektet till en viss AI-tjänst.</p></header>
