@@ -1,0 +1,87 @@
+import type { Locale } from "./settings";
+
+export const UI = {
+  sv: {
+    project:"Projekt", newAlbum:"Nytt seriealbum", noRecent:"Inga senaste projekt ännu", showAll:"Visa alla projekt",
+    styleTemplates:"Stillmallar", guide:"Guide", settings:"Inställningar", language:"Språk",
+    dark:"Mörkt", light:"Ljust", manuscript:"Manus", characters:"Karaktärer", locations:"Platser",
+    panels:"Bildrutor", pages:"Sidor", imageStyles:"Bildstilar", comicProject:"SERIEPROJEKT", style:"Stil",
+    sourceText:"KÄLLTEXT", savedLocally:"Sparas lokalt", scenes:"SCENER", sceneDivision:"Scenindelning",
+    add:"Lägg till", noScenes:"Inga scener ännu.", sceneList:"Scenlista", noSceneSelected:"Ingen scen vald",
+    deleteScene:"Radera scen", newPanel:"Ny bildruta", sourceExcerpt:"Källtext", charactersInPanel:"Karaktärer i rutan",
+    noCharacters:"Inga karaktärer skapade.", place:"Plats", noneSelected:"Ingen vald", action:"Handling",
+    dialogue:"Dialog", narration:"Berättartext", imageInstruction:"Bildinstruktion", finishedPrompt:"Färdig bildprompt",
+    builtLocally:"Byggs lokalt · inget skickas till en AI-tjänst", copyPrompt:"Kopiera prompt", copied:"Kopierad",
+    visualContinuity:"VISUELL KONTINUITET", storyRole:"Berättelseroll / anteckningar", visualIdentity:"Permanent visuell identitet",
+    description:"Beskrivning", visualAnchor:"Visuellt ankare", album:"ALBUM", newPage:"Ny sida", page:"Sida",
+    drawLayout:"Rita sidlayout", deletePage:"Radera sida", projectDefault:"Projektstandard", thisPage:"Denna sida",
+    columns:"Kolumner", rows:"Rader", appliesNewPages:"Gäller nya sidor.", resetLayout:"Ändring återställer sidans layout.",
+    panelsReadingOrder:"Rutor och läsordning", noPanelSelected:"Ingen bildruta vald", editText:"Redigera text", remove:"Ta bort",
+    panelEditor:"PANELREDIGERARE", row:"ruta", addTextBox:"Lägg till textruta", close:"Stäng", noImage:"Ingen bild uppladdad",
+    properties:"EGENSKAPER", textLayer:"TEXTLAGER", type:"Typ", speech:"Pratbubbla", caption:"Berättarruta", thought:"Tankebubbla",
+    sfx:"SFX", roundness:"Rundning", text:"Text", font:"Font", weight:"Vikt", size:"Storlek", tail:"Svans",
+    bend:"Böjning", rootWidth:"Rotbredd", chooseTextBox:"Välj en textruta direkt i bilden för att redigera den.",
+    createTextHint:"Skapa en ny med knappen ovan om panelen ännu saknar text.",
+    deleteProject:"Radera projekt", goHome:"Gå till startsidan", projectContent:"Projektinnehåll",
+    activeProject:"Aktivt serieprojekt", comicWorkspace:"COMIC CREATION WORKSPACE", fromStory:"Från berättelse", toComic:"till seriealbum.",
+    yourProjects:"DINA PROJEKT", continueWhere:"Fortsätt där du slutade.", createFirst:"Skapa ditt första seriealbum.",
+    localIndependent:"Projekt lagras lokalt och är helt fristående från StoryBook."
+  },
+  en: {
+    project:"Project", newAlbum:"New comic album", noRecent:"No recent projects yet", showAll:"Show all projects",
+    styleTemplates:"Style templates", guide:"Guide", settings:"Settings", language:"Language",
+    dark:"Dark", light:"Light", manuscript:"Manuscript", characters:"Characters", locations:"Locations",
+    panels:"Panels", pages:"Pages", imageStyles:"Image styles", comicProject:"COMIC PROJECT", style:"Style",
+    sourceText:"SOURCE TEXT", savedLocally:"Saved locally", scenes:"SCENES", sceneDivision:"Scene breakdown",
+    add:"Add", noScenes:"No scenes yet.", sceneList:"Scene list", noSceneSelected:"No scene selected",
+    deleteScene:"Delete scene", newPanel:"New panel", sourceExcerpt:"Source text", charactersInPanel:"Characters in panel",
+    noCharacters:"No characters created.", place:"Location", noneSelected:"None selected", action:"Action",
+    dialogue:"Dialogue", narration:"Narration", imageInstruction:"Image direction", finishedPrompt:"Final image prompt",
+    builtLocally:"Built locally · nothing is sent to an AI service", copyPrompt:"Copy prompt", copied:"Copied",
+    visualContinuity:"VISUAL CONTINUITY", storyRole:"Story role / notes", visualIdentity:"Permanent visual identity",
+    description:"Description", visualAnchor:"Visual anchor", album:"ALBUM", newPage:"New page", page:"Page",
+    drawLayout:"Draw page layout", deletePage:"Delete page", projectDefault:"Project default", thisPage:"This page",
+    columns:"Columns", rows:"Rows", appliesNewPages:"Applies to new pages.", resetLayout:"Changing this resets the page layout.",
+    panelsReadingOrder:"Panels and reading order", noPanelSelected:"No panel selected", editText:"Edit text", remove:"Remove",
+    panelEditor:"PANEL EDITOR", row:"panel", addTextBox:"Add text box", close:"Close", noImage:"No image uploaded",
+    properties:"PROPERTIES", textLayer:"TEXT LAYER", type:"Type", speech:"Speech bubble", caption:"Caption box", thought:"Thought bubble",
+    sfx:"SFX", roundness:"Roundness", text:"Text", font:"Font", weight:"Weight", size:"Size", tail:"Tail",
+    bend:"Bend", rootWidth:"Root width", chooseTextBox:"Select a text box directly in the image to edit it.",
+    createTextHint:"Create a new one with the button above if this panel has no text yet.",
+    deleteProject:"Delete project", goHome:"Go to home", projectContent:"Project content",
+    activeProject:"Active comic project", comicWorkspace:"COMIC CREATION WORKSPACE", fromStory:"From story", toComic:"to comic album.",
+    yourProjects:"YOUR PROJECTS", continueWhere:"Continue where you left off.", createFirst:"Create your first comic album.",
+    localIndependent:"Projects are stored locally and remain completely independent from StoryBook."
+  },
+  nb: {
+    project:"Prosjekt", newAlbum:"Nytt tegneseriealbum", noRecent:"Ingen nylige prosjekter ennå", showAll:"Vis alle prosjekter",
+    styleTemplates:"Stilmaler", guide:"Veiledning", settings:"Innstillinger", language:"Språk",
+    dark:"Mørkt", light:"Lyst", manuscript:"Manus", characters:"Karakterer", locations:"Steder",
+    panels:"Ruter", pages:"Sider", imageStyles:"Bildestiler", comicProject:"TEGNESERIEPROSJEKT", style:"Stil",
+    sourceText:"KILDETEKST", savedLocally:"Lagres lokalt", scenes:"SCENER", sceneDivision:"Sceneinndeling",
+    add:"Legg til", noScenes:"Ingen scener ennå.", sceneList:"Sceneliste", noSceneSelected:"Ingen scene valgt",
+    deleteScene:"Slett scene", newPanel:"Ny rute", sourceExcerpt:"Kildetekst", charactersInPanel:"Karakterer i ruten",
+    noCharacters:"Ingen karakterer opprettet.", place:"Sted", noneSelected:"Ingen valgt", action:"Handling",
+    dialogue:"Dialog", narration:"Fortellertekst", imageInstruction:"Bildeinstruksjon", finishedPrompt:"Ferdig bildeprompt",
+    builtLocally:"Bygges lokalt · ingenting sendes til en AI-tjeneste", copyPrompt:"Kopier prompt", copied:"Kopiert",
+    visualContinuity:"VISUELL KONTINUITET", storyRole:"Fortellerrolle / notater", visualIdentity:"Permanent visuell identitet",
+    description:"Beskrivelse", visualAnchor:"Visuelt anker", album:"ALBUM", newPage:"Ny side", page:"Side",
+    drawLayout:"Tegn sidelayout", deletePage:"Slett side", projectDefault:"Prosjektstandard", thisPage:"Denne siden",
+    columns:"Kolonner", rows:"Rader", appliesNewPages:"Gjelder nye sider.", resetLayout:"Endring nullstiller sidelayouten.",
+    panelsReadingOrder:"Ruter og leserekkefølge", noPanelSelected:"Ingen rute valgt", editText:"Rediger tekst", remove:"Fjern",
+    panelEditor:"PANELREDIGERING", row:"rute", addTextBox:"Legg til tekstrute", close:"Lukk", noImage:"Ingen bilde lastet opp",
+    properties:"EGENSKAPER", textLayer:"TEKSTLAG", type:"Type", speech:"Snakkeboble", caption:"Fortellerrute", thought:"Tankeboble",
+    sfx:"SFX", roundness:"Avrunding", text:"Tekst", font:"Font", weight:"Vekt", size:"Størrelse", tail:"Hale",
+    bend:"Bøyning", rootWidth:"Rotbredde", chooseTextBox:"Velg en tekstrute direkte i bildet for å redigere den.",
+    createTextHint:"Opprett en ny med knappen over hvis ruten ikke har tekst ennå.",
+    deleteProject:"Slett prosjekt", goHome:"Gå til startsiden", projectContent:"Prosjektinnhold",
+    activeProject:"Aktivt tegneserieprosjekt", comicWorkspace:"COMIC CREATION WORKSPACE", fromStory:"Fra fortelling", toComic:"til tegneseriealbum.",
+    yourProjects:"DINE PROSJEKTER", continueWhere:"Fortsett der du slapp.", createFirst:"Lag ditt første tegneseriealbum.",
+    localIndependent:"Prosjekter lagres lokalt og er helt uavhengige av StoryBook."
+  }
+} as const;
+
+export type UiKey = keyof typeof UI.sv;
+export function uiText(locale: Locale, key: UiKey): string {
+  return UI[locale]?.[key] ?? UI.sv[key];
+}
