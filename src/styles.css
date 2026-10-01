@@ -366,3 +366,10 @@ h2 { margin: 0; font-size: 1.05rem; }
 .placement-row > strong { color: var(--ink); text-align: center; }
 .placement-row select { min-width: 0; padding: .45rem; border: 1px solid var(--border); border-radius: 5px; background: var(--panel); color: var(--text); }
 @media (max-width: 650px) { .placement-row { grid-template-columns: 2rem 1fr auto auto; } .placement-row .danger-button { grid-column: 2/-1; justify-self: start; } }
+.grid-settings { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin: .8rem 0; }
+.grid-settings > div, .app-grid-setting { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; padding: .65rem; border: 1px solid var(--border-soft); border-radius: 6px; background: var(--panel); }
+.grid-settings strong, .app-grid-setting h3 { width: 100%; margin: 0; font-size: .82rem; }
+.grid-settings label, .app-grid-setting label { display: flex; align-items: center; gap: .3rem; color: var(--text-dim); font-size: .72rem; }
+.grid-settings input, .app-grid-setting input { width: 3.8rem; padding: .35rem; border: 1px solid var(--border); border-radius: 4px; background: var(--paper); color: var(--text); }
+.app-grid-setting { margin: .8rem 0 1rem; }
+@media (max-width: 650px) { .grid-settings { grid-template-columns: 1fr; } }
