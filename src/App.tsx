@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AI_MODES, type AiMode } from "./ai";
 import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, type Locale, type Theme } from "./settings";
+import { BUILTIN_STYLES, STYLE_GENRES } from "./stylesLibrary";
 
 type Panel = "styles" | "guide" | "settings" | null;
 
@@ -10,6 +11,8 @@ export function App() {
   const [aiMode, setAiMode] = useState<AiMode>("prompt");
   const [locale, setLocale] = useState<Locale>(readLocale);
   const [theme, setTheme] = useState<Theme>(readTheme);
+  const [styleGenre, setStyleGenre] = useState("Alla");
+  const [styleQuery, setStyleQuery] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
@@ -22,6 +25,11 @@ export function App() {
   }, [projectMenuOpen]);
 
   const closePanel = () => setPanel(null);
+  const visibleStyles = BUILTIN_STYLES.filter((style) => {
+    const genreMatch = styleGenre === "Alla" || style.genre === styleGenre;
+    const q = styleQuery.trim().toLowerCase();
+    return genreMatch && (!q || style.name.toLowerCase().includes(q) || style.promptText.toLowerCase().includes(q));
+  });
 
   return (
     <div className="app-shell">
@@ -64,7 +72,10 @@ export function App() {
         <article className="guide-card" role="dialog" aria-modal="true">
           <div className="guide-actions"><button className="text-button" type="button" onClick={closePanel}>Stäng</button></div>
           {panel === "guide" ? <><p className="eyebrow">GUIDE</p><h1>ComicBook AI Guide</h1><p className="lede">Guiden skriver vi senare. Den här platsen är förberedd för den.</p></> : null}
-          {panel === "styles" ? <><p className="eyebrow">SYSTEM</p><h1>Stillmallar</h1><p className="lede">Här kommer ComicBook AI:s globala bibliotek med stillmallar att finnas. StoryBooks startbibliotek kopieras in i nästa steg.</p></> : null}
+          {panel === "styles" ? <><p className="eyebrow">SYSTEM</p><h1>Stillmallar</h1><p className="lede">Globala visuella stilar som kan användas när ComicBook AI bygger bildprompter.</p>
+              <div className="style-tools"><input value={styleQuery} onChange={(e) => setStyleQuery(e.target.value)} placeholder="Sök stillmall…" aria-label="Sök stillmall" />
+                <select value={styleGenre} onChange={(e) => setStyleGenre(e.target.value)} aria-label="Genre"><option>Alla</option>{STYLE_GENRES.map((genre) => <option key={genre}>{genre}</option>)}</select></div>
+              <div className="style-grid">{visibleStyles.map((style) => <article className="style-card" key={style.id}><span className="style-genre">{style.genre}</span><h2>{style.name}</h2><p>{style.promptText}</p></article>)}</div></> : null}
           {panel === "settings" ? <><p className="eyebrow">SYSTEM</p><h1>Inställningar</h1><p className="lede">Välj hur ComicBook AI ska arbeta med bildgenerering.</p>
             <div className="ai-options" role="radiogroup" aria-label="AI-läge">{AI_MODES.map((mode) => (
               <button key={mode.id} type="button" className={aiMode === mode.id ? "ai-option is-selected" : "ai-option"} disabled={!mode.available}
