@@ -311,3 +311,18 @@ h2 { margin: 0; font-size: 1.05rem; }
 .panel-editor label:first-of-type, .panel-editor label:last-of-type { grid-column: 1/-1; }
 .empty-panels { padding: 2rem; border: 1px dashed var(--border); border-radius: 7px; text-align: center; color: var(--text-dim); }
 @media (max-width: 850px) { .scene-workspace { grid-template-columns: 1fr; } .panel-editor { grid-template-columns: 1fr; } .panel-editor label, .panel-editor label:first-of-type, .panel-editor label:last-of-type { grid-column: 1; } }
+.library-workspace { padding: 1rem; border: 1px solid var(--border-soft); border-radius: 8px; background: var(--paper); }
+.inline-add { display: flex; gap: .45rem; }
+.inline-add input { min-width: 220px; padding: .55rem .65rem; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); }
+.entity-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; margin-top: 1rem; }
+.entity-card { display: grid; gap: .75rem; padding: 1rem; border: 1px solid var(--border-soft); border-radius: 7px; background: var(--panel); }
+.entity-card label { display: grid; gap: .35rem; color: var(--text-dim); font-size: .78rem; }
+.entity-card textarea, .entity-name { width: 100%; padding: .6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); color: var(--text); resize: vertical; }
+.entity-name { font-family: var(--font-prose); font-size: 1.25rem; }
+.panel-context { grid-column: 1/-1; display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; padding: .7rem; border: 1px solid var(--border-soft); border-radius: 6px; }
+.panel-context fieldset { display: flex; flex-wrap: wrap; gap: .55rem; border: 0; padding: 0; }
+.panel-context legend, .panel-context > label { color: var(--text-dim); font-size: .75rem; }
+.panel-context fieldset label { display: inline-flex; grid-auto-flow: column; align-items: center; gap: .25rem; }
+.panel-context > label { display: grid; gap: .3rem; }
+.panel-context select { padding: .45rem; border: 1px solid var(--border); border-radius: 5px; background: var(--paper); color: var(--text); }
+@media (max-width: 750px) { .entity-grid, .panel-context { grid-template-columns: 1fr; } .inline-add { flex-direction: column; } .inline-add input { min-width: 0; } }
