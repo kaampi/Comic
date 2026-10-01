@@ -5,7 +5,8 @@ export const PROJECT_FORMAT = 1;
 export type ProjectSource = "blank" | "text" | "storybook";
 
 export type OverlayType = "speech" | "thought" | "caption" | "sfx";
-export type TextOverlay = { id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number; fontSize?: number; tailX?: number; tailY?: number };
+export type BubbleStyle = "organic" | "oval" | "rounded" | "shout" | "whisper";
+export type TextOverlay = { id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number; fontSize?: number; bubbleStyle?: BubbleStyle; tailX?: number; tailY?: number };
 
 export type ComicProject = {
   format: 1;
