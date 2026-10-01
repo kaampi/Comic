@@ -1,0 +1,177 @@
+/* StoryBook-inspired form language: warm paper fields, compact uppercase labels,
+   soft borders and restrained focus treatment. */
+:root {
+  --form-bg: #fbf8f2;
+  --form-bg-soft: #f4ecdf;
+  --form-border: #d8c7b2;
+  --form-border-strong: #b99272;
+  --form-text: #342c25;
+  --form-muted: #7d6d5e;
+  --form-focus: #c46a4a;
+}
+
+[data-theme="dark"] {
+  --form-bg: #231e18;
+  --form-bg-soft: #1c1814;
+  --form-border: #4a4034;
+  --form-border-strong: #6a5747;
+  --form-text: #f3eadc;
+  --form-muted: #b7a692;
+  --form-focus: #d06a48;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+select,
+textarea {
+  font: inherit;
+  color: var(--form-text);
+  background: var(--form-bg);
+  border: 1px solid var(--form-border);
+  border-radius: 5px;
+  padding: 9px 11px;
+  min-height: 36px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
+}
+
+textarea {
+  line-height: 1.45;
+  resize: vertical;
+}
+
+select {
+  appearance: auto;
+  cursor: pointer;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):focus,
+select:focus,
+textarea:focus {
+  border-color: var(--form-border-strong);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--form-focus) 14%, transparent);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--form-muted);
+  opacity: .9;
+}
+
+label {
+  color: var(--form-text);
+}
+
+/* Stacked field labels used throughout the app */
+.panel-tool-card > label,
+.new-project-form > label,
+.style-editor > label,
+.source-excerpt,
+.entity-card > label,
+.panel-editor > label,
+.panel-context > label,
+.app-grid-setting label,
+.grid-settings label {
+  display: grid;
+  gap: 6px;
+}
+
+/* StoryBook-like small editorial field labels */
+.panel-tool-card > label,
+.type-grid label,
+.number-grid label,
+.new-project-form > label,
+.style-editor > label,
+.source-excerpt,
+.entity-card > label,
+.panel-editor > label,
+.panel-context > label {
+  font-size: .78rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--form-muted);
+  font-weight: 600;
+}
+
+/* Inputs inside those labels should read normally, not as uppercase labels. */
+.panel-tool-card input,
+.panel-tool-card select,
+.type-grid input,
+.type-grid select,
+.number-grid input,
+.number-grid select,
+.new-project-form input,
+.new-project-form select,
+.new-project-form textarea,
+.style-editor input,
+.style-editor select,
+.style-editor textarea,
+.source-excerpt textarea,
+.entity-card input,
+.entity-card select,
+.entity-card textarea,
+.panel-editor input,
+.panel-editor select,
+.panel-editor textarea,
+.panel-context input,
+.panel-context select,
+.panel-context textarea {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  font-size: .94rem;
+  color: var(--form-text);
+}
+
+fieldset {
+  border: 1px solid var(--form-border);
+  border-radius: 6px;
+  padding: 12px 14px 14px;
+}
+
+legend {
+  padding: 0 6px;
+  font-size: .75rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--form-muted);
+  font-weight: 600;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--form-focus);
+}
+
+/* Give property panels the same calm vertical rhythm as StoryBook settings cards. */
+.panel-tool-card {
+  gap: 14px;
+}
+
+.type-grid,
+.number-grid {
+  align-items: end;
+}
+
+.type-grid label,
+.number-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+/* Compact selects/number fields in the panel editor should still share the same field chrome. */
+.panel-editor-tools select,
+.panel-editor-tools input[type="number"],
+.panel-editor-tools input[type="text"] {
+  min-height: 34px;
+}
+
+/* Light theme gets the paper-on-paper look visible in StoryBook. */
+[data-theme="light"] .panel-editor-tools,
+[data-theme="light"] .guide-card,
+[data-theme="light"] .workspace-card,
+[data-theme="light"] .entity-card,
+[data-theme="light"] .panel-editor {
+  --form-bg: #fffdf8;
+  --form-bg-soft: #f5ede2;
+}
