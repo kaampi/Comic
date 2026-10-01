@@ -13,11 +13,12 @@ export type ComicProject = {
   title: string;
   createdAt: string;
   updatedAt: string;
-  source: { type: ProjectSource; textSnapshot?: string };
+  source: { type: ProjectSource; textSnapshot?: string; storyBookId?: string };
+  references?: { characterPortraits?: Record<string, string> };
   style: IllustrationStyle;
   pageDefaults: { gridColumns: number; gridRows: number };
-  characters: Array<{ id: string; name: string; description: string; visualIdentity: string }>;
-  locations: Array<{ id: string; name: string; description: string; visualIdentity: string }>;
+  characters: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string; pronoun?: string; approximateAge?: number }>;
+  locations: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string }>;
   scenes: Array<{ id: string; title: string; sourceText: string; panelIds: string[] }>;
   panels: Array<{ id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string; characterIds: string[]; locationId?: string }>;
   pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number; overlays: TextOverlay[] }> }>;
