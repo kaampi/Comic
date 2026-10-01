@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AI_MODES, type AiMode } from "./ai";
-import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, type Locale, type Theme } from "./settings";
+import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, readPageGridDefaults, savePageGridDefaults, type Locale, type Theme } from "./settings";
 import { BUILTIN_STYLES, STYLE_GENRES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
 import { createProject, readProjects, saveProjects, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
@@ -92,7 +92,12 @@ export function App() {
   };
   const addPage = () => updateActiveProject((project) => ({ ...project, pages: [...project.pages, { id: "page-" + crypto.randomUUID(), number: project.pages.length + 1, gridColumns: project.pageDefaults.gridColumns, gridRows: project.pageDefaults.gridRows, placements: [] }] }));
   const setProjectGridDefaults = (gridColumns:number, gridRows:number) => updateActiveProject((project) => ({...project,pageDefaults:{gridColumns,gridRows}}));
-  const setPageGrid = (pageId:string, gridColumns:number, gridRows:number) => updateActiveProject((project) => ({...project,pages:project.pages.map((page)=>page.id===pageId?{...page,gridColumns,gridRows,placements:[]}:page)}));
+  const setPageGrid = (pageId:string, gridColumns:number, gridRows:number) => {
+    const page = activeProject?.pages.find((item) => item.id === pageId);
+    if (page?.placements.length && !window.confirm("Rutnätsändringen tar bort sidans nuvarande layout. Fortsätta?")) return;
+    setLayoutStart(null);
+    updateActiveProject((project) => ({...project,pages:project.pages.map((item)=>item.id===pageId?{...item,gridColumns,gridRows,placements:[]}:item)}));
+  };
   const updateAppGrid = (gridColumns:number, gridRows:number) => { const value={gridColumns,gridRows}; setAppPageGrid(value); savePageGridDefaults(value); };
   const applyPreset = (pageId: string, presetId: string) => {
     const preset = PAGE_PRESETS.find((item) => item.id === presetId); if (!preset) return;
@@ -110,6 +115,24 @@ export function App() {
   const setPlacementPanel = (pageId:string, placementId:string, panelId:string) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.map((item) => item.id === placementId ? { ...item, panelId: panelId || undefined } : item) } : page) }));
   const removePlacement = (pageId:string, placementId:string) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.filter((item) => item.id !== placementId).map((item,index) => ({...item,readingOrder:index+1})) } : page) }));
   const moveReadingOrder = (pageId:string, placementId:string, direction:-1|1) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => { if(page.id!==pageId)return page; const ordered=[...page.placements].sort((x,y)=>x.readingOrder-y.readingOrder); const index=ordered.findIndex((item)=>item.id===placementId); const target=index+direction; if(index<0||target<0||target>=ordered.length)return page; [ordered[index],ordered[target]]=[ordered[target],ordered[index]]; return {...page,placements:ordered.map((item,i)=>({...item,readingOrder:i+1}))}; }) }));
+  const moveScene = (sceneId:string, direction:-1|1) => updateActiveProject((project) => { const scenes=[...project.scenes]; const index=scenes.findIndex((item)=>item.id===sceneId); const target=index+direction; if(index<0||target<0||target>=scenes.length)return project; [scenes[index],scenes[target]]=[scenes[target],scenes[index]]; return {...project,scenes}; });
+  const deletePanel = (panelId:string) => {
+    if (!window.confirm("Radera bildrutan? Den tas även bort från alla sidlayouter.")) return;
+    updateActiveProject((project) => ({...project,panels:project.panels.filter((item)=>item.id!==panelId),scenes:project.scenes.map((scene)=>({...scene,panelIds:scene.panelIds.filter((id)=>id!==panelId)})),pages:project.pages.map((page)=>({...page,placements:page.placements.map((placement)=>placement.panelId===panelId?{...placement,panelId:undefined}:placement)}))}));
+  };
+  const movePanel = (sceneId:string, panelId:string, direction:-1|1) => updateActiveProject((project) => ({...project,scenes:project.scenes.map((scene)=>{if(scene.id!==sceneId)return scene;const ids=[...scene.panelIds];const index=ids.indexOf(panelId),target=index+direction;if(index<0||target<0||target>=ids.length)return scene;[ids[index],ids[target]]=[ids[target],ids[index]];return {...scene,panelIds:ids};}),panels:project.panels.map((panel)=>{if(panel.sceneId!==sceneId)return panel;const scene=project.scenes.find((item)=>item.id===sceneId);if(!scene)return panel;const ids=[...scene.panelIds];const index=ids.indexOf(panelId),target=index+direction;if(index>=0&&target>=0&&target<ids.length)[ids[index],ids[target]]=[ids[target],ids[index]];return {...panel,order:ids.indexOf(panel.id)+1};})}));
+  const deleteScene = (sceneId:string) => {
+    const panelIds=activeProject?.scenes.find((item)=>item.id===sceneId)?.panelIds ?? [];
+    if (!window.confirm(`Radera scenen och dess ${panelIds.length} bildrutor? Bildrutorna kopplas också bort från sidor.`)) return;
+    updateActiveProject((project)=>({...project,scenes:project.scenes.filter((item)=>item.id!==sceneId),panels:project.panels.filter((item)=>item.sceneId!==sceneId),pages:project.pages.map((page)=>({...page,placements:page.placements.map((placement)=>placement.panelId&&panelIds.includes(placement.panelId)?{...placement,panelId:undefined}:placement)}))}));
+    setSelectedSceneId(null);
+  };
+  const deletePage = (pageId:string) => {
+    if (!window.confirm("Radera sidan? Manusets bildrutor påverkas inte.")) return;
+    updateActiveProject((project)=>{const pages=project.pages.filter((item)=>item.id!==pageId).map((item,index)=>({...item,number:index+1}));return {...project,pages};});
+    setSelectedPageId(null); setLayoutStart(null);
+  };
+  const movePage = (pageId:string,direction:-1|1) => updateActiveProject((project)=>{const pages=[...project.pages];const index=pages.findIndex((item)=>item.id===pageId),target=index+direction;if(index<0||target<0||target>=pages.length)return project;[pages[index],pages[target]]=[pages[target],pages[index]];return {...project,pages:pages.map((item,i)=>({...item,number:i+1}))};});
   const createNewProject = () => {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
@@ -171,9 +194,9 @@ export function App() {
             </aside>
             {(() => { const scene = activeProject.scenes.find((item) => item.id === selectedSceneId) ?? activeProject.scenes[0]; if (!scene) return <div className="workspace-card"><h2>Ingen scen vald</h2></div>;
               const panels = scene.panelIds.map((id) => activeProject.panels.find((panel) => panel.id === id)).filter(Boolean);
-              return <div className="scene-editor"><div className="section-heading"><div><p className="eyebrow">SCEN</p><input className="scene-title-input" value={scene.title} onChange={(e) => updateScene(scene.id,{title:e.target.value})} /></div><button className="primary-button" onClick={() => addPanel(scene.id)}>Ny bildruta</button></div>
+              return <div className="scene-editor"><div className="section-heading"><div><p className="eyebrow">SCEN</p><input className="scene-title-input" value={scene.title} onChange={(e) => updateScene(scene.id,{title:e.target.value})} /></div><div className="edit-actions"><button className="text-button" disabled={activeProject.scenes[0]?.id===scene.id} onClick={()=>moveScene(scene.id,-1)}>↑ Scen</button><button className="text-button" disabled={activeProject.scenes[activeProject.scenes.length-1]?.id===scene.id} onClick={()=>moveScene(scene.id,1)}>↓ Scen</button><button className="text-button danger-button" onClick={()=>deleteScene(scene.id)}>Radera scen</button><button className="primary-button" onClick={() => addPanel(scene.id)}>Ny bildruta</button></div></div>
                 <label className="source-excerpt">Källtext<textarea rows={6} value={scene.sourceText} onChange={(e) => updateScene(scene.id,{sourceText:e.target.value})} placeholder="Klistra in det textavsnitt ur manuset som scenen bygger på…" /></label>
-                <div className="panel-list">{panels.length ? panels.map((panel,index) => panel ? <article className="panel-editor" key={panel.id}><div className="panel-number">RUTA {index+1}</div>
+                <div className="panel-list">{panels.length ? panels.map((panel,index) => panel ? <article className="panel-editor" key={panel.id}><div className="panel-number">RUTA {index+1}<span className="panel-edit-actions"><button className="text-button" disabled={index===0} onClick={()=>movePanel(scene.id,panel.id,-1)}>↑</button><button className="text-button" disabled={index===panels.length-1} onClick={()=>movePanel(scene.id,panel.id,1)}>↓</button><button className="text-button danger-button" onClick={()=>deletePanel(panel.id)}>Radera</button></span></div>
                   <div className="panel-context"><fieldset><legend>Karaktärer i rutan</legend>{activeProject.characters.length ? activeProject.characters.map((character) => <label key={character.id}><input type="checkbox" checked={(panel.characterIds ?? []).includes(character.id)} onChange={() => togglePanelCharacter(panel.id,character.id)} /> {character.name}</label>) : <span className="quiet">Inga karaktärer skapade.</span>}</fieldset>
                     <label>Plats<select value={panel.locationId ?? ""} onChange={(e) => setPanelLocation(panel.id,e.target.value)}><option value="">Ingen vald</option>{activeProject.locations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}</select></label></div>
                   <label>Handling<textarea rows={3} value={panel.action} onChange={(e) => updatePanel(panel.id,"action",e.target.value)} placeholder="Vad ser vi i rutan?" /></label>
@@ -195,7 +218,7 @@ export function App() {
               <div className="page-list">{activeProject.pages.map((page) => <button key={page.id} className={selectedPageId === page.id ? "page-nav is-selected" : "page-nav"} onClick={() => {setSelectedPageId(page.id);setLayoutStart(null);}}>Sida {page.number}<span>{page.placements.length} rutor</span></button>)}</div>
             </aside>
             {(() => { const page = activeProject.pages.find((item) => item.id === selectedPageId) ?? activeProject.pages[0]; if (!page) return <div className="workspace-card"><h2>Skapa första sidan</h2><button className="primary-button" onClick={addPage}>Ny sida</button></div>;
-              return <div className="page-planner"><div className="section-heading"><div><p className="eyebrow">SIDA {page.number}</p><h2>Rita sidlayout</h2><p className="quiet">{layoutStart ? "Välj rutans motsatta hörn." : "Klicka första och sista cellen för att rama in en serieruta."}</p></div><select className="preset-select" defaultValue="" onChange={(e)=>{if(e.target.value)applyPreset(page.id,e.target.value);e.currentTarget.value="";}}><option value="">Använd preset…</option>{PAGE_PRESETS.map((preset)=><option key={preset.id} value={preset.id}>{preset.name}</option>)}</select></div>
+              return <div className="page-planner"><div className="section-heading"><div><p className="eyebrow">SIDA {page.number}</p><h2>Rita sidlayout</h2><p className="quiet">{layoutStart ? "Välj rutans motsatta hörn." : "Klicka första och sista cellen för att rama in en serieruta."}</p></div><div className="edit-actions"><button className="text-button" disabled={page.number===1} onClick={()=>movePage(page.id,-1)}>← Sida</button><button className="text-button" disabled={page.number===activeProject.pages.length} onClick={()=>movePage(page.id,1)}>Sida →</button><button className="text-button danger-button" onClick={()=>deletePage(page.id)}>Radera sida</button><select className="preset-select" defaultValue="" onChange={(e)=>{if(e.target.value)applyPreset(page.id,e.target.value);e.currentTarget.value="";}}><option value="">Använd preset…</option>{PAGE_PRESETS.map((preset)=><option key={preset.id} value={preset.id}>{preset.name}</option>)}</select></div></div>
                 <div className="grid-settings"><div><strong>Projektstandard</strong><label>Kolumner <input type="number" min="2" max="6" value={activeProject.pageDefaults.gridColumns} onChange={(e)=>setProjectGridDefaults(Number(e.target.value),activeProject.pageDefaults.gridRows)} /></label><label>Rader <input type="number" min="2" max="8" value={activeProject.pageDefaults.gridRows} onChange={(e)=>setProjectGridDefaults(activeProject.pageDefaults.gridColumns,Number(e.target.value))} /></label><span className="quiet">Gäller nya sidor.</span></div><div><strong>Denna sida</strong><label>Kolumner <input type="number" min="2" max="6" value={page.gridColumns} onChange={(e)=>setPageGrid(page.id,Number(e.target.value),page.gridRows)} /></label><label>Rader <input type="number" min="2" max="8" value={page.gridRows} onChange={(e)=>setPageGrid(page.id,page.gridColumns,Number(e.target.value))} /></label><span className="quiet">Ändring återställer sidans layout.</span></div></div>
                 <div className="layout-canvas">
                   <div className="construction-grid" style={{gridTemplateColumns:`repeat(${page.gridColumns},1fr)`,gridTemplateRows:`repeat(${page.gridRows},1fr)`}}>{Array.from({length:page.gridColumns*page.gridRows},(_,i)=>{const x=i%page.gridColumns,y=Math.floor(i/page.gridColumns);return <button key={i} className={layoutStart?.x===x&&layoutStart?.y===y?"grid-cell is-start":"grid-cell"} onClick={()=>selectGridCell(page.id,x,y)} aria-label={`Kolumn ${x+1}, rad ${y+1}`} />;})}</div>
@@ -248,7 +271,7 @@ export function App() {
                 </article>;
               })}</div></> : null}
           {panel === "settings" ? <><p className="eyebrow">SYSTEM</p><h1>Inställningar</h1><p className="lede">Välj hur ComicBook AI ska arbeta med bildgenerering.</p>
-            <div className="ai-options" role="radiogroup" aria-label="AI-läge">{AI_MODES.map((mode) => (
+            <div className="app-grid-setting"><h3>Standardrutnät för nya projekt</h3><label>Kolumner <input type="number" min="2" max="6" value={appPageGrid.gridColumns} onChange={(e)=>updateAppGrid(Number(e.target.value),appPageGrid.gridRows)} /></label><label>Rader <input type="number" min="2" max="8" value={appPageGrid.gridRows} onChange={(e)=>updateAppGrid(appPageGrid.gridColumns,Number(e.target.value))} /></label></div><div className="ai-options" role="radiogroup" aria-label="AI-läge">{AI_MODES.map((mode) => (
               <button key={mode.id} type="button" className={aiMode === mode.id ? "ai-option is-selected" : "ai-option"} disabled={!mode.available}
                 aria-pressed={aiMode === mode.id} onClick={() => mode.available && setAiMode(mode.id)}>
                 <span><strong>{mode.label}</strong>{!mode.available ? <small>Kommer senare</small> : null}</span><span>{mode.description}</span>
