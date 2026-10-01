@@ -448,3 +448,20 @@ h2 { margin: 0; font-size: 1.05rem; }
 .overlay-drag-surface { cursor: move; }
 .overlay-resize-grip { fill: #fffdf7; stroke: #171411; stroke-width: 1; vector-effect: non-scaling-stroke; cursor: nwse-resize; }
 .overlay-tail-grip { fill: #fffdf7; stroke: #171411; stroke-width: 1; vector-effect: non-scaling-stroke; cursor: crosshair; }
+
+.panel-editor-backdrop { position: fixed; inset: 0; z-index: 1200; background: rgba(10,8,6,.72); display: grid; place-items: center; padding: 3vh 3vw; }
+.panel-editor-modal { width: min(1500px,94vw); height: min(900px,92vh); background: var(--panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 24px 80px rgba(0,0,0,.45); display: flex; flex-direction: column; overflow: hidden; }
+.panel-editor-modal > header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.panel-editor-modal > header h2 { margin: 2px 0 0; }
+.panel-editor-layout { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0,1fr) 300px; }
+.panel-editor-stage { position: relative; margin: 20px; min-height: 0; background: #0e0c0a; display: grid; place-items: center; overflow: hidden; }
+.panel-editor-stage > img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.panel-editor-stage > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.panel-editor-empty { color: var(--text-faint); }
+.panel-editor-tools { overflow: auto; padding: 18px; border-left: 1px solid var(--border); background: var(--paper); }
+.panel-tool-card { display: grid; gap: 12px; padding: 14px 0; border-top: 1px solid var(--border); }
+.panel-tool-card > input, .panel-tool-card select { width: 100%; }
+.panel-tool-card label { display: grid; gap: 6px; }
+.panel-editor-stage .overlay-resize-grip { opacity: .72; }
+.panel-editor-stage .overlay-tail-grip { opacity: .72; }
+@media (max-width: 900px) { .panel-editor-layout { grid-template-columns: 1fr; grid-template-rows: minmax(0,1fr) auto; } .panel-editor-tools { border-left: 0; border-top: 1px solid var(--border); max-height: 34vh; } }
