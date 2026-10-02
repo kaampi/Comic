@@ -81,28 +81,62 @@ export function extractBeats(sourceText: string): AdaptationBeat[] {
   });
 }
 
+function sequenceTheme(beat: AdaptationBeat): string {
+  const t = beat.sourceTextExcerpt.toLowerCase();
+  if (/dance|dancing|music|band|bossanova|rhythm|melody|applause/.test(t)) return "dance";
+  if (beat.beatType === "establishing" || beat.beatType === "atmosphere") return "opening";
+  if (beat.beatType === "transition" || beat.beatType === "resolution") return "transition";
+  if (beat.beatType === "dialogue" || beat.beatType === "reaction") return "conversation";
+  return "action";
+}
+
 function sequenceTitle(beats: AdaptationBeat[], index: number): string {
   if (!beats.length) return `Sequence ${index + 1}`;
-  if (beats.some((b) => /dance|music/i.test(b.sourceTextExcerpt))) return "Dance";
-  if (beats.some((b) => b.beatType === "establishing")) return "Opening";
-  if (beats.some((b) => b.beatType === "resolution")) return "Exit / resolution";
-  if (beats.some((b) => b.beatType === "dialogue")) return "Conversation";
+  const theme = sequenceTheme(beats[0]);
+  if (theme === "opening") return index === 0 ? "Opening" : "Atmosphere";
+  if (theme === "dance") return "The dance";
+  if (theme === "transition") return beats.some((b) => b.beatType === "resolution") ? "Exit / resolution" : "Transition";
+  if (theme === "conversation") {
+    const joined = beats.map((b) => b.sourceTextExcerpt.toLowerCase()).join(" ");
+    if (/join you|i'm lena|this is maja|nice to meet/.test(joined)) return "First contact";
+    if (/take this back|our place|nest|offer/.test(joined)) return "Invitation";
+    return "Conversation";
+  }
   return `Sequence ${index + 1}`;
 }
 
 export function buildSequences(beats: AdaptationBeat[]): AdaptationSequence[] {
   const groups: AdaptationBeat[][] = [];
   let current: AdaptationBeat[] = [];
+  let currentTheme = "";
+
   for (const beat of beats) {
-    const startsNew = current.length >= 3 || (current.length >= 2 && (beat.beatType === "transition" || beat.beatType === "resolution"));
-    if (startsNew) { groups.push(current); current = []; }
+    const theme = sequenceTheme(beat);
+    const hardBreak = beat.beatType === "transition" || beat.beatType === "resolution";
+    const themeChanged = current.length > 0 && theme !== currentTheme;
+    const tooLong = current.length >= 8;
+
+    if (current.length && (themeChanged || tooLong || (hardBreak && current.length >= 2))) {
+      groups.push(current);
+      current = [];
+    }
+
     current.push(beat);
+    currentTheme = theme;
+
+    if (hardBreak) {
+      groups.push(current);
+      current = [];
+      currentTheme = "";
+    }
   }
   if (current.length) groups.push(current);
+
   return groups.map((group, index) => {
-    const cinematic = group.some((b) => /dance|music/i.test(b.sourceTextExcerpt));
-    const density: PanelDensity = cinematic ? "cinematic" : index === 0 ? "compact" : "normal";
-    const factor = density === "compact" ? .75 : density === "cinematic" ? 1.6 : 1;
+    const theme = sequenceTheme(group[0]);
+    const cinematic = theme === "dance";
+    const density: PanelDensity = cinematic ? "cinematic" : theme === "opening" ? "compact" : "normal";
+    const factor = density === "compact" ? .75 : density === "cinematic" ? 1.35 : .9;
     return {
       id: id("sequence"),
       order: index + 1,
