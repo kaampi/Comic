@@ -655,3 +655,248 @@ h2 { margin: 0; font-size: 1.05rem; }
     padding:18px 14px 32px;
   }
 }
+
+/* Wide StoryBook-inspired workspace pass */
+.home:has(.project-shell){
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:0;
+}
+.project-shell{
+  width:100%;
+  max-width:none;
+  margin:0;
+  grid-template-columns:220px minmax(0,1fr);
+  min-height:calc(100vh - 48px);
+}
+.project-sidebar{
+  top:48px;
+  min-height:calc(100vh - 48px);
+  border-radius:0;
+}
+.project-workspace{
+  width:auto;
+  max-width:none;
+  margin:0;
+  min-width:0;
+  padding:20px 24px 32px;
+}
+
+/* Manus uses the width instead of a centered card */
+.manuscript-workspace{
+  grid-template-columns:minmax(0,1fr) 280px;
+  gap:18px;
+}
+.manuscript-main,
+.scene-sidebar{
+  border-radius:4px;
+}
+.manuscript-editor{
+  min-height:calc(100vh - 190px);
+}
+
+/* Adaptering: main step in the center, overview/actions as right context */
+.adaptation-workspace{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 292px;
+  grid-template-rows:auto auto minmax(0,1fr);
+  column-gap:22px;
+  row-gap:12px;
+  align-items:start;
+}
+.adaptation-heading{
+  grid-column:2;
+  grid-row:1;
+  display:grid;
+  gap:10px;
+  align-content:start;
+  position:sticky;
+  top:68px;
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:5px;
+  background:var(--paper);
+}
+.adaptation-heading>div{
+  min-width:0;
+}
+.adaptation-heading h2{
+  margin:.2rem 0 .45rem;
+  font-size:1.2rem;
+}
+.adaptation-heading .quiet{
+  font-size:.78rem;
+  line-height:1.45;
+}
+.adaptation-heading .primary-button{
+  width:100%;
+}
+.adaptation-summary{
+  grid-column:2;
+  grid-row:2;
+  position:sticky;
+  top:250px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  padding:10px;
+  border:1px solid var(--border);
+  border-radius:5px;
+  background:var(--paper);
+}
+.adaptation-summary span{
+  border-radius:4px;
+  text-align:center;
+  padding:7px 6px;
+}
+.adaptation-step{
+  grid-column:1;
+  grid-row:1 / span 3;
+  min-width:0;
+  padding:0;
+}
+.adaptation-empty{
+  grid-column:1;
+}
+.beat-grid,
+.panel-plan-grid{
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  align-items:start;
+}
+.sequence-list,
+.prompt-plan-list{
+  max-width:none;
+}
+
+/* Pages: page canvas takes center, page navigator becomes right context */
+.page-workspace{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 280px;
+  gap:20px;
+  align-items:start;
+}
+.page-planner{
+  grid-column:1;
+  grid-row:1;
+  min-width:0;
+  padding:14px 18px 22px;
+  border-radius:4px;
+}
+.page-sidebar{
+  grid-column:2;
+  grid-row:1;
+  position:sticky;
+  top:68px;
+  padding:14px;
+  border-radius:4px;
+}
+.page-sidebar .section-heading{
+  display:grid;
+  gap:8px;
+}
+.page-sidebar .section-heading .primary-button{
+  width:100%;
+}
+.layout-canvas{
+  width:min(100%,700px);
+  margin:16px auto;
+}
+.grid-settings{
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.grid-settings>div{
+  padding:9px 10px;
+}
+.placement-list{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+}
+.placement-list h3{
+  grid-column:1/-1;
+}
+.placement-row{
+  grid-template-columns:1.7rem minmax(0,1fr) auto auto;
+  min-width:0;
+}
+.placement-row .danger-button{
+  grid-column:auto;
+}
+
+/* Scene editor can breathe too */
+.scene-workspace{
+  grid-template-columns:220px minmax(0,1fr);
+  gap:18px;
+}
+.scene-editor{
+  min-width:0;
+}
+
+/* Libraries use available width */
+.entity-grid{
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+}
+
+/* Very wide displays: keep useful reading lengths but use the screen */
+@media(min-width:1700px){
+  .project-shell{
+    grid-template-columns:240px minmax(0,1fr);
+  }
+  .project-workspace{
+    padding-left:30px;
+    padding-right:30px;
+  }
+  .adaptation-workspace{
+    grid-template-columns:minmax(0,1fr) 320px;
+  }
+  .page-workspace{
+    grid-template-columns:minmax(0,1fr) 300px;
+  }
+  .layout-canvas{
+    width:min(100%,780px);
+  }
+}
+
+@media(max-width:1100px){
+  .adaptation-workspace,
+  .page-workspace{
+    grid-template-columns:minmax(0,1fr) 240px;
+  }
+  .adaptation-summary{
+    grid-template-columns:1fr;
+  }
+  .placement-list{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:900px){
+  .home:has(.project-shell){
+    padding:0;
+  }
+  .project-workspace{
+    padding:16px 14px 28px;
+  }
+  .adaptation-workspace,
+  .page-workspace{
+    grid-template-columns:1fr;
+  }
+  .adaptation-heading,
+  .adaptation-summary,
+  .adaptation-step,
+  .adaptation-empty,
+  .page-planner,
+  .page-sidebar{
+    grid-column:1;
+    grid-row:auto;
+    position:static;
+  }
+  .page-sidebar{
+    order:-1;
+  }
+  .manuscript-workspace,
+  .scene-workspace{
+    grid-template-columns:1fr;
+  }
+}
