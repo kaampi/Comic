@@ -1,3 +1,5 @@
+import { ManuscriptExportError, parseManuscriptExport, type ManuscriptExport } from "@ocedo-apps/storycore";
+
 export type StoryBookImport = {
   kind: "storybook-ai.manuscript";
   format: 1;
@@ -16,68 +18,126 @@ export type StoryBookCard = {
 };
 export type StoryBookCardsImport = { kind: "ai-sandbox-library"; format: 1; characters: StoryBookCard[] };
 
-const array=(value:unknown):any[]=>Array.isArray(value)?value:[];
-const str=(value:unknown):string=>typeof value==="string"?value:"";
-const num=(value:unknown):number|undefined=>typeof value==="number"&&Number.isFinite(value)?value:undefined;
+const array = (value: unknown): any[] => (Array.isArray(value) ? value : []);
+const str = (value: unknown): string => (typeof value === "string" ? value : "");
+const num = (value: unknown): number | undefined => (typeof value === "number" && Number.isFinite(value) ? value : undefined);
 
-function entityName(item:any):string { return str(item?.name ?? item?.title ?? item?.label); }
-function entityDescription(item:any):string {
-  return str(item?.description ?? item?.summary ?? item?.profile ?? item?.notes ?? item?.personality ?? item?.looks);
+type ExportedBibleEntity = ManuscriptExport["bible"][number]["entities"][number];
+
+function entitiesOfKind(manuscript: ManuscriptExport, kind: "characters" | "locations"): ExportedBibleEntity[] {
+  return manuscript.bible.find((section) => section.kind === kind)?.entities ?? [];
 }
 
-export function parseStoryBookExport(raw:string):StoryBookImport {
-  let data:any; try{data=JSON.parse(raw)}catch{throw new Error("Filen är inte giltig JSON.")}
-  if(data?.kind!=="storybook-ai.manuscript"||data?.format!==1) throw new Error("Filen är inte en StoryBook AI-backup i format 1.");
-  const book=data.book ?? data.manuscript ?? data;
-  const chapters=array(data.chapters ?? book.chapters).map((item)=>({
-    id:str(item?.id), title:str(item?.title ?? item?.name)||"Kapitel",
-    text:str(item?.prose ?? item?.text ?? item?.content ?? item?.body)
-  })).filter((item)=>item.text||item.title);
+/**
+ * One description string per entity, from every structured field StoryCore
+ * gives us — looks, personality, and every locked fact's value — instead of
+ * the old guessed import's "pick the first field that happens to exist"
+ * (description/summary/profile/notes/personality/looks). StoryCore has
+ * already resolved status, visibility, and classification; nothing here
+ * needs to guess at any of that again.
+ */
+function describeEntity(entity: ExportedBibleEntity): string {
+  const parts: string[] = [];
+  if (entity.looks) parts.push(entity.looks);
+  if (entity.personality) parts.push(entity.personality);
+  for (const fact of entity.facts) parts.push(fact.value);
+  return parts.join("\n");
+}
 
-  const rawEntities=array(data.entities ?? book.entities);
-  const facts=array(data.facts ?? book.facts);
-  const profiles=array(data.profiles ?? book.profiles);
-  const kinds=new Map(array(data.entity_kinds ?? book.entity_kinds).map((x)=>[str(x?.entity_ref),str(x?.kind)]));
-  const profileByRef=new Map(profiles.map((x)=>[str(x?.entity_ref),x]));
-  const charsSource=array(data.characters ?? book.characters);
-  const locSource=array(data.locations ?? data.places ?? book.locations ?? book.places);
-  const factRefs=new Map<string,{id:string;name:string;description:string}>();
-  for(const fact of facts){
-    const ref=str(fact?.entity_ref); if(!ref) continue;
-    const current=factRefs.get(ref)??{id:ref,name:str(fact?.entity_label)||ref,description:""};
-    if(!fact?.superseded_by && str(fact?.value)) current.description=[current.description,str(fact.value)].filter(Boolean).join("\n");
-    factRefs.set(ref,current);
+/**
+ * Reads a StoryBook AI export produced by its "Export for other apps"
+ * button (StoryCore's `ManuscriptExportSchema`) — not StoryBook AI's own
+ * internal backup/restore format, which is a different, much larger shape
+ * not meant for other apps to read directly.
+ *
+ * Replaces an earlier version of this function that duck-typed StoryBook
+ * AI's internal backup JSON directly (guessed field names, inferred entity
+ * kind from ad-hoc heuristics). That version only ever recognized
+ * characters and locations — objects, groups, events, and concepts were
+ * silently dropped — and read every fact regardless of whether the author
+ * had actually approved and locked it, or hidden it from the model.
+ * StoryCore's export already excludes anything not locked, visible, and
+ * not hidden, so none of that filtering needs reimplementing here.
+ *
+ * Objects/groups/events/concepts aren't surfaced into `StoryBookImport`
+ * yet — `ComicProject` (`project.ts`) and the import review UI
+ * (`App.tsx`) only have fields for characters and locations today. Adding
+ * the other four kinds is a separate, larger change to that data model and
+ * UI, not folded in here.
+ */
+export function parseStoryBookExport(raw: string): StoryBookImport {
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error("Filen är inte giltig JSON.");
   }
-  const inferredChars=rawEntities.filter((x)=>["characters","character","people","person"].includes(kinds.get(str(x?.id ?? x?.ref ?? x?.entity_ref))??str(x?.kind)));
-  const inferredLocs=rawEntities.filter((x)=>["locations","location","places","place"].includes(kinds.get(str(x?.id ?? x?.ref ?? x?.entity_ref))??str(x?.kind)));
-  const locationRefs=new Set(inferredLocs.map((x)=>str(x?.id ?? x?.ref ?? x?.entity_ref)));
-  for(const [ref,kind] of kinds) if(["locations","location","places","place"].includes(kind)) locationRefs.add(ref);
-  const profileRefs=new Set(profiles.map((x)=>str(x?.entity_ref)).filter(Boolean));
-  const factCharacters=[...factRefs.values()].filter((x)=>profileRefs.has(x.id)&&!locationRefs.has(x.id));
-  const factLocations=[...factRefs.values()].filter((x)=>locationRefs.has(x.id));
 
-  const characterSource=charsSource.length?charsSource:(inferredChars.length?inferredChars:factCharacters);
-  const characters=characterSource.map((item)=>{
-    const ref=str(item?.entity_ref ?? item?.ref ?? item?.id); const p=profileByRef.get(ref) as any;
-    return {id:ref,name:entityName(item)||str(p?.name)||ref,description:entityDescription(item)||str((item as any)?.description)||str(p?.personality ?? p?.looks),pronoun:str(item?.pronoun ?? p?.pronoun)||undefined,approximateAge:num(item?.approximateAge ?? p?.approximateAge)};
-  }).filter((x)=>x.name);
-  const locationSource=locSource.length?locSource:(inferredLocs.length?inferredLocs:factLocations);
-  const locations=locationSource.map((item)=>({id:str(item?.entity_ref ?? item?.ref ?? item?.id),name:entityName(item)||str((item as any)?.name),description:entityDescription(item)||str((item as any)?.description)})).filter((x)=>x.name);
-  const text=str(book.text ?? book.content ?? data.text ?? data.manuscript?.text) || chapters.map((x)=>x.text).join("\n\n");
-  return {kind:data.kind,format:1,sourceBookId:str(book.id),title:str(book.title)||"Importerat StoryBook-manus",text,illustrationStyle:str(book.illustration_style),chapters,characters,locations};
+  let manuscript: ManuscriptExport;
+  try {
+    manuscript = parseManuscriptExport(data);
+  } catch (err) {
+    if (err instanceof ManuscriptExportError) {
+      if (err.code === "newer-format") {
+        throw new Error("Den här exporten använder en nyare version av StoryCore-formatet än den här appen förstår än. Uppdatera ComicBook AI och försök igen.");
+      }
+      throw new Error(
+        "Filen är inte en StoryBook AI-export. Exportera på nytt från StoryBook AI med knappen \"Exportera för andra appar\" (bredvid Backup)."
+      );
+    }
+    throw err;
+  }
+
+  return {
+    kind: "storybook-ai.manuscript",
+    format: 1,
+    sourceBookId: manuscript.sourceBookId,
+    title: manuscript.title || "Importerat StoryBook-manus",
+    text: manuscript.chapters.map((chapter) => chapter.prose).filter(Boolean).join("\n\n"),
+    illustrationStyle: manuscript.illustrationStyle,
+    chapters: manuscript.chapters.map((chapter) => ({ id: chapter.id, title: chapter.title || "Kapitel", text: chapter.prose })),
+    characters: entitiesOfKind(manuscript, "characters").map((entity) => ({
+      id: entity.entity_ref,
+      name: entity.name,
+      description: describeEntity(entity),
+      ...(entity.pronoun ? { pronoun: entity.pronoun } : {}),
+      ...(entity.approximateAge !== undefined ? { approximateAge: entity.approximateAge } : {})
+    })),
+    locations: entitiesOfKind(manuscript, "locations").map((entity) => ({
+      id: entity.entity_ref,
+      name: entity.name,
+      description: describeEntity(entity)
+    }))
+  };
 }
 
-export function parseStoryBookCards(raw:string):StoryBookCardsImport {
-  let data:any; try{data=JSON.parse(raw)}catch{throw new Error("Cards-filen är inte giltig JSON.")}
-  if(data?.kind!=="ai-sandbox-library"||data?.format!==1) throw new Error("Filen är inte en StoryBook Cards-export i format 1.");
-  const characters=array(data.characters).map((item)=>({
-    id:str(item?.id),name:str(item?.name),personality:str(item?.personality),appearance:str(item?.appearance),
-    pronoun:str(item?.pronoun)||undefined,approximateAge:num(item?.approximateAge),
-    portraitDataUrl:str(item?.portraitDataUrl)||undefined
-  })).filter((x)=>x.name);
-  return {kind:data.kind,format:1,characters};
+export function parseStoryBookCards(raw: string): StoryBookCardsImport {
+  let data: any;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error("Cards-filen är inte giltig JSON.");
+  }
+  if (data?.kind !== "ai-sandbox-library" || data?.format !== 1) throw new Error("Filen är inte en StoryBook Cards-export i format 1.");
+  const characters = array(data.characters)
+    .map((item) => {
+      const pronoun = str(item?.pronoun) || undefined;
+      const approximateAge = num(item?.approximateAge);
+      const portraitDataUrl = str(item?.portraitDataUrl) || undefined;
+      return {
+        id: str(item?.id),
+        name: str(item?.name),
+        personality: str(item?.personality),
+        appearance: str(item?.appearance),
+        ...(pronoun ? { pronoun } : {}),
+        ...(approximateAge !== undefined ? { approximateAge } : {}),
+        ...(portraitDataUrl ? { portraitDataUrl } : {})
+      };
+    })
+    .filter((x) => x.name);
+  return { kind: data.kind, format: 1, characters };
 }
 
-export function cardMatchesBook(card:StoryBookCard,bookId:string):boolean {
-  return Boolean(bookId)&&card.id.startsWith(`sb-${bookId}-`);
+export function cardMatchesBook(card: StoryBookCard, bookId: string): boolean {
+  return Boolean(bookId) && card.id.startsWith(`sb-${bookId}-`);
 }

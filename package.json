@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
