@@ -211,3 +211,18 @@
     grid-template-columns:1fr;
   }
 }
+
+.panel-plan-field{
+  display:grid;
+  gap:6px;
+  margin-top:10px;
+}
+.panel-plan-field textarea{
+  width:100%;
+  box-sizing:border-box;
+  resize:vertical;
+}
+.panel-plan-field.adaptation-snippet{
+  border-top:1px solid var(--border);
+  padding-top:9px;
+}
