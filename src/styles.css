@@ -40,23 +40,22 @@ button { color: inherit; }
 .brand {
   display: flex;
   align-items: center;
-  gap: .65rem;
   border: 0;
+  padding: 0;
   background: transparent;
-  font-weight: 700;
   cursor: pointer;
+  line-height: 0;
+  flex: 0 0 auto;
 }
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--ink);
-  border-radius: 7px;
-  color: var(--ink);
-  font-size: .72rem;
-  letter-spacing: .05em;
+.brand-logo {
+  display: block;
+  height: 1.7rem;
+  width: auto;
 }
+.brand-logo-light { display: none; }
+.brand-logo-dark { display: block; }
+[data-theme="light"] .brand-logo-light { display: block; }
+[data-theme="light"] .brand-logo-dark { display: none; }
 .text-button, .home-guide-button {
   border: 0;
   background: transparent;
