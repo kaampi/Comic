@@ -1,4 +1,5 @@
 import { BUILTIN_STYLES, type IllustrationStyle } from "./stylesLibrary";
+import type { StoryAdaptation } from "./adaptation/types";
 
 export const PROJECT_FORMAT = 1;
 
@@ -23,6 +24,7 @@ export type ComicProject = {
   scenes: Array<{ id: string; title: string; sourceText: string; panelIds: string[] }>;
   panels: Array<{ id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string; characterIds: string[]; locationId?: string }>;
   pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number; overlays: TextOverlay[]; image?: { name: string; dataUrl: string } }> }>;
+  adaptations: StoryAdaptation[];
 };
 
 const PROJECTS_KEY = "comicbook-ai.projects";
@@ -35,7 +37,7 @@ export function createProject(title: string, source: ProjectSource, style: Illus
   const now = new Date().toISOString();
   return {
     format: PROJECT_FORMAT, id: stableId("project"), title: title.trim(), createdAt: now, updatedAt: now,
-    source: { type: source, textSnapshot: "" }, style: { ...style }, pageDefaults: { gridColumns: 3, gridRows: 5 }, characters: [], locations: [], scenes: [], panels: [], pages: []
+    source: { type: source, textSnapshot: "" }, style: { ...style }, pageDefaults: { gridColumns: 3, gridRows: 5 }, characters: [], locations: [], scenes: [], panels: [], pages: [], adaptations: []
   };
 }
 
@@ -48,6 +50,7 @@ export function readProjects(): ComicProject[] {
       characters: Array.isArray(p.characters) ? p.characters.map((item: any) => ({ ...item, visualIdentity: item.visualIdentity ?? "" })) : [],
       locations: Array.isArray(p.locations) ? p.locations.map((item: any) => ({ ...item, visualIdentity: item.visualIdentity ?? "" })) : [],
       panels: Array.isArray(p.panels) ? p.panels.map((item: any) => ({ ...item, characterIds: item.characterIds ?? [] })) : [],
+      adaptations: Array.isArray(p.adaptations) ? p.adaptations : [],
       pages: Array.isArray(p.pages) ? p.pages.map((page: any) => ({
         ...page, gridColumns: page.gridColumns ?? 3, gridRows: page.gridRows ?? 5,
         placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number").map((item:any)=>({...item,overlays:Array.isArray(item.overlays)?item.overlays.map((overlay:any)=>({...overlay,tailEnabled:overlay.type==="speech"?(overlay.tailEnabled??true):overlay.tailEnabled})):[]})) : []
