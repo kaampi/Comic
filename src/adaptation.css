@@ -405,8 +405,6 @@
 .beat-edit-field textarea:hover,
 .beat-dialogue-input:hover,
 .beat-caption-input:hover{
-  padding:3px 4px;
-  margin:-3px -4px;
   border-color:rgb(221,208,190);
   border-radius:4px;
   background:rgb(251,246,238);
@@ -414,8 +412,7 @@
 .beat-edit-field textarea:focus,
 .beat-dialogue-input:focus,
 .beat-caption-input:focus{
-  padding:3px 4px;
-  margin:-3px -4px;
+  outline:none;
   border-color:rgb(208,106,72);
   border-radius:4px;
   background:rgb(255,252,246);
