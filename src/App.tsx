@@ -121,6 +121,13 @@ export function App() {
     const sourceText = activeProject.source.textSnapshot ?? "";
     if (!sourceText.trim()) return;
     const next = createAdaptation(activeProject.title + " – adaptation", sourceText);
+    if (activeAdaptation) {
+      const previousBeatByExcerpt = new Map(activeAdaptation.beats.map((beat) => [beat.sourceTextExcerpt.trim(), beat]));
+      next.beats = next.beats.map((beat) => {
+        const previous = previousBeatByExcerpt.get(beat.sourceTextExcerpt.trim());
+        return previous ? { ...beat, id: previous.id } : beat;
+      });
+    }
     next.beats = next.beats.map((beat) => {
       const haystack = beat.sourceTextExcerpt.toLocaleLowerCase();
       const characterIds = activeProject.characters
@@ -610,10 +617,15 @@ export function App() {
               {adaptationStep===1?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step1")}</h3></div></div>
                 <div className="beat-grid">{activeAdaptation.beats.map((beat) => {
-                  const matchingPlanIds = activeAdaptation.panelPlans.filter((plan) => plan.sourceBeatIds.includes(beat.id)).map((plan) => plan.id);
+                  const matchingPlans = activeAdaptation.panelPlans.filter((plan) => plan.sourceBeatIds.includes(beat.id));
+                  const matchingPlanIds = matchingPlans.map((plan) => plan.id);
+                  const adaptationSceneId = "scene-adaptation-" + activeAdaptation.id;
                   const linkedPanel = activeProject.panels.find((panel) =>
                     panel.sourceBeatIds?.includes(beat.id) ||
                     (panel.adaptationPanelPlanId ? matchingPlanIds.includes(panel.adaptationPanelPlanId) : false)
+                  ) ?? activeProject.panels.find((panel) =>
+                    panel.sceneId === adaptationSceneId &&
+                    matchingPlans.some((plan) => plan.order === panel.order)
                   );
                   const linkedPlacement = linkedPanel
                     ? activeProject.pages.flatMap((page) => page.placements.map((placement) => ({ page, placement }))).find(({placement}) => placement.panelId === linkedPanel.id && placement.image)
