@@ -291,3 +291,22 @@
   .swatch-manager-row select{grid-column:2 / -1}
   .adaptation-step-actions{width:100%;justify-content:flex-end;flex-wrap:wrap}
 }
+
+.panel-source-picker{
+  display:grid;
+  gap:7px;
+  padding:0 0 14px;
+  margin:0 0 14px;
+  border-bottom:1px solid var(--border);
+}
+.panel-source-picker>.eyebrow{
+  margin:0;
+}
+.panel-source-picker select{
+  width:100%;
+}
+.panel-source-picker .quiet{
+  margin:0;
+  font-size:.78rem;
+  line-height:1.45;
+}
