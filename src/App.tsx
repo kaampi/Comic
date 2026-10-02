@@ -24,7 +24,7 @@ export function App() {
   const [aiMode, setAiMode] = useState<AiMode>("prompt");
   const [locale, setLocale] = useState<Locale>(readLocale);
   const [theme, setTheme] = useState<Theme>(readTheme);
-  const [styleGenre, setStyleGenre] = useState("Alla");
+  const [styleGenre, setStyleGenre] = useState("__all__");
   const [styleQuery, setStyleQuery] = useState("");
   const [customStyles, setCustomStyles] = useState<IllustrationStyle[]>(readCustomStyles);
   const [styleDraft, setStyleDraft] = useState<StyleDraft | null>(null);
@@ -86,10 +86,11 @@ export function App() {
   };
   const closePanel = () => setPanel(null);
   const allStyles = [...BUILTIN_STYLES, ...customStyles];
+  const styleCategories = Array.from(new Set(allStyles.map((style) => style.genre))).sort((a,b) => a.localeCompare(b));
   const visibleStyles = allStyles.filter((style) => {
-    const genreMatch = styleGenre === "Alla" || style.genre === styleGenre;
+    const genreMatch = styleGenre === "__all__" || style.genre === styleGenre;
     const q = styleQuery.trim().toLowerCase();
-    return genreMatch && (!q || style.name.toLowerCase().includes(q) || style.promptText.toLowerCase().includes(q));
+    return genreMatch && (!q || style.name.toLowerCase().includes(q) || style.promptText.toLowerCase().includes(q) || style.genre.toLowerCase().includes(q));
   });
   const persistCustomStyles = (next: IllustrationStyle[]) => { setCustomStyles(next); saveCustomStyles(next); };
   const saveDraft = () => {
@@ -781,24 +782,42 @@ export function App() {
               <div className="style-editor-actions"><button className="text-button" type="button" onClick={closePanel}>{tr("cancel")}</button><button className="primary-button" type="button" disabled={!newTitle.trim() || (newSource==="storybook" && !storyBookImport)} onClick={newSource==="storybook" ? createFromStoryBook : createNewProject}>{newSource==="storybook" ? tr("importCreate") : tr("createProject")}</button></div>
             </div></> : null}
           {panel === "guide" ? <><p className="eyebrow">{tr("guide").toUpperCase()}</p><h1>ComicBook AI {tr("guide")}</h1><p className="lede">{tr("guidePlaceholder")}</p></> : null}
-          {panel === "styles" ? <><p className="eyebrow">{tr("system")}</p><h1>{tr("styleTemplates")}</h1><p className="lede">{tr("styleTemplatesLead")}</p>
-              <div className="style-tools"><input value={styleQuery} onChange={(e) => setStyleQuery(e.target.value)} placeholder={tr("searchStyle")} aria-label={tr("searchStyle")} />
-                <select value={styleGenre} onChange={(e) => setStyleGenre(e.target.value)} aria-label="Genre"><option>{tr("all")}</option>{STYLE_GENRES.map((genre) => <option key={genre}>{genre}</option>)}<option>Custom</option></select>
-                <button className="primary-button" type="button" onClick={() => setStyleDraft({ name: "", genre: "Custom", promptText: "" })}>{tr("newStyle")}</button></div>
-              {styleDraft ? <div className="style-editor">
-                <label>{tr("name")}<input value={styleDraft.name} onChange={(e) => setStyleDraft({ ...styleDraft, name: e.target.value })} /></label>
-                <label>{tr("genre")}<input value={styleDraft.genre} onChange={(e) => setStyleDraft({ ...styleDraft, genre: e.target.value })} /></label>
-                <label>{tr("prompt")}<textarea rows={6} value={styleDraft.promptText} onChange={(e) => setStyleDraft({ ...styleDraft, promptText: e.target.value })} /></label>
-                <div className="style-editor-actions"><button className="text-button" type="button" onClick={() => setStyleDraft(null)}>{tr("cancel")}</button><button className="primary-button" type="button" onClick={saveDraft}>{tr("save")}</button></div>
-              </div> : null}
-              <div className="style-grid">{visibleStyles.map((style) => {
-                const custom = style.id.startsWith("custom-");
-                return <article className="style-card" key={style.id}><span className="style-genre">{style.genre}{custom ? ` · ${tr("custom")}` : ` · ${tr("builtin")}`}</span><h2>{style.name}</h2><p>{style.promptText}</p>
-                  <div className="style-card-actions">{activeProject?<button className={activeProject.style.id===style.id?"primary-button compact-button":"text-button"} type="button" disabled={activeProject.style.id===style.id} onClick={() => applyStyleToActiveProject(style)}>{activeProject.style.id===style.id?tr("activeStyle"):tr("useForProject")}</button>:null}<button className="text-button" type="button" onClick={() => duplicateStyle(style)}>{tr("duplicate")}</button>
-                    {custom ? <><button className="text-button" type="button" onClick={() => setStyleDraft({ ...style })}>{tr("edit")}</button>
-                    <button className="text-button danger-button" type="button" onClick={() => persistCustomStyles(customStyles.filter((item) => item.id !== style.id))}>{tr("delete")}</button></> : null}</div>
-                </article>;
-              })}</div></> : null}
+          {panel === "styles" ? <div className="style-library">
+              <div className="style-library-head">
+                <div><p className="eyebrow">{tr("styleTemplates")}</p><p className="style-library-subtitle">{activeProject ? `${activeProject.title} · ${activeProject.style.name}` : tr("styleTemplatesLead")}</p></div>
+                <button className="text-button" type="button" onClick={() => {
+                  const source = activeProject?.style;
+                  setStyleDraft(source ? { name: source.name + " – kopia", genre: source.genre, promptText: source.promptText } : { name: "", genre: "Custom", promptText: "" });
+                }}>{tr("saveCurrentStyleAsNew")}</button>
+              </div>
+              <div className="style-library-search">
+                <input value={styleQuery} onChange={(e) => setStyleQuery(e.target.value)} placeholder={tr("searchStyle")} aria-label={tr("searchStyle")} autoFocus />
+              </div>
+              <div className="style-library-body">
+                <aside className="style-category-list" aria-label={tr("genre")}>
+                  <button type="button" className={styleGenre==="__all__"?"is-active":""} onClick={()=>setStyleGenre("__all__")}><span>{tr("all")}</span><span>{allStyles.length}</span></button>
+                  {styleCategories.map((genre)=><button key={genre} type="button" className={styleGenre===genre?"is-active":""} onClick={()=>setStyleGenre(genre)}><span>{genre}</span><span>{allStyles.filter((style)=>style.genre===genre).length}</span></button>)}
+                </aside>
+                <div className="style-library-results">
+                  {styleDraft ? <div className="style-editor">
+                    <label>{tr("name")}<input value={styleDraft.name} onChange={(e) => setStyleDraft({ ...styleDraft, name: e.target.value })} /></label>
+                    <label>{tr("genre")}<input value={styleDraft.genre} onChange={(e) => setStyleDraft({ ...styleDraft, genre: e.target.value })} /></label>
+                    <label>{tr("prompt")}<textarea rows={6} value={styleDraft.promptText} onChange={(e) => setStyleDraft({ ...styleDraft, promptText: e.target.value })} /></label>
+                    <div className="style-editor-actions"><button className="text-button" type="button" onClick={() => setStyleDraft(null)}>{tr("cancel")}</button><button className="primary-button" type="button" onClick={saveDraft}>{tr("save")}</button></div>
+                  </div> : null}
+                  <div className="style-grid">{visibleStyles.map((style) => {
+                    const custom = style.id.startsWith("custom-");
+                    const active = activeProject?.style.id===style.id;
+                    return <article className={active?"style-card is-active":"style-card"} key={style.id} onClick={()=>activeProject&&applyStyleToActiveProject(style)}>
+                      <div className="style-card-preview" aria-hidden="true"></div>
+                      <button className="style-card-edit" type="button" title={custom?tr("edit"):tr("duplicate")} onClick={(e)=>{e.stopPropagation(); custom?setStyleDraft({...style}):duplicateStyle(style);}}>✎</button>
+                      <div className="style-card-copy"><h2>{style.name}</h2><p>{style.promptText}</p><span className="style-genre">{style.genre}{active?` · ${tr("activeStyle")}`:""}</span></div>
+                    </article>;
+                  })}</div>
+                  {!visibleStyles.length?<p className="style-empty">{tr("noStylesFound")}</p>:null}
+                </div>
+              </div>
+            </div> : null}
           {panel === "settings" ? <><p className="eyebrow">{tr("system")}</p><h1>{tr("settings")}</h1><p className="lede">{tr("settingsLead")}</p>
             <div className="app-grid-setting"><h3>{tr("defaultGrid")}</h3><label>{tr("columns")} <input type="number" min="2" max="6" value={appPageGrid.gridColumns} onChange={(e)=>updateAppGrid(Number(e.target.value),appPageGrid.gridRows)} /></label><label>{tr("rows")} <input type="number" min="2" max="8" value={appPageGrid.gridRows} onChange={(e)=>updateAppGrid(appPageGrid.gridColumns,Number(e.target.value))} /></label></div><div className="ai-options" role="radiogroup" aria-label={tr("aiMode")}>{AI_MODES.map((mode) => (
               <button key={mode.id} type="button" className={aiMode === mode.id ? "ai-option is-selected" : "ai-option"} disabled={!mode.available}
