@@ -43,7 +43,15 @@ export const UI = {
     createFirstPage:"Skapa första sidan", dragLayout:"Dra över rutnätet för att skapa en serieruta. Dubbelklicka en ruta för textredigering.",
     dragSize:"Dra till önskad storlek och släpp.", usePreset:"Använd preset…", deleteImage:"Ta bort bild", deletePanel:"Ta bort panel",
     uploadImage:"Ladda upp bild…", changeImage:"Byt bild…", noCharactersYet:"Inga karaktärer ännu.", noLocationsYet:"Inga platser ännu.",
-    dropImage:"Släpp en bild här eller klicka för att välja från hårddisken", dropImageHint:"PNG, JPG eller WebP"
+    dropImage:"Släpp en bild här eller klicka för att välja från hårddisken", dropImageHint:"PNG, JPG eller WebP",
+    adaptation:"Adaptering", adaptationTitle:"Manus → serie", adaptationIntro:"Destillera källtexten till beats, styr rytmen per sekvens och bygg sedan paneler och bildprompter.",
+    step1:"1 · Beats", step2:"2 · Sekvenser", step3:"3 · Paneler", step4:"4 · Bildprompter", extractBeats:"Extrahera beats",
+    regenerateBeats:"Extrahera på nytt", noSourceForAdaptation:"Lägg först in ett kapitel eller annan källtext under Manus.", beatsFound:"beats hittade",
+    sequences:"sekvenser", compact:"Kompakt", normal:"Normal", cinematic:"Filmisk", panelsWanted:"paneler", createPanels:"Skapa paneler",
+    recreatePanels:"Skapa paneler på nytt", createPrompts:"Generera bildprompter", regeneratePrompts:"Generera prompter på nytt",
+    originalDialogue:"Originaldialog", adaptedCaption:"Adapterad berättartext", visualIdea:"Bildidé", sourceExcerptLabel:"Källutdrag",
+    panelProposal:"Panelförslag", imagePrompt:"Bildprompt", copy:"Kopiera", adaptationEmpty:"Börja med steg 1 för att analysera källtexten.",
+    sequencePacing:"Rytm", preferredPanels:"Önskat antal paneler", promptReady:"promptar genererade"
   },
   en: {
     project:"Project", newAlbum:"New comic album", noRecent:"No recent projects yet", showAll:"Show all projects",
@@ -87,7 +95,15 @@ export const UI = {
     createFirstPage:"Create first page", dragLayout:"Drag across the grid to create a comic panel. Double-click a panel to edit text.",
     dragSize:"Drag to the desired size and release.", usePreset:"Use preset…", deleteImage:"Remove image", deletePanel:"Remove panel",
     uploadImage:"Upload image…", changeImage:"Change image…", noCharactersYet:"No characters yet.", noLocationsYet:"No locations yet.",
-    dropImage:"Drop image here or click to pick from hard drive", dropImageHint:"PNG, JPG or WebP"
+    dropImage:"Drop image here or click to pick from hard drive", dropImageHint:"PNG, JPG or WebP",
+    adaptation:"Adaptation", adaptationTitle:"Manuscript → comic", adaptationIntro:"Distill the source into beats, control pacing per sequence, then build panels and image prompts.",
+    step1:"1 · Beats", step2:"2 · Sequences", step3:"3 · Panels", step4:"4 · Image prompts", extractBeats:"Extract beats",
+    regenerateBeats:"Extract again", noSourceForAdaptation:"First add a chapter or other source text under Manuscript.", beatsFound:"beats found",
+    sequences:"sequences", compact:"Compact", normal:"Normal", cinematic:"Cinematic", panelsWanted:"panels", createPanels:"Create panels",
+    recreatePanels:"Create panels again", createPrompts:"Generate image prompts", regeneratePrompts:"Generate prompts again",
+    originalDialogue:"Original dialogue", adaptedCaption:"Adapted caption", visualIdea:"Visual idea", sourceExcerptLabel:"Source excerpt",
+    panelProposal:"Panel proposal", imagePrompt:"Image prompt", copy:"Copy", adaptationEmpty:"Start with step 1 to analyse the source text.",
+    sequencePacing:"Pacing", preferredPanels:"Preferred panel count", promptReady:"prompts generated"
   },
   nb: {
     project:"Prosjekt", newAlbum:"Nytt tegneseriealbum", noRecent:"Ingen nylige prosjekter ennå", showAll:"Vis alle prosjekter",
@@ -131,7 +147,15 @@ export const UI = {
     createFirstPage:"Opprett første side", dragLayout:"Dra over rutenettet for å opprette en tegneserierute. Dobbeltklikk en rute for tekstredigering.",
     dragSize:"Dra til ønsket størrelse og slipp.", usePreset:"Bruk preset…", deleteImage:"Fjern bilde", deletePanel:"Fjern rute",
     uploadImage:"Last opp bilde…", changeImage:"Bytt bilde…", noCharactersYet:"Ingen karakterer ennå.", noLocationsYet:"Ingen steder ennå.",
-    dropImage:"Slipp et bilde her eller klikk for å velge fra harddisken", dropImageHint:"PNG, JPG eller WebP"
+    dropImage:"Slipp et bilde her eller klikk for å velge fra harddisken", dropImageHint:"PNG, JPG eller WebP",
+    adaptation:"Adaptering", adaptationTitle:"Manus → tegneserie", adaptationIntro:"Destiller kildeteksten til beats, styr rytmen per sekvens og bygg deretter ruter og bildeprompter.",
+    step1:"1 · Beats", step2:"2 · Sekvenser", step3:"3 · Ruter", step4:"4 · Bildeprompter", extractBeats:"Trekk ut beats",
+    regenerateBeats:"Trekk ut på nytt", noSourceForAdaptation:"Legg først inn et kapittel eller annen kildetekst under Manus.", beatsFound:"beats funnet",
+    sequences:"sekvenser", compact:"Kompakt", normal:"Normal", cinematic:"Filmisk", panelsWanted:"ruter", createPanels:"Opprett ruter",
+    recreatePanels:"Opprett ruter på nytt", createPrompts:"Generer bildeprompter", regeneratePrompts:"Generer prompter på nytt",
+    originalDialogue:"Originaldialog", adaptedCaption:"Adaptert fortellertekst", visualIdea:"Bildeidé", sourceExcerptLabel:"Kildeutdrag",
+    panelProposal:"Ruteforslag", imagePrompt:"Bildeprompt", copy:"Kopier", adaptationEmpty:"Start med steg 1 for å analysere kildeteksten.",
+    sequencePacing:"Rytme", preferredPanels:"Ønsket antall ruter", promptReady:"prompter generert"
   }
 } as const;
 
