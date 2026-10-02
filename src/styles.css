@@ -939,3 +939,191 @@ h2 { margin: 0; font-size: 1.05rem; }
 .page-planner{
   background:rgb(250,245,237);
 }
+
+/* StoryBook-like top chrome and navigation */
+.topbar{
+  min-height:44px;
+  padding:0 14px;
+  border-bottom:1px solid rgb(226,214,198);
+  background:rgb(250,245,237);
+  box-shadow:none;
+}
+.brand{
+  padding:0;
+  margin-right:10px;
+}
+.brand-logo{
+  height:22px;
+}
+.top-menu{
+  display:flex;
+  align-items:center;
+}
+.topbar>.text-button,
+.top-menu>.text-button,
+.top-chrome .text-button{
+  border:0;
+  background:transparent;
+  color:rgb(106,91,73);
+  padding:13px 10px;
+  border-radius:0;
+  font-family:var(--font-ui);
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.topbar>.text-button:hover,
+.top-menu>.text-button:hover,
+.top-chrome .text-button:hover{
+  color:rgb(42,34,24);
+  background:transparent;
+}
+.top-chrome{
+  margin-left:auto;
+  gap:8px;
+}
+.locale-select select{
+  min-height:28px;
+  border:0;
+  background:transparent;
+  padding:0 20px 0 6px;
+  color:rgb(88,73,58);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  box-shadow:none;
+}
+.theme-toggle{
+  min-width:auto;
+}
+
+/* Left project navigator: flatter, editorial and denser */
+.project-sidebar{
+  padding:18px 12px;
+  gap:13px;
+  border-right:1px solid rgb(226,214,198);
+}
+.project-sidebar-head{
+  padding:0 6px 12px;
+}
+.project-sidebar-head .eyebrow{
+  font-size:9px;
+  letter-spacing:.12em;
+  color:rgb(154,136,113);
+}
+.project-sidebar-head h2{
+  font-size:17px;
+  line-height:1.15;
+}
+.project-sidebar-head .quiet{
+  font-family:"Newsreader", Georgia, serif;
+  font-size:12px;
+  color:rgb(123,107,89);
+}
+.project-side-nav{
+  gap:0;
+}
+.project-side-nav button{
+  position:relative;
+  border-radius:0;
+  padding:8px 8px 8px 14px;
+  color:rgb(91,77,62);
+  font-size:13px;
+  font-weight:400;
+}
+.project-side-nav button:hover{
+  background:rgb(246,238,226);
+}
+.project-side-nav button.is-active{
+  background:rgb(239,230,216);
+  box-shadow:none;
+  color:rgb(42,34,24);
+}
+.project-side-nav button.is-active::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:7px;
+  bottom:7px;
+  width:2px;
+  background:rgb(197,95,62);
+}
+.adaptation-side-nav{
+  gap:0;
+  margin-top:-6px;
+  padding:4px 0 6px 13px;
+  border-left:0;
+}
+.adaptation-side-nav button{
+  grid-template-columns:18px 1fr;
+  gap:6px;
+  padding:6px 7px;
+  border-radius:0;
+  font-size:11px;
+  color:rgb(135,118,99);
+}
+.adaptation-side-nav button span{
+  width:auto;
+  height:auto;
+  border:0;
+  border-radius:0;
+  font-family:"Newsreader", Georgia, serif;
+  font-size:11px;
+  color:rgb(165,144,119);
+}
+.adaptation-side-nav button.is-active{
+  background:transparent;
+  color:rgb(42,34,24);
+}
+.adaptation-side-nav button.is-active span{
+  border:0;
+  color:rgb(197,95,62);
+}
+.project-sidebar-style{
+  font-size:11px;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  color:rgb(123,107,89);
+}
+
+/* General editorial spacing */
+.section-heading{
+  align-items:flex-end;
+}
+.section-heading .eyebrow{
+  margin-bottom:3px;
+  font-size:9px;
+  letter-spacing:.12em;
+  color:rgb(154,136,113);
+}
+.section-heading h2{
+  margin:0;
+}
+.quiet{
+  color:rgb(126,109,91);
+}
+.text-button{
+  border-radius:3px;
+}
+.primary-button{
+  border-radius:4px;
+  box-shadow:none;
+}
+
+/* Cards and work panels flatter, closer to StoryBook */
+.workspace-card,
+.entity-card,
+.panel-editor,
+.page-sidebar,
+.page-planner,
+.manuscript-main,
+.scene-sidebar{
+  box-shadow:none;
+  border-color:rgb(226,214,198);
+}
+.entity-card,
+.panel-editor{
+  border-radius:5px;
+}
