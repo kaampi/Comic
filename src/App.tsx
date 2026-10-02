@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AI_MODES, type AiMode } from "./ai";
 import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, readPageGridDefaults, savePageGridDefaults, type Locale, type Theme } from "./settings";
 import { BUILTIN_STYLES, STYLE_GENRES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
-import { createProject, readProjects, saveProjects, type ComicProject, type ProjectSource } from "./project";
+import { createProject, readProjects, saveProjects, type BubbleSwatch, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
 import { PAGE_PRESETS, overlaps } from "./pageTemplates";
 import { parseStoryBookExport, parseStoryBookCards, cardMatchesBook, type StoryBookImport, type StoryBookCardsImport } from "./storybookImport";
@@ -45,6 +45,7 @@ export function App() {
   const [contextPlacement, setContextPlacement] = useState<{pageId:string;placementId:string;x:number;y:number}|null>(null);
   const [panelEditor, setPanelEditor] = useState<{pageId:string;placementId:string}|null>(null);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
+  const [inspectSourcePanelId, setInspectSourcePanelId] = useState<string | null>(null);
   const [appPageGrid, setAppPageGrid] = useState(readPageGridDefaults);
   const [storyBookImport, setStoryBookImport] = useState<StoryBookImport | null>(null);
   const [storyBookCards, setStoryBookCards] = useState<StoryBookCardsImport | null>(null);
@@ -214,6 +215,74 @@ export function App() {
     try { await navigator.clipboard.writeText(text); } catch {}
   };
 
+  const materializeAdaptationPlan = () => {
+    if (!activeProject || !activeAdaptation?.panelPlans.length) return;
+    updateActiveProject((project) => {
+      const existingScene = project.scenes.find((scene) => scene.id === "scene-adaptation-" + activeAdaptation.id);
+      const sceneId = existingScene?.id ?? "scene-adaptation-" + activeAdaptation.id;
+      const existingByPlan = new Map(project.panels.filter((panel) => panel.adaptationPanelPlanId).map((panel) => [panel.adaptationPanelPlanId!, panel]));
+      const promptByPanel = new Map(activeAdaptation.imagePrompts.map((prompt) => [prompt.panelId, prompt]));
+      const materialized = activeAdaptation.panelPlans.map((plan, index) => {
+        const existing = existingByPlan.get(plan.id);
+        return {
+          id: existing?.id ?? "panel-" + crypto.randomUUID(),
+          sceneId,
+          order: index + 1,
+          action: plan.visualDescription,
+          dialogue: plan.dialogue.map((item) => item.text).join("\n"),
+          narration: plan.captions.map((item) => item.text).join("\n"),
+          imagePrompt: promptByPanel.get(plan.id)?.prompt ?? existing?.imagePrompt ?? "",
+          characterIds: plan.characterIds,
+          locationId: plan.locationId,
+          adaptationPanelPlanId: plan.id,
+          sourceBeatIds: plan.sourceBeatIds
+        };
+      });
+      const materializedIds = materialized.map((panel) => panel.id);
+      const otherPanels = project.panels.filter((panel) => panel.sceneId !== sceneId);
+      const scenes = existingScene
+        ? project.scenes.map((scene) => scene.id === sceneId ? { ...scene, title: activeAdaptation.name, sourceText: activeAdaptation.sourceText, panelIds: materializedIds } : scene)
+        : [...project.scenes, { id: sceneId, title: activeAdaptation.name, sourceText: activeAdaptation.sourceText, panelIds: materializedIds }];
+      return { ...project, panels: [...otherPanels, ...materialized], scenes };
+    });
+    setSelectedSceneId("scene-adaptation-" + activeAdaptation.id);
+    setProjectTab("scenes");
+  };
+  const copyPlannedText = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); } catch {}
+  };
+  const saveBubbleSwatch = (overlay: NonNullable<ComicProject["pages"][number]["placements"][number]["overlays"][number]>) => {
+    const name = window.prompt(tr("swatchName"));
+    if (!name?.trim()) return;
+    const swatch: BubbleSwatch = {
+      id: "swatch-" + crypto.randomUUID(),
+      name: name.trim(),
+      strokeColor: overlay.strokeColor ?? "#171411",
+      strokeWidth: overlay.strokeWidth ?? 2,
+      fillColor: overlay.fillColor ?? "#fffdf7",
+      fillOpacity: overlay.fillOpacity ?? 1
+    };
+    updateActiveProject((project) => ({ ...project, bubbleSwatches: [...(project.bubbleSwatches ?? []), swatch] }));
+  };
+  const applyBubbleSwatch = (pageId: string, placementId: string, overlayId: string, swatch: BubbleSwatch) => {
+    updateOverlay(pageId, placementId, overlayId, {
+      strokeColor: swatch.strokeColor,
+      strokeWidth: swatch.strokeWidth,
+      fillColor: swatch.fillColor,
+      fillOpacity: swatch.fillOpacity,
+      swatchId: swatch.id
+    });
+  };
+  const setSwatchCharacter = (swatchId: string, characterId: string) => {
+    updateActiveProject((project) => ({
+      ...project,
+      bubbleSwatches: (project.bubbleSwatches ?? []).map((swatch) => swatch.id === swatchId ? { ...swatch, characterId: characterId || undefined } : swatch)
+    }));
+  };
+  const deleteBubbleSwatch = (swatchId: string) => {
+    updateActiveProject((project) => ({ ...project, bubbleSwatches: (project.bubbleSwatches ?? []).filter((swatch) => swatch.id !== swatchId) }));
+  };
+
   const addScene = () => {
     if (!sceneTitle.trim()) return;
     updateActiveProject((project) => ({ ...project, scenes: [...project.scenes, { id: "scene-" + crypto.randomUUID(), title: sceneTitle.trim(), sourceText: "", panelIds: [] }] }));
@@ -289,7 +358,7 @@ export function App() {
     reader.readAsDataURL(file);
   };
   const removePlacementImage=(pageId:string,placementId:string)=>{setContextPlacement(null);updateActiveProject((project)=>({...project,pages:project.pages.map((page)=>page.id!==pageId?page:{...page,placements:page.placements.map((p)=>p.id===placementId?{...p,image:undefined}:p)})}));};
-  const addOverlay=(pageId:string,placementId:string,type:OverlayType)=>{
+  const addOverlay=(pageId:string,placementId:string,type:OverlayType,initialText?:string,speakerId?:string)=>{
     const newOverlayId="overlay-"+crypto.randomUUID();
     updateActiveProject((project)=>({...project,pages:project.pages.map((page)=>page.id!==pageId?page:{...page,placements:page.placements.map((placement)=>{
     if(placement.id!==placementId)return placement;
@@ -299,7 +368,8 @@ export function App() {
     const x=previous?Math.max(0,Math.min(100-width,previous.x+4)):10;
     const y=previous?Math.max(0,Math.min(100-height,previous.y+4)):10;
     const dx=x-(previous?.x??x),dy=y-(previous?.y??y);
-    const overlay={id:newOverlayId,type,text:type==="sfx"?"BOOM!":"Text",x,y,width,height,rotation:0,fontSize:previous?.fontSize??(type==="sfx"?28:8),fontFamily:previous?.fontFamily??(type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif"),fontWeight:previous?.fontWeight??(type==="sfx"?800:600),bubbleStyle:"organic" as const,tailEnabled:type==="speech"?(previous?.tailEnabled??true):false,tailCurve:previous?.tailCurve??0,tailRootWidth:previous?.tailRootWidth??50,roundness:previous?.roundness??(type==="caption"?18:60),tailX:type==="speech"?(previous?.tailX!==undefined?previous.tailX+dx:x+width*.65):undefined,tailY:type==="speech"?(previous?.tailY!==undefined?previous.tailY+dy:y+height*1.15):undefined};
+    const characterSwatch=speakerId?(project.bubbleSwatches??[]).find((swatch)=>swatch.characterId===speakerId):undefined;
+    const overlay={id:newOverlayId,type,text:initialText??(type==="sfx"?"BOOM!":"Text"),x,y,width,height,rotation:0,fontSize:previous?.fontSize??(type==="sfx"?28:8),fontFamily:previous?.fontFamily??(type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif"),fontWeight:previous?.fontWeight??(type==="sfx"?800:600),bubbleStyle:"organic" as const,tailEnabled:type==="speech"?(previous?.tailEnabled??true):false,tailCurve:previous?.tailCurve??0,tailRootWidth:previous?.tailRootWidth??50,roundness:previous?.roundness??(type==="caption"?18:60),strokeColor:characterSwatch?.strokeColor??previous?.strokeColor??"#171411",strokeWidth:characterSwatch?.strokeWidth??previous?.strokeWidth??2,fillColor:characterSwatch?.fillColor??previous?.fillColor??"#fffdf7",fillOpacity:characterSwatch?.fillOpacity??previous?.fillOpacity??1,swatchId:characterSwatch?.id??previous?.swatchId,tailX:type==="speech"?(previous?.tailX!==undefined?previous.tailX+dx:x+width*.65):undefined,tailY:type==="speech"?(previous?.tailY!==undefined?previous.tailY+dy:y+height*1.15):undefined};
     return {...placement,overlays:[...overlays,overlay]};
   })})}));
     setSelectedOverlayId(newOverlayId);
@@ -459,7 +529,7 @@ export function App() {
                 <div className="sequence-list">{activeAdaptation.sequences.map((sequence) => <article className="adaptation-card sequence-card" key={sequence.id}><div><span className="sequence-order">{sequence.order}</span><h4>{sequence.title}</h4><p className="quiet">{sequence.beatIds.length} beats</p></div><div className="sequence-controls"><label>{tr("sequencePacing")}<select value={sequence.density} onChange={(e)=>setSequenceDensity(sequence.id,e.target.value as PanelDensity)}><option value="compact">{tr("compact")}</option><option value="normal">{tr("normal")}</option><option value="cinematic">{tr("cinematic")}</option></select></label><label>{tr("preferredPanels")}<input type="number" min="1" max="12" value={sequence.preferredPanelCount} onChange={(e)=>setSequencePanelCount(sequence.id,Number(e.target.value)||1)}/></label></div></article>)}</div>
               </section>
               <section className="adaptation-step">
-                <div className="adaptation-step-head"><div><span className="adaptation-step-number">3</span><h3>{tr("step3")}</h3></div><button className="primary-button" type="button" onClick={runPanelization}>{activeAdaptation.panelPlans.length ? tr("recreatePanels") : tr("createPanels")}</button></div>
+                <div className="adaptation-step-head"><div><span className="adaptation-step-number">3</span><h3>{tr("step3")}</h3></div><div className="adaptation-step-actions"><button className="text-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={materializeAdaptationPlan}>{tr("usePlanOnPages")}</button><button className="primary-button" type="button" onClick={runPanelization}>{activeAdaptation.panelPlans.length ? tr("recreatePanels") : tr("createPanels")}</button></div></div>
                 {activeAdaptation.panelPlans.length ? <div className="panel-plan-grid">{activeAdaptation.panelPlans.map((panel) => <article className="adaptation-card panel-plan-card" key={panel.id}><div className="adaptation-card-meta"><span>{panel.order}</span><span>{panel.shotType}</span><span>{panel.sizeHint}</span></div><h4>{panel.title}</h4><label className="panel-plan-field">{tr("visualIdea")}<textarea rows={4} value={panel.visualDescription} onChange={(e)=>updatePanelPlan(panel.id,{visualDescription:e.target.value})}/></label>{panel.dialogue.map((dialogue)=><label className="panel-plan-field adaptation-snippet" key={dialogue.id}><strong>{tr("originalDialogue")}</strong><textarea rows={2} value={dialogue.text} onChange={(e)=>updatePanelDialogue(panel.id,dialogue.id,e.target.value)}/></label>)}{panel.captions.map((caption)=><label className="panel-plan-field adaptation-snippet" key={caption.id}><strong>{tr("adaptedCaption")}</strong><textarea rows={2} value={caption.text} onChange={(e)=>updatePanelCaption(panel.id,caption.id,e.target.value)}/></label>)}</article>)}</div> : <p className="quiet">{tr("adaptationEmpty")}</p>}
               </section>
               <section className="adaptation-step">
