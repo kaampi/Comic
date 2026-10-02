@@ -603,8 +603,10 @@ export function App() {
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step1")}</h3></div></div>
                 <div className="beat-grid">{activeAdaptation.beats.map((beat) => <article className="adaptation-card beat-card" key={beat.id}><div className="adaptation-card-meta"><span>{beat.order}</span><span>{beat.beatType}</span></div><input className="beat-title-input" value={beat.title} onChange={(e)=>updateBeat(beat.id,{title:e.target.value})}/>
                   <details className="beat-section"><summary>{tr("visualIdea")}</summary><textarea rows={6} value={beat.summary} onChange={(e)=>updateBeat(beat.id,{summary:e.target.value})}/></details>
-                  {beat.dialogueCandidates.length ? <details className="beat-section"><summary>{tr("originalDialogue")}</summary>{beat.dialogueCandidates.map((dialogue) => <textarea className="beat-dialogue-input" rows={2} key={dialogue.id} value={dialogue.text} onChange={(e)=>updateBeatDialogue(beat.id,dialogue.id,e.target.value)}/>)}</details> : null}
-                  {beat.captionCandidates.length ? <details className="beat-section"><summary>{tr("adaptedCaption")}</summary>{beat.captionCandidates.map((caption) => <textarea className="beat-caption-input" rows={2} key={caption.id} value={caption.text} onChange={(e)=>updateBeatCaption(beat.id,caption.id,e.target.value)}/>)}</details> : null}
+                  {(beat.dialogueCandidates.length || beat.captionCandidates.length) ? <details className="beat-section beat-text-section"><summary>{tr("beatText")}</summary>
+                    {beat.dialogueCandidates.length ? <div className="beat-text-group"><strong>{tr("originalDialogue")}</strong>{beat.dialogueCandidates.map((dialogue) => <textarea className="beat-dialogue-input" rows={2} key={dialogue.id} value={dialogue.text} onChange={(e)=>updateBeatDialogue(beat.id,dialogue.id,e.target.value)}/>)}</div> : null}
+                    {beat.captionCandidates.length ? <div className="beat-text-group"><strong>{tr("adaptedCaption")}</strong>{beat.captionCandidates.map((caption) => <textarea className="beat-caption-input" rows={2} key={caption.id} value={caption.text} onChange={(e)=>updateBeatCaption(beat.id,caption.id,e.target.value)}/>)}</div> : null}
+                  </details> : null}
                   <details className="beat-section source-section"><summary>{tr("sourceExcerptLabel")}</summary><p>{beat.sourceTextExcerpt}</p></details>
                 </article>)}</div>
               </section>:null}
