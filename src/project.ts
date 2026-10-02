@@ -7,7 +7,21 @@ export type ProjectSource = "blank" | "text" | "storybook";
 
 export type OverlayType = "speech" | "thought" | "caption" | "sfx";
 export type BubbleStyle = "organic" | "wide" | "tall" | "oval" | "rounded" | "shout" | "whisper";
-export type TextOverlay = { id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number; fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle; tailEnabled?: boolean; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number };
+export type TextOverlay = {
+  id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number;
+  fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle;
+  tailEnabled?: boolean; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number;
+  strokeColor?: string; strokeWidth?: number; fillColor?: string; fillOpacity?: number; swatchId?: string;
+};
+export type BubbleSwatch = {
+  id: string;
+  name: string;
+  strokeColor: string;
+  strokeWidth: number;
+  fillColor: string;
+  fillOpacity: number;
+  characterId?: string;
+};
 
 export type ComicProject = {
   format: 1;
@@ -22,9 +36,13 @@ export type ComicProject = {
   characters: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string; pronoun?: string; approximateAge?: number }>;
   locations: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string }>;
   scenes: Array<{ id: string; title: string; sourceText: string; panelIds: string[] }>;
-  panels: Array<{ id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string; characterIds: string[]; locationId?: string }>;
+  panels: Array<{
+    id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string;
+    characterIds: string[]; locationId?: string; adaptationPanelPlanId?: string; sourceBeatIds?: string[];
+  }>;
   pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number; overlays: TextOverlay[]; image?: { name: string; dataUrl: string } }> }>;
   adaptations: StoryAdaptation[];
+  bubbleSwatches: BubbleSwatch[];
 };
 
 const PROJECTS_KEY = "comicbook-ai.projects";
@@ -37,7 +55,7 @@ export function createProject(title: string, source: ProjectSource, style: Illus
   const now = new Date().toISOString();
   return {
     format: PROJECT_FORMAT, id: stableId("project"), title: title.trim(), createdAt: now, updatedAt: now,
-    source: { type: source, textSnapshot: "" }, style: { ...style }, pageDefaults: { gridColumns: 3, gridRows: 5 }, characters: [], locations: [], scenes: [], panels: [], pages: [], adaptations: []
+    source: { type: source, textSnapshot: "" }, style: { ...style }, pageDefaults: { gridColumns: 3, gridRows: 5 }, characters: [], locations: [], scenes: [], panels: [], pages: [], adaptations: [], bubbleSwatches: []
   };
 }
 
@@ -51,9 +69,17 @@ export function readProjects(): ComicProject[] {
       locations: Array.isArray(p.locations) ? p.locations.map((item: any) => ({ ...item, visualIdentity: item.visualIdentity ?? "" })) : [],
       panels: Array.isArray(p.panels) ? p.panels.map((item: any) => ({ ...item, characterIds: item.characterIds ?? [] })) : [],
       adaptations: Array.isArray(p.adaptations) ? p.adaptations : [],
+      bubbleSwatches: Array.isArray(p.bubbleSwatches) ? p.bubbleSwatches : [],
       pages: Array.isArray(p.pages) ? p.pages.map((page: any) => ({
         ...page, gridColumns: page.gridColumns ?? 3, gridRows: page.gridRows ?? 5,
-        placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number").map((item:any)=>({...item,overlays:Array.isArray(item.overlays)?item.overlays.map((overlay:any)=>({...overlay,tailEnabled:overlay.type==="speech"?(overlay.tailEnabled??true):overlay.tailEnabled})):[]})) : []
+        placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number").map((item:any)=>({...item,overlays:Array.isArray(item.overlays)?item.overlays.map((overlay:any)=>({
+          ...overlay,
+          tailEnabled:overlay.type==="speech"?(overlay.tailEnabled??true):overlay.tailEnabled,
+          strokeColor:overlay.strokeColor??"#171411",
+          strokeWidth:overlay.strokeWidth??2,
+          fillColor:overlay.fillColor??"#fffdf7",
+          fillOpacity:overlay.fillOpacity??1
+        })):[]})) : []
       })) : []
     })) : [];
   } catch { return []; }
