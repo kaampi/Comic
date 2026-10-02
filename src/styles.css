@@ -900,3 +900,42 @@ h2 { margin: 0; font-size: 1.05rem; }
     grid-template-columns:1fr;
   }
 }
+
+/* StoryBook editorial workspace typography */
+.section-heading h2,
+.scene-sidebar h2,
+.page-sidebar h2,
+.library-workspace>.section-heading h2{
+  font-family:"Newsreader", Georgia, serif;
+  font-style:normal;
+  font-weight:500;
+  font-size:27px;
+  line-height:normal;
+  letter-spacing:0;
+  color:rgb(42,34,24);
+}
+.project-sidebar-head h2{
+  font-family:"Newsreader", Georgia, serif;
+  font-weight:500;
+  color:rgb(42,34,24);
+}
+.project-side-nav button,
+.adaptation-side-nav button,
+.page-nav{
+  border-radius:3px;
+}
+.project-side-nav button.is-active,
+.adaptation-side-nav button.is-active,
+.page-nav.is-selected{
+  background:rgb(239,230,216);
+}
+.project-workspace{
+  background:rgb(246,239,229);
+}
+.project-sidebar,
+.page-sidebar,
+.scene-sidebar,
+.manuscript-main,
+.page-planner{
+  background:rgb(250,245,237);
+}
