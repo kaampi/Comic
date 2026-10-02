@@ -57,7 +57,8 @@ export const UI = {
     usePlanOnPages:"Godkänn plan till paneler", planTransferred:"Planen är överförd till paneler", bubbleAppearance:"BUBBELSTIL",
     strokeColor:"Linjefärg", strokeWidth:"Linjebredd", fillColor:"Fyllningsfärg", fillOpacity:"Transparens", savedSwatches:"Sparade swatches",
     saveSwatch:"Spara aktuell", swatchName:"Namn på swatch", characterSwatch:"Karaktär", noCharacter:"Ingen karaktär", deleteSwatch:"Ta bort swatch",
-    sourceUnavailable:"Den här panelen har ingen länkad manus-källa ännu.", sourceBeats:"Källbeats", closeSource:"Stäng källa"
+    sourceUnavailable:"Den här panelen har ingen länkad manus-källa ännu.", sourceBeats:"Källbeats", closeSource:"Stäng källa",
+    panelSource:"Panelkälla", choosePanelSource:"Välj panel från planen…", noPanelSource:"Ingen panel vald", panelSourceHelp:"Koppla denna sidruta till en planerad panel för att visa källa och planerad text."
   },
   en: {
     project:"Project", newAlbum:"New comic album", noRecent:"No recent projects yet", showAll:"Show all projects",
@@ -115,7 +116,8 @@ export const UI = {
     usePlanOnPages:"Approve plan for panels", planTransferred:"The plan has been transferred to panels", bubbleAppearance:"BUBBLE STYLE",
     strokeColor:"Stroke colour", strokeWidth:"Stroke width", fillColor:"Fill colour", fillOpacity:"Transparency", savedSwatches:"Saved swatches",
     saveSwatch:"Save current", swatchName:"Swatch name", characterSwatch:"Character", noCharacter:"No character", deleteSwatch:"Delete swatch",
-    sourceUnavailable:"This panel does not have a linked manuscript source yet.", sourceBeats:"Source beats", closeSource:"Close source"
+    sourceUnavailable:"This panel does not have a linked manuscript source yet.", sourceBeats:"Source beats", closeSource:"Close source",
+    panelSource:"Panel source", choosePanelSource:"Choose panel from plan…", noPanelSource:"No panel selected", panelSourceHelp:"Link this page slot to a planned panel to show its source and planned text."
   },
   nb: {
     project:"Prosjekt", newAlbum:"Nytt tegneseriealbum", noRecent:"Ingen nylige prosjekter ennå", showAll:"Vis alle prosjekter",
@@ -173,7 +175,8 @@ export const UI = {
     usePlanOnPages:"Godkjenn plan til ruter", planTransferred:"Planen er overført til ruter", bubbleAppearance:"BOBLESTIL",
     strokeColor:"Linjefarge", strokeWidth:"Linjebredde", fillColor:"Fyllfarge", fillOpacity:"Transparens", savedSwatches:"Lagrede swatches",
     saveSwatch:"Lagre gjeldende", swatchName:"Navn på swatch", characterSwatch:"Karakter", noCharacter:"Ingen karakter", deleteSwatch:"Slett swatch",
-    sourceUnavailable:"Denne ruten har ingen koblet manuskilde ennå.", sourceBeats:"Kildebeats", closeSource:"Lukk kilde"
+    sourceUnavailable:"Denne ruten har ingen koblet manuskilde ennå.", sourceBeats:"Kildebeats", closeSource:"Lukk kilde",
+    panelSource:"Panelkilde", choosePanelSource:"Velg rute fra planen…", noPanelSource:"Ingen rute valgt", panelSourceHelp:"Koble denne sideruten til en planlagt rute for å vise kilde og planlagt tekst."
   }
 } as const;
 
