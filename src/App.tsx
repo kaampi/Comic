@@ -484,7 +484,21 @@ export function App() {
       ));
       if (alreadyPlaced) return project;
     }
-    return { ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.map((item) => item.id === placementId ? { ...item, panelId: panelId || undefined } : item) } : page) };
+    const selectedPanel = panelId ? project.panels.find((panel) => panel.id === panelId) : undefined;
+    let sourceBeatIds = selectedPanel?.sourceBeatIds;
+    if ((!sourceBeatIds || !sourceBeatIds.length) && selectedPanel?.adaptationPanelPlanId) {
+      const plan = project.adaptations.flatMap((adaptation) => adaptation.panelPlans).find((item) => item.id === selectedPanel.adaptationPanelPlanId);
+      sourceBeatIds = plan?.sourceBeatIds;
+    }
+    if ((!sourceBeatIds || !sourceBeatIds.length) && selectedPanel) {
+      for (const adaptation of project.adaptations) {
+        const adaptationSceneId = "scene-adaptation-" + adaptation.id;
+        if (selectedPanel.sceneId !== adaptationSceneId) continue;
+        const plan = adaptation.panelPlans.find((item) => item.order === selectedPanel.order);
+        if (plan?.sourceBeatIds?.length) { sourceBeatIds = plan.sourceBeatIds; break; }
+      }
+    }
+    return { ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.map((item) => item.id === placementId ? { ...item, panelId: panelId || undefined, sourceBeatIds: panelId ? sourceBeatIds : undefined } : item) } : page) };
   });
   const removePlacement = (pageId:string, placementId:string) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.filter((item) => item.id !== placementId).map((item,index) => ({...item,readingOrder:index+1})) } : page) }));
   const moveReadingOrder = (pageId:string, placementId:string, direction:-1|1) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => { if(page.id!==pageId)return page; const ordered=[...page.placements].sort((x,y)=>x.readingOrder-y.readingOrder); const index=ordered.findIndex((item)=>item.id===placementId); const target=index+direction; if(index<0||target<0||target>=ordered.length)return page; [ordered[index],ordered[target]]=[ordered[target],ordered[index]]; return {...page,placements:ordered.map((item,i)=>({...item,readingOrder:i+1}))}; }) }));
@@ -617,6 +631,9 @@ export function App() {
               {adaptationStep===1?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step1")}</h3></div></div>
                 <div className="beat-grid">{activeAdaptation.beats.map((beat) => {
+                  const explicitPlacement = activeProject.pages
+                    .flatMap((page) => page.placements.map((placement) => ({ page, placement })))
+                    .find(({placement}) => placement.image && placement.sourceBeatIds?.includes(beat.id));
                   const matchingPlans = activeAdaptation.panelPlans.filter((plan) => plan.sourceBeatIds.includes(beat.id));
                   const matchingPlanIds = matchingPlans.map((plan) => plan.id);
                   const adaptationSceneId = "scene-adaptation-" + activeAdaptation.id;
@@ -627,9 +644,9 @@ export function App() {
                     panel.sceneId === adaptationSceneId &&
                     matchingPlans.some((plan) => plan.order === panel.order)
                   );
-                  const linkedPlacement = linkedPanel
+                  const linkedPlacement = explicitPlacement ?? (linkedPanel
                     ? activeProject.pages.flatMap((page) => page.placements.map((placement) => ({ page, placement }))).find(({placement}) => placement.panelId === linkedPanel.id && placement.image)
-                    : undefined;
+                    : undefined);
                   const thumbImage = linkedPlacement?.placement.image;
                   return <article className="adaptation-card beat-card" key={beat.id}>{thumbImage?<div className="beat-thumbnail"><img src={thumbImage.dataUrl} alt="" style={{objectFit:thumbImage.fit??"cover",objectPosition:`${50+(thumbImage.offsetX??0)/2}% ${50+(thumbImage.offsetY??0)/2}%`,transform:`scale(${thumbImage.zoom??1})`}} /></div>:null}<div className="beat-heading-line"><span>{beat.order}</span><span aria-hidden="true">–</span><input className="beat-title-input" maxLength={30} value={beat.title} onChange={(e)=>updateBeat(beat.id,{title:e.target.value.slice(0,30)})}/></div>
                   <details className="beat-section"><summary>{tr("visualIdea")}</summary><textarea rows={6} value={beat.summary} onChange={(e)=>updateBeat(beat.id,{summary:e.target.value})}/></details>
