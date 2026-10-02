@@ -106,6 +106,9 @@ export function App() {
     const next = projects.map((project) => project.id === activeProjectId ? { ...update(project), updatedAt: new Date().toISOString() } : project);
     setProjects(next); saveProjects(next);
   };
+  const applyStyleToActiveProject = (style: IllustrationStyle) => {
+    updateActiveProject((project) => ({ ...project, style: { ...style } }));
+  };
   const replaceActiveAdaptation = (adaptation: StoryAdaptation) => {
     updateActiveProject((project) => ({
       ...project,
@@ -791,7 +794,7 @@ export function App() {
               <div className="style-grid">{visibleStyles.map((style) => {
                 const custom = style.id.startsWith("custom-");
                 return <article className="style-card" key={style.id}><span className="style-genre">{style.genre}{custom ? ` · ${tr("custom")}` : ` · ${tr("builtin")}`}</span><h2>{style.name}</h2><p>{style.promptText}</p>
-                  <div className="style-card-actions"><button className="text-button" type="button" onClick={() => duplicateStyle(style)}>{tr("duplicate")}</button>
+                  <div className="style-card-actions">{activeProject?<button className={activeProject.style.id===style.id?"primary-button compact-button":"text-button"} type="button" disabled={activeProject.style.id===style.id} onClick={() => applyStyleToActiveProject(style)}>{activeProject.style.id===style.id?tr("activeStyle"):tr("useForProject")}</button>:null}<button className="text-button" type="button" onClick={() => duplicateStyle(style)}>{tr("duplicate")}</button>
                     {custom ? <><button className="text-button" type="button" onClick={() => setStyleDraft({ ...style })}>{tr("edit")}</button>
                     <button className="text-button danger-button" type="button" onClick={() => persistCustomStyles(customStyles.filter((item) => item.id !== style.id))}>{tr("delete")}</button></> : null}</div>
                 </article>;
