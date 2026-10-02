@@ -65,7 +65,8 @@
   color:#b9aa99;
   border:1px dashed rgba(185,170,153,.38);
   background:rgba(255,255,255,.015);
-  z-index:1;
+  z-index:4;
+  pointer-events:auto;
 }
 .panel-editor-dropzone:hover,
 .panel-editor-dropzone:focus-within{
