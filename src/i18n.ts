@@ -51,7 +51,13 @@ export const UI = {
     recreatePanels:"Skapa paneler på nytt", createPrompts:"Generera bildprompter", regeneratePrompts:"Generera prompter på nytt",
     originalDialogue:"Originaldialog", adaptedCaption:"Adapterad berättartext", visualIdea:"Bildidé", sourceExcerptLabel:"Källutdrag",
     panelProposal:"Panelförslag", imagePrompt:"Bildprompt", copy:"Kopiera", adaptationEmpty:"Börja med steg 1 för att analysera källtexten.",
-    sequencePacing:"Rytm", preferredPanels:"Önskat antal paneler", promptReady:"promptar genererade"
+    sequencePacing:"Rytm", preferredPanels:"Önskat antal paneler", promptReady:"promptar genererade",
+    inspectSource:"Inspect source", sourceForPanel:"KÄLLA FÖR PANEL", plannedText:"TEXT FRÅN MANUSPLAN", addSpeechFromPlan:"+ Pratbubbla",
+    addCaptionFromPlan:"+ Berättarruta", copyText:"Kopiera", original:"Original", adapted:"Adapterad", aiSuggested:"AI-förslag",
+    usePlanOnPages:"Godkänn plan till paneler", planTransferred:"Planen är överförd till paneler", bubbleAppearance:"BUBBELSTIL",
+    strokeColor:"Linjefärg", strokeWidth:"Linjebredd", fillColor:"Fyllningsfärg", fillOpacity:"Transparens", savedSwatches:"Sparade swatches",
+    saveSwatch:"Spara aktuell", swatchName:"Namn på swatch", characterSwatch:"Karaktär", noCharacter:"Ingen karaktär", deleteSwatch:"Ta bort swatch",
+    sourceUnavailable:"Den här panelen har ingen länkad manus-källa ännu.", sourceBeats:"Källbeats", closeSource:"Stäng källa"
   },
   en: {
     project:"Project", newAlbum:"New comic album", noRecent:"No recent projects yet", showAll:"Show all projects",
@@ -103,7 +109,13 @@ export const UI = {
     recreatePanels:"Create panels again", createPrompts:"Generate image prompts", regeneratePrompts:"Generate prompts again",
     originalDialogue:"Original dialogue", adaptedCaption:"Adapted caption", visualIdea:"Visual idea", sourceExcerptLabel:"Source excerpt",
     panelProposal:"Panel proposal", imagePrompt:"Image prompt", copy:"Copy", adaptationEmpty:"Start with step 1 to analyse the source text.",
-    sequencePacing:"Pacing", preferredPanels:"Preferred panel count", promptReady:"prompts generated"
+    sequencePacing:"Pacing", preferredPanels:"Preferred panel count", promptReady:"prompts generated",
+    inspectSource:"Inspect source", sourceForPanel:"PANEL SOURCE", plannedText:"TEXT FROM MANUSCRIPT PLAN", addSpeechFromPlan:"+ Speech bubble",
+    addCaptionFromPlan:"+ Caption box", copyText:"Copy", original:"Original", adapted:"Adapted", aiSuggested:"AI suggestion",
+    usePlanOnPages:"Approve plan for panels", planTransferred:"The plan has been transferred to panels", bubbleAppearance:"BUBBLE STYLE",
+    strokeColor:"Stroke colour", strokeWidth:"Stroke width", fillColor:"Fill colour", fillOpacity:"Transparency", savedSwatches:"Saved swatches",
+    saveSwatch:"Save current", swatchName:"Swatch name", characterSwatch:"Character", noCharacter:"No character", deleteSwatch:"Delete swatch",
+    sourceUnavailable:"This panel does not have a linked manuscript source yet.", sourceBeats:"Source beats", closeSource:"Close source"
   },
   nb: {
     project:"Prosjekt", newAlbum:"Nytt tegneseriealbum", noRecent:"Ingen nylige prosjekter ennå", showAll:"Vis alle prosjekter",
@@ -155,7 +167,13 @@ export const UI = {
     recreatePanels:"Opprett ruter på nytt", createPrompts:"Generer bildeprompter", regeneratePrompts:"Generer prompter på nytt",
     originalDialogue:"Originaldialog", adaptedCaption:"Adaptert fortellertekst", visualIdea:"Bildeidé", sourceExcerptLabel:"Kildeutdrag",
     panelProposal:"Ruteforslag", imagePrompt:"Bildeprompt", copy:"Kopier", adaptationEmpty:"Start med steg 1 for å analysere kildeteksten.",
-    sequencePacing:"Rytme", preferredPanels:"Ønsket antall ruter", promptReady:"prompter generert"
+    sequencePacing:"Rytme", preferredPanels:"Ønsket antall ruter", promptReady:"prompter generert",
+    inspectSource:"Inspect source", sourceForPanel:"KILDE FOR RUTE", plannedText:"TEKST FRA MANUSPLAN", addSpeechFromPlan:"+ Snakkeboble",
+    addCaptionFromPlan:"+ Fortellerrute", copyText:"Kopier", original:"Original", adapted:"Adaptert", aiSuggested:"AI-forslag",
+    usePlanOnPages:"Godkjenn plan til ruter", planTransferred:"Planen er overført til ruter", bubbleAppearance:"BOBLESTIL",
+    strokeColor:"Linjefarge", strokeWidth:"Linjebredde", fillColor:"Fyllfarge", fillOpacity:"Transparens", savedSwatches:"Lagrede swatches",
+    saveSwatch:"Lagre gjeldende", swatchName:"Navn på swatch", characterSwatch:"Karakter", noCharacter:"Ingen karakter", deleteSwatch:"Slett swatch",
+    sourceUnavailable:"Denne ruten har ingen koblet manuskilde ennå.", sourceBeats:"Kildebeats", closeSource:"Lukk kilde"
   }
 } as const;
 
