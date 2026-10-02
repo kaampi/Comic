@@ -241,3 +241,76 @@
   line-height:18px;
   color:rgb(107,95,82);
 }
+
+/* Equal-height beat cards and editable extraction fields */
+.beat-grid{
+  align-items:stretch;
+}
+.beat-card{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+}
+.beat-card details{
+  margin-top:auto;
+}
+.beat-title-input{
+  width:100%;
+  margin:.35rem 0 .55rem;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--text);
+  font:600 1rem/1.2 var(--font-ui);
+}
+.beat-title-input:focus{
+  outline:none;
+  box-shadow:inset 0 -1px 0 var(--ink);
+}
+.beat-edit-field{
+  display:grid;
+  gap:5px;
+  flex:1 0 auto;
+}
+.beat-edit-field>span{
+  font-family:var(--font-ui);
+  font-size:.68rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--text-faint);
+}
+.beat-edit-field textarea,
+.beat-dialogue-input,
+.beat-caption-input{
+  width:100%;
+  box-sizing:border-box;
+  resize:vertical;
+  border:1px solid transparent;
+  border-radius:4px;
+  background:transparent;
+  padding:4px 5px;
+  font-family:"Newsreader", Georgia, serif;
+  font-style:normal;
+  font-weight:400;
+  font-size:13px;
+  line-height:18px;
+  color:rgb(107,95,82);
+}
+.beat-edit-field textarea:hover,
+.beat-dialogue-input:hover,
+.beat-caption-input:hover{
+  border-color:var(--border);
+  background:var(--raised);
+}
+.beat-edit-field textarea:focus,
+.beat-dialogue-input:focus,
+.beat-caption-input:focus{
+  outline:none;
+  border-color:var(--ink);
+  background:var(--paper);
+}
+.beat-dialogue-input,
+.beat-caption-input{
+  min-height:42px;
+}
