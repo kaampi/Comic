@@ -500,6 +500,21 @@ export function App() {
     }
     return { ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.map((item) => item.id === placementId ? { ...item, panelId: panelId || undefined, sourceBeatIds: panelId ? sourceBeatIds : undefined } : item) } : page) };
   });
+  const linkPlacementToPanelPlan = (pageId:string, placementId:string, planId:string) => updateActiveProject((project) => {
+    const adaptation = project.adaptations.find((item) => item.panelPlans.some((plan) => plan.id === planId));
+    const plan = adaptation?.panelPlans.find((item) => item.id === planId);
+    return {
+      ...project,
+      pages: project.pages.map((page) => page.id === pageId ? {
+        ...page,
+        placements: page.placements.map((placement) => placement.id === placementId ? {
+          ...placement,
+          adaptationPanelPlanId: planId || undefined,
+          sourceBeatIds: plan?.sourceBeatIds ?? placement.sourceBeatIds
+        } : placement)
+      } : page)
+    };
+  });
   const removePlacement = (pageId:string, placementId:string) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.filter((item) => item.id !== placementId).map((item,index) => ({...item,readingOrder:index+1})) } : page) }));
   const moveReadingOrder = (pageId:string, placementId:string, direction:-1|1) => updateActiveProject((project) => ({ ...project, pages: project.pages.map((page) => { if(page.id!==pageId)return page; const ordered=[...page.placements].sort((x,y)=>x.readingOrder-y.readingOrder); const index=ordered.findIndex((item)=>item.id===placementId); const target=index+direction; if(index<0||target<0||target>=ordered.length)return page; [ordered[index],ordered[target]]=[ordered[target],ordered[index]]; return {...page,placements:ordered.map((item,i)=>({...item,readingOrder:i+1}))}; }) }));
   const moveScene = (sceneId:string, direction:-1|1) => updateActiveProject((project) => { const scenes=[...project.scenes]; const index=scenes.findIndex((item)=>item.id===sceneId); const target=index+direction; if(index<0||target<0||target>=scenes.length)return project; [scenes[index],scenes[target]]=[scenes[target],scenes[index]]; return {...project,scenes}; });
@@ -663,10 +678,13 @@ export function App() {
                 <div className="sequence-list">{activeAdaptation.sequences.map((sequence) => <article className="adaptation-card sequence-card" key={sequence.id}><div><span className="sequence-order">{sequence.order}</span><h4>{sequence.title}</h4><p className="quiet">{sequence.beatIds.length} beats</p></div><div className="sequence-controls"><label>{tr("sequencePacing")}<select value={sequence.density} onChange={(e)=>setSequenceDensity(sequence.id,e.target.value as PanelDensity)}><option value="compact">{tr("compact")}</option><option value="normal">{tr("normal")}</option><option value="cinematic">{tr("cinematic")}</option></select></label><label>{tr("preferredPanels")}<input type="number" min="1" max="12" value={sequence.preferredPanelCount} onChange={(e)=>setSequencePanelCount(sequence.id,Number(e.target.value)||1)}/></label></div></article>)}</div>
               </section>:null}
               {adaptationStep===3?<section className="adaptation-step">
-                <div className="adaptation-step-head"><div><span className="adaptation-step-number">3</span><h3>{tr("step3")}</h3></div><div className="adaptation-step-actions"><button className="text-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={materializeAdaptationPlan}>{tr("usePlanOnPages")}</button><button className="primary-button" type="button" onClick={runPanelization}>{activeAdaptation.panelPlans.length ? tr("recreatePanels") : tr("createPanels")}</button></div></div>
+                <div className="adaptation-step-head"><div><span className="adaptation-step-number">3</span><h3>{tr("step3")}</h3></div><div className="adaptation-step-actions"><button className="text-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={materializeAdaptationPlan}>{tr("createPanelSources")}</button><button className="primary-button" type="button" onClick={runPanelization}>{activeAdaptation.panelPlans.length ? tr("recreatePanels") : tr("createPanels")}</button></div></div>
                 {activeAdaptation.panelPlans.length ? <div className="panel-plan-grid">{activeAdaptation.panelPlans.map((panel) => {
                   const materializedPanel = activeProject.panels.find((item)=>item.adaptationPanelPlanId===panel.id);
-                  const placement = materializedPanel ? activeProject.pages.flatMap((page)=>page.placements.map((placement)=>({page,placement}))).find(({placement})=>placement.panelId===materializedPanel.id) : undefined;
+                  const placement = activeProject.pages.flatMap((page)=>page.placements.map((placement)=>({page,placement}))).find(({placement}) =>
+                    placement.adaptationPanelPlanId===panel.id ||
+                    (materializedPanel ? placement.panelId===materializedPanel.id : false)
+                  );
                   const image = placement?.placement.image;
                   const characters = panel.characterIds.map((id)=>activeProject.characters.find((character)=>character.id===id)).filter(Boolean);
                   const location = panel.locationId ? activeProject.locations.find((item)=>item.id===panel.locationId) : undefined;
@@ -680,7 +698,9 @@ export function App() {
                     {panel.captions.length?<div className="storyboard-text"><strong>{tr("adaptedCaption")}</strong>{panel.captions.map((caption)=><span key={caption.id}>{caption.text}</span>)}</div>:null}
                     <details className="storyboard-direction"><summary>{tr("imageDirection")}</summary><textarea rows={4} value={panel.visualDescription} onChange={(e)=>updatePanelPlan(panel.id,{visualDescription:e.target.value})}/></details>
                     <details className="storyboard-source"><summary>{tr("sourceBeats")}</summary>{panel.sourceBeatIds.map((id)=>{const beat=activeAdaptation.beats.find((item)=>item.id===id);return beat?<p key={id}>{beat.order} – {beat.title}</p>:null})}</details>
+                    <div className="storyboard-status">{placement?<span>{tr("onPage")}{placement.page.number ? ` · ${tr("page")} ${placement.page.number}`:""}</span>:<span>{tr("plannedOnly")}</span>}{image?<span>{tr("imageAdded")}</span>:null}</div>
                   </article>})}</div> : <p className="quiet">{tr("adaptationEmpty")}</p>}
+                {activeProject.pages.some((page)=>page.placements.some((placement)=>placement.image && !placement.adaptationPanelPlanId && !activeProject.panels.find((panel)=>panel.id===placement.panelId)?.adaptationPanelPlanId)) ? <div className="unlinked-page-panels"><h4>{tr("unlinkedPagePanels")}</h4><p className="quiet">{tr("unlinkedPagePanelsHelp")}</p><div className="panel-plan-grid">{activeProject.pages.flatMap((page)=>page.placements.map((placement)=>({page,placement}))).filter(({placement})=>placement.image && !placement.adaptationPanelPlanId && !activeProject.panels.find((panel)=>panel.id===placement.panelId)?.adaptationPanelPlanId).map(({page,placement})=><article className="adaptation-card storyboard-card unlinked-storyboard-card" key={placement.id}><div className="storyboard-thumb"><img src={placement.image!.dataUrl} alt="" style={{objectFit:placement.image!.fit??"cover",objectPosition:`${50+(placement.image!.offsetX??0)/2}% ${50+(placement.image!.offsetY??0)/2}%`,transform:`scale(${placement.image!.zoom??1})`}} /></div><div className="adaptation-card-meta"><span>{tr("page")} {page.number}</span><span>{tr("row")} {placement.readingOrder}</span><span>{tr("unlinked")}</span></div><label className="panel-plan-field">{tr("linkToSuggestion")}<select value="" onChange={(e)=>{if(e.target.value)linkPlacementToPanelPlan(page.id,placement.id,e.target.value)}}><option value="">{tr("chooseSuggestion")}</option>{activeAdaptation.panelPlans.map((plan)=><option key={plan.id} value={plan.id}>{plan.order} · {plan.title}</option>)}</select></label></article>)}</div></div> : null}
               </section>:null}
               {adaptationStep===4?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">4</span><h3>{tr("step4")}</h3></div><button className="primary-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={runPromptGeneration}>{activeAdaptation.imagePrompts.length ? tr("regeneratePrompts") : tr("createPrompts")}</button></div>
