@@ -9,10 +9,14 @@ import { parseStoryBookExport, parseStoryBookCards, cardMatchesBook, type StoryB
 import { SvgOverlay } from "./SvgOverlay";
 import type { OverlayType } from "./project";
 import { uiText, type UiKey } from "./i18n";
+import { createAdaptation } from "./adaptation/extract";
+import { panelize } from "./adaptation/panelize";
+import { generateImagePrompts } from "./adaptation/prompts";
+import type { PanelDensity, StoryAdaptation } from "./adaptation/types";
 
 type Panel = "styles" | "guide" | "settings" | "new-project" | null;
 type StyleDraft = { id?: string; name: string; genre: string; promptText: string };
-type ProjectTab = "manus" | "characters" | "locations" | "scenes" | "pages";
+type ProjectTab = "manus" | "adaptation" | "characters" | "locations" | "scenes" | "pages";
 
 export function App() {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
@@ -87,11 +91,93 @@ export function App() {
   };
   const duplicateStyle = (style: IllustrationStyle) => setStyleDraft({ name: style.name + " – kopia", genre: style.genre, promptText: style.promptText });
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
+  const activeAdaptation = activeProject?.adaptations?.[0] ?? null;
   const updateActiveProject = (update: (project: ComicProject) => ComicProject) => {
     if (!activeProjectId) return;
     const next = projects.map((project) => project.id === activeProjectId ? { ...update(project), updatedAt: new Date().toISOString() } : project);
     setProjects(next); saveProjects(next);
   };
+  const replaceActiveAdaptation = (adaptation: StoryAdaptation) => {
+    updateActiveProject((project) => ({
+      ...project,
+      adaptations: [adaptation, ...(project.adaptations ?? []).filter((item) => item.id !== adaptation.id)]
+    }));
+  };
+  const updateAdaptation = (update: (adaptation: StoryAdaptation) => StoryAdaptation) => {
+    if (!activeAdaptation) return;
+    replaceActiveAdaptation({ ...update(activeAdaptation), updatedAt: new Date().toISOString() });
+  };
+  const runBeatExtraction = () => {
+    if (!activeProject) return;
+    const sourceText = activeProject.source.textSnapshot ?? "";
+    if (!sourceText.trim()) return;
+    const next = createAdaptation(activeProject.title + " – adaptation", sourceText);
+    if (activeAdaptation) {
+      next.id = activeAdaptation.id;
+      next.name = activeAdaptation.name;
+      next.createdAt = activeAdaptation.createdAt;
+    }
+    replaceActiveAdaptation(next);
+  };
+  const setSequenceDensity = (sequenceId: string, density: PanelDensity) => {
+    updateAdaptation((adaptation) => ({
+      ...adaptation,
+      status: "sequenced",
+      panelPlans: [],
+      imagePrompts: [],
+      sequences: adaptation.sequences.map((sequence) => {
+        if (sequence.id !== sequenceId) return sequence;
+        const count = sequence.beatIds.length;
+        const preferredPanelCount = density === "compact"
+          ? Math.max(1, Math.ceil(count * 0.7))
+          : density === "cinematic"
+            ? Math.max(count + 1, Math.round(count * 1.6))
+            : Math.max(1, count);
+        return {
+          ...sequence,
+          density,
+          preferredPanelCount,
+          allowReactionShots: density === "cinematic",
+          allowAtmospherePanels: density !== "compact",
+          allowSilentPanels: density === "cinematic"
+        };
+      })
+    }));
+  };
+  const setSequencePanelCount = (sequenceId: string, preferredPanelCount: number) => {
+    updateAdaptation((adaptation) => ({
+      ...adaptation,
+      status: "sequenced",
+      panelPlans: [],
+      imagePrompts: [],
+      sequences: adaptation.sequences.map((sequence) => sequence.id === sequenceId
+        ? { ...sequence, preferredPanelCount: Math.max(1, Math.min(12, preferredPanelCount)) }
+        : sequence)
+    }));
+  };
+  const runPanelization = () => {
+    if (!activeAdaptation) return;
+    updateAdaptation((adaptation) => ({
+      ...adaptation,
+      status: "panels-generated",
+      panelPlans: panelize(adaptation.beats, adaptation.sequences),
+      imagePrompts: []
+    }));
+  };
+  const runPromptGeneration = () => {
+    if (!activeProject || !activeAdaptation?.panelPlans.length) return;
+    const prompts = generateImagePrompts(activeProject, activeAdaptation.panelPlans, "full");
+    updateAdaptation((adaptation) => ({
+      ...adaptation,
+      status: "prompts-generated",
+      imagePrompts: prompts,
+      panelPlans: adaptation.panelPlans.map((panel, index) => ({ ...panel, imagePromptId: prompts[index]?.id }))
+    }));
+  };
+  const copyAdaptationPrompt = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); } catch {}
+  };
+
   const addScene = () => {
     if (!sceneTitle.trim()) return;
     updateActiveProject((project) => ({ ...project, scenes: [...project.scenes, { id: "scene-" + crypto.randomUUID(), title: sceneTitle.trim(), sourceText: "", panelIds: [] }] }));
@@ -291,7 +377,7 @@ export function App() {
       {activeProject ? <nav className="project-topbar" aria-label={tr("activeProject")}>
         <button className="project-title-button" type="button" onClick={() => setProjectTab("manus")}>{activeProject.title}</button>
         <span className="project-topbar-spacer" />
-        <button type="button" onClick={() => setProjectTab("manus")}>{tr("manuscript")}</button>
+        <button type="button" onClick={() => setProjectTab("manus")}>{tr("manuscript")}</button><button type="button" onClick={() => setProjectTab("adaptation")}>{tr("adaptation")}</button>
         <button type="button" onClick={() => setProjectTab("characters")}>{tr("characters")}</button>
         <button type="button" onClick={() => setProjectTab("locations")}>{tr("locations")}</button>
         <button type="button" onClick={() => setProjectTab("scenes")}>{tr("panels")}</button>
@@ -304,7 +390,7 @@ export function App() {
           <p className="eyebrow">{tr("comicProject")}</p><h1>{activeProject.title}</h1>
           <p className="lede">{tr("style")}: {activeProject.style.name}</p>
           <nav className="project-tabs" aria-label={tr("projectContent")}>
-            {([["manus",tr("manuscript")],["characters",tr("characters")],["locations",tr("locations")],["scenes",tr("scenes")],["pages",tr("pages")]] as const).map(([id,label]) => <button key={id} className={projectTab === id ? "is-active" : ""} onClick={() => setProjectTab(id)}>{label}</button>)}
+            {([["manus",tr("manuscript")],["adaptation",tr("adaptation")],["characters",tr("characters")],["locations",tr("locations")],["scenes",tr("scenes")],["pages",tr("pages")]] as const).map(([id,label]) => <button key={id} className={projectTab === id ? "is-active" : ""} onClick={() => setProjectTab(id)}>{label}</button>)}
           </nav>
           {projectTab === "manus" ? <section className="manuscript-workspace">
             <div className="manuscript-main">
@@ -316,6 +402,35 @@ export function App() {
               <div className="scene-add"><input value={sceneTitle} onChange={(e) => setSceneTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addScene()} placeholder={tr("sceneName")} /><button className="primary-button" type="button" disabled={!sceneTitle.trim()} onClick={addScene}>{tr("add")}</button></div>
               <div className="scene-list">{activeProject.scenes.length ? activeProject.scenes.map((scene, index) => <button className="scene-row scene-button" key={scene.id} onClick={() => { setSelectedSceneId(scene.id); setProjectTab("scenes"); }}><span>{index + 1}</span><strong>{scene.title}</strong></button>) : <p className="quiet">{tr("noScenes")}</p>}</div>
             </aside>
+          </section> : null}
+          {projectTab === "adaptation" ? <section className="adaptation-workspace">
+            <div className="section-heading adaptation-heading"><div><p className="eyebrow">{tr("adaptation").toUpperCase()}</p><h2>{tr("adaptationTitle")}</h2><p className="quiet">{tr("adaptationIntro")}</p></div>
+              <button className="primary-button" type="button" disabled={!(activeProject.source.textSnapshot ?? "").trim()} onClick={runBeatExtraction}>{activeAdaptation ? tr("regenerateBeats") : tr("extractBeats")}</button>
+            </div>
+            {!(activeProject.source.textSnapshot ?? "").trim() ? <div className="adaptation-empty">{tr("noSourceForAdaptation")}</div> : null}
+            {activeAdaptation ? <>
+              <div className="adaptation-summary"><span>{activeAdaptation.beats.length} {tr("beatsFound")}</span><span>{activeAdaptation.sequences.length} {tr("sequences")}</span><span>{activeAdaptation.panelPlans.length} {tr("panelsWanted")}</span><span>{activeAdaptation.imagePrompts.length} {tr("promptReady")}</span></div>
+              <section className="adaptation-step">
+                <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step1")}</h3></div></div>
+                <div className="beat-grid">{activeAdaptation.beats.map((beat) => <article className="adaptation-card beat-card" key={beat.id}><div className="adaptation-card-meta"><span>{beat.order}</span><span>{beat.beatType}</span></div><h4>{beat.title}</h4><p>{beat.summary}</p>
+                  {beat.dialogueCandidates.length ? <div className="adaptation-snippet"><strong>{tr("originalDialogue")}</strong>{beat.dialogueCandidates.map((dialogue) => <q key={dialogue.id}>{dialogue.text}</q>)}</div> : null}
+                  {beat.captionCandidates.length ? <div className="adaptation-snippet"><strong>{tr("adaptedCaption")}</strong>{beat.captionCandidates.map((caption) => <span key={caption.id}>{caption.text}</span>)}</div> : null}
+                  <details><summary>{tr("sourceExcerptLabel")}</summary><p>{beat.sourceTextExcerpt}</p></details>
+                </article>)}</div>
+              </section>
+              <section className="adaptation-step">
+                <div className="adaptation-step-head"><div><span className="adaptation-step-number">2</span><h3>{tr("step2")}</h3></div></div>
+                <div className="sequence-list">{activeAdaptation.sequences.map((sequence) => <article className="adaptation-card sequence-card" key={sequence.id}><div><span className="sequence-order">{sequence.order}</span><h4>{sequence.title}</h4><p className="quiet">{sequence.beatIds.length} beats</p></div><div className="sequence-controls"><label>{tr("sequencePacing")}<select value={sequence.density} onChange={(e)=>setSequenceDensity(sequence.id,e.target.value as PanelDensity)}><option value="compact">{tr("compact")}</option><option value="normal">{tr("normal")}</option><option value="cinematic">{tr("cinematic")}</option></select></label><label>{tr("preferredPanels")}<input type="number" min="1" max="12" value={sequence.preferredPanelCount} onChange={(e)=>setSequencePanelCount(sequence.id,Number(e.target.value)||1)}/></label></div></article>)}</div>
+              </section>
+              <section className="adaptation-step">
+                <div className="adaptation-step-head"><div><span className="adaptation-step-number">3</span><h3>{tr("step3")}</h3></div><button className="primary-button" type="button" onClick={runPanelization}>{activeAdaptation.panelPlans.length ? tr("recreatePanels") : tr("createPanels")}</button></div>
+                {activeAdaptation.panelPlans.length ? <div className="panel-plan-grid">{activeAdaptation.panelPlans.map((panel) => <article className="adaptation-card panel-plan-card" key={panel.id}><div className="adaptation-card-meta"><span>{panel.order}</span><span>{panel.shotType}</span><span>{panel.sizeHint}</span></div><h4>{panel.title}</h4><p>{panel.visualDescription}</p>{panel.dialogue.map((dialogue)=><div className="adaptation-snippet" key={dialogue.id}><strong>{tr("originalDialogue")}</strong><q>{dialogue.text}</q></div>)}{panel.captions.map((caption)=><div className="adaptation-snippet" key={caption.id}><strong>{tr("adaptedCaption")}</strong><span>{caption.text}</span></div>)}</article>)}</div> : <p className="quiet">{tr("adaptationEmpty")}</p>}
+              </section>
+              <section className="adaptation-step">
+                <div className="adaptation-step-head"><div><span className="adaptation-step-number">4</span><h3>{tr("step4")}</h3></div><button className="primary-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={runPromptGeneration}>{activeAdaptation.imagePrompts.length ? tr("regeneratePrompts") : tr("createPrompts")}</button></div>
+                {activeAdaptation.imagePrompts.length ? <div className="prompt-plan-list">{activeAdaptation.imagePrompts.map((prompt,index) => <article className="adaptation-card prompt-plan-card" key={prompt.id}><div className="prompt-plan-head"><strong>{tr("imagePrompt")} {index+1}</strong><button className="text-button" type="button" onClick={()=>copyAdaptationPrompt(prompt.prompt)}>{tr("copy")}</button></div><p>{prompt.prompt}</p></article>)}</div> : null}
+              </section>
+            </> : <div className="adaptation-empty">{tr("adaptationEmpty")}</div>}
           </section> : null}
           {projectTab === "scenes" ? <section className="scene-workspace">
             <aside className="scene-navigator"><div className="section-heading"><div><p className="eyebrow">{tr("scenes")}</p><h2>{tr("sceneList")}</h2></div></div>
