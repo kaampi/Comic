@@ -148,6 +148,38 @@ export function App() {
     replaceActiveAdaptation(next);
     setAdaptationStep(1);
   };
+  const updateBeat = (beatId: string, patch: Partial<StoryAdaptation["beats"][number]>) => {
+    updateAdaptation((adaptation) => ({
+      ...adaptation,
+      status: "beats-generated",
+      panelPlans: [],
+      imagePrompts: [],
+      beats: adaptation.beats.map((beat) => beat.id === beatId ? { ...beat, ...patch } : beat)
+    }));
+  };
+  const updateBeatDialogue = (beatId: string, dialogueId: string, text: string) => {
+    updateAdaptation((adaptation) => ({
+      ...adaptation,
+      status: "beats-generated",
+      panelPlans: [],
+      imagePrompts: [],
+      beats: adaptation.beats.map((beat) => beat.id === beatId
+        ? { ...beat, dialogueCandidates: beat.dialogueCandidates.map((item) => item.id === dialogueId ? { ...item, text } : item) }
+        : beat)
+    }));
+  };
+  const updateBeatCaption = (beatId: string, captionId: string, text: string) => {
+    updateAdaptation((adaptation) => ({
+      ...adaptation,
+      status: "beats-generated",
+      panelPlans: [],
+      imagePrompts: [],
+      beats: adaptation.beats.map((beat) => beat.id === beatId
+        ? { ...beat, captionCandidates: beat.captionCandidates.map((item) => item.id === captionId ? { ...item, text } : item) }
+        : beat)
+    }));
+  };
+
   const setSequenceDensity = (sequenceId: string, density: PanelDensity) => {
     updateAdaptation((adaptation) => ({
       ...adaptation,
@@ -557,9 +589,9 @@ export function App() {
               <div className="adaptation-summary"><span>{activeAdaptation.beats.length} {tr("beatsFound")}</span><span>{activeAdaptation.sequences.length} {tr("sequences")}</span><span>{activeAdaptation.panelPlans.length} {tr("panelsWanted")}</span><span>{activeAdaptation.imagePrompts.length} {tr("promptReady")}</span></div>
               {adaptationStep===1?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step1")}</h3></div></div>
-                <div className="beat-grid">{activeAdaptation.beats.map((beat) => <article className="adaptation-card beat-card" key={beat.id}><div className="adaptation-card-meta"><span>{beat.order}</span><span>{beat.beatType}</span></div><h4>{beat.title}</h4><p>{beat.summary}</p>
-                  {beat.dialogueCandidates.length ? <div className="adaptation-snippet"><strong>{tr("originalDialogue")}</strong>{beat.dialogueCandidates.map((dialogue) => <q key={dialogue.id}>{dialogue.text}</q>)}</div> : null}
-                  {beat.captionCandidates.length ? <div className="adaptation-snippet"><strong>{tr("adaptedCaption")}</strong>{beat.captionCandidates.map((caption) => <span key={caption.id}>{caption.text}</span>)}</div> : null}
+                <div className="beat-grid">{activeAdaptation.beats.map((beat) => <article className="adaptation-card beat-card" key={beat.id}><div className="adaptation-card-meta"><span>{beat.order}</span><span>{beat.beatType}</span></div><input className="beat-title-input" value={beat.title} onChange={(e)=>updateBeat(beat.id,{title:e.target.value})}/><label className="beat-edit-field"><span>{tr("visualIdea")}</span><textarea rows={6} value={beat.summary} onChange={(e)=>updateBeat(beat.id,{summary:e.target.value})}/></label>
+                  {beat.dialogueCandidates.length ? <div className="adaptation-snippet"><strong>{tr("originalDialogue")}</strong>{beat.dialogueCandidates.map((dialogue) => <textarea className="beat-dialogue-input" rows={2} key={dialogue.id} value={dialogue.text} onChange={(e)=>updateBeatDialogue(beat.id,dialogue.id,e.target.value)}/>)}</div> : null}
+                  {beat.captionCandidates.length ? <div className="adaptation-snippet"><strong>{tr("adaptedCaption")}</strong>{beat.captionCandidates.map((caption) => <textarea className="beat-caption-input" rows={2} key={caption.id} value={caption.text} onChange={(e)=>updateBeatCaption(beat.id,caption.id,e.target.value)}/>)}</div> : null}
                   <details><summary>{tr("sourceExcerptLabel")}</summary><p>{beat.sourceTextExcerpt}</p></details>
                 </article>)}</div>
               </section>:null}
