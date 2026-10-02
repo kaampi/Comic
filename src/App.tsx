@@ -610,8 +610,14 @@ export function App() {
               {adaptationStep===1?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step1")}</h3></div></div>
                 <div className="beat-grid">{activeAdaptation.beats.map((beat) => {
-                  const linkedPanel = activeProject.panels.find((panel) => panel.sourceBeatIds?.includes(beat.id));
-                  const linkedPlacement = linkedPanel ? activeProject.pages.flatMap((page) => page.placements.map((placement) => ({ page, placement }))).find(({placement}) => placement.panelId === linkedPanel.id && placement.image) : undefined;
+                  const matchingPlanIds = activeAdaptation.panelPlans.filter((plan) => plan.sourceBeatIds.includes(beat.id)).map((plan) => plan.id);
+                  const linkedPanel = activeProject.panels.find((panel) =>
+                    panel.sourceBeatIds?.includes(beat.id) ||
+                    (panel.adaptationPanelPlanId ? matchingPlanIds.includes(panel.adaptationPanelPlanId) : false)
+                  );
+                  const linkedPlacement = linkedPanel
+                    ? activeProject.pages.flatMap((page) => page.placements.map((placement) => ({ page, placement }))).find(({placement}) => placement.panelId === linkedPanel.id && placement.image)
+                    : undefined;
                   const thumbImage = linkedPlacement?.placement.image;
                   return <article className="adaptation-card beat-card" key={beat.id}>{thumbImage?<div className="beat-thumbnail"><img src={thumbImage.dataUrl} alt="" style={{objectFit:thumbImage.fit??"cover",objectPosition:`${50+(thumbImage.offsetX??0)/2}% ${50+(thumbImage.offsetY??0)/2}%`,transform:`scale(${thumbImage.zoom??1})`}} /></div>:null}<div className="beat-heading-line"><span>{beat.order}</span><span aria-hidden="true">–</span><input className="beat-title-input" maxLength={30} value={beat.title} onChange={(e)=>updateBeat(beat.id,{title:e.target.value.slice(0,30)})}/></div>
                   <details className="beat-section"><summary>{tr("visualIdea")}</summary><textarea rows={6} value={beat.summary} onChange={(e)=>updateBeat(beat.id,{summary:e.target.value})}/></details>
