@@ -175,3 +175,76 @@ input[type="radio"] {
   --form-bg: #fffdf8;
   --form-bg-soft: #f5ede2;
 }
+
+/* StoryBook-like compact editorial form controls */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+select,
+textarea{
+  border-color:rgb(218,204,185);
+  border-radius:3px;
+  background:rgb(255,252,246);
+  color:rgb(58,47,37);
+  padding:7px 9px;
+  min-height:32px;
+  box-shadow:none;
+}
+textarea{
+  line-height:1.45;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):focus,
+select:focus,
+textarea:focus{
+  border-color:rgb(184,146,113);
+  box-shadow:none;
+}
+input::placeholder,
+textarea::placeholder{
+  color:rgb(159,143,124);
+}
+.panel-tool-card > label,
+.type-grid label,
+.number-grid label,
+.new-project-form > label,
+.style-editor > label,
+.source-excerpt,
+.entity-card > label,
+.panel-editor > label,
+.panel-context > label{
+  font-size:10px;
+  letter-spacing:.08em;
+  color:rgb(136,117,94);
+  font-weight:600;
+}
+.panel-tool-card input,
+.panel-tool-card select,
+.type-grid input,
+.type-grid select,
+.number-grid input,
+.number-grid select,
+.new-project-form input,
+.new-project-form select,
+.new-project-form textarea,
+.style-editor input,
+.style-editor select,
+.style-editor textarea,
+.source-excerpt textarea,
+.entity-card input,
+.entity-card select,
+.entity-card textarea,
+.panel-editor input,
+.panel-editor select,
+.panel-editor textarea,
+.panel-context input,
+.panel-context select,
+.panel-context textarea{
+  font-size:13px;
+}
+fieldset{
+  border-color:rgb(224,211,193);
+  border-radius:4px;
+  padding:10px 12px 12px;
+}
+legend{
+  font-size:10px;
+  color:rgb(136,117,94);
+}
