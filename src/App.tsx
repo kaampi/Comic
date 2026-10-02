@@ -599,14 +599,19 @@ export function App() {
           <aside className="project-sidebar">
             <div className="project-sidebar-head"><p className="eyebrow">{tr("comicProject")}</p><h2>{activeProject.title}</h2><p className="quiet">{tr("style")}: {activeProject.style.name}</p></div>
             <nav className="project-side-nav" aria-label={tr("projectContent")}>
-              {([["manus",tr("manuscript")],["adaptation",tr("adaptation")],["characters",tr("characters")],["locations",tr("locations")],["scenes",tr("panels")],["pages",tr("pages")]] as const).map(([id,label]) => <button key={id} type="button" className={projectTab===id?"is-active":""} onClick={()=>setProjectTab(id)}><span>{label}</span></button>)}
+              <button type="button" className={projectTab==="manus"?"is-active":""} onClick={()=>setProjectTab("manus")}><span>{tr("manuscript")}</span></button>
+              <button type="button" className={projectTab==="adaptation"?"is-active":""} onClick={()=>setProjectTab("adaptation")}><span>{tr("adaptation")}</span></button>
+              {projectTab==="adaptation"?<div className="adaptation-side-nav" aria-label={tr("adaptation")}>
+                <button type="button" className={adaptationStep===1?"is-active":""} onClick={()=>setAdaptationStep(1)}><span>1</span>{tr("step1").replace(/^1 · /,"")}</button>
+                <button type="button" className={adaptationStep===2?"is-active":""} onClick={()=>setAdaptationStep(2)} disabled={!activeAdaptation}><span>2</span>{tr("step2").replace(/^2 · /,"")}</button>
+                <button type="button" className={adaptationStep===3?"is-active":""} onClick={()=>setAdaptationStep(3)} disabled={!activeAdaptation}><span>3</span>{tr("step3").replace(/^3 · /,"")}</button>
+                <button type="button" className={adaptationStep===4?"is-active":""} onClick={()=>setAdaptationStep(4)} disabled={!activeAdaptation?.panelPlans.length}><span>4</span>{tr("step4").replace(/^4 · /,"")}</button>
+              </div>:null}
+              <button type="button" className={projectTab==="characters"?"is-active":""} onClick={()=>setProjectTab("characters")}><span>{tr("characters")}</span></button>
+              <button type="button" className={projectTab==="locations"?"is-active":""} onClick={()=>setProjectTab("locations")}><span>{tr("locations")}</span></button>
+              <button type="button" className={projectTab==="scenes"?"is-active":""} onClick={()=>setProjectTab("scenes")}><span>{tr("panels")}</span></button>
+              <button type="button" className={projectTab==="pages"?"is-active":""} onClick={()=>setProjectTab("pages")}><span>{tr("pages")}</span></button>
             </nav>
-            {projectTab==="adaptation"?<nav className="adaptation-side-nav" aria-label={tr("adaptation")}>
-              <button type="button" className={adaptationStep===1?"is-active":""} onClick={()=>setAdaptationStep(1)}><span>1</span>{tr("step1").replace(/^1 · /,"")}</button>
-              <button type="button" className={adaptationStep===2?"is-active":""} onClick={()=>setAdaptationStep(2)} disabled={!activeAdaptation}><span>2</span>{tr("step2").replace(/^2 · /,"")}</button>
-              <button type="button" className={adaptationStep===3?"is-active":""} onClick={()=>setAdaptationStep(3)} disabled={!activeAdaptation}><span>3</span>{tr("step3").replace(/^3 · /,"")}</button>
-              <button type="button" className={adaptationStep===4?"is-active":""} onClick={()=>setAdaptationStep(4)} disabled={!activeAdaptation?.panelPlans.length}><span>4</span>{tr("step4").replace(/^4 · /,"")}</button>
-            </nav>:null}
             <button className="project-sidebar-style" type="button" onClick={()=>setPanel("styles")}>{tr("imageStyles")}</button>
           </aside>
           <section className="project-workspace">
