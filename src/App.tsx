@@ -112,6 +112,14 @@ export function App() {
     const sourceText = activeProject.source.textSnapshot ?? "";
     if (!sourceText.trim()) return;
     const next = createAdaptation(activeProject.title + " – adaptation", sourceText);
+    next.beats = next.beats.map((beat) => {
+      const haystack = beat.sourceTextExcerpt.toLocaleLowerCase();
+      const characterIds = activeProject.characters
+        .filter((character) => character.name && haystack.includes(character.name.toLocaleLowerCase()))
+        .map((character) => character.id);
+      const location = activeProject.locations.find((item) => item.name && haystack.includes(item.name.toLocaleLowerCase()));
+      return { ...beat, characterIds, locationId: location?.id };
+    });
     if (activeAdaptation) {
       next.id = activeAdaptation.id;
       next.name = activeAdaptation.name;
@@ -162,6 +170,34 @@ export function App() {
       status: "panels-generated",
       panelPlans: panelize(adaptation.beats, adaptation.sequences),
       imagePrompts: []
+    }));
+  };
+  const updatePanelPlan = (panelId: string, patch: Partial<StoryAdaptation["panelPlans"][number]>) => {
+    updateAdaptation((adaptation) => ({
+      ...adaptation,
+      status: "panels-generated",
+      imagePrompts: [],
+      panelPlans: adaptation.panelPlans.map((panel) => panel.id === panelId ? { ...panel, ...patch, status: "edited" } : panel)
+    }));
+  };
+  const updatePanelDialogue = (panelId: string, dialogueId: string, text: string) => {
+    updateAdaptation((adaptation) => ({
+      ...adaptation,
+      status: "panels-generated",
+      imagePrompts: [],
+      panelPlans: adaptation.panelPlans.map((panel) => panel.id === panelId
+        ? { ...panel, status: "edited", dialogue: panel.dialogue.map((item) => item.id === dialogueId ? { ...item, text } : item) }
+        : panel)
+    }));
+  };
+  const updatePanelCaption = (panelId: string, captionId: string, text: string) => {
+    updateAdaptation((adaptation) => ({
+      ...adaptation,
+      status: "panels-generated",
+      imagePrompts: [],
+      panelPlans: adaptation.panelPlans.map((panel) => panel.id === panelId
+        ? { ...panel, status: "edited", captions: panel.captions.map((item) => item.id === captionId ? { ...item, text } : item) }
+        : panel)
     }));
   };
   const runPromptGeneration = () => {
@@ -424,7 +460,7 @@ export function App() {
               </section>
               <section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">3</span><h3>{tr("step3")}</h3></div><button className="primary-button" type="button" onClick={runPanelization}>{activeAdaptation.panelPlans.length ? tr("recreatePanels") : tr("createPanels")}</button></div>
-                {activeAdaptation.panelPlans.length ? <div className="panel-plan-grid">{activeAdaptation.panelPlans.map((panel) => <article className="adaptation-card panel-plan-card" key={panel.id}><div className="adaptation-card-meta"><span>{panel.order}</span><span>{panel.shotType}</span><span>{panel.sizeHint}</span></div><h4>{panel.title}</h4><p>{panel.visualDescription}</p>{panel.dialogue.map((dialogue)=><div className="adaptation-snippet" key={dialogue.id}><strong>{tr("originalDialogue")}</strong><q>{dialogue.text}</q></div>)}{panel.captions.map((caption)=><div className="adaptation-snippet" key={caption.id}><strong>{tr("adaptedCaption")}</strong><span>{caption.text}</span></div>)}</article>)}</div> : <p className="quiet">{tr("adaptationEmpty")}</p>}
+                {activeAdaptation.panelPlans.length ? <div className="panel-plan-grid">{activeAdaptation.panelPlans.map((panel) => <article className="adaptation-card panel-plan-card" key={panel.id}><div className="adaptation-card-meta"><span>{panel.order}</span><span>{panel.shotType}</span><span>{panel.sizeHint}</span></div><h4>{panel.title}</h4><label className="panel-plan-field">{tr("visualIdea")}<textarea rows={4} value={panel.visualDescription} onChange={(e)=>updatePanelPlan(panel.id,{visualDescription:e.target.value})}/></label>{panel.dialogue.map((dialogue)=><label className="panel-plan-field adaptation-snippet" key={dialogue.id}><strong>{tr("originalDialogue")}</strong><textarea rows={2} value={dialogue.text} onChange={(e)=>updatePanelDialogue(panel.id,dialogue.id,e.target.value)}/></label>)}{panel.captions.map((caption)=><label className="panel-plan-field adaptation-snippet" key={caption.id}><strong>{tr("adaptedCaption")}</strong><textarea rows={2} value={caption.text} onChange={(e)=>updatePanelCaption(panel.id,caption.id,e.target.value)}/></label>)}</article>)}</div> : <p className="quiet">{tr("adaptationEmpty")}</p>}
               </section>
               <section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">4</span><h3>{tr("step4")}</h3></div><button className="primary-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={runPromptGeneration}>{activeAdaptation.imagePrompts.length ? tr("regeneratePrompts") : tr("createPrompts")}</button></div>
