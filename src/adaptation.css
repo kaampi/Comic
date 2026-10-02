@@ -314,3 +314,122 @@
 .beat-caption-input{
   min-height:42px;
 }
+
+/* StoryBook editorial card treatment */
+.adaptation-step-head h3{
+  font-family:"Newsreader", Georgia, serif;
+  font-style:normal;
+  font-weight:500;
+  font-size:27px;
+  line-height:1.05;
+  letter-spacing:-.01em;
+  color:rgb(42,34,24);
+}
+.adaptation-step-number{
+  width:auto;
+  height:auto;
+  min-width:0;
+  border:0;
+  border-radius:0;
+  color:rgb(157,137,112);
+  font-family:"Newsreader", Georgia, serif;
+  font-weight:400;
+  font-size:13px;
+  background:transparent;
+}
+.adaptation-card{
+  border:1px solid rgb(221,208,190);
+  border-radius:8px;
+  background:rgb(255,252,246);
+  padding:15px 16px 14px;
+  box-shadow:none;
+}
+.beat-grid,
+.panel-plan-grid{
+  gap:14px;
+}
+.adaptation-card-meta{
+  gap:6px;
+  margin-bottom:3px;
+}
+.adaptation-card-meta span{
+  padding:2px 7px;
+  border-radius:999px;
+  background:rgb(241,233,220);
+  color:rgb(154,137,114);
+  font-family:var(--font-ui);
+  font-size:10px;
+  font-weight:500;
+  line-height:18px;
+  letter-spacing:.06em;
+}
+.adaptation-card-meta span:first-child{
+  padding-left:0;
+  padding-right:2px;
+  background:transparent;
+  border-radius:0;
+  font-family:"Newsreader", Georgia, serif;
+  font-size:13px;
+  font-weight:400;
+  color:rgb(157,137,112);
+}
+.beat-title-input{
+  margin:.05rem 0 .35rem;
+  font-family:"Newsreader", Georgia, serif;
+  font-style:normal;
+  font-weight:500;
+  font-size:17px;
+  line-height:normal;
+  letter-spacing:0;
+  color:rgb(42,34,24);
+}
+.beat-title-input:hover{
+  background:transparent;
+}
+.beat-edit-field>span,
+.adaptation-snippet strong{
+  font-family:var(--font-ui);
+  font-size:10px;
+  font-weight:600;
+  line-height:16px;
+  letter-spacing:.08em;
+  color:rgb(139,119,95);
+}
+.beat-edit-field textarea,
+.beat-dialogue-input,
+.beat-caption-input{
+  padding:0;
+  border-color:transparent;
+  border-radius:0;
+}
+.beat-edit-field textarea:hover,
+.beat-dialogue-input:hover,
+.beat-caption-input:hover{
+  padding:3px 4px;
+  margin:-3px -4px;
+  border-color:rgb(221,208,190);
+  border-radius:4px;
+  background:rgb(251,246,238);
+}
+.beat-edit-field textarea:focus,
+.beat-dialogue-input:focus,
+.beat-caption-input:focus{
+  padding:3px 4px;
+  margin:-3px -4px;
+  border-color:rgb(208,106,72);
+  border-radius:4px;
+  background:rgb(255,252,246);
+}
+.adaptation-snippet{
+  border-top:1px solid rgb(224,211,193);
+}
+.adaptation-card details{
+  padding-top:7px;
+  border-top:1px solid rgb(232,220,203);
+  color:rgb(147,127,103);
+}
+.adaptation-card details summary{
+  font-family:var(--font-ui);
+  font-size:12px;
+  color:rgb(147,127,103);
+}
