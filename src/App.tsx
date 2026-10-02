@@ -140,15 +140,15 @@ export function App() {
       });
       const shortTitle = (() => {
         const clean = beat.title.replace(/\s+/g," ").trim();
-        if (clean.length <= 42) return clean;
+        if (clean.length <= 30) return clean;
         const words = clean.split(" ");
         let out = "";
         for (const word of words) {
           const candidate = out ? out + " " + word : word;
-          if (candidate.length > 42) break;
+          if (candidate.length > 30) break;
           out = candidate;
         }
-        return out || clean.slice(0,42);
+        return out || clean.slice(0,30);
       })();
       return { ...beat, title: shortTitle, characterIds, locationId: location?.id, dialogueCandidates };
     });
@@ -601,10 +601,9 @@ export function App() {
               <div className="adaptation-summary"><span>{activeAdaptation.beats.length} {tr("beatsFound")}</span><span>{activeAdaptation.sequences.length} {tr("sequences")}</span><span>{activeAdaptation.panelPlans.length} {tr("panelsWanted")}</span><span>{activeAdaptation.imagePrompts.length} {tr("promptReady")}</span></div>
               {adaptationStep===1?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step1")}</h3></div></div>
-                <div className="beat-grid">{activeAdaptation.beats.map((beat) => <article className="adaptation-card beat-card" key={beat.id}><div className="adaptation-card-meta"><span>{beat.order}</span><span>{beat.beatType}</span></div><input className="beat-title-input" value={beat.title} onChange={(e)=>updateBeat(beat.id,{title:e.target.value})}/>
+                <div className="beat-grid">{activeAdaptation.beats.map((beat) => <article className="adaptation-card beat-card" key={beat.id}><div className="beat-heading-line"><span>{beat.order}</span><span aria-hidden="true">–</span><input className="beat-title-input" maxLength={30} value={beat.title} onChange={(e)=>updateBeat(beat.id,{title:e.target.value.slice(0,30)})}/></div>
                   <details className="beat-section"><summary>{tr("visualIdea")}</summary><textarea rows={6} value={beat.summary} onChange={(e)=>updateBeat(beat.id,{summary:e.target.value})}/></details>
-                  {beat.dialogueCandidates.length ? <details className="beat-section"><summary>{tr("originalDialogue")}</summary>{beat.dialogueCandidates.map((dialogue) => <textarea className="beat-dialogue-input" rows={2} key={dialogue.id} value={dialogue.text} onChange={(e)=>updateBeatDialogue(beat.id,dialogue.id,e.target.value)}/>)}</details> : null}
-                  {beat.captionCandidates.length ? <details className="beat-section"><summary>{tr("adaptedCaption")}</summary>{beat.captionCandidates.map((caption) => <textarea className="beat-caption-input" rows={2} key={caption.id} value={caption.text} onChange={(e)=>updateBeatCaption(beat.id,caption.id,e.target.value)}/>)}</details> : null}
+                  {beat.dialogueCandidates.length ? <details className="beat-section" open><summary>{tr("originalDialogue")}</summary>{beat.dialogueCandidates.map((dialogue) => <textarea className="beat-dialogue-input" rows={2} key={dialogue.id} value={dialogue.text} onChange={(e)=>updateBeatDialogue(beat.id,dialogue.id,e.target.value)}/>)}</details> : beat.captionCandidates.length ? <details className="beat-section" open><summary>{tr("adaptedCaption")}</summary>{beat.captionCandidates.map((caption) => <textarea className="beat-caption-input" rows={2} key={caption.id} value={caption.text} onChange={(e)=>updateBeatCaption(beat.id,caption.id,e.target.value)}/>)}</details> : null}
                   <details className="beat-section source-section"><summary>{tr("sourceExcerptLabel")}</summary><p>{beat.sourceTextExcerpt}</p></details>
                 </article>)}</div>
               </section>:null}
