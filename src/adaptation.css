@@ -443,3 +443,62 @@
 .beat-edit-field textarea{
   align-self:start;
 }
+
+/* Compact collapsible beat sections */
+.beat-card{
+  height:auto;
+  min-height:0;
+}
+.beat-section{
+  margin:0;
+  padding:7px 0;
+  border-top:1px solid rgb(232,220,203);
+}
+.beat-section:first-of-type{
+  margin-top:4px;
+}
+.beat-section summary{
+  cursor:pointer;
+  list-style:none;
+  font-family:var(--font-ui);
+  font-size:10px;
+  font-weight:600;
+  line-height:16px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:rgb(139,119,95);
+}
+.beat-section summary::-webkit-details-marker{
+  display:none;
+}
+.beat-section summary::before{
+  content:"▸";
+  display:inline-block;
+  width:14px;
+  color:rgb(163,143,118);
+  transform-origin:45% 50%;
+  transition:transform .12s ease;
+}
+.beat-section[open] summary::before{
+  transform:rotate(90deg);
+}
+.beat-section textarea{
+  width:100%;
+  box-sizing:border-box;
+  margin-top:7px;
+  padding:6px 7px;
+  border:1px solid rgb(218,204,185);
+  border-radius:3px;
+  background:rgb(255,252,246);
+  font-family:"Newsreader", Georgia, serif;
+  font-size:13px;
+  line-height:18px;
+  color:rgb(107,95,82);
+  resize:vertical;
+}
+.beat-section p{
+  margin:7px 0 0;
+}
+.source-section{
+  margin-top:auto;
+}
