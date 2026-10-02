@@ -226,3 +226,18 @@
   border-top:1px solid var(--border);
   padding-top:9px;
 }
+
+/* StoryBook-inspired prose typography inside adaptation cards */
+.adaptation-card p,
+.adaptation-card q,
+.adaptation-card .adaptation-snippet span,
+.adaptation-card details p,
+.panel-plan-field textarea,
+.prompt-plan-card p{
+  font-family:"Newsreader", Georgia, serif;
+  font-style:normal;
+  font-weight:400;
+  font-size:13px;
+  line-height:18px;
+  color:rgb(107,95,82);
+}
