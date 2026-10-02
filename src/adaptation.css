@@ -555,3 +555,21 @@
 .beat-section{
   padding:6px 0;
 }
+
+.beat-thumbnail{
+  width:calc(100% + 32px);
+  aspect-ratio:4 / 3;
+  margin:-15px -16px 12px;
+  overflow:hidden;
+  border-bottom:1px solid rgb(221,208,190);
+  background:rgb(239,230,216);
+  border-radius:8px 8px 0 0;
+}
+.beat-thumbnail img{
+  width:100%;
+  height:100%;
+  display:block;
+  transform-origin:center center;
+  user-select:none;
+  pointer-events:none;
+}
