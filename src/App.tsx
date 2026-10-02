@@ -119,7 +119,18 @@ export function App() {
         .filter((character) => character.name && haystack.includes(character.name.toLocaleLowerCase()))
         .map((character) => character.id);
       const location = activeProject.locations.find((item) => item.name && haystack.includes(item.name.toLocaleLowerCase()));
-      return { ...beat, characterIds, locationId: location?.id };
+      const dialogueCandidates = beat.dialogueCandidates.map((dialogue) => {
+        const quoteIndex = haystack.indexOf(dialogue.text.toLocaleLowerCase());
+        const nearbyStart = Math.max(0, quoteIndex - 160);
+        const nearbyEnd = quoteIndex < 0 ? beat.sourceTextExcerpt.length : Math.min(beat.sourceTextExcerpt.length, quoteIndex + dialogue.text.length + 160);
+        const nearby = beat.sourceTextExcerpt.slice(nearbyStart, nearbyEnd).toLocaleLowerCase();
+        const speaker = activeProject.characters
+          .map((character) => ({ character, index: nearby.lastIndexOf(character.name.toLocaleLowerCase()) }))
+          .filter((item) => item.character.name && item.index >= 0)
+          .sort((a,b) => b.index - a.index)[0]?.character;
+        return { ...dialogue, speaker: speaker?.id };
+      });
+      return { ...beat, characterIds, locationId: location?.id, dialogueCandidates };
     });
     if (activeAdaptation) {
       next.id = activeAdaptation.id;
