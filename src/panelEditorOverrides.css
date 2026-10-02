@@ -405,3 +405,20 @@
 @media(max-width:900px){
   .image-position-grid{grid-template-columns:1fr}
 }
+
+.panel-editor-layout{
+  min-height:0;
+}
+.panel-editor-stage{
+  align-self:center;
+  justify-self:center;
+  width:min(calc(100% - 40px), 1100px);
+  height:auto;
+  max-height:calc(100% - 40px);
+  margin:20px;
+}
+@supports (aspect-ratio: 1 / 1){
+  .panel-editor-stage{
+    max-width:calc(100% - 40px);
+  }
+}
