@@ -4,6 +4,7 @@ import { App } from "./App";
 import "./styles.css";
 import "./panelEditorOverrides.css";
 import "./typography.css";
+import "./adaptation.css";
 import "./formTheme.css";
 
 const root = document.getElementById("root");
