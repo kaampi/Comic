@@ -537,3 +537,25 @@
   outline:none;
   box-shadow:inset 0 -1px 0 rgb(197,95,62);
 }
+
+/* Align the primary text section (dialogue/caption) across beat cards. */
+.beat-card{
+  display:grid;
+  grid-template-rows:auto auto 1fr auto;
+}
+.beat-heading-line{
+  grid-row:1;
+}
+.beat-card>.beat-section:first-of-type{
+  grid-row:2;
+}
+.beat-card>.beat-section:not(:first-of-type):not(.source-section){
+  grid-row:3;
+  align-self:start;
+  margin-top:54px;
+}
+.beat-card>.source-section{
+  grid-row:4;
+  align-self:end;
+  margin-top:12px;
+}
