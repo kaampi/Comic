@@ -59,7 +59,7 @@ export const UI = {
     strokeColor:"Linjefärg", strokeWidth:"Linjebredd", fillColor:"Fyllningsfärg", fillOpacity:"Transparens", savedSwatches:"Sparade swatches",
     saveSwatch:"Spara aktuell", swatchName:"Namn på swatch", characterSwatch:"Karaktär", noCharacter:"Ingen karaktär", deleteSwatch:"Ta bort swatch",
     sourceUnavailable:"Den här panelen har ingen länkad manus-källa ännu.", sourceBeats:"Källbeats", closeSource:"Stäng källa",
-    panelSource:"Panelkälla", choosePanelSource:"Välj panel från planen…", noPanelSource:"Ingen panel vald", panelSourceHelp:"Koppla denna sidruta till en planerad panel för att visa källa och planerad text.",
+    panelSource:"Panelkälla", choosePanelSource:"Välj panel från planen…", noPanelSource:"Ingen panel vald", panelSourceHelp:"Koppla denna sidruta till en panelkälla eller ett storyboardförslag för att visa källa och planerad text.", storyboardSuggestion:"Storyboardförslag", noStoryboardSuggestion:"Inget storyboardförslag",
     imageControls:"BILD", editImage:"Redigera bild", finishImageEdit:"Klar med bild", zoom:"Zoom", imageX:"X-position", imageY:"Y-position",
     imageFit:"Passning", fitCover:"Fyll ruta", fitContain:"Visa hela", resetImageView:"Återställ bild", dragImageHint:"Dra bilden för att positionera den. Använd mushjulet för att zooma."
   },
@@ -121,7 +121,7 @@ export const UI = {
     strokeColor:"Stroke colour", strokeWidth:"Stroke width", fillColor:"Fill colour", fillOpacity:"Transparency", savedSwatches:"Saved swatches",
     saveSwatch:"Save current", swatchName:"Swatch name", characterSwatch:"Character", noCharacter:"No character", deleteSwatch:"Delete swatch",
     sourceUnavailable:"This panel does not have a linked manuscript source yet.", sourceBeats:"Source beats", closeSource:"Close source",
-    panelSource:"Panel source", choosePanelSource:"Choose panel from plan…", noPanelSource:"No panel selected", panelSourceHelp:"Link this page slot to a planned panel to show its source and planned text.",
+    panelSource:"Panel source", choosePanelSource:"Choose panel from plan…", noPanelSource:"No panel selected", panelSourceHelp:"Link this page slot to a panel source or storyboard suggestion to show its source and planned text.", storyboardSuggestion:"Storyboard suggestion", noStoryboardSuggestion:"No storyboard suggestion",
     imageControls:"IMAGE", editImage:"Edit image", finishImageEdit:"Done editing image", zoom:"Zoom", imageX:"X position", imageY:"Y position",
     imageFit:"Fit", fitCover:"Fill frame", fitContain:"Show whole image", resetImageView:"Reset image", dragImageHint:"Drag the image to position it. Use the mouse wheel to zoom."
   },
@@ -183,7 +183,7 @@ export const UI = {
     strokeColor:"Linjefarge", strokeWidth:"Linjebredde", fillColor:"Fyllfarge", fillOpacity:"Transparens", savedSwatches:"Lagrede swatches",
     saveSwatch:"Lagre gjeldende", swatchName:"Navn på swatch", characterSwatch:"Karakter", noCharacter:"Ingen karakter", deleteSwatch:"Slett swatch",
     sourceUnavailable:"Denne ruten har ingen koblet manuskilde ennå.", sourceBeats:"Kildebeats", closeSource:"Lukk kilde",
-    panelSource:"Panelkilde", choosePanelSource:"Velg rute fra planen…", noPanelSource:"Ingen rute valgt", panelSourceHelp:"Koble denne sideruten til en planlagt rute for å vise kilde og planlagt tekst.",
+    panelSource:"Panelkilde", choosePanelSource:"Velg rute fra planen…", noPanelSource:"Ingen rute valgt", panelSourceHelp:"Koble denne sideruten til en rutekilde eller et storyboardforslag for å vise kilde og planlagt tekst.", storyboardSuggestion:"Storyboardforslag", noStoryboardSuggestion:"Ingen storyboardforslag",
     imageControls:"BILDE", editImage:"Rediger bilde", finishImageEdit:"Ferdig med bilde", zoom:"Zoom", imageX:"X-posisjon", imageY:"Y-posisjon",
     imageFit:"Tilpasning", fitCover:"Fyll rute", fitContain:"Vis hele", resetImageView:"Tilbakestill bilde", dragImageHint:"Dra bildet for å plassere det. Bruk musehjulet for å zoome."
   }
