@@ -433,3 +433,13 @@
   font-size:12px;
   color:rgb(147,127,103);
 }
+
+/* Keep editable beat content top-aligned; equal-card whitespace belongs below content. */
+.beat-edit-field{
+  flex:0 0 auto;
+  align-content:start;
+  grid-template-rows:auto auto;
+}
+.beat-edit-field textarea{
+  align-self:start;
+}
