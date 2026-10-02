@@ -495,7 +495,8 @@ export function App() {
     <div className="app-shell">
       <header className="topbar">
         <button className="brand" type="button" onClick={closePanel} aria-label={tr("goHome")}>
-          <span className="brand-mark" aria-hidden="true">CB</span><span>ComicBook AI</span>
+          <img className="brand-logo brand-logo-light" src="/logo.png" alt="ComicBook AI" />
+          <img className="brand-logo brand-logo-dark" src="/logo-dark.png" alt="ComicBook AI" />
         </button>
         <div className="top-menu" ref={menuRef}>
           <button className="text-button" type="button" aria-expanded={projectMenuOpen} onClick={() => setProjectMenuOpen((open) => !open)}>{tr("project")}</button>
