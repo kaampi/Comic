@@ -35,6 +35,7 @@ export function App() {
   const [newStyleId, setNewStyleId] = useState(BUILTIN_STYLES[0].id);
   const [sceneTitle, setSceneTitle] = useState("");
   const [projectTab, setProjectTab] = useState<ProjectTab>("manus");
+  const [adaptationStep, setAdaptationStep] = useState<1|2|3|4>(1);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [newCharacterName, setNewCharacterName] = useState("");
   const [newLocationName, setNewLocationName] = useState("");
@@ -145,6 +146,7 @@ export function App() {
       next.createdAt = activeAdaptation.createdAt;
     }
     replaceActiveAdaptation(next);
+    setAdaptationStep(1);
   };
   const setSequenceDensity = (sequenceId: string, density: PanelDensity) => {
     updateAdaptation((adaptation) => ({
@@ -184,6 +186,7 @@ export function App() {
   };
   const runPanelization = () => {
     if (!activeAdaptation) return;
+    setAdaptationStep(3);
     updateAdaptation((adaptation) => ({
       ...adaptation,
       status: "panels-generated",
@@ -221,6 +224,7 @@ export function App() {
   };
   const runPromptGeneration = () => {
     if (!activeProject || !activeAdaptation?.panelPlans.length) return;
+    setAdaptationStep(4);
     const prompts = generateImagePrompts(activeProject, activeAdaptation.panelPlans, "full");
     updateAdaptation((adaptation) => ({
       ...adaptation,
@@ -514,24 +518,24 @@ export function App() {
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? tr("dark") : tr("light")}</button>
         </div>
       </header>
-      {activeProject ? <nav className="project-topbar" aria-label={tr("activeProject")}>
-        <button className="project-title-button" type="button" onClick={() => setProjectTab("manus")}>{activeProject.title}</button>
-        <span className="project-topbar-spacer" />
-        <button type="button" onClick={() => setProjectTab("manus")}>{tr("manuscript")}</button><button type="button" onClick={() => setProjectTab("adaptation")}>{tr("adaptation")}</button>
-        <button type="button" onClick={() => setProjectTab("characters")}>{tr("characters")}</button>
-        <button type="button" onClick={() => setProjectTab("locations")}>{tr("locations")}</button>
-        <button type="button" onClick={() => setProjectTab("scenes")}>{tr("panels")}</button>
-        <button type="button" onClick={() => setProjectTab("pages")}>{tr("pages")}</button>
-        <button type="button" onClick={() => setPanel("styles")}>{tr("imageStyles")}</button>
-      </nav> : null}
+
 
       <main className="home">
-        {activeProject ? <section className="project-workspace">
-          <p className="eyebrow">{tr("comicProject")}</p><h1>{activeProject.title}</h1>
-          <p className="lede">{tr("style")}: {activeProject.style.name}</p>
-          <nav className="project-tabs" aria-label={tr("projectContent")}>
-            {([["manus",tr("manuscript")],["adaptation",tr("adaptation")],["characters",tr("characters")],["locations",tr("locations")],["scenes",tr("scenes")],["pages",tr("pages")]] as const).map(([id,label]) => <button key={id} className={projectTab === id ? "is-active" : ""} onClick={() => setProjectTab(id)}>{label}</button>)}
-          </nav>
+        {activeProject ? <section className="project-shell">
+          <aside className="project-sidebar">
+            <div className="project-sidebar-head"><p className="eyebrow">{tr("comicProject")}</p><h2>{activeProject.title}</h2><p className="quiet">{tr("style")}: {activeProject.style.name}</p></div>
+            <nav className="project-side-nav" aria-label={tr("projectContent")}>
+              {([["manus",tr("manuscript")],["adaptation",tr("adaptation")],["characters",tr("characters")],["locations",tr("locations")],["scenes",tr("panels")],["pages",tr("pages")]] as const).map(([id,label]) => <button key={id} type="button" className={projectTab===id?"is-active":""} onClick={()=>setProjectTab(id)}><span>{label}</span></button>)}
+            </nav>
+            {projectTab==="adaptation"?<nav className="adaptation-side-nav" aria-label={tr("adaptation")}>
+              <button type="button" className={adaptationStep===1?"is-active":""} onClick={()=>setAdaptationStep(1)}><span>1</span>{tr("step1").replace(/^1 · /,"")}</button>
+              <button type="button" className={adaptationStep===2?"is-active":""} onClick={()=>setAdaptationStep(2)} disabled={!activeAdaptation}><span>2</span>{tr("step2").replace(/^2 · /,"")}</button>
+              <button type="button" className={adaptationStep===3?"is-active":""} onClick={()=>setAdaptationStep(3)} disabled={!activeAdaptation}><span>3</span>{tr("step3").replace(/^3 · /,"")}</button>
+              <button type="button" className={adaptationStep===4?"is-active":""} onClick={()=>setAdaptationStep(4)} disabled={!activeAdaptation?.panelPlans.length}><span>4</span>{tr("step4").replace(/^4 · /,"")}</button>
+            </nav>:null}
+            <button className="project-sidebar-style" type="button" onClick={()=>setPanel("styles")}>{tr("imageStyles")}</button>
+          </aside>
+          <section className="project-workspace">
           {projectTab === "manus" ? <section className="manuscript-workspace">
             <div className="manuscript-main">
               <div className="section-heading"><div><p className="eyebrow">{tr("sourceText")}</p><h2>{tr("manuscript")}</h2></div><span className="save-state">{tr("savedLocally")}</span></div>
@@ -550,26 +554,26 @@ export function App() {
             {!(activeProject.source.textSnapshot ?? "").trim() ? <div className="adaptation-empty">{tr("noSourceForAdaptation")}</div> : null}
             {activeAdaptation ? <>
               <div className="adaptation-summary"><span>{activeAdaptation.beats.length} {tr("beatsFound")}</span><span>{activeAdaptation.sequences.length} {tr("sequences")}</span><span>{activeAdaptation.panelPlans.length} {tr("panelsWanted")}</span><span>{activeAdaptation.imagePrompts.length} {tr("promptReady")}</span></div>
-              <section className="adaptation-step">
+              {adaptationStep===1?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step1")}</h3></div></div>
                 <div className="beat-grid">{activeAdaptation.beats.map((beat) => <article className="adaptation-card beat-card" key={beat.id}><div className="adaptation-card-meta"><span>{beat.order}</span><span>{beat.beatType}</span></div><h4>{beat.title}</h4><p>{beat.summary}</p>
                   {beat.dialogueCandidates.length ? <div className="adaptation-snippet"><strong>{tr("originalDialogue")}</strong>{beat.dialogueCandidates.map((dialogue) => <q key={dialogue.id}>{dialogue.text}</q>)}</div> : null}
                   {beat.captionCandidates.length ? <div className="adaptation-snippet"><strong>{tr("adaptedCaption")}</strong>{beat.captionCandidates.map((caption) => <span key={caption.id}>{caption.text}</span>)}</div> : null}
                   <details><summary>{tr("sourceExcerptLabel")}</summary><p>{beat.sourceTextExcerpt}</p></details>
                 </article>)}</div>
-              </section>
-              <section className="adaptation-step">
+              </section>:null}
+              {adaptationStep===2?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">2</span><h3>{tr("step2")}</h3></div></div>
                 <div className="sequence-list">{activeAdaptation.sequences.map((sequence) => <article className="adaptation-card sequence-card" key={sequence.id}><div><span className="sequence-order">{sequence.order}</span><h4>{sequence.title}</h4><p className="quiet">{sequence.beatIds.length} beats</p></div><div className="sequence-controls"><label>{tr("sequencePacing")}<select value={sequence.density} onChange={(e)=>setSequenceDensity(sequence.id,e.target.value as PanelDensity)}><option value="compact">{tr("compact")}</option><option value="normal">{tr("normal")}</option><option value="cinematic">{tr("cinematic")}</option></select></label><label>{tr("preferredPanels")}<input type="number" min="1" max="12" value={sequence.preferredPanelCount} onChange={(e)=>setSequencePanelCount(sequence.id,Number(e.target.value)||1)}/></label></div></article>)}</div>
-              </section>
-              <section className="adaptation-step">
+              </section>:null}
+              {adaptationStep===3?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">3</span><h3>{tr("step3")}</h3></div><div className="adaptation-step-actions"><button className="text-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={materializeAdaptationPlan}>{tr("usePlanOnPages")}</button><button className="primary-button" type="button" onClick={runPanelization}>{activeAdaptation.panelPlans.length ? tr("recreatePanels") : tr("createPanels")}</button></div></div>
                 {activeAdaptation.panelPlans.length ? <div className="panel-plan-grid">{activeAdaptation.panelPlans.map((panel) => <article className="adaptation-card panel-plan-card" key={panel.id}><div className="adaptation-card-meta"><span>{panel.order}</span><span>{panel.shotType}</span><span>{panel.sizeHint}</span></div><h4>{panel.title}</h4><label className="panel-plan-field">{tr("visualIdea")}<textarea rows={4} value={panel.visualDescription} onChange={(e)=>updatePanelPlan(panel.id,{visualDescription:e.target.value})}/></label>{panel.dialogue.map((dialogue)=><label className="panel-plan-field adaptation-snippet" key={dialogue.id}><strong>{tr("originalDialogue")}</strong><textarea rows={2} value={dialogue.text} onChange={(e)=>updatePanelDialogue(panel.id,dialogue.id,e.target.value)}/></label>)}{panel.captions.map((caption)=><label className="panel-plan-field adaptation-snippet" key={caption.id}><strong>{tr("adaptedCaption")}</strong><textarea rows={2} value={caption.text} onChange={(e)=>updatePanelCaption(panel.id,caption.id,e.target.value)}/></label>)}</article>)}</div> : <p className="quiet">{tr("adaptationEmpty")}</p>}
-              </section>
-              <section className="adaptation-step">
+              </section>:null}
+              {adaptationStep===4?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">4</span><h3>{tr("step4")}</h3></div><button className="primary-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={runPromptGeneration}>{activeAdaptation.imagePrompts.length ? tr("regeneratePrompts") : tr("createPrompts")}</button></div>
                 {activeAdaptation.imagePrompts.length ? <div className="prompt-plan-list">{activeAdaptation.imagePrompts.map((prompt,index) => <article className="adaptation-card prompt-plan-card" key={prompt.id}><div className="prompt-plan-head"><strong>{tr("imagePrompt")} {index+1}</strong><button className="text-button" type="button" onClick={()=>copyAdaptationPrompt(prompt.prompt)}>{tr("copy")}</button></div><p>{prompt.prompt}</p></article>)}</div> : null}
-              </section>
+              </section>:null}
             </> : <div className="adaptation-empty">{tr("adaptationEmpty")}</div>}
           </section> : null}
           {projectTab === "scenes" ? <section className="scene-workspace">
@@ -613,6 +617,7 @@ export function App() {
                 <div className="placement-list"><h3>{tr("panelsReadingOrder")}</h3>{page.placements.map((placement)=><div className="placement-row" key={placement.id}><strong>{placement.readingOrder}</strong><select value={placement.panelId??""} onChange={(e)=>setPlacementPanel(page.id,placement.id,e.target.value)}><option value="">{tr("noPanelSelected")}</option>{activeProject.panels.map((panel)=><option key={panel.id} value={panel.id}>{activeProject.scenes.find((s)=>s.id===panel.sceneId)?.title??"Scen"} — ruta {panel.order}</option>)}</select><button className="text-button" disabled={placement.readingOrder===1} onClick={()=>moveReadingOrder(page.id,placement.id,-1)}>↑</button><button className="text-button" disabled={placement.readingOrder===page.placements.length} onClick={()=>moveReadingOrder(page.id,placement.id,1)}>↓</button><button className="text-button" onClick={()=>{setPanelEditor({pageId:page.id,placementId:placement.id});setSelectedOverlayId((placement.overlays??[])[0]?.id??null);}}>{tr("editText")}</button>{placement.panelId&&activeProject.panels.find((item)=>item.id===placement.panelId)?.sourceBeatIds?.length?<button className="text-button" onClick={()=>setInspectSourcePanelId(placement.panelId!)}>{tr("inspectSource")}</button>:null}<button className="text-button danger-button" onClick={()=>removePlacement(page.id,placement.id)}>{tr("remove")}</button></div>)}</div>
               </div>; })()}
           </section> : null}
+          </section>
         </section> : <>
           <header className="home-brand"><p className="eyebrow">{tr("comicWorkspace")}</p><h1>{tr("fromStory")}<br />{tr("toComic")}</h1>
             <p className="lede">Planera bildrutor, bygg konsekventa bildprompter och skapa din serie utan att låsa projektet till en viss AI-tjänst.</p></header>
