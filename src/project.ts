@@ -40,7 +40,7 @@ export type ComicProject = {
     id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string;
     characterIds: string[]; locationId?: string; adaptationPanelPlanId?: string; sourceBeatIds?: string[];
   }>;
-  pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number; overlays: TextOverlay[]; image?: { name: string; dataUrl: string; zoom?: number; offsetX?: number; offsetY?: number; fit?: "cover" | "contain" }; sourceBeatIds?: string[] }> }>;
+  pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number; overlays: TextOverlay[]; image?: { name: string; dataUrl: string; zoom?: number; offsetX?: number; offsetY?: number; fit?: "cover" | "contain" }; sourceBeatIds?: string[]; adaptationPanelPlanId?: string }> }>;
   adaptations: StoryAdaptation[];
   bubbleSwatches: BubbleSwatch[];
 };
@@ -72,7 +72,7 @@ export function readProjects(): ComicProject[] {
       bubbleSwatches: Array.isArray(p.bubbleSwatches) ? p.bubbleSwatches : [],
       pages: Array.isArray(p.pages) ? p.pages.map((page: any) => ({
         ...page, gridColumns: page.gridColumns ?? 3, gridRows: page.gridRows ?? 5,
-        placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number").map((item:any)=>({...item,sourceBeatIds:Array.isArray(item.sourceBeatIds)?item.sourceBeatIds:undefined,image:item.image?{...item.image,zoom:item.image.zoom??1,offsetX:item.image.offsetX??0,offsetY:item.image.offsetY??0,fit:item.image.fit??"cover"}:undefined,overlays:Array.isArray(item.overlays)?item.overlays.map((overlay:any)=>({
+        placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number").map((item:any)=>({...item,sourceBeatIds:Array.isArray(item.sourceBeatIds)?item.sourceBeatIds:undefined,adaptationPanelPlanId:typeof item.adaptationPanelPlanId==="string"?item.adaptationPanelPlanId:undefined,image:item.image?{...item.image,zoom:item.image.zoom??1,offsetX:item.image.offsetX??0,offsetY:item.image.offsetY??0,fit:item.image.fit??"cover"}:undefined,overlays:Array.isArray(item.overlays)?item.overlays.map((overlay:any)=>({
           ...overlay,
           tailEnabled:overlay.type==="speech"?(overlay.tailEnabled??true):overlay.tailEnabled,
           strokeColor:overlay.strokeColor??"#171411",
