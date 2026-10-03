@@ -1,5 +1,7 @@
 import type { ComicProject } from "./project";
 
+const lineOnlyModifier = "Line art only. Black ink drawing with clean contour lines and controlled hatching. No color, no painted fills, no grayscale wash, no colored lighting. Preserve the selected comic style through line quality, shape language, anatomy, expression, composition, and background detail.";
+
 export function buildPanelPrompt(project: ComicProject, panelId: string): string {
   const panel = project.panels.find((item) => item.id === panelId);
   if (!panel) return "";
@@ -9,6 +11,7 @@ export function buildPanelPrompt(project: ComicProject, panelId: string): string
 
   const sections: string[] = [];
   sections.push("STYLE\n" + project.style.promptText);
+  if (project.renderOptions?.linesOnly) sections.push("RENDERING MODE\n" + lineOnlyModifier);
 
   if (characters.length) {
     sections.push("CHARACTERS\n" + characters.map((character) =>
