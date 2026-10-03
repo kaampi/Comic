@@ -1,0 +1,35 @@
+name: Finalize style library
+
+on:
+  push:
+    paths:
+      - '.github/style-library-finalize.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: node scripts/finalize-style-library.mjs
+      - run: npm ci
+      - run: npm run build
+      - name: Commit finalized style library
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Finalize style previews and lines-only controls"
+            git push
+          fi
