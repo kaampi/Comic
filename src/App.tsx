@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AI_MODES, type AiMode } from "./ai";
 import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, readPageGridDefaults, savePageGridDefaults, type Locale, type Theme } from "./settings";
-import { BUILTIN_STYLES, STYLE_GENRES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
+import { BUILTIN_STYLES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
+import { optimizeStylePreview } from "./stylePreview";
 import { createProject, readProjects, saveProjects, type BubbleSwatch, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
 import { PAGE_PRESETS, overlaps } from "./pageTemplates";
@@ -15,7 +16,7 @@ import { generateImagePrompts } from "./adaptation/prompts";
 import type { PanelDensity, StoryAdaptation } from "./adaptation/types";
 
 type Panel = "styles" | "guide" | "settings" | "new-project" | null;
-type StyleDraft = { id?: string; name: string; genre: string; promptText: string };
+type StyleDraft = { id?: string; name: string; genre: string; promptText: string; previewImage?: string; linePreviewImage?: string };
 type ProjectTab = "manus" | "adaptation" | "characters" | "locations" | "scenes" | "pages";
 
 export function App() {
@@ -95,17 +96,40 @@ export function App() {
   const persistCustomStyles = (next: IllustrationStyle[]) => { setCustomStyles(next); saveCustomStyles(next); };
   const saveDraft = () => {
     if (!styleDraft || !styleDraft.name.trim() || !styleDraft.promptText.trim()) return;
-    const style: IllustrationStyle = { id: styleDraft.id ?? createCustomStyleId(), name: styleDraft.name.trim(), genre: styleDraft.genre.trim() || "Custom", promptText: styleDraft.promptText.trim() };
+    const style: IllustrationStyle = {
+      id: styleDraft.id ?? createCustomStyleId(),
+      name: styleDraft.name.trim(),
+      genre: styleDraft.genre.trim() || "Custom",
+      promptText: styleDraft.promptText.trim(),
+      previewImage: styleDraft.previewImage,
+      linePreviewImage: styleDraft.linePreviewImage
+    };
     persistCustomStyles(styleDraft.id ? customStyles.map((item) => item.id === styleDraft.id ? style : item) : [...customStyles, style]);
     setStyleDraft(null);
   };
-  const duplicateStyle = (style: IllustrationStyle) => setStyleDraft({ name: style.name + " – kopia", genre: style.genre, promptText: style.promptText });
+  const duplicateStyle = (style: IllustrationStyle) => setStyleDraft({
+    name: style.name + " – kopia",
+    genre: style.genre,
+    promptText: style.promptText,
+    previewImage: style.previewImage,
+    linePreviewImage: style.linePreviewImage
+  });
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
   const activeAdaptation = activeProject?.adaptations?.[0] ?? null;
   const updateActiveProject = (update: (project: ComicProject) => ComicProject) => {
     if (!activeProjectId) return;
     const next = projects.map((project) => project.id === activeProjectId ? { ...update(project), updatedAt: new Date().toISOString() } : project);
     setProjects(next); saveProjects(next);
+  };
+  const updateStyleDraftImage = async (field: "previewImage" | "linePreviewImage", file?: File) => {
+    if (!file) return;
+    try {
+      const dataUrl = await optimizeStylePreview(file);
+      setStyleDraft((current) => current ? { ...current, [field]: dataUrl } : current);
+    } catch {}
+  };
+  const setLinesOnly = (linesOnly: boolean) => {
+    updateActiveProject((project) => ({ ...project, renderOptions: { ...project.renderOptions, linesOnly } }));
   };
   const applyStyleToActiveProject = (style: IllustrationStyle) => {
     updateActiveProject((project) => ({ ...project, style: { ...style } }));
@@ -785,10 +809,13 @@ export function App() {
           {panel === "styles" ? <div className="style-library">
               <div className="style-library-head">
                 <div><p className="eyebrow">{tr("styleTemplates")}</p><p className="style-library-subtitle">{activeProject ? `${activeProject.title} · ${activeProject.style.name}` : tr("styleTemplatesLead")}</p></div>
-                <button className="text-button" type="button" onClick={() => {
-                  const source = activeProject?.style;
-                  setStyleDraft(source ? { name: source.name + " – kopia", genre: source.genre, promptText: source.promptText } : { name: "", genre: "Custom", promptText: "" });
-                }}>{tr("saveCurrentStyleAsNew")}</button>
+                <div className="style-library-head-actions">
+                  {activeProject ? <label className="style-render-toggle"><input type="checkbox" checked={activeProject.renderOptions?.linesOnly ?? false} onChange={(e)=>setLinesOnly(e.target.checked)} /><span>Lines only, no colors</span></label> : null}
+                  <button className="text-button" type="button" onClick={() => {
+                    const source = activeProject?.style;
+                    setStyleDraft(source ? { name: source.name + " – kopia", genre: source.genre, promptText: source.promptText, previewImage: source.previewImage, linePreviewImage: source.linePreviewImage } : { name: "", genre: "Custom", promptText: "" });
+                  }}>{tr("saveCurrentStyleAsNew")}</button>
+                </div>
               </div>
               <div className="style-library-search">
                 <input value={styleQuery} onChange={(e) => setStyleQuery(e.target.value)} placeholder={tr("searchStyle")} aria-label={tr("searchStyle")} autoFocus />
@@ -803,13 +830,20 @@ export function App() {
                     <label>{tr("name")}<input value={styleDraft.name} onChange={(e) => setStyleDraft({ ...styleDraft, name: e.target.value })} /></label>
                     <label>{tr("genre")}<input value={styleDraft.genre} onChange={(e) => setStyleDraft({ ...styleDraft, genre: e.target.value })} /></label>
                     <label>{tr("prompt")}<textarea rows={6} value={styleDraft.promptText} onChange={(e) => setStyleDraft({ ...styleDraft, promptText: e.target.value })} /></label>
+                    <div className="style-editor-images">
+                      <div className="style-editor-image-slot"><span>Color preview</span>{styleDraft.previewImage?<div className="style-editor-image-preview"><img src={styleDraft.previewImage} alt="" /></div>:<div className="style-editor-image-empty">{tr("noImage")}</div>}<div className="style-editor-image-actions"><label className="text-button style-image-upload">{styleDraft.previewImage?tr("changeImage"):tr("uploadImage")}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e)=>{const file=e.target.files?.[0];if(file)void updateStyleDraftImage("previewImage",file);e.currentTarget.value="";}} /></label>{styleDraft.previewImage?<button className="text-button danger-button" type="button" onClick={()=>setStyleDraft({...styleDraft,previewImage:undefined})}>{tr("deleteImage")}</button>:null}</div></div>
+                      <div className="style-editor-image-slot"><span>Lines only preview</span>{styleDraft.linePreviewImage?<div className="style-editor-image-preview"><img src={styleDraft.linePreviewImage} alt="" /></div>:<div className="style-editor-image-empty">{tr("noImage")}</div>}<div className="style-editor-image-actions"><label className="text-button style-image-upload">{styleDraft.linePreviewImage?tr("changeImage"):tr("uploadImage")}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e)=>{const file=e.target.files?.[0];if(file)void updateStyleDraftImage("linePreviewImage",file);e.currentTarget.value="";}} /></label>{styleDraft.linePreviewImage?<button className="text-button danger-button" type="button" onClick={()=>setStyleDraft({...styleDraft,linePreviewImage:undefined})}>{tr("deleteImage")}</button>:null}</div></div>
+                    </div>
                     <div className="style-editor-actions"><button className="text-button" type="button" onClick={() => setStyleDraft(null)}>{tr("cancel")}</button><button className="primary-button" type="button" onClick={saveDraft}>{tr("save")}</button></div>
                   </div> : null}
                   <div className="style-grid">{visibleStyles.map((style) => {
                     const custom = style.id.startsWith("custom-");
                     const active = activeProject?.style.id===style.id;
+                    const linesOnly = activeProject?.renderOptions?.linesOnly ?? false;
+                    const previewImage = linesOnly ? (style.linePreviewImage ?? style.previewImage) : style.previewImage;
+                    const lineFallback = linesOnly && !style.linePreviewImage && Boolean(style.previewImage);
                     return <article className={active?"style-card is-active":"style-card"} key={style.id} onClick={()=>activeProject&&applyStyleToActiveProject(style)}>
-                      <div className="style-card-preview" aria-hidden="true"></div>
+                      <div className={lineFallback?"style-card-preview is-line-fallback":"style-card-preview"}>{previewImage?<img src={previewImage} alt="" loading="lazy" decoding="async" />:<span>{tr("noImage")}</span>}{linesOnly?<span className="style-preview-mode-badge">LINES ONLY</span>:null}</div>
                       <button className="style-card-edit" type="button" title={custom?tr("edit"):tr("duplicate")} onClick={(e)=>{e.stopPropagation(); custom?setStyleDraft({...style}):duplicateStyle(style);}}>✎</button>
                       <div className="style-card-copy"><h2>{style.name}</h2><p>{style.promptText}</p><span className="style-genre">{style.genre}{active?` · ${tr("activeStyle")}`:""}</span></div>
                     </article>;
