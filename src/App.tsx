@@ -841,9 +841,10 @@ export function App() {
                     const active = activeProject?.style.id===style.id;
                     const linesOnly = activeProject?.renderOptions?.linesOnly ?? false;
                     const previewImage = linesOnly ? (style.linePreviewImage ?? style.previewImage) : style.previewImage;
+                    const resolvedPreviewImage = previewImage?.startsWith("data:") ? previewImage : previewImage ? new URL(previewImage, window.location.href).toString() : undefined;
                     const lineFallback = linesOnly && !style.linePreviewImage && Boolean(style.previewImage);
                     return <article className={active?"style-card is-active":"style-card"} key={style.id} onClick={()=>activeProject&&applyStyleToActiveProject(style)}>
-                      <div className={lineFallback?"style-card-preview is-line-fallback":"style-card-preview"}>{previewImage?<img src={previewImage} alt="" loading="lazy" decoding="async" />:<span>{tr("noImage")}</span>}{linesOnly?<span className="style-preview-mode-badge">LINES ONLY</span>:null}</div>
+                      <div className={lineFallback?"style-card-preview is-line-fallback":"style-card-preview"}>{resolvedPreviewImage?<img src={resolvedPreviewImage} alt="" loading="lazy" decoding="async" />:<span>{tr("noImage")}</span>}{linesOnly?<span className="style-preview-mode-badge">LINES ONLY</span>:null}</div>
                       <button className="style-card-edit" type="button" title={custom?tr("edit"):tr("duplicate")} onClick={(e)=>{e.stopPropagation(); custom?setStyleDraft({...style}):duplicateStyle(style);}}>✎</button>
                       <div className="style-card-copy"><h2>{style.name}</h2><p>{style.promptText}</p><span className="style-genre">{style.genre}{active?` · ${tr("activeStyle")}`:""}</span></div>
                     </article>;
