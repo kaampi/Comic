@@ -19,6 +19,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - run: node scripts/install-style-assets.mjs
       - run: node scripts/finalize-style-library.mjs
       - run: npm ci
       - run: npm run build
