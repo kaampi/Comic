@@ -102,13 +102,19 @@ export function thoughtTrailGeometry(o: TextOverlay, outline: Point[]) {
       x: center.x + direction.x * boundary,
       y: center.y + direction.y * boundary,
     };
+  const bend = Math.max(-100, Math.min(100, o.thoughtTailCurve ?? 30)) / 200;
+  const widthScale = Math.max(0, Math.min(100, o.thoughtTailWidth ?? 50)) / 50;
   const control = {
-    x: (start.x + target.x) / 2 - direction.y * distance * 0.15,
-    y: (start.y + target.y) / 2 + direction.x * distance * 0.15,
+    x: (start.x + target.x) / 2 - direction.y * distance * bend,
+    y: (start.y + target.y) / 2 + direction.x * distance * bend,
   };
-  const largest = Math.min(
-      Math.min(o.width, o.height) * 0.125,
-      (distance / count) * 0.38,
+  const largest = Math.max(
+      0.15,
+      widthScale *
+        Math.min(
+          Math.min(o.width, o.height) * 0.125,
+          (distance / count) * 0.38,
+        ),
     ),
     smallest = Math.min(0.65, largest * 0.45);
   return Array.from({ length: count }, (_, i) => {

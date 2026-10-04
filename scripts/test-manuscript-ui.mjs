@@ -126,6 +126,14 @@ const shape=thoughtCloudGeometry(42,24);
 const normalTrail=thoughtTrailGeometry(thought,shape.outline);
 const longTrail=thoughtTrailGeometry({...thought,tailX:80,tailY:80},shape.outline);
 assert.ok(longTrail.length>normalTrail.length);
+const wideTrail=thoughtTrailGeometry({...thought,tailX:80,tailY:80,thoughtTailWidth:100},shape.outline);
+assert.ok(wideTrail[0].r>longTrail[0].r);
+const straightTrail=thoughtTrailGeometry({...thought,tailX:80,tailY:80,thoughtTailCurve:0},shape.outline);
+const reverseTrail=thoughtTrailGeometry({...thought,tailX:80,tailY:80,thoughtTailCurve:-30},shape.outline);
+assert.notEqual(straightTrail[0].x,longTrail[0].x);
+assert.notEqual(reverseTrail[0].x,longTrail[0].x);
+assert.deepEqual(reverseTrail.at(-1),longTrail.at(-1));
+
 assert.deepEqual(thoughtTrailGeometry({...thought,tailX:21,tailY:12},shape.outline),[]);
 assert.deepEqual(thoughtTrailGeometry({...thought,tailX:25,tailY:14},shape.outline),[]);
 for(let i=1;i<longTrail.length;i++)assert.ok(longTrail[i].r<=longTrail[i-1].r);
@@ -727,6 +735,11 @@ try {
   assert.ok(document.querySelector(".panel-editor-stage .thought-trail"));
   assert.ok(document.querySelectorAll(".panel-editor-stage .thought-trail circle").length>=1);
   assert.ok(document.querySelector(".overlay-tail-grip"));
+  fireEvent.change(within(properties).getByLabelText("Startbredd"),{target:{value:"85"}});
+  fireEvent.change(within(properties).getByLabelText("Böjning"),{target:{value:"-45"}});
+  assert.equal(saved().pages[0].placements[0].overlays.at(-1).thoughtTailWidth,85);
+  assert.equal(saved().pages[0].placements[0].overlays.at(-1).thoughtTailCurve,-45);
+
   const changedText = saved().pages[0].placements[0].overlays.at(-1);
   assert.equal(changedText.text, "First\n\nSecond");
   assert.equal(changedText.textAlign, "center");

@@ -13,6 +13,7 @@ export type TextOverlay = {
   sourcePanelId?: string; sourceTextId?: string;
   textAlign?: "left" | "center" | "right"; textPadding?: number;
   fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle;
+  thoughtTailWidth?: number; thoughtTailCurve?: number;
   tailEnabled?: boolean; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number;
   strokeColor?: string; strokeWidth?: number; fillColor?: string; fillOpacity?: number; swatchId?: string;
 };
