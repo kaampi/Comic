@@ -18,6 +18,7 @@ En fristående desktopapp som omvandlar litterär text till illustrerade serier 
 
 - [PROJECT_SPEC.md](PROJECT_SPEC.md): funktioner, arkitektur, datamodell och utvecklingsplan.
 - [AGENTS.md](AGENTS.md): regler för arbete i detta repository.
+- [PAGE_LAYOUT.md](PAGE_LAYOUT.md): markera rutor och ändra deras storlek med hörn som fäster i rutnätet.
 - [LOCAL_AI.md](LOCAL_AI.md): anslut Ollama eller LM Studio / llama.cpp, välj modell och föreslå beats.
 
 ## Första milstolpen

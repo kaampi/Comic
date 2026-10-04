@@ -35,6 +35,8 @@ for (const key of [
     configurable: true,
   });
 }
+window.PointerEvent = window.MouseEvent;
+globalThis.PointerEvent = window.MouseEvent;
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const sourceRoot = join(projectRoot, "src");
@@ -497,6 +499,51 @@ try {
     originalPlan,
   );
   assert.deepEqual(saved().pages[0].placements[1].image, manualImage);
+  assert.equal(document.querySelectorAll(".panel-corner-handle").length, 0);
+  const drawn = document.querySelectorAll(".drawn-panel")[1];
+  await user.click(drawn);
+  assert.equal(document.querySelectorAll(".panel-corner-handle").length, 4);
+  assert.ok(document.querySelector(".layout-snap-grid"));
+  const grid = document.querySelector(".layout-panels");
+  grid.getBoundingClientRect = () => ({
+    x: 0,
+    y: 0,
+    left: 0,
+    top: 0,
+    right: 300,
+    bottom: 500,
+    width: 300,
+    height: 500,
+    toJSON() {},
+  });
+  const initialRect = saved().pages[0].placements[1];
+  const handle = document.querySelector(".corner-bottom-right");
+  fireEvent.pointerDown(handle, { button: 0, clientX: 100, clientY: 100 });
+  fireEvent.pointerMove(window, { clientX: 202, clientY: 302 });
+  fireEvent.pointerUp(window);
+  const resized = saved().pages[0].placements[1];
+  assert.equal(resized.width, 2);
+  assert.equal(resized.height, 3);
+  assert.equal(resized.id, initialRect.id);
+  assert.equal(resized.readingOrder, initialRect.readingOrder);
+  assert.deepEqual(resized.image, initialRect.image);
+  assert.deepEqual(resized.overlays, initialRect.overlays);
+  fireEvent.keyDown(document.querySelector(".corner-top-left"), {
+    key: "ArrowLeft",
+  });
+  assert.equal(saved().pages[0].placements[1].x, 1); // overlap with adjacent panel is rejected
+  fireEvent.pointerDown(document.querySelector(".corner-bottom-right"), {
+    button: 0,
+    clientX: 0,
+    clientY: 0,
+  });
+  fireEvent.pointerMove(window, { clientX: 1000, clientY: 1000 });
+  assert.equal(saved().pages[0].placements[1].height, 5);
+  fireEvent.keyDown(window, { key: "Escape" });
+  assert.equal(saved().pages[0].placements[1].height, 3);
+  await user.click(document.querySelector(".layout-canvas"));
+  assert.equal(document.querySelectorAll(".panel-corner-handle").length, 0);
+  assert.equal(document.querySelector(".layout-snap-grid"), null);
   assert.ok(
     requests.some(
       (request) =>

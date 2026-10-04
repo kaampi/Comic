@@ -1,0 +1,75 @@
+.layout-canvas:not(.is-drawing) .construction-grid .grid-cell {
+  border-color: transparent;
+  background: transparent;
+}
+.layout-canvas .drawn-panel.is-layout-selected {
+  overflow: visible;
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  z-index: 4;
+}
+.layout-canvas .drawn-panel .panel-image-frame {
+  overflow: hidden;
+}
+.panel-corner-handle {
+  position: absolute;
+  z-index: 8;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  padding: 0;
+  touch-action: none;
+}
+.panel-corner-handle:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+.corner-top-left {
+  top: -10px;
+  left: -10px;
+  cursor: nwse-resize;
+}
+.corner-top-right {
+  top: -10px;
+  right: -10px;
+  cursor: nesw-resize;
+}
+.corner-bottom-left {
+  bottom: -10px;
+  left: -10px;
+  cursor: nesw-resize;
+}
+.corner-bottom-right {
+  bottom: -10px;
+  right: -10px;
+  cursor: nwse-resize;
+}
+.layout-snap-grid {
+  position: absolute;
+  inset: 10px;
+  display: grid;
+  gap: 6px;
+  z-index: 3;
+  pointer-events: none;
+}
+.layout-snap-grid > span {
+  border: 1px dashed rgb(208 106 72 / 0.55);
+  pointer-events: none;
+}
+.layout-canvas .drawn-panel {
+  touch-action: manipulation;
+}
+.layout-canvas .panel-overlays-preview {
+  pointer-events: none;
+}
+.layout-canvas .drawn-panel .panel-overlays-preview {
+  overflow: hidden;
+}
+.layout-canvas .drawn-panel > span {
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}

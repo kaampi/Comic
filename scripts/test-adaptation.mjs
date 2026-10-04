@@ -9,7 +9,7 @@ import ts from "typescript";
 // Compile only the local domain modules; no app, browser or manuscript fixture is needed.
 const temporary = mkdtempSync(join(tmpdir(), "comicbook-adaptation-"));
 globalThis.crypto ??= { randomUUID };
-const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "localAi", "project", "stylesLibrary", "manuscriptModel", "adaptation/prompts"];
+const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "localAi", "project", "stylesLibrary", "manuscriptModel", "adaptation/prompts", "pageLayout"];
 for (const file of files) {
   const source = readFileSync(new URL("../src/" + file + ".ts", import.meta.url), "utf8");
   const result = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });
@@ -80,6 +80,16 @@ try {
   assert.ok(custom.sequences.every(s => s.title === "My custom title"));
   console.log("PASS: partial legacy references recover; ambiguous data and custom titles remain unchanged");
 
+  const { resizeFromCorner } = await import(pathToFileURL(join(temporary,"pageLayout.mjs")));
+  const rect={x:1,y:1,width:2,height:2};
+  assert.deepEqual(resizeFromCorner(rect,"bottom-right",2,3,6,8),{x:1,y:1,width:4,height:5});
+  assert.deepEqual(resizeFromCorner(rect,"top-left",-1,-1,6,8),{x:0,y:0,width:3,height:3});
+  assert.deepEqual(resizeFromCorner(rect,"top-right",1,-1,6,8),{x:1,y:0,width:3,height:3});
+  assert.deepEqual(resizeFromCorner(rect,"bottom-left",-1,1,6,8),{x:0,y:1,width:3,height:3});
+  assert.deepEqual(resizeFromCorner(rect,"bottom-right",100,100,6,8),{x:1,y:1,width:5,height:7});
+  assert.deepEqual(resizeFromCorner(rect,"top-left",100,100,6,8),{x:2,y:2,width:1,height:1});
+  assert.deepEqual(resizeFromCorner(rect,"bottom-right",.49,.51,6,8),{x:1,y:1,width:2,height:3});
+  console.log("PASS: all corner directions snap to grid, preserve the opposite corner and clamp at page bounds/minimum size");
   const model = await import(pathToFileURL(join(temporary, "manuscriptModel.mjs")));
   let working = createProject("Manuscript", "text", BUILTIN_STYLES[0]);
   working.source.textSnapshot = 'Prelude.\n\n"Wait here," he said.\n\n"Wait here," he said.';
