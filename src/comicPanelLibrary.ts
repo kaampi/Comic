@@ -115,7 +115,7 @@ export function assignLibraryPanel(
       bubbleStyle: "organic",
       tailEnabled: text.type === "speech",
       tailX: x + 26,
-      tailY: y + 28,
+      tailY: y + (text.type === "thought" ? 24*1.55 : 28),
       strokeColor: swatch?.strokeColor ?? "#171411",
       strokeWidth: swatch?.strokeWidth ?? 2,
       fillColor: swatch?.fillColor ?? "#fffdf7",

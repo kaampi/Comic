@@ -113,6 +113,9 @@ for (const [textAlign, anchor, x] of [
   assert.equal((markup.match(/<tspan/g) || []).length, 3);
 }
 
+const legacyThought = renderToStaticMarkup(React.createElement(SvgOverlay,{overlay:{id:"thought",type:"thought",text:"Thinking",x:10,y:10,width:42,height:24,rotation:0}}));
+assert.equal((legacyThought.match(/<circle/g)||[]).length,3);
+assert.ok(legacyThought.includes('class="thought-trail"'));
 const { render, screen, waitFor, fireEvent, within } =
   await import("@testing-library/react");
 const user = (await import("@testing-library/user-event")).default.setup();
@@ -701,9 +704,14 @@ try {
     within(properties).getByLabelText("Textjustering"),
     "right",
   );
+  await user.selectOptions(within(properties).getByLabelText("Typ"),"thought");
+  assert.equal(saved().pages[0].placements[0].overlays.at(-1).type,"thought");
+  assert.ok(document.querySelector(".panel-editor-stage .thought-trail"));
+  assert.equal(document.querySelectorAll(".panel-editor-stage .thought-trail circle").length,3);
+  assert.ok(document.querySelector(".overlay-tail-grip"));
   const changedText = saved().pages[0].placements[0].overlays.at(-1);
   assert.equal(changedText.text, "First\n\nSecond");
-  assert.equal(changedText.textAlign, "right");
+  assert.equal(changedText.textAlign, "center");
   assert.equal(saved().overlayDefaults.speech.textAlign, "left");
   await user.click(
     within(document.querySelector(".panel-editor-modal header")).getByRole(

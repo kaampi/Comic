@@ -47,7 +47,13 @@ function speechPath(o:TextOverlay,style:string){
  return d+" Z";
 }
 function shoutPath(o:TextOverlay){const w=o.width,h=o.height,cx=w/2,cy=h/2,pts=18;return Array.from({length:pts},(_,i)=>{const a=-Math.PI/2+i*Math.PI*2/pts,r=i%2?0.72:1,x=cx+Math.cos(a)*w*.48*r,y=cy+Math.sin(a)*h*.48*r;return(i?"L":"M")+" "+x+" "+y}).join(" ")+" Z";}
-function ThoughtTrail({o}:{o:TextOverlay}){if(o.tailX===undefined||o.tailY===undefined)return null;const tx=o.tailX-o.x,ty=o.tailY-o.y,cx=o.width*.5,cy=o.height*.72;const common=commonStyle(o);return <>{[.38,.64,.86].map((t,i)=><circle key={i} cx={cx+(tx-cx)*t} cy={cy+(ty-cy)*t} r={[5,3.6,2.4][i]} {...common}/>)}</>;}
+export function thoughtTailEndpoint(o:TextOverlay){return {x:o.tailX??o.x+o.width*.75,y:o.tailY??o.y+o.height*1.55};}
+function ThoughtTrail({o}:{o:TextOverlay}){
+ const end=thoughtTailEndpoint(o),tx=end.x-o.x,ty=end.y-o.y,cx=o.width/2,cy=o.height/2;
+ const angle=Math.atan2((ty-cy)/(o.height*.43),(tx-cx)/(o.width*.48));
+ const start=roundedBodyPoint(o,o.bubbleStyle??"organic",angle),common=commonStyle(o),size=Math.min(o.width,o.height);
+ return <g className="thought-trail">{[.25,.65,1].map((t,i)=><circle key={i} cx={start.x+(tx-start.x)*t} cy={start.y+(ty-start.y)*t} r={Math.max(.4,size*[.09,.065,.04][i])} {...common}/>)}</g>;
+}
 
 export function SvgOverlay({overlay}:{overlay:TextOverlay}){
  const sizeValue=overlay.fontSize??(overlay.type==="sfx"?20:12);
