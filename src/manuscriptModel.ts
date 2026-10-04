@@ -441,3 +441,46 @@ export function generateBeatPanelPrompt(
     ),
   });
 }
+
+/** Remove the source beat, retaining independent panels, prompts, images and page layout. */
+export function removeManuscriptBeat(
+  project: ComicProject,
+  beatId: string,
+): ComicProject {
+  if (!project.adaptations.some((a) => a.beats.some((b) => b.id === beatId)))
+    return project;
+  const without = (ids: string[]) => ids.filter((id) => id !== beatId);
+  return {
+    ...project,
+    adaptations: project.adaptations.map((a) => ({
+      ...a,
+      beats: a.beats
+        .filter((b) => b.id !== beatId)
+        .map((b, index) => ({ ...b, order: index + 1 })),
+      sequences: a.sequences.map((sequence) => ({
+        ...sequence,
+        beatIds: without(sequence.beatIds),
+      })),
+      panelPlans: a.panelPlans.map((panel) => ({
+        ...panel,
+        sourceBeatIds: without(panel.sourceBeatIds),
+      })),
+      updatedAt: new Date().toISOString(),
+    })),
+    panels: project.panels.map((panel) => ({
+      ...panel,
+      sourceBeatIds: panel.sourceBeatIds
+        ? without(panel.sourceBeatIds)
+        : undefined,
+    })),
+    pages: project.pages.map((page) => ({
+      ...page,
+      placements: page.placements.map((placement) => ({
+        ...placement,
+        sourceBeatIds: placement.sourceBeatIds
+          ? without(placement.sourceBeatIds)
+          : undefined,
+      })),
+    })),
+  };
+}

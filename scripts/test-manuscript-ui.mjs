@@ -534,6 +534,56 @@ try {
   });
   assert.equal(saved().adaptations[0].beats[0].title, "Saved title");
   assert.equal(screen.queryByText(/Projektet kunde inte sparas/), null);
+  const beforeDelete = saved();
+  const removedId = beforeDelete.adaptations[0].beats[0].id;
+  await user.click(
+    screen.getByRole("button", { name: "Ta bort beat", exact: true }),
+  );
+  assert.equal(
+    saved().adaptations[0].beats.length,
+    beforeDelete.adaptations[0].beats.length - 1,
+  );
+  assert.ok(!saved().adaptations[0].beats.some((b) => b.id === removedId));
+  assert.equal(saved().source.textSnapshot, beforeDelete.source.textSnapshot);
+  assert.deepEqual(
+    saved().adaptations[0].panelPlans.map((p) => p.image),
+    beforeDelete.adaptations[0].panelPlans.map((p) => p.image),
+  );
+  assert.ok(
+    saved().adaptations[0].panelPlans.every(
+      (p) => !p.sourceBeatIds.includes(removedId),
+    ),
+  );
+  assert.ok(!document.querySelector(`[data-beat-ids~="${removedId}"]`));
+  await user.click(
+    screen.getByRole("button", { name: "Ångra borttagning", exact: true }),
+  );
+  const restored = saved();
+  assert.deepEqual(restored.adaptations, beforeDelete.adaptations);
+  assert.deepEqual(restored.pages, beforeDelete.pages);
+  assert.ok(document.querySelector(`[data-beat-ids~="${removedId}"]`));
+  await user.click(
+    screen.getByRole("button", { name: "Ta bort beat", exact: true }),
+  );
+  fireEvent.change(screen.getByLabelText("Rubrik"), {
+    target: { value: "Edit remaining beat" },
+  });
+  assert.equal(
+    screen.queryByRole("button", { name: "Ångra borttagning", exact: true }),
+    null,
+  );
+  await user.click(
+    screen.getByRole("button", { name: "Ta bort beat", exact: true }),
+  );
+  assert.equal(saved().adaptations[0].beats.length, 0);
+  assert.equal(
+    screen.queryByRole("button", { name: "Ta bort beat", exact: true }),
+    null,
+  );
+  assert.equal(
+    saved().adaptations[0].panelPlans.length,
+    beforeDelete.adaptations[0].panelPlans.length,
+  );
   console.log(
     "PASS: manuscript frames/CRLF, prompt/image/history/dialogue inspector, selected-only AI append/failure/cancel, source edits/caret, no sequences, stable panel IDs and page images",
   );

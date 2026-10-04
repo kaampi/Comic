@@ -13,6 +13,7 @@ import {
   generateBeatPanelPrompt,
   patchBeatPanel,
   patchManuscriptBeat,
+  removeManuscriptBeat,
   withAdaptation,
   type TextRange,
 } from "./manuscriptModel";
@@ -33,7 +34,7 @@ export function ManuscriptWorkspace({
   project,
   locale,
   settings,
-  onUpdate,
+  onUpdate: updateProject,
   onSettings,
 }: {
   project: ComicProject;
@@ -50,6 +51,14 @@ export function ManuscriptWorkspace({
     ),
     [range, setRange] = useState<TextRange | null>(null),
     [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [deletedBeat, setDeletedBeat] = useState<{
+    project: ComicProject;
+    beatId: string;
+  } | null>(null);
+  const onUpdate = (update: (project: ComicProject) => ComicProject) => {
+    setDeletedBeat(null);
+    updateProject(update);
+  };
   const [width, setWidth] = useState(
     () =>
       Number(localStorage.getItem("comicbook-ai.manuscript-sidebar-width")) ||
@@ -424,6 +433,22 @@ export function ManuscriptWorkspace({
         }}
       />
       <aside className="beat-inspector">
+        {deletedBeat ? (
+          <div className="beat-review-warning" role="status">
+            <p>{t.deleted}</p>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => {
+                updateProject(() => deletedBeat.project);
+                setSelected(deletedBeat.beatId);
+                setDeletedBeat(null);
+              }}
+            >
+              {t.undoDelete}
+            </button>
+          </div>
+        ) : null}
         {busy ? (
           <div role="status">
             {t.analysing} {progress}
@@ -568,6 +593,23 @@ export function ManuscriptWorkspace({
                 →
               </button>
             </div>
+            <button
+              type="button"
+              className="text-button danger-text"
+              onClick={() => {
+                updateProject((p) => {
+                  setDeletedBeat({ project: p, beatId: beat.id });
+                  return removeManuscriptBeat(p, beat.id);
+                });
+                setSelected(
+                  adaptation.beats[index + 1]?.id ??
+                    adaptation.beats[index - 1]?.id ??
+                    null,
+                );
+              }}
+            >
+              {t.deleteBeat}
+            </button>
             <label>
               {t.title}
               <input

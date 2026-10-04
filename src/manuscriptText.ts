@@ -1,5 +1,8 @@
 import type { Locale } from "./settings";
 const en = {
+  deleteBeat: "Delete beat",
+  undoDelete: "Undo deletion",
+  deleted: "Beat deleted. Panels and images are preserved.",
   details: "Beat details",
   cancelled: "Analysis cancelled.",
   timeout:
@@ -71,6 +74,9 @@ const en = {
   basic: "Extract beats from all text without AI",
 };
 const sv: typeof en = {
+  deleteBeat: "Ta bort beat",
+  undoDelete: "Ångra borttagning",
+  deleted: "Beatet togs bort. Rutor och bilder finns kvar.",
   details: "Beatdetaljer",
   cancelled: "Analysen avbröts.",
   timeout:
@@ -143,6 +149,9 @@ const sv: typeof en = {
 };
 const nb: typeof en = {
   ...sv,
+  deleteBeat: "Slett beat",
+  undoDelete: "Angre sletting",
+  deleted: "Beatet ble slettet. Ruter og bilder er bevart.",
   details: "Beatdetaljer",
   cancelled: "Analysen ble avbrutt.",
   timeout:
