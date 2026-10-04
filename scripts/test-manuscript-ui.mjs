@@ -817,6 +817,14 @@ try {
   );
   assert.equal(saved().pages.length, 1);
   assert.ok(document.querySelector(".layout-canvas"));
+  const albumMenuStyles = document.createElement("style");
+  const stylesheet = readFileSync(join(sourceRoot,"styles.css"),"utf8");
+  albumMenuStyles.textContent = [...stylesheet.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(match=>match[1].includes(".project-topbar")).map(match=>match[0]).join("\n") + readFileSync(join(sourceRoot,"AlbumMenu.css"),"utf8");
+  document.head.append(albumMenuStyles);
+  const visibleAlbumMenu = screen.getByRole("navigation",{name:"Albummeny",exact:true});
+  assert.equal(window.getComputedStyle(visibleAlbumMenu).display,"flex");
+  assert.ok(within(visibleAlbumMenu).getByRole("button",{name:"Backup",exact:true}));
+  albumMenuStyles.remove();
   await user.click(
     screen.getByRole("button", { name: "Albuminställningar", exact: true }),
   );
