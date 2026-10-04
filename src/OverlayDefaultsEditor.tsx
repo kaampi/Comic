@@ -102,7 +102,7 @@ export function OverlayDefaultsEditor({
                     patch({ fontWeight: Number(e.target.value) })
                   }
                 >
-                  {[400, 500, 600, 700, 800, 900].map((weight) => (
+                  {[300, 400, 500, 600, 700, 800, 900].map((weight) => (
                     <option key={weight} value={weight}>
                       {weight}
                     </option>

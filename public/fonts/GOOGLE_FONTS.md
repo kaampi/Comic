@@ -13,3 +13,11 @@ Fuzzy Bubbles includes real regular (400) and bold (700) faces. The other five f
 - [FuzzyBubbles-Bold.ttf](https://github.com/google/fonts/blob/main/ofl/fuzzybubbles/FuzzyBubbles-Bold.ttf), source Git blob `174132670b9d347cb085145c543aa3b0f20100c0`.
 - [FuzzyBubbles-Regular.ttf](https://github.com/google/fonts/blob/main/ofl/fuzzybubbles/FuzzyBubbles-Regular.ttf), source Git blob `7f48e9382050d3f8d8bfe208f75b5af89a807b3e`.
 - [RubikBubbles-Regular.ttf](https://github.com/google/fonts/blob/main/ofl/rubikbubbles/RubikBubbles-Regular.ttf), source Git blob `dbfaaa72f262144e200642ac9245a7fe714f0f58`.
+
+## Comic Neue
+
+Comic Neue is bundled in real Light (300), Regular (400) and Bold (700) faces. Its original OFL license is in `licenses/comicneue/OFL.txt`. All three files contain Swedish ÅÄÖåäö.
+
+- [ComicNeue-Light.ttf](https://github.com/google/fonts/blob/main/ofl/comicneue/ComicNeue-Light.ttf), source Git blob `42448d3709fc5cb9380b4390195986a8647b6531`.
+- [ComicNeue-Regular.ttf](https://github.com/google/fonts/blob/main/ofl/comicneue/ComicNeue-Regular.ttf), source Git blob `88e9417f0e247c141adbcaa2464107d8d5b55aa1`.
+- [ComicNeue-Bold.ttf](https://github.com/google/fonts/blob/main/ofl/comicneue/ComicNeue-Bold.ttf), source Git blob `378eb2004a5bdb5ff06e97fc709ec4f1fc205d80`.
