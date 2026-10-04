@@ -113,8 +113,25 @@ for (const [textAlign, anchor, x] of [
   assert.equal((markup.match(/<tspan/g) || []).length, 3);
 }
 
+const { thoughtCloudGeometry, thoughtTrailGeometry } = await import(pathToFileURL(join(compiledRoot,"thoughtBubble.mjs")));
+for(const [width,height] of [[42,24],[84,48],[100,4],[4,100]]) {
+ const shape=thoughtCloudGeometry(width,height);
+ assert.equal(shape.path,thoughtCloudGeometry(width,height).path);
+ assert.ok(shape.path.includes(" A "));
+ for(const point of shape.outline){assert.ok(Number.isFinite(point.x)&&Number.isFinite(point.y));assert.ok(point.x>=0&&point.x<=width&&point.y>=0&&point.y<=height);}
+}
+assert.ok(thoughtCloudGeometry(84,48).count>thoughtCloudGeometry(42,24).count);
+const thought={id:"thought",type:"thought",text:"",x:0,y:0,width:42,height:24,rotation:0};
+const shape=thoughtCloudGeometry(42,24);
+const normalTrail=thoughtTrailGeometry(thought,shape.outline);
+const longTrail=thoughtTrailGeometry({...thought,tailX:80,tailY:80},shape.outline);
+assert.ok(longTrail.length>normalTrail.length);
+assert.deepEqual(thoughtTrailGeometry({...thought,tailX:21,tailY:12},shape.outline),[]);
+assert.deepEqual(thoughtTrailGeometry({...thought,tailX:25,tailY:14},shape.outline),[]);
+for(let i=1;i<longTrail.length;i++)assert.ok(longTrail[i].r<=longTrail[i-1].r);
+assert.ok(Math.abs(longTrail.at(-1).x-80)<1e-8&&Math.abs(longTrail.at(-1).y-80)<1e-8);
 const legacyThought = renderToStaticMarkup(React.createElement(SvgOverlay,{overlay:{id:"thought",type:"thought",text:"Thinking",x:10,y:10,width:42,height:24,rotation:0}}));
-assert.equal((legacyThought.match(/<circle/g)||[]).length,3);
+assert.ok((legacyThought.match(/<circle/g)||[]).length>=1);
 assert.ok(legacyThought.includes('class="thought-trail"'));
 assert.ok(legacyThought.includes('class="thought-cloud"'));
 const { render, screen, waitFor, fireEvent, within } =
@@ -708,7 +725,7 @@ try {
   await user.selectOptions(within(properties).getByLabelText("Typ"),"thought");
   assert.equal(saved().pages[0].placements[0].overlays.at(-1).type,"thought");
   assert.ok(document.querySelector(".panel-editor-stage .thought-trail"));
-  assert.equal(document.querySelectorAll(".panel-editor-stage .thought-trail circle").length,3);
+  assert.ok(document.querySelectorAll(".panel-editor-stage .thought-trail circle").length>=1);
   assert.ok(document.querySelector(".overlay-tail-grip"));
   const changedText = saved().pages[0].placements[0].overlays.at(-1);
   assert.equal(changedText.text, "First\n\nSecond");

@@ -1,3 +1,5 @@
+import { thoughtCloudGeometry, thoughtTrailGeometry } from "./thoughtBubble";
+export { thoughtTailEndpoint } from "./thoughtBubble";
 import { wrapOverlayText } from "./overlayTypography";
 import type { TextOverlay } from "./project";
 
@@ -47,28 +49,6 @@ function speechPath(o:TextOverlay,style:string){
  return d+" Z";
 }
 function shoutPath(o:TextOverlay){const w=o.width,h=o.height,cx=w/2,cy=h/2,pts=18;return Array.from({length:pts},(_,i)=>{const a=-Math.PI/2+i*Math.PI*2/pts,r=i%2?0.72:1,x=cx+Math.cos(a)*w*.48*r,y=cy+Math.sin(a)*h*.48*r;return(i?"L":"M")+" "+x+" "+y}).join(" ")+" Z";}
-// Broad, uneven cloud lobes built from cubic arcs instead of radial ripples.
-function thoughtCloudPath(w:number,h:number){
- const segments=[
-  [.12,.72],
-  [-.02,.69,-.02,.32,.17,.30],
-  [.19,.12,.34,.04,.45,.16],
-  [.54,-.01,.69,.04,.74,.23],
-  [.88,.14,.99,.30,.95,.44],
-  [1.08,.50,1.00,.71,.92,.75],
-  [.90,.94,.75,1.00,.65,.86],
-  [.57,1.03,.41,1.00,.35,.88],
-  [.22,1.01,.09,.94,.12,.72],
- ];
- return segments.map((points,index)=>(index?"C":"M")+" "+points.map((value,i)=>(value*(i%2?h:w)).toFixed(3)).join(" ")).join(" ")+" Z";
-}
-export function thoughtTailEndpoint(o:TextOverlay){return {x:o.tailX??o.x+o.width*.75,y:o.tailY??o.y+o.height*1.55};}
-function ThoughtTrail({o}:{o:TextOverlay}){
- const end=thoughtTailEndpoint(o),tx=end.x-o.x,ty=end.y-o.y,cx=o.width/2,cy=o.height/2;
- const angle=Math.atan2((ty-cy)/(o.height*.43),(tx-cx)/(o.width*.48));
- const start=roundedBodyPoint(o,o.bubbleStyle??"organic",angle),common=commonStyle(o),size=Math.min(o.width,o.height);
- return <g className="thought-trail">{[.25,.65,1].map((t,i)=><circle key={i} cx={start.x+(tx-start.x)*t} cy={start.y+(ty-start.y)*t} r={Math.max(.4,size*[.09,.065,.04][i])} {...common}/>)}</g>;
-}
 
 export function SvgOverlay({overlay}:{overlay:TextOverlay}){
  const sizeValue=overlay.fontSize??(overlay.type==="sfx"?20:12);
@@ -79,9 +59,10 @@ export function SvgOverlay({overlay}:{overlay:TextOverlay}){
  const align=overlay.textAlign??"center",textX=align==="left"?padding:align==="right"?w-padding:w/2;
  const anchor=align==="left"?"start":align==="right"?"end":"middle";
  const common=commonStyle(overlay);
+ const cloud=overlay.type==="thought"?thoughtCloudGeometry(w,h):undefined;
  return <g transform={`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>
   {overlay.type==="speech"?<path d={style==="shout"?shoutPath(overlay):speechPath(overlay,style)} {...common} strokeDasharray={style==="whisper"?"4 3":undefined}/>:null}
-  {overlay.type==="thought"?<><path className="thought-cloud" d={thoughtCloudPath(w,h)} {...common}/><ThoughtTrail o={overlay}/></>:null}
+  {overlay.type==="thought"?<><g className="thought-trail">{thoughtTrailGeometry(overlay,cloud!.outline).map((circle,i)=><circle key={i} cx={circle.x} cy={circle.y} r={circle.r} {...common}/>)}</g><path className="thought-cloud" d={cloud!.path} {...common} strokeLinejoin="round" strokeLinecap="round"/></>:null}
   {overlay.type==="caption"?<path d={bodyPath({...overlay,roundness:overlay.roundness??18},"organic")} {...common}/>:null}
   <text x={textX} y={h/2-(textLines.length-1)*fontSize*.575} textAnchor={anchor} dominantBaseline="middle" fontFamily={overlay.fontFamily??(overlay.type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif")} fontWeight={overlay.fontWeight??(overlay.type==="sfx"?800:600)} fontSize={fontSize} fill="#171411" stroke={overlay.type==="sfx"?"#fffdf7":"none"} strokeWidth={overlay.type==="sfx"?3:0} paintOrder="stroke">{textLines.map((line,i)=><tspan key={i} x={textX} dy={i===0?0:fontSize*1.15}>{line||"\u00a0"}</tspan>)}</text>
  </g>;
