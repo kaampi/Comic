@@ -575,8 +575,11 @@ export function ManuscriptWorkspace({
                 onChange={(e) => patch({ title: e.target.value })}
               />
             </label>
-            <details className="beat-section" key={beat.id + "-summary"}>
-              <summary>{t.summary}</summary>
+            <details
+              className="beat-section beat-details-section"
+              key={beat.id + "-details"}
+            >
+              <summary>{t.details}</summary>
               <div className="beat-section-body">
                 <label>
                   {t.summary}
@@ -586,11 +589,7 @@ export function ManuscriptWorkspace({
                     onChange={(e) => patch({ summary: e.target.value })}
                   />
                 </label>
-              </div>
-            </details>
-            <details className="beat-section" key={beat.id + "-type"}>
-              <summary>{t.type}</summary>
-              <div className="beat-section-body">
+
                 <label>
                   {t.type}
                   <select
@@ -604,11 +603,7 @@ export function ManuscriptWorkspace({
                     ))}
                   </select>
                 </label>
-              </div>
-            </details>
-            <details className="beat-section" key={beat.id + "-characters"}>
-              <summary>{t.characters}</summary>
-              <div className="beat-section-body">
+
                 <fieldset>
                   <legend>{t.characters}</legend>
                   {project.characters.map((c) => (
@@ -628,11 +623,7 @@ export function ManuscriptWorkspace({
                     </label>
                   ))}
                 </fieldset>
-              </div>
-            </details>
-            <details className="beat-section" key={beat.id + "-location"}>
-              <summary>{t.location}</summary>
-              <div className="beat-section-body">
+
                 <label>
                   {t.location}
                   <select
@@ -649,11 +640,7 @@ export function ManuscriptWorkspace({
                     ))}
                   </select>
                 </label>
-              </div>
-            </details>
-            <details className="beat-section" key={beat.id + "-dialogue"}>
-              <summary>{t.dialogue}</summary>
-              <div className="beat-section-body">
+
                 {beat.dialogueCandidates.map((item, i) => (
                   <label key={item.id}>
                     {t.dialogue}
@@ -676,11 +663,7 @@ export function ManuscriptWorkspace({
                     />
                   </label>
                 ))}
-              </div>
-            </details>
-            <details className="beat-section" key={beat.id + "-narration"}>
-              <summary>{t.narration}</summary>
-              <div className="beat-section-body">
+
                 {beat.captionCandidates.map((item, i) => (
                   <label key={item.id}>
                     {t.narration}
@@ -704,7 +687,7 @@ export function ManuscriptWorkspace({
                   </label>
                 ))}
               </div>
-            </details>{" "}
+            </details>
             <details>
               <summary>{t.source}</summary>
               <blockquote>{beat.sourceTextExcerpt}</blockquote>

@@ -1,5 +1,6 @@
 import type { Locale } from "./settings";
 const en = {
+  details: "Beat details",
   cancelled: "Analysis cancelled.",
   timeout:
     "The model did not finish within five minutes. Try a shorter selection.",
@@ -70,6 +71,7 @@ const en = {
   basic: "Extract beats from all text without AI",
 };
 const sv: typeof en = {
+  details: "Beatdetaljer",
   cancelled: "Analysen avbröts.",
   timeout:
     "Modellen blev inte klar inom fem minuter. Prova en kortare markering.",
@@ -141,6 +143,7 @@ const sv: typeof en = {
 };
 const nb: typeof en = {
   ...sv,
+  details: "Beatdetaljer",
   cancelled: "Analysen ble avbrutt.",
   timeout:
     "Modellen ble ikke ferdig innen fem minutter. Prøv en kortere markering.",

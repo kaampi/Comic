@@ -291,7 +291,16 @@ try {
   assert.equal(saved().panels.length, 1);
   assert.equal(document.querySelector(".beat-width"), null);
   const sections = [...document.querySelectorAll(".beat-section")];
-  assert.ok(sections.length >= 7);
+  assert.equal(sections.length, 2);
+  const beatDetails = document.querySelector(".beat-details-section");
+  assert.equal(beatDetails.querySelectorAll("details").length, 0);
+  assert.ok(beatDetails.contains(screen.getByLabelText("Sammanfattning")));
+  assert.ok(beatDetails.contains(screen.getByLabelText("Beat-typ")));
+  assert.ok(beatDetails.contains(screen.getByLabelText("Plats")));
+  await user.click(beatDetails.querySelector("summary"));
+  assert.equal(beatDetails.open, true);
+  await user.click(beatDetails.querySelector("summary"));
+  assert.equal(beatDetails.open, false);
   const firstCard = document.querySelector(".beat-panel-card");
   assert.equal(firstCard.open, false);
   const beforeCollapse = saved();
@@ -319,7 +328,10 @@ try {
   await user.click(secondCard.querySelector("summary"));
   await user.click(firstCard.querySelector("summary"));
   await user.click(
-    within(firstCard).getByRole("button", { name: "Generera bildprompt", exact: true }),
+    within(firstCard).getByRole("button", {
+      name: "Generera bildprompt",
+      exact: true,
+    }),
   );
   assert.ok(
     screen.getByLabelText("Bildprompt").value.includes("Ink illustration."),
@@ -359,7 +371,10 @@ try {
   );
   assert.deepEqual(saved().adaptations[0].panelPlans[0].image, initialImage);
   await user.click(
-    within(firstCard).getByRole("button", { name: "Lägg till dialog", exact: true }),
+    within(firstCard).getByRole("button", {
+      name: "Lägg till dialog",
+      exact: true,
+    }),
   );
   await user.type(screen.getByLabelText("Dialog"), "Please wait.");
   assert.equal(
