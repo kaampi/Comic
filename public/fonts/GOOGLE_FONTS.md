@@ -1,0 +1,15 @@
+# Additional Google Fonts
+
+Bundled locally as full WOFF fonts, converted from the unmodified Google Fonts TTF files with fontTools. No runtime Google Fonts requests are used. The original licenses are included in `licenses/<family>/`.
+
+Fuzzy Bubbles includes real regular (400) and bold (700) faces. The other five families provide a regular (400) face; browser weight synthesis applies to other selected weights. Swedish ÅÄÖåäö glyphs are present in all seven files.
+
+## Sources
+
+- [LuckiestGuy-Regular.ttf](https://github.com/google/fonts/blob/main/apache/luckiestguy/LuckiestGuy-Regular.ttf), source Git blob `5ca663c2f05761356ca4427c084e4443a157f834`.
+- [PermanentMarker-Regular.ttf](https://github.com/google/fonts/blob/main/apache/permanentmarker/PermanentMarker-Regular.ttf), source Git blob `3218fc5b3d395c3a3fc207fdf17a27bb32af3242`.
+- [GloriaHallelujah.ttf](https://github.com/google/fonts/blob/main/ofl/gloriahallelujah/GloriaHallelujah.ttf), source Git blob `6382747e830a1299fc7c9b1888572bc8f6a25daa`.
+- [BubblerOne-Regular.ttf](https://github.com/google/fonts/blob/main/ofl/bubblerone/BubblerOne-Regular.ttf), source Git blob `ca00ec18c6e4e0db18fffb0e149a6e0686cfce5a`.
+- [FuzzyBubbles-Bold.ttf](https://github.com/google/fonts/blob/main/ofl/fuzzybubbles/FuzzyBubbles-Bold.ttf), source Git blob `174132670b9d347cb085145c543aa3b0f20100c0`.
+- [FuzzyBubbles-Regular.ttf](https://github.com/google/fonts/blob/main/ofl/fuzzybubbles/FuzzyBubbles-Regular.ttf), source Git blob `7f48e9382050d3f8d8bfe208f75b5af89a807b3e`.
+- [RubikBubbles-Regular.ttf](https://github.com/google/fonts/blob/main/ofl/rubikbubbles/RubikBubbles-Regular.ttf), source Git blob `dbfaaa72f262144e200642ac9245a7fe714f0f58`.

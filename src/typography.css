@@ -109,3 +109,60 @@ select,
 .panel-editor-tools {
   font-family: var(--font-ui);
 }
+
+
+@font-face {
+  font-family: "Luckiest Guy";
+  src: url("/fonts/luckiestguy-400.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Permanent Marker";
+  src: url("/fonts/permanentmarker-400.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Gloria Hallelujah";
+  src: url("/fonts/gloriahallelujah-400.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bubbler One";
+  src: url("/fonts/bubblerone-400.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fuzzy Bubbles";
+  src: url("/fonts/fuzzybubbles-400.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fuzzy Bubbles";
+  src: url("/fonts/fuzzybubbles-700.woff") format("woff");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rubik Bubbles";
+  src: url("/fonts/rubikbubbles-400.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}

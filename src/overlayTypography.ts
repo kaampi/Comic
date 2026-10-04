@@ -18,6 +18,12 @@ export const OVERLAY_FONTS = [
   "Gochi Hand, cursive",
   "Rancho, cursive",
   "Impact, sans-serif",
+  "Luckiest Guy, cursive",
+  "Permanent Marker, cursive",
+  "Gloria Hallelujah, cursive",
+  "Bubbler One, sans-serif",
+  "Fuzzy Bubbles, cursive",
+  "Rubik Bubbles, cursive",
 ];
 export function overlayDefaults(
   project: ComicProject,
