@@ -47,12 +47,20 @@ function speechPath(o:TextOverlay,style:string){
  return d+" Z";
 }
 function shoutPath(o:TextOverlay){const w=o.width,h=o.height,cx=w/2,cy=h/2,pts=18;return Array.from({length:pts},(_,i)=>{const a=-Math.PI/2+i*Math.PI*2/pts,r=i%2?0.72:1,x=cx+Math.cos(a)*w*.48*r,y=cy+Math.sin(a)*h*.48*r;return(i?"L":"M")+" "+x+" "+y}).join(" ")+" Z";}
+// Broad, uneven cloud lobes built from cubic arcs instead of radial ripples.
 function thoughtCloudPath(w:number,h:number){
- const lobes=12,steps=144,cx=w/2,cy=h/2;
- const point=(angle:number)=>{const ripple=1+.085*Math.cos(lobes*angle);return {x:cx+Math.cos(angle)*w*.44*ripple,y:cy+Math.sin(angle)*h*.41*ripple};};
- const first=point(0);let d=`M ${first.x} ${first.y}`;
- for(let i=1;i<=steps;i++){const p=point(i*Math.PI*2/steps);d+=` L ${p.x} ${p.y}`;}
- return d+" Z";
+ const segments=[
+  [.12,.72],
+  [-.02,.69,-.02,.32,.17,.30],
+  [.19,.12,.34,.04,.45,.16],
+  [.54,-.01,.69,.04,.74,.23],
+  [.88,.14,.99,.30,.95,.44],
+  [1.08,.50,1.00,.71,.92,.75],
+  [.90,.94,.75,1.00,.65,.86],
+  [.57,1.03,.41,1.00,.35,.88],
+  [.22,1.01,.09,.94,.12,.72],
+ ];
+ return segments.map((points,index)=>(index?"C":"M")+" "+points.map((value,i)=>(value*(i%2?h:w)).toFixed(3)).join(" ")).join(" ")+" Z";
 }
 export function thoughtTailEndpoint(o:TextOverlay){return {x:o.tailX??o.x+o.width*.75,y:o.tailY??o.y+o.height*1.55};}
 function ThoughtTrail({o}:{o:TextOverlay}){
