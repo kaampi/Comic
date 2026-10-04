@@ -47,6 +47,13 @@ function speechPath(o:TextOverlay,style:string){
  return d+" Z";
 }
 function shoutPath(o:TextOverlay){const w=o.width,h=o.height,cx=w/2,cy=h/2,pts=18;return Array.from({length:pts},(_,i)=>{const a=-Math.PI/2+i*Math.PI*2/pts,r=i%2?0.72:1,x=cx+Math.cos(a)*w*.48*r,y=cy+Math.sin(a)*h*.48*r;return(i?"L":"M")+" "+x+" "+y}).join(" ")+" Z";}
+function thoughtCloudPath(w:number,h:number){
+ const lobes=12,steps=144,cx=w/2,cy=h/2;
+ const point=(angle:number)=>{const ripple=1+.085*Math.cos(lobes*angle);return {x:cx+Math.cos(angle)*w*.44*ripple,y:cy+Math.sin(angle)*h*.41*ripple};};
+ const first=point(0);let d=`M ${first.x} ${first.y}`;
+ for(let i=1;i<=steps;i++){const p=point(i*Math.PI*2/steps);d+=` L ${p.x} ${p.y}`;}
+ return d+" Z";
+}
 export function thoughtTailEndpoint(o:TextOverlay){return {x:o.tailX??o.x+o.width*.75,y:o.tailY??o.y+o.height*1.55};}
 function ThoughtTrail({o}:{o:TextOverlay}){
  const end=thoughtTailEndpoint(o),tx=end.x-o.x,ty=end.y-o.y,cx=o.width/2,cy=o.height/2;
@@ -66,7 +73,7 @@ export function SvgOverlay({overlay}:{overlay:TextOverlay}){
  const common=commonStyle(overlay);
  return <g transform={`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>
   {overlay.type==="speech"?<path d={style==="shout"?shoutPath(overlay):speechPath(overlay,style)} {...common} strokeDasharray={style==="whisper"?"4 3":undefined}/>:null}
-  {overlay.type==="thought"?<><path d={bodyPath(overlay,style)} {...common}/><ThoughtTrail o={overlay}/></>:null}
+  {overlay.type==="thought"?<><path className="thought-cloud" d={thoughtCloudPath(w,h)} {...common}/><ThoughtTrail o={overlay}/></>:null}
   {overlay.type==="caption"?<path d={bodyPath({...overlay,roundness:overlay.roundness??18},"organic")} {...common}/>:null}
   <text x={textX} y={h/2-(textLines.length-1)*fontSize*.575} textAnchor={anchor} dominantBaseline="middle" fontFamily={overlay.fontFamily??(overlay.type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif")} fontWeight={overlay.fontWeight??(overlay.type==="sfx"?800:600)} fontSize={fontSize} fill="#171411" stroke={overlay.type==="sfx"?"#fffdf7":"none"} strokeWidth={overlay.type==="sfx"?3:0} paintOrder="stroke">{textLines.map((line,i)=><tspan key={i} x={textX} dy={i===0?0:fontSize*1.15}>{line||"\u00a0"}</tspan>)}</text>
  </g>;

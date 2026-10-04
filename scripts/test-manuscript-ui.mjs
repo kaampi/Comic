@@ -116,6 +116,7 @@ for (const [textAlign, anchor, x] of [
 const legacyThought = renderToStaticMarkup(React.createElement(SvgOverlay,{overlay:{id:"thought",type:"thought",text:"Thinking",x:10,y:10,width:42,height:24,rotation:0}}));
 assert.equal((legacyThought.match(/<circle/g)||[]).length,3);
 assert.ok(legacyThought.includes('class="thought-trail"'));
+assert.ok(legacyThought.includes('class="thought-cloud"'));
 const { render, screen, waitFor, fireEvent, within } =
   await import("@testing-library/react");
 const user = (await import("@testing-library/user-event")).default.setup();
