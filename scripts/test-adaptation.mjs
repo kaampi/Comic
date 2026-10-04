@@ -9,7 +9,7 @@ import ts from "typescript";
 // Compile only the local domain modules; no app, browser or manuscript fixture is needed.
 const temporary = mkdtempSync(join(tmpdir(), "comicbook-adaptation-"));
 globalThis.crypto ??= { randomUUID };
-const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "project", "stylesLibrary"];
+const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "localAi", "project", "stylesLibrary"];
 for (const file of files) {
   const source = readFileSync(new URL("../src/" + file + ".ts", import.meta.url), "utf8");
   const result = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });
@@ -90,6 +90,88 @@ try {
   assert.deepEqual(loaded.pages[0].placements[0].image, project.pages[0].placements[0].image);
   assert.ok(panelize(loaded.adaptations[0].beats, loaded.adaptations[0].sequences).length > 0);
   console.log("PASS: normal project loading repairs legacy adaptation and preserves page images");
+
+  const local = await import(pathToFileURL(join(temporary, "localAi.mjs")));
+  const ai = await import(pathToFileURL(join(temporary, "adaptation/aiBeats.mjs")));
+  const settings = local.defaultLocalAiSettings();
+  settings.servers.ollama.model = "story-model:latest";
+  local.saveLocalAiSettings(settings);
+  assert.deepEqual(local.readLocalAiSettings(), settings);
+  assert.ok(storage.has("comicbook-ai.local-text-ai"));
+  assert.ok(![...storage.keys()].some(key => key.startsWith("storybook")));
+  assert.equal(local.normalizeLocalBaseUrl(" http://localhost:11434/ "), "http://localhost:11434");
+  for (const url of ["http://192.168.1.20:1234", "http://10.0.0.2:8000/v1", "http://[::1]:11434", "http://ai-server.local:1234"]) {
+    assert.ok(local.normalizeLocalBaseUrl(url));
+  }
+  for (const url of ["https://api.openai.com", "https://example.com", "file:///tmp/server", "http://user:secret@localhost:1234"]) {
+    assert.throws(() => local.normalizeLocalBaseUrl(url));
+  }
+  const requests = [];
+  const response = payload => new Response(JSON.stringify(payload), { headers: { "Content-Type": "application/json" } });
+  const mock = async (url, init) => {
+    requests.push({ url, init });
+    if (url.endsWith("/api/tags")) return response({ models: [{ name: "z:latest" }, { name: "a:latest" }, { name: "z:latest" }] });
+    if (url.endsWith("/v1/models")) return response({ data: [{ id: "studio-model" }] });
+    if (url.endsWith("/api/show")) return response({ model_info: { "llama.context_length": 32768 } });
+    if (url.endsWith("/api/chat")) return response({ message: { content: '{"beats":[]}' }, done_reason: "stop" });
+    return response({ choices: [{ message: { content: '{"beats":[]}' }, finish_reason: "stop" }] });
+  };
+  assert.deepEqual(await local.listLocalModels(settings, undefined, mock), ["a:latest", "z:latest"]);
+  assert.equal(local.pickListedModel("z", ["a:latest", "z:latest"]), "z:latest");
+  assert.equal(await local.getLocalModelContextLength(settings, undefined, mock), 32768);
+  await local.completeLocalChat(settings, [{ role: "user", content: "test" }], undefined, mock);
+  let body = JSON.parse(requests.at(-1).init.body);
+  assert.equal(body.model, "story-model:latest");
+  assert.equal(body.options.num_ctx, 8192);
+  assert.equal(body.format, "json");
+  settings.engine = "openai-compatible";
+  settings.servers["openai-compatible"] = { baseUrl: "http://localhost:1234/v1/", model: "studio-model" };
+  assert.deepEqual(await local.listLocalModels(settings, undefined, mock), ["studio-model"]);
+  assert.equal(requests.at(-1).url, "http://localhost:1234/v1/models");
+  await local.completeLocalChat(settings, [{ role: "user", content: "test" }], undefined, mock);
+  assert.equal(requests.at(-1).url, "http://localhost:1234/v1/chat/completions");
+  body = JSON.parse(requests.at(-1).init.body);
+  assert.equal(body.model, "studio-model"); assert.equal(body.stream, false); assert.ok(body.max_tokens > 0);
+  await assert.rejects(local.listLocalModels(settings, undefined, async () => response({})));
+  await assert.rejects(local.completeLocalChat(settings, [], undefined, async () => new Response("failed", { status: 503 })));
+  await assert.rejects(local.completeLocalChat(settings, [], undefined, async () => response({ choices: [{ finish_reason: "length", message: { content: "{}" } }] })));
+  const abort = new AbortController(); abort.abort();
+  await assert.rejects(local.listLocalModels(settings, abort.signal, async (_url, init) => { init.signal.throwIfAborted(); }));
+  console.log("PASS: both local transports, model listing, context, storage isolation, failures and cancellation");
+
+  const excerpt = 'Holmes opened the gate. "Wait here," he said.';
+  const beatReply = JSON.stringify({ beats: [{
+    title: "At the gate", summary: "Holmes opens the gate.", beatType: "action", sourceTextExcerpt: excerpt,
+    visualDescription: "Holmes stands at the open gate.", dialogue: ["Wait here,"], captions: [], characters: ["Holmes"], location: "Gate"
+  }] });
+  const beatContext = { characters: [{ id: "holmes", name: "Holmes" }], locations: [{ id: "gate", name: "Gate" }] };
+  const proposals = ai.parseAiBeats(beatReply, excerpt, beatContext, 50);
+  assert.equal(proposals[0].sourceStart, 50); assert.equal(proposals[0].sourceEnd, 50 + excerpt.length);
+  assert.deepEqual(proposals[0].characterIds, ["holmes"]); assert.equal(proposals[0].locationId, "gate");
+  assert.equal(proposals[0].dialogueCandidates[0].source, "original");
+  assert.equal(proposals[0].origin, "ai-generated");
+  assert.throws(() => ai.parseAiBeats(beatReply.replace("Wait here,", "Invented dialogue"), excerpt, beatContext));
+  assert.throws(() => ai.parseAiBeats(beatReply, "An unrelated scene.", beatContext));
+  assert.throws(() => ai.parseAiBeats("not json", excerpt, beatContext));
+  assert.throws(() => ai.parseAiBeats('{"beats":[]}', excerpt, beatContext));
+  const longSource = (excerpt + "\n\n").repeat(150);
+  const chunks = ai.splitBeatSource(longSource, 8192);
+  assert.equal(chunks.map(chunk => chunk.text).join(""), longSource);
+  assert.ok(chunks.length > 1 && chunks.every(chunk => chunk.text.length <= 2469));
+  const frozenPlan = structuredClone(first);
+  const accepted = ai.adaptationFromAiBeats("AI", source, proposals, first);
+  assert.deepEqual(first, frozenPlan); assert.equal(accepted.id, first.id);
+  assert.ok(accepted.sequences.every(sequence => sequence.beatIds.every(id => accepted.beats.some(beat => beat.id === id))));
+  assert.ok(panelize(accepted.beats, accepted.sequences).length > 0);
+  const progress = [];
+  const suggested = await ai.suggestAiBeats({ source: excerpt, sourceOffset: 50, context: beatContext, settings,
+    fetchImpl: async (_url, init) => {
+      assert.equal(JSON.parse(JSON.parse(init.body).messages[1].content).manuscript, excerpt);
+      return response({ choices: [{ message: { content: beatReply }, finish_reason: "stop" }] });
+    }, onProgress: (done, total) => progress.push([done, total]) });
+  assert.equal(suggested[0].sourceStart, 50); assert.deepEqual(progress, [[0, 1], [1, 1]]);
+  await assert.rejects(ai.suggestAiBeats({ source: excerpt, context: beatContext, settings, signal: abort.signal }));
+  console.log("PASS: AI proposals preserve source/dialogue, reject hallucinated sources, split long manuscripts, and apply only validated beats");
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

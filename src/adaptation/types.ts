@@ -34,6 +34,9 @@ export type AdaptationBeat = {
   summary: string;
   beatType: BeatType;
   sourceTextExcerpt: string;
+  sourceStart?: number;
+  sourceEnd?: number;
+  origin?: "heuristic" | "ai-generated";
   characterIds: string[];
   locationId?: string;
   dialogueCandidates: DialogueCandidate[];

@@ -14,6 +14,10 @@ import { createAdaptation } from "./adaptation/extract";
 import { panelize } from "./adaptation/panelize";
 import { generateImagePrompts } from "./adaptation/prompts";
 import type { PanelDensity, StoryAdaptation } from "./adaptation/types";
+import { readLocalAiSettings, saveLocalAiSettings } from "./localAi";
+import { LocalAiSettings } from "./LocalAiSettings";
+import { AiBeatSuggestions } from "./AiBeatSuggestions";
+import { localAiText } from "./localAiText";
 
 type Panel = "styles" | "guide" | "settings" | "new-project" | null;
 type StyleDraft = { id?: string; name: string; genre: string; promptText: string; previewImage?: string; linePreviewImage?: string };
@@ -23,6 +27,7 @@ export function App() {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
   const [aiMode, setAiMode] = useState<AiMode>("prompt");
+  const [localAiSettings, setLocalAiSettings] = useState(readLocalAiSettings);
   const [locale, setLocale] = useState<Locale>(readLocale);
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [styleGenre, setStyleGenre] = useState("__all__");
@@ -79,6 +84,10 @@ export function App() {
   }, [panelEditor]);
 
   const tr = (key: UiKey) => uiText(locale, key);
+  const aiText = localAiText(locale);
+  const updateLocalAiSettings = (settings: typeof localAiSettings) => {
+    setLocalAiSettings(settings); saveLocalAiSettings(settings);
+  };
   const panelAspectRatio = (page: ComicProject["pages"][number], placement: ComicProject["pages"][number]["placements"][number]) => {
     const pageAspect = 3 / 5;
     const widthShare = placement.width / Math.max(1, page.gridColumns);
@@ -664,9 +673,10 @@ export function App() {
           </section> : null}
           {projectTab === "adaptation" ? <section className="adaptation-workspace">
             <div className="section-heading adaptation-heading"><div><p className="eyebrow">{tr("adaptation").toUpperCase()}</p><h2>{tr("adaptationTitle")}</h2><p className="quiet">{tr("adaptationIntro")}</p></div>
-              <button className="primary-button" type="button" disabled={!(activeProject.source.textSnapshot ?? "").trim()} onClick={runBeatExtraction}>{activeAdaptation ? tr("regenerateBeats") : tr("extractBeats")}</button>
+              <button className="text-button" type="button" disabled={!(activeProject.source.textSnapshot ?? "").trim()} onClick={runBeatExtraction}>{aiText.basic}</button>
             </div>
             {!(activeProject.source.textSnapshot ?? "").trim() ? <div className="adaptation-empty">{tr("noSourceForAdaptation")}</div> : null}
+            {adaptationStep === 1 ? <AiBeatSuggestions key={activeProject.id} project={activeProject} adaptation={activeAdaptation} settings={localAiSettings} locale={locale} onSettings={() => setPanel("settings")} onApply={(adaptation) => { replaceActiveAdaptation(adaptation); setAdaptationStep(1); }} /> : null}
             {activeAdaptation ? <>
               <div className="adaptation-summary"><span>{activeAdaptation.beats.length} {tr("beatsFound")}</span><span>{activeAdaptation.sequences.length} {tr("sequences")}</span><span>{activeAdaptation.panelPlans.length} {tr("panelsWanted")}</span><span>{activeAdaptation.imagePrompts.length} {tr("promptReady")}</span></div>
               {adaptationStep===1?<section className="adaptation-step">
@@ -690,7 +700,9 @@ export function App() {
                     : undefined);
                   const thumbImage = linkedPlacement?.placement.image;
                   return <article className="adaptation-card beat-card" key={beat.id}>{thumbImage?<div className="beat-thumbnail"><img src={thumbImage.dataUrl} alt="" style={{objectFit:thumbImage.fit??"cover",objectPosition:`${50+(thumbImage.offsetX??0)/2}% ${50+(thumbImage.offsetY??0)/2}%`,transform:`scale(${thumbImage.zoom??1})`}} /></div>:null}<div className="beat-heading-line"><span>{beat.order}</span><span aria-hidden="true">–</span><input className="beat-title-input" maxLength={30} value={beat.title} onChange={(e)=>updateBeat(beat.id,{title:e.target.value.slice(0,30)})}/></div>
-                  {beat.dialogueCandidates.length ? <details className="beat-section" open><summary>{tr("originalDialogue")}</summary>{beat.dialogueCandidates.map((dialogue) => <textarea className="beat-dialogue-input" rows={2} key={dialogue.id} value={dialogue.text} onChange={(e)=>updateBeatDialogue(beat.id,dialogue.id,e.target.value)}/>)}</details> : beat.captionCandidates.length ? <details className="beat-section" open><summary>{tr("adaptedCaption")}</summary>{beat.captionCandidates.map((caption) => <textarea className="beat-caption-input" rows={2} key={caption.id} value={caption.text} onChange={(e)=>updateBeatCaption(beat.id,caption.id,e.target.value)}/>)}</details> : null}
+                  {beat.origin === "ai-generated" ? <p className="quiet">{aiText.generated}</p> : null}
+                  {beat.dialogueCandidates.length ? <details className="beat-section" open><summary>{tr("originalDialogue")}</summary>{beat.dialogueCandidates.map((dialogue) => <textarea className="beat-dialogue-input" rows={2} key={dialogue.id} value={dialogue.text} onChange={(e)=>updateBeatDialogue(beat.id,dialogue.id,e.target.value)}/>)}</details> : null}
+                  {beat.captionCandidates.length ? <details className="beat-section" open><summary>{beat.captionCandidates.some(item => item.source === "ai-generated") ? aiText.caption : tr("adaptedCaption")}</summary>{beat.captionCandidates.map((caption) => <textarea className="beat-caption-input" rows={2} key={caption.id} value={caption.text} onChange={(e)=>updateBeatCaption(beat.id,caption.id,e.target.value)}/>)}</details> : null}
                   <details className="beat-section source-section"><summary>{tr("sourceExcerptLabel")}</summary><p>{beat.sourceTextExcerpt}</p></details>
                 </article>;})}</div>
               </section>:null}
@@ -847,6 +859,8 @@ export function App() {
               </div>
             </div> : null}
           {panel === "settings" ? <><p className="eyebrow">{tr("system")}</p><h1>{tr("settings")}</h1><p className="lede">{tr("settingsLead")}</p>
+            <LocalAiSettings settings={localAiSettings} locale={locale} onChange={updateLocalAiSettings} />
+            <h3>{aiText.imageHeading}</h3>
             <div className="app-grid-setting"><h3>{tr("defaultGrid")}</h3><label>{tr("columns")} <input type="number" min="2" max="6" value={appPageGrid.gridColumns} onChange={(e)=>updateAppGrid(Number(e.target.value),appPageGrid.gridRows)} /></label><label>{tr("rows")} <input type="number" min="2" max="8" value={appPageGrid.gridRows} onChange={(e)=>updateAppGrid(appPageGrid.gridColumns,Number(e.target.value))} /></label></div><div className="ai-options" role="radiogroup" aria-label={tr("aiMode")}>{AI_MODES.map((mode) => (
               <button key={mode.id} type="button" className={aiMode === mode.id ? "ai-option is-selected" : "ai-option"} disabled={!mode.available}
                 aria-pressed={aiMode === mode.id} onClick={() => mode.available && setAiMode(mode.id)}>

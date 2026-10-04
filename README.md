@@ -2,7 +2,7 @@
 
 En fristående desktopapp som omvandlar litterär text till illustrerade serier med redigerbart manus, karaktärsreferenser, sidlayout och pratbubblor.
 
-**Status:** planering. Repot innehåller projektspecifikation och arbetsregler; ingen körbar app ännu.
+**Status:** körbar prototyp med lokal projektlagring, StoryBook-import, adaptering, sidlayout och textlager. Lokal text-AI kan föreslå beats för granskning.
 
 ## Grundprinciper
 
@@ -18,9 +18,11 @@ En fristående desktopapp som omvandlar litterär text till illustrerade serier 
 
 - [PROJECT_SPEC.md](PROJECT_SPEC.md): funktioner, arkitektur, datamodell och utvecklingsplan.
 - [AGENTS.md](AGENTS.md): regler för arbete i detta repository.
+- [LOCAL_AI.md](LOCAL_AI.md): anslut Ollama eller LM Studio / llama.cpp, välj modell och föreslå beats.
 
 ## Första milstolpen
 
 Ett komplett flöde för en kort serie på 1–3 sidor: text eller StoryBook-import → redigerbart seriemanus → sidmallar → bildgenerering → textlager → export.
 
 Teknikförslaget är React, TypeScript, Vite och Tauri. Val av AI-tjänster och övriga bibliotek fastställs vid implementation.
+
