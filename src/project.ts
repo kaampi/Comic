@@ -11,6 +11,7 @@ export type BubbleStyle = "organic" | "wide" | "tall" | "oval" | "rounded" | "sh
 export type TextOverlay = {
   id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number;
   sourcePanelId?: string; sourceTextId?: string;
+  textAlign?: "left" | "center" | "right"; textPadding?: number;
   fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle;
   tailEnabled?: boolean; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number;
   strokeColor?: string; strokeWidth?: number; fillColor?: string; fillOpacity?: number; swatchId?: string;
@@ -46,6 +47,7 @@ export type ComicProject = {
   }>;
   pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number; overlays: TextOverlay[]; image?: { name: string; dataUrl: string; zoom?: number; offsetX?: number; offsetY?: number; fit?: "cover" | "contain" }; sourceBeatIds?: string[]; adaptationPanelPlanId?: string }> }>;
   adaptations: StoryAdaptation[];
+  overlayDefaults?: Partial<Record<OverlayType, Partial<import("./overlayTypography").OverlayTypography>>>;
   bubbleSwatches: BubbleSwatch[];
 };
 

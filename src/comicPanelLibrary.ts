@@ -1,3 +1,4 @@
+import { overlayDefaults } from "./overlayTypography";
 import type { ComicProject, TextOverlay } from "./project";
 
 export function libraryEntries(project: ComicProject) {
@@ -111,19 +112,16 @@ export function assignLibraryPanel(
       width: 40,
       height: 24,
       rotation: 0,
-      fontSize: 8,
-      fontFamily: "Comic Neue, sans-serif",
-      fontWeight: 600,
       bubbleStyle: "organic",
       tailEnabled: text.type === "speech",
       tailX: x + 26,
       tailY: y + 28,
-      roundness: text.type === "caption" ? 18 : 60,
       strokeColor: swatch?.strokeColor ?? "#171411",
       strokeWidth: swatch?.strokeWidth ?? 2,
       fillColor: swatch?.fillColor ?? "#fffdf7",
       fillOpacity: swatch?.fillOpacity ?? 1,
       swatchId: swatch?.id,
+      ...overlayDefaults(project,text.type),
     };
     overlays.push(overlay);
   }

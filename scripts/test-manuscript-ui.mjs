@@ -73,6 +73,46 @@ function compile(directory = "") {
 }
 compile();
 const React = await import("react");
+const { renderToStaticMarkup } = await import("react-dom/server");
+const { SvgOverlay } = await import(
+  pathToFileURL(join(compiledRoot, "SvgOverlay.mjs"))
+);
+const { wrapOverlayText } = await import(
+  pathToFileURL(join(compiledRoot, "overlayTypography.mjs"))
+);
+assert.deepEqual(wrapOverlayText("First\r\n\r\nSecond", 24), [
+  "First",
+  "",
+  "Second",
+]);
+assert.equal(wrapOverlayText("1\n2\n3\n4\n5\n6\n7\n8", 24).length, 8);
+for (const [textAlign, anchor, x] of [
+  ["left", "start", 1.6],
+  ["center", "middle", 20],
+  ["right", "end", 38.4],
+]) {
+  const markup = renderToStaticMarkup(
+    React.createElement(SvgOverlay, {
+      overlay: {
+        id: "test",
+        type: "speech",
+        text: "First\n\nSecond",
+        x: 0,
+        y: 0,
+        width: 40,
+        height: 24,
+        rotation: 0,
+        fontSize: 8,
+        textAlign,
+        textPadding: 4,
+      },
+    }),
+  );
+  assert.ok(markup.includes(`text-anchor="${anchor}"`));
+  assert.ok(markup.includes(`<text x="${x}"`));
+  assert.equal((markup.match(/<tspan/g) || []).length, 3);
+}
+
 const { render, screen, waitFor, fireEvent, within } =
   await import("@testing-library/react");
 const user = (await import("@testing-library/user-event")).default.setup();
@@ -600,6 +640,57 @@ try {
   await user.click(document.querySelector(".layout-canvas"));
   assert.equal(document.querySelectorAll(".panel-corner-handle").length, 0);
   assert.equal(document.querySelector(".layout-snap-grid"), null);
+  await user.dblClick(document.querySelectorAll(".drawn-panel")[0]);
+  const oldOverlay = saved().pages[0].placements[0].overlays[0];
+  const defaults = document.querySelector(".panel-editor-tools > details");
+  await user.click(defaults.querySelector("summary"));
+  const speechDefaults = defaults.querySelector("details");
+  await user.click(speechDefaults.querySelector("summary"));
+  fireEvent.change(within(speechDefaults).getByLabelText("Textstorlek"), {
+    target: { value: "12" },
+  });
+  fireEvent.change(within(speechDefaults).getByLabelText("Rundning"), {
+    target: { value: "80" },
+  });
+  await user.selectOptions(
+    within(speechDefaults).getByLabelText("Textvikt"),
+    "700",
+  );
+  await user.selectOptions(
+    within(speechDefaults).getByLabelText("Textjustering"),
+    "left",
+  );
+  await user.click(
+    document.querySelector(".panel-editor-modal header button.primary-button"),
+  );
+  const createdText = saved().pages[0].placements[0].overlays.at(-1);
+  assert.deepEqual(saved().pages[0].placements[0].overlays[0], oldOverlay);
+  const { readProjects } = await import(
+    pathToFileURL(join(compiledRoot, "project.mjs"))
+  );
+  assert.equal(readProjects()[0].overlayDefaults.speech.fontSize, 12);
+  assert.equal(createdText.fontSize, 12);
+  assert.equal(createdText.fontWeight, 700);
+  assert.equal(createdText.roundness, 80);
+  assert.equal(createdText.textAlign, "left");
+  const properties = document.querySelector(".selected-panel-tool");
+  fireEvent.change(properties.querySelector("textarea"), {
+    target: { value: "First\n\nSecond" },
+  });
+  await user.selectOptions(
+    within(properties).getByLabelText("Textjustering"),
+    "right",
+  );
+  const changedText = saved().pages[0].placements[0].overlays.at(-1);
+  assert.equal(changedText.text, "First\n\nSecond");
+  assert.equal(changedText.textAlign, "right");
+  assert.equal(saved().overlayDefaults.speech.textAlign, "left");
+  await user.click(
+    within(document.querySelector(".panel-editor-modal header")).getByRole(
+      "button",
+      { name: "Stäng", exact: true },
+    ),
+  );
   const freeCell = document.querySelectorAll(".grid-cell")[9];
   fireEvent.pointerDown(freeCell, { button: 0 });
   fireEvent.pointerUp(document.querySelector(".construction-grid"));
@@ -695,11 +786,15 @@ try {
   );
   await user.click(screen.getByRole("button", { name: "Sidor", exact: true }));
   window.confirm = () => true;
-  await user.click(screen.getByRole("button", { name: "Radera sida", exact: true }));
+  await user.click(
+    screen.getByRole("button", { name: "Radera sida", exact: true }),
+  );
   assert.equal(saved().pages.length, 0);
   assert.ok(screen.getByRole("region", { name: "Rutbibliotek" }));
   assert.equal(document.querySelector(".layout-canvas"), null);
-  await user.click(screen.getAllByRole("button", { name: "Ny sida", exact: true })[0]);
+  await user.click(
+    screen.getAllByRole("button", { name: "Ny sida", exact: true })[0],
+  );
   assert.equal(saved().pages.length, 1);
   assert.ok(document.querySelector(".layout-canvas"));
   console.log(

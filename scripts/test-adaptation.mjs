@@ -9,7 +9,7 @@ import ts from "typescript";
 // Compile only the local domain modules; no app, browser or manuscript fixture is needed.
 const temporary = mkdtempSync(join(tmpdir(), "comicbook-adaptation-"));
 globalThis.crypto ??= { randomUUID };
-const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "localAi", "project", "stylesLibrary", "manuscriptModel", "adaptation/prompts", "pageLayout"];
+const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "localAi", "project", "stylesLibrary", "manuscriptModel", "adaptation/prompts", "pageLayout", "overlayTypography"];
 for (const file of files) {
   const source = readFileSync(new URL("../src/" + file + ".ts", import.meta.url), "utf8");
   const result = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });

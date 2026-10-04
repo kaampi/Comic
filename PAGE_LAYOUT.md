@@ -21,3 +21,9 @@ Rutorna från manusvyn finns automatiskt i **Rutbibliotek** bredvid sidan, med r
 Bilden, dialogen och berättartexten följer med. Texten blir redigerbara textlager; dubbelklicka på bildrutan för att justera dem. Befintliga bilder och textlager i bildrutan bevaras. Placeringen är en sparad kopia; senare ändringar i manusrutans text skriver inte över sidans redigerade textlager.
 
 Placerade rutor visar sidnummer och kan filtreras bort med **Visa bara oplacerade**. En redan placerad ruta kan inte väljas igen i biblioteket. Tar du bort bildrutan från sidan blir innehållet tillgängligt i biblioteket igen. Rutans bild och manusinnehåll finns kvar.
+
+## Text och standardvärden
+
+Dubbelklicka på en bildruta och öppna **Standardvärden för text och bubblor** i verktygspanelen. Pratbubbla, tankebubbla, berättartext och ljudeffekt har varsin inställning för rundning, font, textstorlek, textvikt, justering och sidmarginal. Värdena sparas i albumet och används för nya textlager, även vid placering från rutbiblioteket. Befintliga lager ändras inte.
+
+Varje markerat textlager kan också få egen **Textjustering** (vänster, centrerad eller höger) och **Sidmarginal (%)**. Sidmarginalen är som standard 4 procent av textlagrets bredd på varje sida. Enter och tomma rader i textfältet återges i bildrutan. Långa rader radbryts automatiskt; texten kapas inte efter sju rader. Öka textrutans höjd eller minska textstorleken om texten inte ryms.
