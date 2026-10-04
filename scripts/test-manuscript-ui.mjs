@@ -283,15 +283,12 @@ try {
     screen.getByRole("textbox", { name: "Manus", exact: true }).textContent,
     source,
   );
-  await user.click(
-    screen.getByRole("button", { name: "Lägg till ruta", exact: true }),
-  );
   const originalPlan = saved().adaptations[0].panelPlans[0].id;
   const originalPanel = saved().panels[0].id;
   assert.equal(saved().panels.length, 1);
   assert.equal(document.querySelector(".beat-width"), null);
   const sections = [...document.querySelectorAll(".beat-section")];
-  assert.equal(sections.length, 2);
+  assert.equal(sections.length, 1);
   const beatDetails = document.querySelector(".beat-details-section");
   assert.equal(beatDetails.querySelectorAll("details").length, 0);
   assert.ok(beatDetails.contains(screen.getByLabelText("Sammanfattning")));
@@ -301,23 +298,23 @@ try {
   assert.equal(beatDetails.open, true);
   await user.click(beatDetails.querySelector("summary"));
   assert.equal(beatDetails.open, false);
-  const firstCard = document.querySelector(".beat-panel-card");
-  assert.equal(firstCard.open, false);
+  let firstCard = document.querySelector(".beat-panel-card");
+  assert.equal(firstCard.tagName, "SECTION");
+  assert.equal(firstCard.querySelector(":scope > summary"), null);
+  assert.equal(document.querySelector(".beat-panels-section"), null);
+  await user.click(
+    screen.getByRole("button", { name: "Lägg till ruta", exact: true }),
+  );
+  firstCard = document.querySelector(".beat-panel-card");
+  assert.equal(firstCard.tagName, "DETAILS");
   const beforeCollapse = saved();
   await user.click(firstCard.querySelector("summary"));
   assert.equal(firstCard.open, true);
-  await user.click(firstCard.querySelector("summary"));
-  assert.equal(firstCard.open, false);
-  assert.deepEqual(saved(), beforeCollapse);
-  await user.click(firstCard.querySelector("summary"));
   const panelsSection = document.querySelector(".beat-panels-section");
   await user.click(panelsSection.querySelector("summary"));
   assert.equal(panelsSection.open, false);
   await user.click(panelsSection.querySelector("summary"));
-  assert.equal(firstCard.open, true);
-  await user.click(
-    screen.getByRole("button", { name: "Lägg till ruta", exact: true }),
-  );
+  assert.deepEqual(saved(), beforeCollapse);
   const secondCard = document.querySelectorAll(".beat-panel-card")[1];
   assert.equal(secondCard.open, false);
   await user.click(secondCard.querySelector("summary"));
@@ -475,11 +472,10 @@ try {
     2,
   );
   assert.equal(screen.queryByText(/Sekvenser/), null);
-  await user.click(
-    screen.getByRole("button", {
-      name: "Skapa rutor för återstående beats",
-      exact: true,
-    }),
+  assert.equal(
+    screen.getByRole("button", { name: "Alla beats har rutor", exact: true })
+      .disabled,
+    true,
   );
   assert.equal(saved().adaptations[0].panelPlans[0].id, originalPlan);
   assert.ok(saved().adaptations[0].panelPlans[0].image);

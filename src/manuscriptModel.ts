@@ -228,11 +228,13 @@ export function addManualBeat(
     .sort((a, b) => (a.sourceStart ?? Infinity) - (b.sourceStart ?? Infinity))
     .map((item, index) => ({ ...item, order: index + 1 }));
   return {
-    project: withAdaptation(project, {
-      ...adaptation,
-      beats,
-      status: "beats-generated",
-    }),
+    project: ensureBeatPanels(
+      withAdaptation(project, {
+        ...adaptation,
+        beats,
+        status: "beats-generated",
+      }),
+    ),
     beatId: beat.id,
   };
 }
@@ -257,11 +259,13 @@ export function appendAiBeats(
   beats.sort(
     (a, b) => (a.sourceStart ?? Infinity) - (b.sourceStart ?? Infinity),
   );
-  return withAdaptation(project, {
-    ...adaptation,
-    beats: beats.map((beat, index) => ({ ...beat, order: index + 1 })),
-    status: "beats-generated",
-  });
+  return ensureBeatPanels(
+    withAdaptation(project, {
+      ...adaptation,
+      beats: beats.map((beat, index) => ({ ...beat, order: index + 1 })),
+      status: "beats-generated",
+    }),
+  );
 }
 export function editManuscript(
   project: ComicProject,
@@ -483,4 +487,28 @@ export function removeManuscriptBeat(
       })),
     })),
   };
+}
+
+/** Supply one initial panel per active beat, without changing any existing panel. */
+export function ensureBeatPanels(project: ComicProject): ComicProject {
+  const existing = project.adaptations[0];
+  if (!existing) return project;
+  const missing = existing.beats.filter(
+    (beat) =>
+      beat.status !== "discarded" &&
+      !existing.panelPlans.some((panel) =>
+        panel.sourceBeatIds.includes(beat.id),
+      ),
+  );
+  if (!missing.length) return project;
+  return withAdaptation(project, {
+    ...existing,
+    status: "panels-generated",
+    panelPlans: [
+      ...existing.panelPlans,
+      ...missing.map((beat, index) =>
+        panelForBeat(beat, existing.panelPlans.length + index + 1),
+      ),
+    ],
+  });
 }

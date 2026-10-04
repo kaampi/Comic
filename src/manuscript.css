@@ -286,3 +286,17 @@
   margin-top: 8px;
   justify-content: flex-end;
 }
+
+.beat-inline-panel {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 12px 0;
+}
+.beat-inline-panel > .beat-panel-body {
+  border-top: 0;
+  padding-top: 0;
+}
+.beat-inline-panel-group > .section-heading {
+  justify-content: flex-end;
+}

@@ -33,6 +33,8 @@ Du kan också högerklicka på en markering och välja **Skapa beat** utan AI. B
 
 Välj ett beat och använd **Ta bort beat** för att ta bort dess ram och källkopplingar. Manustext, befintliga rutor, prompter och bilder behålls. **Ångra borttagning** återställer beatet så länge du inte gör nya projektändringar eller lämnar manusvyn.
 
+Varje nytt beat får automatiskt en första serieruta. När beatet har en enda ruta visas bildinstruktion, prompt och bild direkt i beatets högerpanel. Äldre beats som saknar ruta får en första ruta när manusvyn öppnas; befintliga rutor och bilder bevaras. Först när du väljer **Lägg till ruta** visas flera rutor som separata hopfällbara avsnitt.
+
 Varje beat kan ha flera **serierutor**. Använd **Lägg till ruta**, redigera bildinstruktion, dialog och berättartext, skapa/kopiera bildprompt och lägg in en PNG-, JPG- eller WebP-bild via filval eller drag och släpp. Tidigare bifogade bilder kan återställas under **Tidigare bilder**. Rutor blir automatiskt tillgängliga under **Bildrutor** och **Sidor**. En bifogad bild följer med när rutan väljs på en sida; en redan placerad bild ersätts inte automatiskt.
 
 **Sekvenser ingår inte i arbetsflödet.** Äldre projekt behåller sina tidigare data och rutor. I adapteringsöversikten kan du skapa rutor för återstående beats utan att befintliga rutor eller bildprompter ersätts.
