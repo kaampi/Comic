@@ -13,3 +13,11 @@ Rutan förblir rektangulär. Breda panoramarutor och stående rutor kan blandas 
 Rutans ID, koppling till manus, läsordning, bild och textlager bevaras vid storleksändring. Bilden visas i den nya rektangeln med sin befintliga beskärningsinställning. Textlagrets relativa koordinater följer rutans storlek. Storleksändring startar ingen AI-generering.
 
 Fria hörn, sneda rutor och polygonformer ingår inte i detta första steg.
+
+## Rutbibliotek i Sidor
+
+Rutorna från manusvyn finns automatiskt i **Rutbibliotek** bredvid sidan, med rubrik och bild när en sådan lagts till. Rita en tom bildruta eller markera en befintlig tom ruta och klicka på innehållet i biblioteket. Nya bildrutor markeras direkt efter ritning. Du kan också välja bildruta i bibliotekets lista.
+
+Bilden, dialogen och berättartexten följer med. Texten blir redigerbara textlager; dubbelklicka på bildrutan för att justera dem. Befintliga bilder och textlager i bildrutan bevaras. Placeringen är en sparad kopia; senare ändringar i manusrutans text skriver inte över sidans redigerade textlager.
+
+Placerade rutor visar sidnummer och kan filtreras bort med **Visa bara oplacerade**. En redan placerad ruta kan inte väljas igen i biblioteket. Tar du bort bildrutan från sidan blir innehållet tillgängligt i biblioteket igen. Rutans bild och manusinnehåll finns kvar.

@@ -76,6 +76,9 @@ const React = await import("react");
 const { render, screen, waitFor, fireEvent, within } =
   await import("@testing-library/react");
 const user = (await import("@testing-library/user-event")).default.setup();
+const { assignLibraryPanel } = await import(
+  pathToFileURL(join(compiledRoot, "panelLibrary.mjs"))
+);
 const { App } = await import(pathToFileURL(join(compiledRoot, "App.mjs")));
 const source = 'Holmes opened the gate.\r\n"Wait here," he said.';
 const project = {
@@ -484,14 +487,67 @@ try {
   assert.equal(saved().adaptations[0].panelPlans.length, 3);
   await user.click(screen.getByRole("button", { name: "Sidor", exact: true }));
   const placementRows = document.querySelectorAll(".placement-row");
-  await user.selectOptions(
-    placementRows[0].querySelector("select"),
-    originalPanel,
+  const libraryCard = document.querySelector(
+    `[data-panel-id="${originalPanel}"]`,
   );
+  assert.ok(libraryCard.querySelector("img"));
+  await user.click(document.querySelectorAll(".drawn-panel")[0]);
+  await user.click(libraryCard);
+  assert.ok(
+    saved().pages[0].placements[0].overlays.some(
+      (o) => o.text === "Please wait.",
+    ),
+  );
+  assert.ok(
+    document.querySelector(`[data-panel-id="${originalPanel}"]`).disabled,
+  );
+  assert.match(
+    document.querySelector(`[data-panel-id="${originalPanel}"]`).textContent,
+    /Sida 1/,
+  );
+  await user.click(screen.getByLabelText("Visa bara oplacerade"));
+  assert.equal(
+    document.querySelector(`[data-panel-id="${originalPanel}"]`),
+    null,
+  );
+  await user.click(screen.getByLabelText("Visa bara oplacerade"));
+  await user.click(document.querySelector(".layout-canvas"));
   assert.deepEqual(saved().pages[0].placements[0].image, initialImage);
   assert.deepEqual(
     saved().pages[0].placements[0].sourceBeatIds,
     saved().adaptations[0].panelPlans[0].sourceBeatIds,
+  );
+  const assignedProject = saved();
+  assert.deepEqual(
+    assignLibraryPanel(
+      assignedProject,
+      "page",
+      "blank-placement",
+      originalPanel,
+    ),
+    assignedProject,
+  );
+  assert.equal(
+    assignLibraryPanel(
+      assignedProject,
+      "page",
+      "manual-placement",
+      originalPanel,
+    ),
+    assignedProject,
+  );
+  const unusedPanel = assignedProject.panels.find(
+    (p) => p.id !== originalPanel,
+  );
+  const withManualImage = assignLibraryPanel(
+    assignedProject,
+    "page",
+    "manual-placement",
+    unusedPanel.id,
+  );
+  assert.deepEqual(
+    withManualImage.pages[0].placements[1].image,
+    assignedProject.pages[0].placements[1].image,
   );
   const manualImage = saved().pages[0].placements[1].image;
   await user.selectOptions(
@@ -544,6 +600,16 @@ try {
   await user.click(document.querySelector(".layout-canvas"));
   assert.equal(document.querySelectorAll(".panel-corner-handle").length, 0);
   assert.equal(document.querySelector(".layout-snap-grid"), null);
+  const freeCell = document.querySelectorAll(".grid-cell")[9];
+  fireEvent.pointerDown(freeCell, { button: 0 });
+  fireEvent.pointerUp(document.querySelector(".construction-grid"));
+  fireEvent.click(freeCell);
+  const newPlacement = saved().pages[0].placements.at(-1);
+  assert.equal(
+    screen.getByLabelText("Bildruta på sidan").value,
+    newPlacement.id,
+  );
+  assert.equal(document.querySelectorAll(".panel-corner-handle").length, 4);
   assert.ok(
     requests.some(
       (request) =>

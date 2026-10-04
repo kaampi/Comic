@@ -10,6 +10,7 @@ export type OverlayType = "speech" | "thought" | "caption" | "sfx";
 export type BubbleStyle = "organic" | "wide" | "tall" | "oval" | "rounded" | "shout" | "whisper";
 export type TextOverlay = {
   id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number;
+  sourcePanelId?: string; sourceTextId?: string;
   fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle;
   tailEnabled?: boolean; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number;
   strokeColor?: string; strokeWidth?: number; fillColor?: string; fillOpacity?: number; swatchId?: string;
