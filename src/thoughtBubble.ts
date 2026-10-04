@@ -71,15 +71,17 @@ export function thoughtCloudGeometry(width: number, height: number) {
     " Z";
   return { path, outline: outline.map(fit), count };
 }
-export function thoughtTrailGeometry(o: TextOverlay, outline: Point[]) {
+export function thoughtTrailStart(o: TextOverlay, outline: Point[]) {
   const end = thoughtTailEndpoint(o),
     target = { x: end.x - o.x, y: end.y - o.y },
     center = { x: o.width / 2, y: o.height / 2 };
   const dx = target.x - center.x,
     dy = target.y - center.y,
     length = Math.hypot(dx, dy);
-  if (length < 0.001) return [];
-  const direction = { x: dx / length, y: dy / length };
+  if (length < 0.001 && o.tailStartAngle === undefined)
+    return { x: center.x, y: center.y };
+  const angle = o.tailStartAngle ?? Math.atan2(dy, dx);
+  const direction = { x: Math.cos(angle), y: Math.sin(angle) };
   let boundary = 0;
   for (let i = 0; i < outline.length; i++) {
     const p = outline[i],
@@ -95,13 +97,34 @@ export function thoughtTrailGeometry(o: TextOverlay, outline: Point[]) {
     if (distance > 0 && t >= 0 && t <= 1)
       boundary = Math.max(boundary, distance);
   }
-  const distance = length - boundary;
+  return {
+    x: center.x + direction.x * boundary,
+    y: center.y + direction.y * boundary,
+  };
+}
+export function thoughtTrailGeometry(o: TextOverlay, outline: Point[]) {
+  const end = thoughtTailEndpoint(o),
+    target = { x: end.x - o.x, y: end.y - o.y },
+    start = thoughtTrailStart(o, outline);
+  const dx = target.x - start.x,
+    dy = target.y - start.y,
+    distance = Math.hypot(dx, dy);
+  const center = { x: o.width / 2, y: o.height / 2 },
+    insideStart = thoughtTrailStart(
+      { ...o, tailStartAngle: undefined },
+      outline,
+    );
+  if (
+    Math.hypot(target.x - center.x, target.y - center.y) <=
+    Math.hypot(insideStart.x - center.x, insideStart.y - center.y)
+  )
+    return [];
+  const direction = {
+    x: dx / Math.max(distance, 0.001),
+    y: dy / Math.max(distance, 0.001),
+  };
   if (distance < 1) return [];
-  const count = Math.min(24, Math.max(1, Math.floor(distance / 5))),
-    start = {
-      x: center.x + direction.x * boundary,
-      y: center.y + direction.y * boundary,
-    };
+  const count = Math.min(24, Math.max(1, Math.floor(distance / 5)));
   const bend = Math.max(-100, Math.min(100, o.thoughtTailCurve ?? 30)) / 200;
   const widthScale = Math.max(0, Math.min(100, o.thoughtTailWidth ?? 50)) / 50;
   const control = {

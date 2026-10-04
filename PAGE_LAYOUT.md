@@ -35,3 +35,7 @@ När ett album är öppet visas en andra menyrad under appens huvudmeny. Den vis
 **Backup** skapar en lokal `.json`-fil med hela albumet, inklusive manus, adaptationsdata, bilder och bildhistorik, sidor, textlager, bubbelpaletter och albuminställningar. Filen innehåller inga globala AI-serverinställningar. Bilderna är inbäddade i prototypens backupfil.
 
 **Återställ backup** låter dig välja fil och granska titel och omfattning innan **Öppna som nytt album** skapar en separat kopia. Befintliga album ersätts inte. Återställning finns även under **Projekt → Återställ albumbackup**, när inget album är öppet. Ogiltiga filer och lagringsfel lämnar befintliga album orörda. **Stäng album** återgår till albumlistan.
+
+## Startpunkt för svans och bubbelkedja
+
+Markera en pratbubbla eller tankebubbla i bildrutans editor. Handtaget vid konturen flyttar svansens eller bubbelkedjans start runt bubblan. Det yttre handtaget flyttar slutpunkten. Starten fäster vid konturen och följer med när textlagret flyttas eller ändrar storlek. Startbredd och böjning styrs separat av de numeriska fälten.

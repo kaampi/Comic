@@ -1,4 +1,4 @@
-import { thoughtCloudGeometry, thoughtTrailGeometry } from "./thoughtBubble";
+import { thoughtCloudGeometry, thoughtTrailGeometry, thoughtTrailStart } from "./thoughtBubble";
 export { thoughtTailEndpoint } from "./thoughtBubble";
 import { wrapOverlayText } from "./overlayTypography";
 import type { TextOverlay } from "./project";
@@ -32,12 +32,28 @@ function bodyPath(o:TextOverlay,style:string){
  return d+" Z";
 }
 
+function speechAttachmentAngle(o:TextOverlay,style:string){
+ const rx=o.width*(style==="wide"?.49:style==="tall"?.43:.48),ry=o.height*(style==="wide"?.37:style==="tall"?.48:.43);
+ if(o.tailStartAngle===undefined)return Math.atan2(((o.tailY??o.y+o.height*1.12)-o.y-o.height/2)/ry,((o.tailX??o.x+o.width*.58)-o.x-o.width/2)/rx);
+ const exponent=2+(1-Math.max(0,Math.min(100,o.roundness??60))/100)*18;
+ const u=Math.cos(o.tailStartAngle)/rx,v=Math.sin(o.tailStartAngle)/ry;
+ return Math.atan2(Math.sign(v)*Math.abs(v)**(exponent/2),Math.sign(u)*Math.abs(u)**(exponent/2));
+}
+export function bubbleTailStart(o:TextOverlay){
+ const p=o.type==="thought"?thoughtTrailStart(o,thoughtCloudGeometry(o.width,o.height).outline):roundedBodyPoint(o,o.bubbleStyle??"organic",speechAttachmentAngle(o,o.bubbleStyle??"organic"));
+ const a=o.rotation*Math.PI/180,dx=p.x-o.width/2,dy=p.y-o.height/2;
+ return {x:o.x+o.width/2+dx*Math.cos(a)-dy*Math.sin(a),y:o.y+o.height/2+dx*Math.sin(a)+dy*Math.cos(a)};
+}
+export function bubbleTailStartAngle(o:TextOverlay,x:number,y:number){
+ const a=-o.rotation*Math.PI/180,dx=x-o.x-o.width/2,dy=y-o.y-o.height/2;
+ return Math.atan2(dx*Math.sin(a)+dy*Math.cos(a),dx*Math.cos(a)-dy*Math.sin(a));
+}
 function speechPath(o:TextOverlay,style:string){
  if(o.tailEnabled===false)return bodyPath(o,style);
  const w=o.width,h=o.height,cx=w/2,cy=h/2;
  const tx=(o.tailX??o.x+w*.58)-o.x,ty=(o.tailY??o.y+h*1.12)-o.y;
  const rx=w*(style==="wide"?.49:style==="tall"?.43:.48),ry=h*(style==="wide"?.37:style==="tall"?.48:.43);
- const angle=Math.atan2((ty-cy)/ry,(tx-cx)/rx),spread=.08+((o.tailRootWidth??50)/100)*.22;
+ const angle=speechAttachmentAngle(o,style),spread=.08+((o.tailRootWidth??50)/100)*.22;
  const a1=angle-spread,a2=angle+spread,tau=Math.PI*2;
  const p=(a:number)=>roundedBodyPoint(o,style,a);
  const r1=p(a1),r2=p(a2),sweep=((a1-a2)%tau+tau)%tau,steps=96;

@@ -74,7 +74,7 @@ function compile(directory = "") {
 compile();
 const React = await import("react");
 const { renderToStaticMarkup } = await import("react-dom/server");
-const { SvgOverlay } = await import(
+const { SvgOverlay, bubbleTailStart } = await import(
   pathToFileURL(join(compiledRoot, "SvgOverlay.mjs"))
 );
 const { wrapOverlayText } = await import(
@@ -740,6 +740,31 @@ try {
   assert.equal(saved().pages[0].placements[0].overlays.at(-1).thoughtTailWidth,85);
   assert.equal(saved().pages[0].placements[0].overlays.at(-1).thoughtTailCurve,-45);
 
+  const overlaySvg=document.querySelector(".panel-editor-stage > svg");
+  overlaySvg.getBoundingClientRect=()=>({left:0,top:0,width:300,height:300});
+  const beforeRootDrag=saved().pages[0].placements[0].overlays.at(-1);
+  const root=bubbleTailStart(beforeRootDrag);
+  fireEvent.pointerDown(document.querySelector(".overlay-tail-start-grip"),{clientX:root.x*3,clientY:root.y*3});
+  fireEvent.pointerMove(window,{clientX:(beforeRootDrag.x+beforeRootDrag.width/2)*3,clientY:(beforeRootDrag.y-10)*3});
+  fireEvent.pointerUp(window);
+  const topRoot=saved().pages[0].placements[0].overlays.at(-1);
+  assert.ok(Math.abs(topRoot.tailStartAngle+Math.PI/2)<1e-8);
+  assert.equal(topRoot.tailX,beforeRootDrag.tailX);
+  assert.equal(topRoot.tailY,beforeRootDrag.tailY);
+  assert.ok(bubbleTailStart(topRoot).y<topRoot.y+topRoot.height*.2);
+  await user.selectOptions(within(properties).getByLabelText("Typ"),"speech");
+  const speechBefore=saved().pages[0].placements[0].overlays.at(-1),speechRoot=bubbleTailStart(speechBefore);
+  fireEvent.pointerDown(document.querySelector(".overlay-tail-start-grip"),{clientX:speechRoot.x*3,clientY:speechRoot.y*3});
+  fireEvent.pointerMove(window,{clientX:(speechBefore.x-10)*3,clientY:(speechBefore.y+speechBefore.height/2)*3});
+  fireEvent.pointerUp(window);
+  const speechAfter=saved().pages[0].placements[0].overlays.at(-1);
+  assert.ok(Math.abs(Math.abs(speechAfter.tailStartAngle)-Math.PI)<1e-8);
+  assert.ok(bubbleTailStart(speechAfter).x<speechAfter.x+speechAfter.width*.1);
+  assert.equal(speechAfter.tailX,speechBefore.tailX);
+  assert.equal(speechAfter.tailY,speechBefore.tailY);
+  const resizedSpeech={...speechAfter,width:speechAfter.width*1.2};
+  assert.ok(bubbleTailStart(resizedSpeech).x<resizedSpeech.x+resizedSpeech.width*.1);
+  await user.selectOptions(within(properties).getByLabelText("Typ"),"thought");
   const changedText = saved().pages[0].placements[0].overlays.at(-1);
   assert.equal(changedText.text, "First\n\nSecond");
   assert.equal(changedText.textAlign, "center");
