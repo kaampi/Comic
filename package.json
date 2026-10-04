@@ -8,7 +8,8 @@
     "dev": "vite",
     "start": "vite --open",
     "build": "tsc -b && vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:adaptation": "node scripts/test-adaptation.mjs"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",

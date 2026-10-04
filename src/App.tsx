@@ -148,14 +148,7 @@ export function App() {
     if (!activeProject) return;
     const sourceText = activeProject.source.textSnapshot ?? "";
     if (!sourceText.trim()) return;
-    const next = createAdaptation(activeProject.title + " – adaptation", sourceText);
-    if (activeAdaptation) {
-      const previousBeatByExcerpt = new Map(activeAdaptation.beats.map((beat) => [beat.sourceTextExcerpt.trim(), beat]));
-      next.beats = next.beats.map((beat) => {
-        const previous = previousBeatByExcerpt.get(beat.sourceTextExcerpt.trim());
-        return previous ? { ...beat, id: previous.id } : beat;
-      });
-    }
+    const next = createAdaptation(activeProject.title + " – adaptation", sourceText, activeAdaptation);
     next.beats = next.beats.map((beat) => {
       const haystack = beat.sourceTextExcerpt.toLocaleLowerCase();
       const characterIds = activeProject.characters

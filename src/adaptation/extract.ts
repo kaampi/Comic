@@ -27,7 +27,6 @@ function classify(text: string, index: number, total: number): BeatType {
   const t = text.toLowerCase();
   if (index === 0) return "establishing";
   if (dialogueFrom(text).length) return "dialogue";
-  if (/began to play|music|dance|dancing|crowd|applause/.test(t)) return "action";
   if (/turned|looked|smiled|hesitated|felt|heart|eyes/.test(t)) return "reaction";
   if (/left|made their way|outside|night air|later|as the night/.test(t)) return index >= total - 2 ? "resolution" : "transition";
   if (/light|smell|air|atmosphere|room|pub|stage/.test(t)) return "atmosphere";
@@ -82,27 +81,16 @@ export function extractBeats(sourceText: string): AdaptationBeat[] {
 }
 
 function sequenceTheme(beat: AdaptationBeat): string {
-  const t = beat.sourceTextExcerpt.toLowerCase();
-  if (/dance|dancing|music|band|bossanova|rhythm|melody|applause/.test(t)) return "dance";
   if (beat.beatType === "establishing" || beat.beatType === "atmosphere") return "opening";
   if (beat.beatType === "transition" || beat.beatType === "resolution") return "transition";
   if (beat.beatType === "dialogue" || beat.beatType === "reaction") return "conversation";
   return "action";
 }
 
-function sequenceTitle(beats: AdaptationBeat[], index: number): string {
-  if (!beats.length) return `Sequence ${index + 1}`;
-  const theme = sequenceTheme(beats[0]);
-  if (theme === "opening") return index === 0 ? "Opening" : "Atmosphere";
-  if (theme === "dance") return "The dance";
-  if (theme === "transition") return beats.some((b) => b.beatType === "resolution") ? "Exit / resolution" : "Transition";
-  if (theme === "conversation") {
-    const joined = beats.map((b) => b.sourceTextExcerpt.toLowerCase()).join(" ");
-    if (/join you|i'm lena|this is maja|nice to meet/.test(joined)) return "First contact";
-    if (/take this back|our place|nest|offer/.test(joined)) return "Invitation";
-    return "Conversation";
-  }
-  return `Sequence ${index + 1}`;
+export function sequenceTitle(beats: AdaptationBeat[], index: number): string {
+  // Use the current manuscript rather than titles from a particular example story.
+  const first = beats.find((beat) => beat.sourceTextExcerpt.trim());
+  return first ? `${index + 1} · ${shortTitle(first.sourceTextExcerpt, first.beatType, first.order)}` : `Sequence ${index + 1}`;
 }
 
 export function buildSequences(beats: AdaptationBeat[]): AdaptationSequence[] {
@@ -134,9 +122,8 @@ export function buildSequences(beats: AdaptationBeat[]): AdaptationSequence[] {
 
   return groups.map((group, index) => {
     const theme = sequenceTheme(group[0]);
-    const cinematic = theme === "dance";
-    const density: PanelDensity = cinematic ? "cinematic" : theme === "opening" ? "compact" : "normal";
-    const factor = density === "compact" ? .75 : density === "cinematic" ? 1.35 : .9;
+    const density: PanelDensity = theme === "opening" ? "compact" : "normal";
+    const factor = density === "compact" ? .75 : .9;
     return {
       id: id("sequence"),
       order: index + 1,
@@ -144,16 +131,25 @@ export function buildSequences(beats: AdaptationBeat[]): AdaptationSequence[] {
       beatIds: group.map((b) => b.id),
       density,
       preferredPanelCount: Math.max(1, Math.round(group.length * factor)),
-      allowReactionShots: density === "cinematic",
+      allowReactionShots: false,
       allowAtmospherePanels: density !== "compact",
-      allowSilentPanels: density === "cinematic"
+      allowSilentPanels: false
     };
   });
 }
 
-export function createAdaptation(name: string, sourceText: string): StoryAdaptation {
+export function createAdaptation(name: string, sourceText: string, previous?: StoryAdaptation | null): StoryAdaptation {
   const now = new Date().toISOString();
-  const beats = extractBeats(sourceText);
+  const previousByExcerpt = new Map<string, AdaptationBeat[]>();
+  for (const beat of previous?.beats ?? []) {
+    const key = beat.sourceTextExcerpt.trim();
+    previousByExcerpt.set(key, [...(previousByExcerpt.get(key) ?? []), beat]);
+  }
+  const beats = extractBeats(sourceText).map((beat) => {
+    // Consume each match once, so repeated paragraphs still have distinct IDs.
+    const match = previousByExcerpt.get(beat.sourceTextExcerpt.trim())?.shift();
+    return match ? { ...beat, id: match.id } : beat;
+  });
   return {
     id: id("adaptation"),
     name,

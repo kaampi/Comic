@@ -1,5 +1,6 @@
 import { BUILTIN_STYLES, type IllustrationStyle } from "./stylesLibrary";
 import type { StoryAdaptation } from "./adaptation/types";
+import { repairLegacyAdaptation } from "./adaptation/repair";
 
 export const PROJECT_FORMAT = 1;
 
@@ -70,7 +71,7 @@ export function readProjects(): ComicProject[] {
       characters: Array.isArray(p.characters) ? p.characters.map((item: any) => ({ ...item, visualIdentity: item.visualIdentity ?? "" })) : [],
       locations: Array.isArray(p.locations) ? p.locations.map((item: any) => ({ ...item, visualIdentity: item.visualIdentity ?? "" })) : [],
       panels: Array.isArray(p.panels) ? p.panels.map((item: any) => ({ ...item, characterIds: item.characterIds ?? [] })) : [],
-      adaptations: Array.isArray(p.adaptations) ? p.adaptations : [],
+      adaptations: Array.isArray(p.adaptations) ? p.adaptations.map(repairLegacyAdaptation) : [],
       bubbleSwatches: Array.isArray(p.bubbleSwatches) ? p.bubbleSwatches : [],
       pages: Array.isArray(p.pages) ? p.pages.map((page: any) => ({
         ...page, gridColumns: page.gridColumns ?? 3, gridRows: page.gridRows ?? 5,

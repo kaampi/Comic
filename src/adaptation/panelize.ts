@@ -1,3 +1,4 @@
+import { repairSequenceBeatIds } from "./repair";
 import type { AdaptationBeat, AdaptationSequence, PanelPlan, PanelSizeHint, ShotType } from "./types";
 
 const id = (prefix: string) => prefix + "-" + crypto.randomUUID();
@@ -45,7 +46,7 @@ function clonePanel(beat: AdaptationBeat, sequence: AdaptationSequence, index: n
 export function panelize(beats: AdaptationBeat[], sequences: AdaptationSequence[]): PanelPlan[] {
   const beatById = new Map(beats.map((b) => [b.id, b]));
   const panels: PanelPlan[] = [];
-  for (const sequence of [...sequences].sort((a,b)=>a.order-b.order)) {
+  for (const sequence of [...repairSequenceBeatIds(beats, sequences)].sort((a,b)=>a.order-b.order)) {
     const seqBeats = sequence.beatIds.map((id) => beatById.get(id)).filter((b): b is AdaptationBeat => Boolean(b && b.status !== "discarded"));
     if (!seqBeats.length) continue;
     const target = countFor(sequence);
