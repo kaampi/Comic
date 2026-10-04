@@ -71,7 +71,7 @@ function compile(directory = "") {
 }
 compile();
 const React = await import("react");
-const { render, screen, waitFor, fireEvent } =
+const { render, screen, waitFor, fireEvent, within } =
   await import("@testing-library/react");
 const user = (await import("@testing-library/user-event")).default.setup();
 const { App } = await import(pathToFileURL(join(compiledRoot, "App.mjs")));
@@ -289,8 +289,37 @@ try {
   const originalPlan = saved().adaptations[0].panelPlans[0].id;
   const originalPanel = saved().panels[0].id;
   assert.equal(saved().panels.length, 1);
+  assert.equal(document.querySelector(".beat-width"), null);
+  const sections = [...document.querySelectorAll(".beat-section")];
+  assert.ok(sections.length >= 7);
+  const firstCard = document.querySelector(".beat-panel-card");
+  assert.equal(firstCard.open, false);
+  const beforeCollapse = saved();
+  await user.click(firstCard.querySelector("summary"));
+  assert.equal(firstCard.open, true);
+  await user.click(firstCard.querySelector("summary"));
+  assert.equal(firstCard.open, false);
+  assert.deepEqual(saved(), beforeCollapse);
+  await user.click(firstCard.querySelector("summary"));
+  const panelsSection = document.querySelector(".beat-panels-section");
+  await user.click(panelsSection.querySelector("summary"));
+  assert.equal(panelsSection.open, false);
+  await user.click(panelsSection.querySelector("summary"));
+  assert.equal(firstCard.open, true);
   await user.click(
-    screen.getByRole("button", { name: "Generera bildprompt", exact: true }),
+    screen.getByRole("button", { name: "Lägg till ruta", exact: true }),
+  );
+  const secondCard = document.querySelectorAll(".beat-panel-card")[1];
+  assert.equal(secondCard.open, false);
+  await user.click(secondCard.querySelector("summary"));
+  assert.equal(secondCard.open, true);
+  await user.click(firstCard.querySelector("summary"));
+  assert.equal(firstCard.open, false);
+  assert.equal(secondCard.open, true);
+  await user.click(secondCard.querySelector("summary"));
+  await user.click(firstCard.querySelector("summary"));
+  await user.click(
+    within(firstCard).getByRole("button", { name: "Generera bildprompt", exact: true }),
   );
   assert.ok(
     screen.getByLabelText("Bildprompt").value.includes("Ink illustration."),
@@ -330,7 +359,7 @@ try {
   );
   assert.deepEqual(saved().adaptations[0].panelPlans[0].image, initialImage);
   await user.click(
-    screen.getByRole("button", { name: "Lägg till dialog", exact: true }),
+    within(firstCard).getByRole("button", { name: "Lägg till dialog", exact: true }),
   );
   await user.type(screen.getByLabelText("Dialog"), "Please wait.");
   assert.equal(
@@ -439,7 +468,7 @@ try {
   );
   assert.equal(saved().adaptations[0].panelPlans[0].id, originalPlan);
   assert.ok(saved().adaptations[0].panelPlans[0].image);
-  assert.equal(saved().adaptations[0].panelPlans.length, 2);
+  assert.equal(saved().adaptations[0].panelPlans.length, 3);
   await user.click(screen.getByRole("button", { name: "Sidor", exact: true }));
   const placementRows = document.querySelectorAll(".placement-row");
   await user.selectOptions(

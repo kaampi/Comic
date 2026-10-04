@@ -79,16 +79,6 @@
   white-space: pre-wrap;
   font-size: 13px;
 }
-.beat-width {
-  font-size: 12px;
-  display: flex !important;
-  align-items: center;
-  gap: 12px;
-}
-.beat-width input {
-  flex: 1;
-  min-width: 0;
-}
 .beat-navigation {
   display: flex;
   justify-content: space-between;
@@ -188,9 +178,6 @@
     border-left: 0;
     border-top: 1px solid var(--border);
   }
-  .beat-width {
-    display: none !important;
-  }
   .manuscript-document {
     padding: 12px;
   }
@@ -254,4 +241,48 @@
   width: 60px;
   height: 60px;
   object-fit: contain;
+}
+
+.beat-section {
+  margin: 12px 0;
+  border-bottom: 1px solid var(--border-soft);
+  padding-bottom: 8px;
+}
+.beat-section > summary,
+.beat-panel-card > summary {
+  cursor: pointer;
+  padding: 8px 0;
+  font-weight: 600;
+}
+.beat-section-body > label,
+.beat-panel-body > label {
+  display: block;
+  margin: 12px 0;
+}
+.beat-section-body input:not([type="checkbox"]),
+.beat-section-body textarea,
+.beat-section-body select {
+  width: 100%;
+}
+.beat-section-count {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+.beat-panel-card > summary {
+  overflow-wrap: anywhere;
+}
+.beat-panel-card:not([open]) {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.beat-panel-body {
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+}
+.beat-panels-section > .section-heading {
+  margin-top: 8px;
+  justify-content: flex-end;
 }

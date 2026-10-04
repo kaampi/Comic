@@ -29,7 +29,7 @@ Servern måste tillåta anslutningar från adressen där ComicBook körs. Om ans
 
 Förslagen ändrar inte projektet innan du väljer att lägga till dem. Du kan kasta förslagen eller avbryta analysen. Felaktiga svar ändrar inte projektet. Om manuset ändras måste gamla förslag analyseras på nytt.
 
-Du kan också högerklicka på en markering och välja **Skapa beat** utan AI. Beatet får en diskret ram i manuset. Klicka på ramen eller välj beatet i högerpanelens lista för att redigera det. Panelens bredd kan ändras med draghandtaget eller reglaget.
+Du kan också högerklicka på en markering och välja **Skapa beat** utan AI. Beatet får en diskret ram i manuset. Klicka på ramen eller välj beatet i högerpanelens lista för att redigera det. Panelens bredd ändras genom att dra kanten mellan manuset och högerpanelen. Beatets avsnitt, serierutorna som grupp och varje enskild ruta kan fällas ihop för bättre överblick.
 
 Varje beat kan ha flera **serierutor**. Använd **Lägg till ruta**, redigera bildinstruktion, dialog och berättartext, skapa/kopiera bildprompt och lägg in en PNG-, JPG- eller WebP-bild via filval eller drag och släpp. Tidigare bifogade bilder kan återställas under **Tidigare bilder**. Rutor blir automatiskt tillgängliga under **Bildrutor** och **Sidor**. En bifogad bild följer med när rutan väljs på en sida; en redan placerad bild ersätts inte automatiskt.
 

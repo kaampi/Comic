@@ -424,16 +424,6 @@ export function ManuscriptWorkspace({
         }}
       />
       <aside className="beat-inspector">
-        <label className="beat-width">
-          {t.width}
-          <input
-            type="range"
-            min="320"
-            max="700"
-            value={width}
-            onChange={(e) => setWidth(Number(e.target.value))}
-          />
-        </label>
         {busy ? (
           <div role="status">
             {t.analysing} {progress}
@@ -585,96 +575,136 @@ export function ManuscriptWorkspace({
                 onChange={(e) => patch({ title: e.target.value })}
               />
             </label>
-            <label>
-              {t.summary}
-              <textarea
-                rows={3}
-                value={beat.summary}
-                onChange={(e) => patch({ summary: e.target.value })}
-              />
-            </label>
-            <label>
-              {t.type}
-              <select
-                value={beat.beatType}
-                onChange={(e) =>
-                  patch({ beatType: e.target.value as BeatType })
-                }
-              >
-                {beatTypes.map((type) => (
-                  <option key={type}>{type}</option>
-                ))}
-              </select>
-            </label>
-            <fieldset>
-              <legend>{t.characters}</legend>
-              {project.characters.map((c) => (
-                <label key={c.id}>
-                  <input
-                    type="checkbox"
-                    checked={beat.characterIds.includes(c.id)}
-                    onChange={(e) =>
-                      patch({
-                        characterIds: e.target.checked
-                          ? [...beat.characterIds, c.id]
-                          : beat.characterIds.filter((id) => id !== c.id),
-                      })
-                    }
+            <details className="beat-section" key={beat.id + "-summary"}>
+              <summary>{t.summary}</summary>
+              <div className="beat-section-body">
+                <label>
+                  {t.summary}
+                  <textarea
+                    rows={3}
+                    value={beat.summary}
+                    onChange={(e) => patch({ summary: e.target.value })}
                   />
-                  {c.name}
                 </label>
-              ))}
-            </fieldset>
-            <label>
-              {t.location}
-              <select
-                value={beat.locationId ?? ""}
-                onChange={(e) =>
-                  patch({ locationId: e.target.value || undefined })
-                }
-              >
-                <option value="">{t.none}</option>
-                {project.locations.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.name}
-                  </option>
+              </div>
+            </details>
+            <details className="beat-section" key={beat.id + "-type"}>
+              <summary>{t.type}</summary>
+              <div className="beat-section-body">
+                <label>
+                  {t.type}
+                  <select
+                    value={beat.beatType}
+                    onChange={(e) =>
+                      patch({ beatType: e.target.value as BeatType })
+                    }
+                  >
+                    {beatTypes.map((type) => (
+                      <option key={type}>{type}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </details>
+            <details className="beat-section" key={beat.id + "-characters"}>
+              <summary>{t.characters}</summary>
+              <div className="beat-section-body">
+                <fieldset>
+                  <legend>{t.characters}</legend>
+                  {project.characters.map((c) => (
+                    <label key={c.id}>
+                      <input
+                        type="checkbox"
+                        checked={beat.characterIds.includes(c.id)}
+                        onChange={(e) =>
+                          patch({
+                            characterIds: e.target.checked
+                              ? [...beat.characterIds, c.id]
+                              : beat.characterIds.filter((id) => id !== c.id),
+                          })
+                        }
+                      />
+                      {c.name}
+                    </label>
+                  ))}
+                </fieldset>
+              </div>
+            </details>
+            <details className="beat-section" key={beat.id + "-location"}>
+              <summary>{t.location}</summary>
+              <div className="beat-section-body">
+                <label>
+                  {t.location}
+                  <select
+                    value={beat.locationId ?? ""}
+                    onChange={(e) =>
+                      patch({ locationId: e.target.value || undefined })
+                    }
+                  >
+                    <option value="">{t.none}</option>
+                    {project.locations.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </details>
+            <details className="beat-section" key={beat.id + "-dialogue"}>
+              <summary>{t.dialogue}</summary>
+              <div className="beat-section-body">
+                {beat.dialogueCandidates.map((item, i) => (
+                  <label key={item.id}>
+                    {t.dialogue}
+                    <textarea
+                      value={item.text}
+                      onChange={(e) =>
+                        patch({
+                          dialogueCandidates: beat.dialogueCandidates.map(
+                            (x, n) =>
+                              n === i
+                                ? {
+                                    ...x,
+                                    text: e.target.value,
+                                    source: "adapted",
+                                  }
+                                : x,
+                          ),
+                        })
+                      }
+                    />
+                  </label>
                 ))}
-              </select>
-            </label>
-            {beat.dialogueCandidates.map((item, i) => (
-              <label key={item.id}>
-                {t.dialogue}
-                <textarea
-                  value={item.text}
-                  onChange={(e) =>
-                    patch({
-                      dialogueCandidates: beat.dialogueCandidates.map((x, n) =>
-                        n === i
-                          ? { ...x, text: e.target.value, source: "adapted" }
-                          : x,
-                      ),
-                    })
-                  }
-                />
-              </label>
-            ))}
-            {beat.captionCandidates.map((item, i) => (
-              <label key={item.id}>
-                {t.narration}
-                <textarea
-                  value={item.text}
-                  onChange={(e) =>
-                    patch({
-                      captionCandidates: beat.captionCandidates.map((x, n) =>
-                        n === i
-                          ? { ...x, text: e.target.value, source: "adapted" }
-                          : x,
-                      ),
-                    })
-                  }
-                />
-              </label>
-            ))}
+              </div>
+            </details>
+            <details className="beat-section" key={beat.id + "-narration"}>
+              <summary>{t.narration}</summary>
+              <div className="beat-section-body">
+                {beat.captionCandidates.map((item, i) => (
+                  <label key={item.id}>
+                    {t.narration}
+                    <textarea
+                      value={item.text}
+                      onChange={(e) =>
+                        patch({
+                          captionCandidates: beat.captionCandidates.map(
+                            (x, n) =>
+                              n === i
+                                ? {
+                                    ...x,
+                                    text: e.target.value,
+                                    source: "adapted",
+                                  }
+                                : x,
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+            </details>{" "}
             <details>
               <summary>{t.source}</summary>
               <blockquote>{beat.sourceTextExcerpt}</blockquote>
@@ -724,279 +754,307 @@ export function ManuscriptWorkspace({
             >
               {t.relink}
             </button>
-            <div className="section-heading">
-              <h3>{t.panels}</h3>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => onUpdate((p) => addBeatPanel(p, beat.id))}
-              >
-                {t.addPanel}
-              </button>
-            </div>
-            {adaptation.panelPlans
-              .filter((plan) => plan.sourceBeatIds.includes(beat.id))
-              .map((plan) => {
-                const prompt = adaptation.imagePrompts.find(
-                  (x) => x.panelId === plan.id,
-                );
-                const update = (patch: Partial<PanelPlan>) =>
-                  onUpdate((p) => patchBeatPanel(p, plan.id, patch));
-                const projectedId = project.panels.find(
-                  (p) => p.adaptationPanelPlanId === plan.id,
-                )?.id;
-                const image =
-                  plan.image ??
-                  project.pages
-                    .flatMap((p) => p.placements)
-                    .find(
-                      (p) =>
-                        p.adaptationPanelPlanId === plan.id ||
-                        (projectedId && p.panelId === projectedId),
-                    )?.image;
-                return (
-                  <article className="beat-panel-card" key={plan.id}>
-                    <h4>
-                      {plan.order} · {plan.title}
-                    </h4>
-                    {plan.sourceNeedsReview ? (
-                      <div className="beat-review-warning">
-                        <p>{t.dirtyPanel}</p>
-                        <button
-                          type="button"
-                          className="text-button"
-                          onClick={() => update({ sourceNeedsReview: false })}
-                        >
-                          {t.reviewed}
-                        </button>
-                      </div>
-                    ) : null}
-                    <label>
-                      {t.direction}
-                      <textarea
-                        rows={3}
-                        value={plan.visualDescription}
-                        onChange={(e) =>
-                          update({ visualDescription: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      {t.shot}
-                      <select
-                        value={plan.shotType ?? "medium"}
-                        onChange={(e) =>
-                          update({
-                            shotType: e.target.value as PanelPlan["shotType"],
-                          })
-                        }
-                      >
-                        {[
-                          "wide",
-                          "establishing-wide",
-                          "medium",
-                          "medium-close",
-                          "close-up",
-                          "extreme-close-up",
-                          "over-shoulder",
-                          "reaction",
-                          "insert",
-                        ].map((x) => (
-                          <option key={x}>{x}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      {t.size}
-                      <select
-                        value={plan.sizeHint ?? "medium"}
-                        onChange={(e) =>
-                          update({
-                            sizeHint: e.target.value as PanelPlan["sizeHint"],
-                          })
-                        }
-                      >
-                        {[
-                          "small",
-                          "medium",
-                          "large",
-                          "full-width",
-                          "splash",
-                        ].map((x) => (
-                          <option key={x}>{x}</option>
-                        ))}
-                      </select>
-                    </label>
-                    {plan.dialogue.map((item) => (
-                      <label key={item.id}>
-                        {t.dialogue}
-                        <textarea
-                          value={item.text}
-                          onChange={(e) =>
-                            update({
-                              dialogue: plan.dialogue.map((x) =>
-                                x.id === item.id
-                                  ? {
-                                      ...x,
-                                      text: e.target.value,
-                                      source: "adapted",
-                                    }
-                                  : x,
-                              ),
-                            })
-                          }
-                        />
-                      </label>
-                    ))}
-                    {plan.captions.map((item) => (
-                      <label key={item.id}>
-                        {t.narration}
-                        <textarea
-                          value={item.text}
-                          onChange={(e) =>
-                            update({
-                              captions: plan.captions.map((x) =>
-                                x.id === item.id
-                                  ? {
-                                      ...x,
-                                      text: e.target.value,
-                                      source: "adapted",
-                                    }
-                                  : x,
-                              ),
-                            })
-                          }
-                        />
-                      </label>
-                    ))}
-                    <div className="beat-text-actions">
-                      <button
-                        type="button"
-                        className="text-button"
-                        onClick={() =>
-                          update({
-                            dialogue: [
-                              ...plan.dialogue,
-                              {
-                                id: crypto.randomUUID(),
-                                text: "",
-                                source: "adapted",
-                                bubbleType: "speech",
-                              },
-                            ],
-                          })
-                        }
-                      >
-                        {t.addDialogue}
-                      </button>
-                      <button
-                        type="button"
-                        className="text-button"
-                        onClick={() =>
-                          update({
-                            captions: [
-                              ...plan.captions,
-                              {
-                                id: crypto.randomUUID(),
-                                text: "",
-                                source: "adapted",
-                                style: "narration",
-                              },
-                            ],
-                          })
-                        }
-                      >
-                        {t.addNarration}
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      className="text-button"
-                      onClick={() =>
-                        onUpdate((p) => generateBeatPanelPrompt(p, plan.id))
-                      }
-                    >
-                      {t.generate}
-                    </button>
-                    {prompt ? (
-                      <>
+            <details
+              className="beat-panels-section beat-section"
+              open
+              key={beat.id + "-panels"}
+            >
+              <summary>
+                {t.panels}
+                <span className="beat-section-count">
+                  {
+                    adaptation.panelPlans.filter((plan) =>
+                      plan.sourceBeatIds.includes(beat.id),
+                    ).length
+                  }
+                </span>
+              </summary>
+              <div className="section-heading">
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => onUpdate((p) => addBeatPanel(p, beat.id))}
+                >
+                  {t.addPanel}
+                </button>
+              </div>
+              {adaptation.panelPlans
+                .filter((plan) => plan.sourceBeatIds.includes(beat.id))
+                .map((plan) => {
+                  const prompt = adaptation.imagePrompts.find(
+                    (x) => x.panelId === plan.id,
+                  );
+                  const update = (patch: Partial<PanelPlan>) =>
+                    onUpdate((p) => patchBeatPanel(p, plan.id, patch));
+                  const projectedId = project.panels.find(
+                    (p) => p.adaptationPanelPlanId === plan.id,
+                  )?.id;
+                  const image =
+                    plan.image ??
+                    project.pages
+                      .flatMap((p) => p.placements)
+                      .find(
+                        (p) =>
+                          p.adaptationPanelPlanId === plan.id ||
+                          (projectedId && p.panelId === projectedId),
+                      )?.image;
+                  return (
+                    <details className="beat-panel-card" key={plan.id}>
+                      <summary>
+                        <span>
+                          {plan.order} · {plan.title}
+                        </span>
+                        {plan.sourceNeedsReview ? (
+                          <span aria-label={t.dirtyPanel}> ⚠</span>
+                        ) : null}
+                      </summary>
+                      <div className="beat-panel-body">
+                        {plan.sourceNeedsReview ? (
+                          <div className="beat-review-warning">
+                            <p>{t.dirtyPanel}</p>
+                            <button
+                              type="button"
+                              className="text-button"
+                              onClick={() =>
+                                update({ sourceNeedsReview: false })
+                              }
+                            >
+                              {t.reviewed}
+                            </button>
+                          </div>
+                        ) : null}
                         <label>
-                          {t.prompt}
+                          {t.direction}
                           <textarea
-                            rows={6}
-                            value={prompt.prompt}
-                            onChange={(e) => editPrompt(plan, e.target.value)}
+                            rows={3}
+                            value={plan.visualDescription}
+                            onChange={(e) =>
+                              update({ visualDescription: e.target.value })
+                            }
                           />
                         </label>
-                        <button
-                          type="button"
-                          className="text-button"
-                          onClick={() => {
-                            void navigator.clipboard
-                              .writeText(prompt.prompt)
-                              .then(
-                                () => setMessage(t.copied),
-                                () => setMessage(t.failed),
-                              );
-                          }}
-                        >
-                          {t.copy}
-                        </button>
-                      </>
-                    ) : null}
-                    <label
-                      className="beat-image-drop"
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (e.dataTransfer.files[0])
-                          loadImage(plan.id, e.dataTransfer.files[0]);
-                      }}
-                    >
-                      {image ? (
-                        <img src={image.dataUrl} alt={image.name} />
-                      ) : (
-                        <span>{t.drop}</span>
-                      )}
-                      <span>{image ? t.changeImage : t.image}</span>
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        onChange={(e) => {
-                          if (e.target.files?.[0])
-                            loadImage(plan.id, e.target.files[0]);
-                          e.currentTarget.value = "";
-                        }}
-                      />
-                    </label>
-                    {plan.image ? (
-                      <button
-                        type="button"
-                        className="text-button"
-                        onClick={() => update({ image: undefined })}
-                      >
-                        {t.removeImage}
-                      </button>
-                    ) : null}
-                    {plan.imageVersions?.length ? (
-                      <details className="beat-image-history">
-                        <summary>{t.imageHistory}</summary>
-                        {plan.imageVersions.map((previous, index) => (
+                        <label>
+                          {t.shot}
+                          <select
+                            value={plan.shotType ?? "medium"}
+                            onChange={(e) =>
+                              update({
+                                shotType: e.target
+                                  .value as PanelPlan["shotType"],
+                              })
+                            }
+                          >
+                            {[
+                              "wide",
+                              "establishing-wide",
+                              "medium",
+                              "medium-close",
+                              "close-up",
+                              "extreme-close-up",
+                              "over-shoulder",
+                              "reaction",
+                              "insert",
+                            ].map((x) => (
+                              <option key={x}>{x}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          {t.size}
+                          <select
+                            value={plan.sizeHint ?? "medium"}
+                            onChange={(e) =>
+                              update({
+                                sizeHint: e.target
+                                  .value as PanelPlan["sizeHint"],
+                              })
+                            }
+                          >
+                            {[
+                              "small",
+                              "medium",
+                              "large",
+                              "full-width",
+                              "splash",
+                            ].map((x) => (
+                              <option key={x}>{x}</option>
+                            ))}
+                          </select>
+                        </label>
+                        {plan.dialogue.map((item) => (
+                          <label key={item.id}>
+                            {t.dialogue}
+                            <textarea
+                              value={item.text}
+                              onChange={(e) =>
+                                update({
+                                  dialogue: plan.dialogue.map((x) =>
+                                    x.id === item.id
+                                      ? {
+                                          ...x,
+                                          text: e.target.value,
+                                          source: "adapted",
+                                        }
+                                      : x,
+                                  ),
+                                })
+                              }
+                            />
+                          </label>
+                        ))}
+                        {plan.captions.map((item) => (
+                          <label key={item.id}>
+                            {t.narration}
+                            <textarea
+                              value={item.text}
+                              onChange={(e) =>
+                                update({
+                                  captions: plan.captions.map((x) =>
+                                    x.id === item.id
+                                      ? {
+                                          ...x,
+                                          text: e.target.value,
+                                          source: "adapted",
+                                        }
+                                      : x,
+                                  ),
+                                })
+                              }
+                            />
+                          </label>
+                        ))}
+                        <div className="beat-text-actions">
                           <button
                             type="button"
                             className="text-button"
-                            key={index}
-                            onClick={() => update({ image: previous })}
+                            onClick={() =>
+                              update({
+                                dialogue: [
+                                  ...plan.dialogue,
+                                  {
+                                    id: crypto.randomUUID(),
+                                    text: "",
+                                    source: "adapted",
+                                    bubbleType: "speech",
+                                  },
+                                ],
+                              })
+                            }
                           >
-                            <img src={previous.dataUrl} alt="" />
-                            {previous.name} · {t.restore}
+                            {t.addDialogue}
                           </button>
-                        ))}
-                      </details>
-                    ) : null}
-                  </article>
-                );
-              })}
+                          <button
+                            type="button"
+                            className="text-button"
+                            onClick={() =>
+                              update({
+                                captions: [
+                                  ...plan.captions,
+                                  {
+                                    id: crypto.randomUUID(),
+                                    text: "",
+                                    source: "adapted",
+                                    style: "narration",
+                                  },
+                                ],
+                              })
+                            }
+                          >
+                            {t.addNarration}
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() =>
+                            onUpdate((p) => generateBeatPanelPrompt(p, plan.id))
+                          }
+                        >
+                          {t.generate}
+                        </button>
+                        {prompt ? (
+                          <>
+                            <label>
+                              {t.prompt}
+                              <textarea
+                                rows={6}
+                                value={prompt.prompt}
+                                onChange={(e) =>
+                                  editPrompt(plan, e.target.value)
+                                }
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              className="text-button"
+                              onClick={() => {
+                                void navigator.clipboard
+                                  .writeText(prompt.prompt)
+                                  .then(
+                                    () => setMessage(t.copied),
+                                    () => setMessage(t.failed),
+                                  );
+                              }}
+                            >
+                              {t.copy}
+                            </button>
+                          </>
+                        ) : null}
+                        <label
+                          className="beat-image-drop"
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            if (e.dataTransfer.files[0])
+                              loadImage(plan.id, e.dataTransfer.files[0]);
+                          }}
+                        >
+                          {image ? (
+                            <img src={image.dataUrl} alt={image.name} />
+                          ) : (
+                            <span>{t.drop}</span>
+                          )}
+                          <span>{image ? t.changeImage : t.image}</span>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            onChange={(e) => {
+                              if (e.target.files?.[0])
+                                loadImage(plan.id, e.target.files[0]);
+                              e.currentTarget.value = "";
+                            }}
+                          />
+                        </label>
+                        {plan.image ? (
+                          <button
+                            type="button"
+                            className="text-button"
+                            onClick={() => update({ image: undefined })}
+                          >
+                            {t.removeImage}
+                          </button>
+                        ) : null}
+                        {plan.imageVersions?.length ? (
+                          <details className="beat-image-history">
+                            <summary>{t.imageHistory}</summary>
+                            {plan.imageVersions.map((previous, index) => (
+                              <button
+                                type="button"
+                                className="text-button"
+                                key={index}
+                                onClick={() => update({ image: previous })}
+                              >
+                                <img src={previous.dataUrl} alt="" />
+                                {previous.name} · {t.restore}
+                              </button>
+                            ))}
+                          </details>
+                        ) : null}
+                      </div>
+                    </details>
+                  );
+                })}
+            </details>
           </>
         ) : (
           <p>{t.select}</p>
