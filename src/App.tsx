@@ -1,3 +1,5 @@
+import { AlbumMenu, type AlbumTool } from "./AlbumMenu";
+import { restoredAlbumCopy } from "./albumBackup";
 import { OverlayDefaultsEditor } from "./OverlayDefaultsEditor";
 import { overlayDefaults, OVERLAY_FONTS } from "./overlayTypography";
 import { PanelLibrary } from "./PanelLibrary";
@@ -31,6 +33,7 @@ type StyleDraft = { id?: string; name: string; genre: string; promptText: string
 type ProjectTab = "manus" | "adaptation" | "characters" | "locations" | "scenes" | "pages";
 
 export function App() {
+  const [albumTool,setAlbumTool]=useState<AlbumTool>(null);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
   const [aiMode, setAiMode] = useState<AiMode>("prompt");
@@ -476,6 +479,7 @@ export function App() {
           <button className="text-button" type="button" aria-expanded={projectMenuOpen} onClick={() => setProjectMenuOpen((open) => !open)}>{tr("project")}</button>
           {projectMenuOpen ? <div className="menu-panel" role="menu">
             <button role="menuitem" type="button" className="menu-item" onClick={() => { setPanel("new-project"); setProjectMenuOpen(false); }}>{tr("newAlbum")}</button>
+            <button role="menuitem" type="button" className="menu-item" onClick={()=>{setAlbumTool("backup");setProjectMenuOpen(false);}}>{locale==="sv"?"Återställ albumbackup":"Restore album backup"}</button>
             {projects.length ? <><div className="menu-divider" />{projects.slice(0, 5).map((project) => <div className="menu-project-row" key={project.id}><button role="menuitem" type="button" className="menu-item" onClick={() => { setActiveProjectId(project.id); setProjectMenuOpen(false); }}>{project.title}</button><button type="button" className="menu-delete-project" aria-label={`Radera ${project.title}`} title={tr("deleteProject")} onClick={() => deleteProject(project.id)}>×</button></div>)}</> : <><div className="menu-divider" /><span className="menu-empty">{tr("noRecent")}</span></>}
             <div className="menu-divider" /><button role="menuitem" type="button" className="menu-item" onClick={() => { setActiveProjectId(null); setProjectMenuOpen(false); }}>{tr("showAll")}</button>
           </div> : null}
@@ -495,6 +499,7 @@ export function App() {
       </header>
 
 
+      <AlbumMenu saveError={saveFailure?manuscriptText(locale).saveError:undefined} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={project=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];if(!saveProjects(next))throw new Error(manuscriptText(locale).saveError);projectsRef.current=next;setProjects(next);setActiveProjectId(restored.id);setSaveFailure(false);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
       <main className="home">
         {activeProject ? <section className="project-shell">
           <aside className="project-sidebar">

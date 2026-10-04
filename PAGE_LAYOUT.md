@@ -27,3 +27,11 @@ Placerade rutor visar sidnummer och kan filtreras bort med **Visa bara oplacerad
 Dubbelklicka på en bildruta och öppna **Standardvärden för text och bubblor** i verktygspanelen. Pratbubbla, tankebubbla, berättartext och ljudeffekt har varsin inställning för rundning, font, textstorlek, textvikt, justering och sidmarginal. Värdena sparas i albumet och används för nya textlager, även vid placering från rutbiblioteket. Befintliga lager ändras inte.
 
 Varje markerat textlager kan också få egen **Textjustering** (vänster, centrerad eller höger) och **Sidmarginal (%)**. Sidmarginalen är som standard 4 procent av textlagrets bredd på varje sida. Enter och tomma rader i textfältet återges i bildrutan. Långa rader radbryts automatiskt; texten kapas inte efter sju rader. Öka textrutans höjd eller minska textstorleken om texten inte ryms.
+
+## Albummeny och backup
+
+När ett album är öppet visas en andra menyrad under appens huvudmeny. Den visar albumets titel och antal sidor/rutor. **Albuminställningar** samlar titel, bildstil, linjeprompter, rutnät för nya sidor och standardvärden för text och bubblor. Ändringar sparas automatiskt; sidstandarden ändrar inte befintliga sidlayouter.
+
+**Backup** skapar en lokal `.json`-fil med hela albumet, inklusive manus, adaptationsdata, bilder och bildhistorik, sidor, textlager, bubbelpaletter och albuminställningar. Filen innehåller inga globala AI-serverinställningar. Bilderna är inbäddade i prototypens backupfil.
+
+**Återställ backup** låter dig välja fil och granska titel och omfattning innan **Öppna som nytt album** skapar en separat kopia. Befintliga album ersätts inte. Återställning finns även under **Projekt → Återställ albumbackup**, när inget album är öppet. Ogiltiga filer och lagringsfel lämnar befintliga album orörda. **Stäng album** återgår till albumlistan.

@@ -557,6 +557,26 @@ try {
     saved().pages[0].placements[0].sourceBeatIds,
     saved().adaptations[0].panelPlans[0].sourceBeatIds,
   );
+  const { packAlbumBackup, parseAlbumBackup, restoredAlbumCopy } = await import(
+    pathToFileURL(join(compiledRoot, "albumBackup.mjs"))
+  );
+  const backedUpProject = saved();
+  const backup = packAlbumBackup(backedUpProject);
+  assert.deepEqual(
+    parseAlbumBackup(JSON.parse(JSON.stringify(backup))),
+    backedUpProject,
+  );
+  const copiedProject = restoredAlbumCopy(backedUpProject);
+  assert.notEqual(copiedProject.id, backedUpProject.id);
+  assert.deepEqual(copiedProject.pages, backedUpProject.pages);
+  assert.deepEqual(copiedProject.adaptations, backedUpProject.adaptations);
+  assert.throws(() =>
+    parseAlbumBackup({ kind: "storybook-ai.manuscript", format: 1 }),
+  );
+  assert.throws(() => parseAlbumBackup({ ...backup, format: 99 }));
+  const brokenBackup = structuredClone(backup);
+  brokenBackup.project.pages[0].placements[0].overlays = "invalid";
+  assert.throws(() => parseAlbumBackup(brokenBackup));
   const assignedProject = saved();
   assert.deepEqual(
     assignLibraryPanel(
@@ -797,6 +817,92 @@ try {
   );
   assert.equal(saved().pages.length, 1);
   assert.ok(document.querySelector(".layout-canvas"));
+  await user.click(
+    screen.getByRole("button", { name: "Albuminställningar", exact: true }),
+  );
+  const albumDialog = screen.getByRole("dialog", {
+    name: "Albuminställningar",
+  });
+  assert.ok(within(albumDialog).getByLabelText("Albumtitel"));
+  fireEvent.change(within(albumDialog).getByLabelText("Albumtitel"), {
+    target: { value: "Album menu test" },
+  });
+  assert.equal(saved().title, "Album menu test");
+  fireEvent.change(within(albumDialog).getByLabelText("Kolumner"), {
+    target: { value: "4" },
+  });
+  assert.equal(saved().pageDefaults.gridColumns, 4);
+  assert.equal(saved().pages[0].gridColumns, 3);
+  fireEvent.keyDown(window, { key: "Escape" });
+  assert.equal(screen.queryByRole("dialog"), null);
+  await user.click(screen.getByRole("button", { name: "Backup", exact: true }));
+  const originalCreate = URL.createObjectURL,
+    originalRevoke = URL.revokeObjectURL,
+    originalClick = window.HTMLAnchorElement.prototype.click;
+  let downloadedBlob, downloadedName;
+  URL.createObjectURL = (blob) => {
+    downloadedBlob = blob;
+    return "blob:test";
+  };
+  URL.revokeObjectURL = () => {};
+  window.HTMLAnchorElement.prototype.click = function () {
+    downloadedName = this.download;
+  };
+  const beforeBackup = saved();
+  await user.click(
+    screen.getByRole("button", { name: "Ladda ner albumbackup", exact: true }),
+  );
+  assert.ok(downloadedName.endsWith(".json"));
+  assert.deepEqual(
+    parseAlbumBackup(JSON.parse(await downloadedBlob.text())),
+    beforeBackup,
+  );
+  assert.deepEqual(saved(), beforeBackup);
+  URL.createObjectURL = originalCreate;
+  URL.revokeObjectURL = originalRevoke;
+  window.HTMLAnchorElement.prototype.click = originalClick;
+  const beforeRestore = localStorage.getItem("comicbook-ai.projects");
+  await user.upload(
+    screen.getByLabelText("Välj albumbackup"),
+    new window.File(["{}"], "wrong.json", { type: "application/json" }),
+  );
+  await screen.findByRole("alert");
+  assert.equal(localStorage.getItem("comicbook-ai.projects"), beforeRestore);
+  assert.equal(
+    screen.queryByRole("button", { name: "Öppna som nytt album" }),
+    null,
+  );
+  await user.upload(
+    screen.getByLabelText("Välj albumbackup"),
+    new window.File(
+      [JSON.stringify(packAlbumBackup(beforeBackup))],
+      "album.json",
+      { type: "application/json" },
+    ),
+  );
+  const restoreButton = await screen.findByRole("button", {
+    name: "Öppna som nytt album",
+    exact: true,
+  });
+  const normalSetItem = window.Storage.prototype.setItem;
+  window.Storage.prototype.setItem = function (key, value) {
+    if (key === "comicbook-ai.projects") throw new Error("Quota exceeded");
+    return normalSetItem.call(this, key, value);
+  };
+  await user.click(restoreButton);
+  assert.equal(localStorage.getItem("comicbook-ai.projects"), beforeRestore);
+  assert.ok(screen.getByRole("dialog"));
+  window.Storage.prototype.setItem = normalSetItem;
+  await user.click(restoreButton);
+  assert.equal(screen.queryByRole("dialog"), null);
+  const restoredProjects = JSON.parse(
+    localStorage.getItem("comicbook-ai.projects"),
+  );
+  assert.equal(restoredProjects.length, 2);
+  assert.notEqual(restoredProjects[0].id, beforeBackup.id);
+  assert.deepEqual(restoredProjects[1], beforeBackup);
+  assert.deepEqual(restoredProjects[0].pages, beforeBackup.pages);
+  assert.deepEqual(restoredProjects[0].adaptations, beforeBackup.adaptations);
   console.log(
     "PASS: manuscript frames/CRLF, prompt/image/history/dialogue inspector, selected-only AI append/failure/cancel, source edits/caret, no sequences, stable panel IDs and page images",
   );
