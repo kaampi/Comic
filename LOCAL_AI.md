@@ -29,7 +29,11 @@ Servern måste tillåta anslutningar från adressen där ComicBook körs. Om ans
 
 AI-förslag ersätter inte din nuvarande plan förrän du väljer att använda dem. Att använda förslagen ersätter beats, sekvenser och genererade panelförslag/bildprompter; befintliga bilder och sidlayouter behålls. Du kan kasta förslagen eller avbryta analysen. Felaktiga svar ändrar inte projektet.
 
-Källutdrag och originaldialog måste finnas exakt i texten och följa källans ordning. AI-genererad berättartext märks som AI-förslag. Långa texter delas upp i mindre avsnitt som analyseras i följd, med visad progress. En hel roman kan därför ta lång tid; ett kapitel åt gången ger bättre möjlighet att granska resultatet.
+Texten delas upp i numrerade avsnitt. Modellen svarar med en kort rubrik, en sammanfattning, beat-typ samt första och sista avsnittsnummer för varje beat. Appen hämtar källtexten själv och plockar ut citerad originaldialog direkt ur den. Modellen behöver därför inte kopiera text eller dialog perfekt. Okända eller felordnade avsnittsnummer avvisas utan att ändra projektet.
+
+Prompten ber om högst 15 beats per textdel, högst 8 ord i rubriken och högst 30 ord i sammanfattningen. Svarslimiten är 35 procent av kontextstorleken, högst 2 048 token. Bildinstruktionen börjar som beatets sammanfattning och kan justeras vid granskning och under panelsteget. Beats-analysen genererar inte separat visuell regi eller berättartext.
+
+Långa texter delas upp i mindre textdelar som analyseras i följd, med visad progress. En hel roman kan därför ta lång tid; ett kapitel åt gången ger bättre möjlighet att granska resultatet. Kortare svar minskar genereringsarbetet men garanterar inte en viss analystid på din dator.
 
 Det går fortfarande att välja **Extrahera beats utan AI**. Detta använder den befintliga lokala regelbaserade analysen.
 

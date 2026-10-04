@@ -141,8 +141,7 @@ try {
 
   const excerpt = 'Holmes opened the gate. "Wait here," he said.';
   const beatReply = JSON.stringify({ beats: [{
-    title: "At the gate", summary: "Holmes opens the gate.", beatType: "action", sourceTextExcerpt: excerpt,
-    visualDescription: "Holmes stands at the open gate.", dialogue: ["Wait here,"], captions: [], characters: ["Holmes"], location: "Gate"
+    from: 1, to: 2, title: "At the gate", summary: "Holmes opens the gate.", beatType: "action"
   }] });
   const beatContext = { characters: [{ id: "holmes", name: "Holmes" }], locations: [{ id: "gate", name: "Gate" }] };
   const proposals = ai.parseAiBeats(beatReply, excerpt, beatContext, 50);
@@ -150,7 +149,14 @@ try {
   assert.deepEqual(proposals[0].characterIds, ["holmes"]); assert.equal(proposals[0].locationId, "gate");
   assert.equal(proposals[0].dialogueCandidates[0].source, "original");
   assert.equal(proposals[0].origin, "ai-generated");
-  assert.throws(() => ai.parseAiBeats(beatReply.replace("Wait here,", "Invented dialogue"), excerpt, beatContext));
+  const extraFields = JSON.parse(beatReply);
+  extraFields.beats[0].sourceTextExcerpt = "Invented wording";
+  extraFields.beats[0].dialogue = ["Invented dialogue"];
+  assert.equal(ai.parseAiBeats(JSON.stringify(extraFields), excerpt, beatContext)[0].sourceTextExcerpt, excerpt);
+  assert.equal(ai.parseAiBeats(JSON.stringify(extraFields), excerpt, beatContext)[0].dialogueCandidates[0].text, "Wait here,");
+  assert.throws(() => ai.parseAiBeats(beatReply.replace('"from":1', '"from":0'), excerpt, beatContext));
+  assert.throws(() => ai.parseAiBeats(beatReply.replace('"to":2', '"to":999'), excerpt, beatContext));
+  assert.throws(() => ai.parseAiBeats(beatReply.replace('"from":1', '"from":1.5'), excerpt, beatContext));
   assert.throws(() => ai.parseAiBeats(beatReply, "An unrelated scene.", beatContext));
   assert.throws(() => ai.parseAiBeats("not json", excerpt, beatContext));
   assert.throws(() => ai.parseAiBeats('{"beats":[]}', excerpt, beatContext));
@@ -166,12 +172,50 @@ try {
   const progress = [];
   const suggested = await ai.suggestAiBeats({ source: excerpt, sourceOffset: 50, context: beatContext, settings,
     fetchImpl: async (_url, init) => {
-      assert.equal(JSON.parse(JSON.parse(init.body).messages[1].content).manuscript, excerpt);
+      const request = JSON.parse(init.body);
+      const input = JSON.parse(request.messages[1].content);
+      assert.deepEqual(input.segments, [{ id: 1, text: "Holmes opened the gate." }, { id: 2, text: '"Wait here," he said.' }]);
+      assert.ok(!request.messages[0].content.includes("sourceTextExcerpt"));
+      assert.ok(request.max_tokens <= 2048);
       return response({ choices: [{ message: { content: beatReply }, finish_reason: "stop" }] });
     }, onProgress: (done, total) => progress.push([done, total]) });
   assert.equal(suggested[0].sourceStart, 50); assert.deepEqual(progress, [[0, 1], [1, 1]]);
   await assert.rejects(ai.suggestAiBeats({ source: excerpt, context: beatContext, settings, signal: abort.signal }));
-  console.log("PASS: AI proposals preserve source/dialogue, reject hallucinated sources, split long manuscripts, and apply only validated beats");
+  const repeatedSource = excerpt + "\n\n" + excerpt;
+  const numbered = ai.numberSourceSegments(repeatedSource);
+  assert.equal(numbered.length, 4);
+  assert.ok(numbered.every(segment => repeatedSource.slice(segment.start, segment.end) === segment.text));
+  const pair = { beats: [
+    { from: 1, to: 2, title: "First", summary: "First exchange.", beatType: "dialogue" },
+    { from: 3, to: 4, title: "Second", summary: "Repeated exchange.", beatType: "dialogue" }
+  ] };
+  const restored = ai.parseAiBeats(JSON.stringify(pair), repeatedSource, beatContext, 100);
+  assert.equal(restored[0].sourceTextExcerpt, excerpt);
+  assert.equal(restored[1].sourceTextExcerpt, excerpt);
+  assert.equal(restored[1].sourceStart, 100 + excerpt.length + 2);
+  assert.equal(restored[0].dialogueCandidates.length, 1);
+  assert.equal(restored[1].dialogueCandidates.length, 1);
+  assert.throws(() => ai.parseAiBeats(JSON.stringify({ beats: [...pair.beats].reverse() }), repeatedSource, beatContext));
+  const shared = ai.parseAiBeats(JSON.stringify({ beats: [pair.beats[0], { ...pair.beats[1], from: 2, to: 2 }] }), repeatedSource, beatContext);
+  assert.equal(shared[0].dialogueCandidates.length, 1);
+  assert.equal(shared[1].dialogueCandidates.length, 0);
+  const stringIds = ai.parseAiBeats(JSON.stringify({ beats: [{ ...pair.beats[0], from: "1", to: "2" }] }), excerpt, beatContext);
+  assert.equal(stringIds[0].sourceTextExcerpt, excerpt);
+  const whitespaceSource = "\r\n  Första meningen.\r\n\r\n  ”Vänta!”\r\n";
+  const whitespaceSegments = ai.numberSourceSegments(whitespaceSource);
+  assert.ok(whitespaceSegments.every(segment => whitespaceSource.slice(segment.start, segment.end) === segment.text));
+  const whitespaceBeats = ai.parseAiBeats(JSON.stringify({ beats: [{ from: 1, to: whitespaceSegments.length, title: "Vänta", summary: "Någon väntar.", beatType: "dialogue" }] }), whitespaceSource, { characters: [], locations: [] }, 200);
+  assert.equal(whitespaceBeats[0].sourceTextExcerpt, whitespaceSource.slice(whitespaceBeats[0].sourceStart - 200, whitespaceBeats[0].sourceEnd - 200));
+  assert.equal(whitespaceBeats[0].dialogueCandidates[0].text, "Vänta!");
+  const longDialogue = '"Wait here. Keep the gate open."';
+  const splitDialogue = ai.parseAiBeats(JSON.stringify({ beats: [
+    { from: 1, to: 1, title: "Wait", summary: "He asks them to wait.", beatType: "dialogue" },
+    { from: 2, to: 2, title: "Gate", summary: "He asks them to keep the gate open.", beatType: "dialogue" }
+  ] }), longDialogue, { characters: [], locations: [] });
+  assert.equal(splitDialogue[0].dialogueCandidates[0].text, "Wait here.");
+  assert.equal(splitDialogue[1].dialogueCandidates[0].text, "Keep the gate open.");
+  assert.ok(splitDialogue.every(beat => beat.dialogueCandidates.every(line => beat.sourceTextExcerpt.includes(line.text))));
+  console.log("PASS: numbered references restore exact original text and dialogue, handle repetition/overlap/whitespace, reject invalid IDs/order, and send compact prompts");
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

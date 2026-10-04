@@ -91,7 +91,7 @@ export async function completeLocalChat(settings: LocalAiSettings, messages: Arr
   signal?: AbortSignal, fetchImpl?: typeof fetch): Promise<string> {
   const model = settings.servers[settings.engine].model;
   if (!model.trim()) throw new Error("Select a local text model first.");
-  const maxTokens = Math.min(4096, Math.floor(settings.contextWindow * .45));
+  const maxTokens = Math.min(2048, Math.floor(settings.contextWindow * .35));
   const body = settings.engine === "ollama"
     ? { model, messages, stream: false, format: "json", options: { temperature: .2, num_predict: maxTokens, num_ctx: settings.contextWindow } }
     : { model, messages, stream: false, temperature: .2, max_tokens: maxTokens };
