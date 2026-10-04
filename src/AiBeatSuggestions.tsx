@@ -27,10 +27,17 @@ export function AiBeatSuggestions({ project, adaptation, settings, locale, onApp
     return () => { ++requestNumber.current; controller.current?.abort(); };
   }, [fullSource]);
   const source = fullSource.slice(range.start, range.end);
+  const analysisRange = highlighted ?? range;
+  const analysisSource = fullSource.slice(analysisRange.start, analysisRange.end);
   const server = settings.servers[settings.engine];
   const configured = Boolean(server.baseUrl.trim() && server.model.trim());
   const stale = draft && draft.source !== fullSource;
   const analyse = async () => {
+    // A visible selection is the user's current scope, even without the
+    // optional "Use highlighted text" button.
+    const selectedSource = analysisSource;
+    const selectedOffset = analysisRange.start;
+    setRange(analysisRange); setHighlighted(null);
     controller.current?.abort();
     const abort = new AbortController();
     controller.current = abort;
@@ -40,7 +47,7 @@ export function AiBeatSuggestions({ project, adaptation, settings, locale, onApp
     let timeout = window.setTimeout(() => abort.abort(), 300000);
     try {
       const beats = await suggestAiBeats({
-        source, sourceOffset: range.start, context: { characters: project.characters, locations: project.locations },
+        source: selectedSource, sourceOffset: selectedOffset, context: { characters: project.characters, locations: project.locations },
         settings, signal: abort.signal, onProgress: (done, total) => {
           if (request !== requestNumber.current) return;
           setProgress({ done, total });
@@ -77,11 +84,11 @@ export function AiBeatSuggestions({ project, adaptation, settings, locale, onApp
       }} /></label>
       <div className="adaptation-step-actions">
         <button className="text-button" type="button" disabled={busy || !highlighted} onClick={() => { if (highlighted) setRange(highlighted); setHighlighted(null); }}>{t.selection}</button>
-        <button className="text-button" type="button" disabled={busy || (range.start === 0 && range.end === fullSource.length)} onClick={() => { setRange({ start: 0, end: fullSource.length }); setHighlighted(null); }}>{t.whole}</button>
+        <button className="text-button" type="button" disabled={busy || (!highlighted && range.start === 0 && range.end === fullSource.length)} onClick={() => { setRange({ start: 0, end: fullSource.length }); setHighlighted(null); }}>{t.whole}</button>
       </div>
-      <p className="quiet">{t.preview} · {source.length} {t.chars} · {splitBeatSource(source, settings.contextWindow).length} {t.parts}</p>
+      <p className="quiet" role="status">{analysisRange.start !== 0 || analysisRange.end !== fullSource.length ? t.selected : t.whole} · {t.preview} · {analysisSource.length} {t.chars} · {splitBeatSource(analysisSource, settings.contextWindow).length} {t.parts}</p>
       <div className="adaptation-step-actions">
-        <button className="primary-button" type="button" disabled={busy || !configured || !source.trim()} onClick={() => void analyse()}>{busy ? t.analysing + " " + Math.min(progress.done + 1, progress.total) + " / " + progress.total : t.analyse}</button>
+        <button className="primary-button" type="button" disabled={busy || !configured || !analysisSource.trim()} onClick={() => void analyse()}>{busy ? t.analysing + " " + Math.min(progress.done + 1, progress.total) + " / " + progress.total : t.analyse}</button>
         {busy ? <button className="text-button" type="button" onClick={() => controller.current?.abort()}>{t.cancel}</button> : null}
       </div>
       {busy ? <p role="status">{t.analysing} {Math.min(progress.done + 1, progress.total)} / {progress.total}</p> : null}

@@ -22,7 +22,7 @@ Servern måste tillåta anslutningar från adressen där ComicBook körs. Om ans
 
 1. Öppna ett projekt och **Adaptering → 1 · Beats**.
 2. Fäll ut **AI-analys av beats**.
-3. Kontrollera texten och den valda servern/modellen. Markera ett avsnitt och välj **Använd markerad text**, eller använd hela manuset.
+3. Kontrollera texten och den valda servern/modellen. Markera ett avsnitt för att analysera bara markeringen, eller använd hela manuset. Räknaren visar vilket urval som kommer att skickas.
 4. Klicka **Analysera text**. Endast den valda texten och namn på kända karaktärer/platser som förekommer i den skickas till servern. Ingen bild eller StoryBook-fil skickas.
 5. Granska förslagen. Ändra rubrik, sammanfattning och visuellt förslag, och välj vilka beats som ska tas med.
 6. Klicka **Använd valda beats** för att bygga sekvenser från förslagen. Därefter används **Skapa paneler** som vanligt.
