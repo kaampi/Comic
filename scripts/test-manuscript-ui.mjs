@@ -77,7 +77,7 @@ const { render, screen, waitFor, fireEvent, within } =
   await import("@testing-library/react");
 const user = (await import("@testing-library/user-event")).default.setup();
 const { assignLibraryPanel } = await import(
-  pathToFileURL(join(compiledRoot, "panelLibrary.mjs"))
+  pathToFileURL(join(compiledRoot, "comicPanelLibrary.mjs"))
 );
 const { App } = await import(pathToFileURL(join(compiledRoot, "App.mjs")));
 const source = 'Holmes opened the gate.\r\n"Wait here," he said.';
@@ -693,6 +693,15 @@ try {
     saved().adaptations[0].panelPlans.length,
     beforeDelete.adaptations[0].panelPlans.length,
   );
+  await user.click(screen.getByRole("button", { name: "Sidor", exact: true }));
+  window.confirm = () => true;
+  await user.click(screen.getByRole("button", { name: "Radera sida", exact: true }));
+  assert.equal(saved().pages.length, 0);
+  assert.ok(screen.getByRole("region", { name: "Rutbibliotek" }));
+  assert.equal(document.querySelector(".layout-canvas"), null);
+  await user.click(screen.getAllByRole("button", { name: "Ny sida", exact: true })[0]);
+  assert.equal(saved().pages.length, 1);
+  assert.ok(document.querySelector(".layout-canvas"));
   console.log(
     "PASS: manuscript frames/CRLF, prompt/image/history/dialogue inspector, selected-only AI append/failure/cancel, source edits/caret, no sequences, stable panel IDs and page images",
   );

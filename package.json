@@ -9,6 +9,7 @@
     "start": "vite --open",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",
+    "test:module-paths": "node scripts/test-module-paths.mjs",
     "test:adaptation": "node scripts/test-adaptation.mjs",
     "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs"
   },

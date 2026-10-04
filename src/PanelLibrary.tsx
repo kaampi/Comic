@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
-import { libraryEntries } from "./panelLibrary";
+import { libraryEntries } from "./comicPanelLibrary";
 import "./PanelLibrary.css";
 
 export function PanelLibrary({

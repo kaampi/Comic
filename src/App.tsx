@@ -1,5 +1,5 @@
 import { PanelLibrary } from "./PanelLibrary";
-import { assignLibraryPanel } from "./panelLibrary";
+import { assignLibraryPanel } from "./comicPanelLibrary";
 import { PANEL_CORNERS, resizeFromCorner, layoutControlsText, type PanelCorner } from "./pageLayout";
 import "./pageLayout.css";
 import { ManuscriptWorkspace } from "./ManuscriptWorkspace";
@@ -416,7 +416,7 @@ export function App() {
   const deletePage = (pageId:string) => {
     if (!window.confirm("Radera sidan? Manusets bildrutor påverkas inte.")) return;
     updateActiveProject((project)=>{const pages=project.pages.filter((item)=>item.id!==pageId).map((item,index)=>({...item,number:index+1}));return {...project,pages};});
-    setSelectedPageId(null); setLayoutStart(null);
+    setSelectedPageId(null); setSelectedLayoutPlacement(null); setLayoutStart(null);
   };
   const movePage = (pageId:string,direction:-1|1) => updateActiveProject((project)=>{const pages=[...project.pages];const index=pages.findIndex((item)=>item.id===pageId),target=index+direction;if(index<0||target<0||target>=pages.length)return project;[pages[index],pages[target]]=[pages[target],pages[index]];return {...project,pages:pages.map((item,i)=>({...item,number:i+1}))};});
   const readStoryBookFile = async (file: File) => {
@@ -578,7 +578,7 @@ export function App() {
           {projectTab === "pages" ? <section className="page-workspace">
             <aside className="page-sidebar"><div className="section-heading"><div><p className="eyebrow">{tr("album")}</p><h2>{tr("pages")}</h2></div><button className="primary-button" onClick={addPage}>{tr("newPage")}</button></div>
               <div className="page-list">{activeProject.pages.map((page) => <button key={page.id} className={selectedPageId === page.id ? "page-nav is-selected" : "page-nav"} onClick={() => {setSelectedPageId(page.id);setLayoutStart(null);}}>Sida {page.number}<span>{page.placements.length} rutor</span></button>)}</div>
-              <PanelLibrary project={activeProject} locale={locale} pageId={activeProject.pages.find(p=>p.id===selectedPageId)?.id??activeProject.pages[0]?.id} placementId={selectedLayoutPlacement?.pageId===(activeProject.pages.find(p=>p.id===selectedPageId)?.id??activeProject.pages[0]?.id)?selectedLayoutPlacement.placementId:undefined} onSelect={placementId=>{const pageId=activeProject.pages.find(p=>p.id===selectedPageId)?.id??activeProject.pages[0]?.id;setSelectedLayoutPlacement(pageId&&placementId?{pageId,placementId}:null);}} onAssign={panelId=>{if(selectedLayoutPlacement)setPlacementPanel(selectedLayoutPlacement.pageId,selectedLayoutPlacement.placementId,panelId);}} />
+              <PanelLibrary project={activeProject} locale={locale} pageId={activeProject.pages.find(p=>p.id===selectedPageId)?.id??activeProject.pages[0]?.id} placementId={selectedLayoutPlacement?.pageId===(activeProject.pages.find(p=>p.id===selectedPageId)?.id??activeProject.pages[0]?.id)?selectedLayoutPlacement?.placementId:undefined} onSelect={placementId=>{const pageId=activeProject.pages.find(p=>p.id===selectedPageId)?.id??activeProject.pages[0]?.id;setSelectedLayoutPlacement(pageId&&placementId?{pageId,placementId}:null);}} onAssign={panelId=>{if(selectedLayoutPlacement)setPlacementPanel(selectedLayoutPlacement.pageId,selectedLayoutPlacement.placementId,panelId);}} />
             </aside>
             {(() => { const page = activeProject.pages.find((item) => item.id === selectedPageId) ?? activeProject.pages[0]; if (!page) return <div className="workspace-card"><h2>{tr("createFirstPage")}</h2><button className="primary-button" onClick={addPage}>{tr("newPage")}</button></div>;
               return <div className="page-planner"><div className="section-heading"><div><p className="eyebrow">SIDA {page.number}</p><h2>Rita sidlayout</h2><p className="quiet">{layoutControlsText(locale).hint}</p></div><div className="edit-actions"><button className="text-button" disabled={page.number===1} onClick={()=>movePage(page.id,-1)}>← Sida</button><button className="text-button" disabled={page.number===activeProject.pages.length} onClick={()=>movePage(page.id,1)}>Sida →</button><button className="text-button danger-button" onClick={()=>deletePage(page.id)}>{tr("deletePage")}</button><select className="preset-select" defaultValue="" onChange={(e)=>{if(e.target.value)applyPreset(page.id,e.target.value);e.currentTarget.value="";}}><option value="">{tr("usePreset")}</option>{PAGE_PRESETS.map((preset)=><option key={preset.id} value={preset.id}>{preset.name}</option>)}</select></div></div>
