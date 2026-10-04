@@ -2,7 +2,7 @@
 
 En fristående desktopapp som omvandlar litterär text till illustrerade serier med redigerbart manus, karaktärsreferenser, sidlayout och pratbubblor.
 
-**Status:** körbar prototyp med lokal projektlagring, StoryBook-import, adaptering, sidlayout och textlager. Lokal text-AI kan föreslå beats för granskning.
+**Status:** körbar prototyp med lokal projektlagring, StoryBook-import, adaptering, sidlayout och textlager. Markera text direkt i manuset för att skapa beats eller låta lokal text-AI föreslå dem. Högerpanelen samlar beat, rutor, bildprompter och bifogade bilder; sekvenser är tills vidare borttagna ur flödet.
 
 ## Grundprinciper
 

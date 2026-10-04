@@ -1,5 +1,4 @@
 import { completeLocalChat, type LocalAiSettings } from "../localAi";
-import { buildSequences } from "./extract";
 import type { AdaptationBeat, BeatType, StoryAdaptation } from "./types";
 
 const beatTypes: BeatType[] = ["establishing", "introduction", "action", "dialogue", "reaction", "transition", "atmosphere", "climax", "resolution"];
@@ -166,6 +165,6 @@ export function adaptationFromAiBeats(name: string, sourceText: string, beats: A
   return {
     id: previous?.id ?? id("adaptation"), name: previous?.name ?? name, sourceText,
     createdAt: previous?.createdAt ?? now, updatedAt: now, status: "beats-generated",
-    beats: nextBeats, sequences: buildSequences(nextBeats), panelPlans: [], imagePrompts: []
+    beats: nextBeats, sequences: [], panelPlans: [], imagePrompts: []
   };
 }

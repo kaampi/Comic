@@ -158,7 +158,7 @@ export function createAdaptation(name: string, sourceText: string, previous?: St
     updatedAt: now,
     status: "beats-generated",
     beats,
-    sequences: buildSequences(beats),
+    sequences: [],
     panelPlans: [],
     imagePrompts: []
   };

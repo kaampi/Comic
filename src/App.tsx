@@ -1,3 +1,6 @@
+import { ManuscriptWorkspace } from "./ManuscriptWorkspace";
+import { withAdaptation } from "./manuscriptModel";
+import { manuscriptText } from "./manuscriptText";
 import { useEffect, useRef, useState } from "react";
 import { AI_MODES, type AiMode } from "./ai";
 import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, readPageGridDefaults, savePageGridDefaults, type Locale, type Theme } from "./settings";
@@ -10,13 +13,11 @@ import { parseStoryBookExport, parseStoryBookCards, cardMatchesBook, type StoryB
 import { SvgOverlay } from "./SvgOverlay";
 import type { OverlayType } from "./project";
 import { uiText, type UiKey } from "./i18n";
-import { createAdaptation } from "./adaptation/extract";
 import { panelize } from "./adaptation/panelize";
 import { generateImagePrompts } from "./adaptation/prompts";
-import type { PanelDensity, StoryAdaptation } from "./adaptation/types";
+import type { StoryAdaptation } from "./adaptation/types";
 import { readLocalAiSettings, saveLocalAiSettings } from "./localAi";
 import { LocalAiSettings } from "./LocalAiSettings";
-import { AiBeatSuggestions } from "./AiBeatSuggestions";
 import { localAiText } from "./localAiText";
 
 type Panel = "styles" | "guide" | "settings" | "new-project" | null;
@@ -41,7 +42,7 @@ export function App() {
   const [newStyleId, setNewStyleId] = useState(BUILTIN_STYLES[0].id);
   const [sceneTitle, setSceneTitle] = useState("");
   const [projectTab, setProjectTab] = useState<ProjectTab>("manus");
-  const [adaptationStep, setAdaptationStep] = useState<1|2|3|4>(1);
+  const [adaptationStep, setAdaptationStep] = useState<3|4>(3);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [newCharacterName, setNewCharacterName] = useState("");
   const [newLocationName, setNewLocationName] = useState("");
@@ -123,12 +124,17 @@ export function App() {
     previewImage: style.previewImage,
     linePreviewImage: style.linePreviewImage
   });
+  const [saveFailure, setSaveFailure] = useState(false);
+  const projectsRef = useRef(projects);
+  projectsRef.current = projects;
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
   const activeAdaptation = activeProject?.adaptations?.[0] ?? null;
   const updateActiveProject = (update: (project: ComicProject) => ComicProject) => {
     if (!activeProjectId) return;
-    const next = projects.map((project) => project.id === activeProjectId ? { ...update(project), updatedAt: new Date().toISOString() } : project);
-    setProjects(next); saveProjects(next);
+    const next = projectsRef.current.map(project => project.id === activeProjectId ? { ...update(project), updatedAt: new Date().toISOString() } : project);
+    projectsRef.current = next;
+    setProjects(next);
+    setSaveFailure(!saveProjects(next));
   };
   const updateStyleDraftImage = async (field: "previewImage" | "linePreviewImage", file?: File) => {
     if (!file) return;
@@ -144,126 +150,11 @@ export function App() {
     updateActiveProject((project) => ({ ...project, style: { ...style } }));
   };
   const replaceActiveAdaptation = (adaptation: StoryAdaptation) => {
-    updateActiveProject((project) => ({
-      ...project,
-      adaptations: [adaptation, ...(project.adaptations ?? []).filter((item) => item.id !== adaptation.id)]
-    }));
+    updateActiveProject(project => withAdaptation(project, adaptation));
   };
   const updateAdaptation = (update: (adaptation: StoryAdaptation) => StoryAdaptation) => {
     if (!activeAdaptation) return;
     replaceActiveAdaptation({ ...update(activeAdaptation), updatedAt: new Date().toISOString() });
-  };
-  const runBeatExtraction = () => {
-    if (!activeProject) return;
-    const sourceText = activeProject.source.textSnapshot ?? "";
-    if (!sourceText.trim()) return;
-    const next = createAdaptation(activeProject.title + " – adaptation", sourceText, activeAdaptation);
-    next.beats = next.beats.map((beat) => {
-      const haystack = beat.sourceTextExcerpt.toLocaleLowerCase();
-      const characterIds = activeProject.characters
-        .filter((character) => character.name && haystack.includes(character.name.toLocaleLowerCase()))
-        .map((character) => character.id);
-      const location = activeProject.locations.find((item) => item.name && haystack.includes(item.name.toLocaleLowerCase()));
-      const dialogueCandidates = beat.dialogueCandidates.map((dialogue) => {
-        const quoteIndex = haystack.indexOf(dialogue.text.toLocaleLowerCase());
-        const nearbyStart = Math.max(0, quoteIndex - 160);
-        const nearbyEnd = quoteIndex < 0 ? beat.sourceTextExcerpt.length : Math.min(beat.sourceTextExcerpt.length, quoteIndex + dialogue.text.length + 160);
-        const nearby = beat.sourceTextExcerpt.slice(nearbyStart, nearbyEnd).toLocaleLowerCase();
-        const speaker = activeProject.characters
-          .map((character) => ({ character, index: nearby.lastIndexOf(character.name.toLocaleLowerCase()) }))
-          .filter((item) => item.character.name && item.index >= 0)
-          .sort((a,b) => b.index - a.index)[0]?.character;
-        return { ...dialogue, speaker: speaker?.id };
-      });
-      const shortTitle = (() => {
-        const clean = beat.title.replace(/\s+/g," ").trim();
-        if (clean.length <= 30) return clean;
-        const words = clean.split(" ");
-        let out = "";
-        for (const word of words) {
-          const candidate = out ? out + " " + word : word;
-          if (candidate.length > 30) break;
-          out = candidate;
-        }
-        return out || clean.slice(0,30);
-      })();
-      return { ...beat, title: shortTitle, characterIds, locationId: location?.id, dialogueCandidates };
-    });
-    if (activeAdaptation) {
-      next.id = activeAdaptation.id;
-      next.name = activeAdaptation.name;
-      next.createdAt = activeAdaptation.createdAt;
-    }
-    replaceActiveAdaptation(next);
-    setAdaptationStep(1);
-  };
-  const updateBeat = (beatId: string, patch: Partial<StoryAdaptation["beats"][number]>) => {
-    updateAdaptation((adaptation) => ({
-      ...adaptation,
-      status: "beats-generated",
-      panelPlans: [],
-      imagePrompts: [],
-      beats: adaptation.beats.map((beat) => beat.id === beatId ? { ...beat, ...patch } : beat)
-    }));
-  };
-  const updateBeatDialogue = (beatId: string, dialogueId: string, text: string) => {
-    updateAdaptation((adaptation) => ({
-      ...adaptation,
-      status: "beats-generated",
-      panelPlans: [],
-      imagePrompts: [],
-      beats: adaptation.beats.map((beat) => beat.id === beatId
-        ? { ...beat, dialogueCandidates: beat.dialogueCandidates.map((item) => item.id === dialogueId ? { ...item, text } : item) }
-        : beat)
-    }));
-  };
-  const updateBeatCaption = (beatId: string, captionId: string, text: string) => {
-    updateAdaptation((adaptation) => ({
-      ...adaptation,
-      status: "beats-generated",
-      panelPlans: [],
-      imagePrompts: [],
-      beats: adaptation.beats.map((beat) => beat.id === beatId
-        ? { ...beat, captionCandidates: beat.captionCandidates.map((item) => item.id === captionId ? { ...item, text } : item) }
-        : beat)
-    }));
-  };
-
-  const setSequenceDensity = (sequenceId: string, density: PanelDensity) => {
-    updateAdaptation((adaptation) => ({
-      ...adaptation,
-      status: "sequenced",
-      panelPlans: [],
-      imagePrompts: [],
-      sequences: adaptation.sequences.map((sequence) => {
-        if (sequence.id !== sequenceId) return sequence;
-        const count = sequence.beatIds.length;
-        const preferredPanelCount = density === "compact"
-          ? Math.max(1, Math.ceil(count * 0.7))
-          : density === "cinematic"
-            ? Math.max(count + 1, Math.round(count * 1.6))
-            : Math.max(1, count);
-        return {
-          ...sequence,
-          density,
-          preferredPanelCount,
-          allowReactionShots: density === "cinematic",
-          allowAtmospherePanels: density !== "compact",
-          allowSilentPanels: density === "cinematic"
-        };
-      })
-    }));
-  };
-  const setSequencePanelCount = (sequenceId: string, preferredPanelCount: number) => {
-    updateAdaptation((adaptation) => ({
-      ...adaptation,
-      status: "sequenced",
-      panelPlans: [],
-      imagePrompts: [],
-      sequences: adaptation.sequences.map((sequence) => sequence.id === sequenceId
-        ? { ...sequence, preferredPanelCount: Math.max(1, Math.min(12, preferredPanelCount)) }
-        : sequence)
-    }));
   };
   const runPanelization = () => {
     if (!activeAdaptation) return;
@@ -271,15 +162,13 @@ export function App() {
     updateAdaptation((adaptation) => ({
       ...adaptation,
       status: "panels-generated",
-      panelPlans: panelize(adaptation.beats, adaptation.sequences),
-      imagePrompts: []
+      panelPlans: [...adaptation.panelPlans, ...panelize(adaptation.beats.filter(beat => !adaptation.panelPlans.some(plan => plan.sourceBeatIds.includes(beat.id)))).map((plan,index) => ({...plan,order:adaptation.panelPlans.length+index+1}))]
     }));
   };
   const updatePanelPlan = (panelId: string, patch: Partial<StoryAdaptation["panelPlans"][number]>) => {
     updateAdaptation((adaptation) => ({
       ...adaptation,
       status: "panels-generated",
-      imagePrompts: [],
       panelPlans: adaptation.panelPlans.map((panel) => panel.id === panelId ? { ...panel, ...patch, status: "edited" } : panel)
     }));
   };
@@ -287,7 +176,6 @@ export function App() {
     updateAdaptation((adaptation) => ({
       ...adaptation,
       status: "panels-generated",
-      imagePrompts: [],
       panelPlans: adaptation.panelPlans.map((panel) => panel.id === panelId
         ? { ...panel, status: "edited", dialogue: panel.dialogue.map((item) => item.id === dialogueId ? { ...item, text } : item) }
         : panel)
@@ -297,7 +185,6 @@ export function App() {
     updateAdaptation((adaptation) => ({
       ...adaptation,
       status: "panels-generated",
-      imagePrompts: [],
       panelPlans: adaptation.panelPlans.map((panel) => panel.id === panelId
         ? { ...panel, status: "edited", captions: panel.captions.map((item) => item.id === captionId ? { ...item, text } : item) }
         : panel)
@@ -306,7 +193,10 @@ export function App() {
   const runPromptGeneration = () => {
     if (!activeProject || !activeAdaptation?.panelPlans.length) return;
     setAdaptationStep(4);
-    const prompts = generateImagePrompts(activeProject, activeAdaptation.panelPlans, "full");
+    const prompts = generateImagePrompts(activeProject, activeAdaptation.panelPlans, "full").map(prompt => {
+      const previous = activeAdaptation.imagePrompts.find(item => item.panelId === prompt.panelId);
+      return previous ? { ...prompt, id: previous.id, createdAt: previous.createdAt } : prompt;
+    });
     updateAdaptation((adaptation) => ({
       ...adaptation,
       status: "prompts-generated",
@@ -320,36 +210,7 @@ export function App() {
 
   const materializeAdaptationPlan = () => {
     if (!activeProject || !activeAdaptation?.panelPlans.length) return;
-    updateActiveProject((project) => {
-      const existingScene = project.scenes.find((scene) => scene.id === "scene-adaptation-" + activeAdaptation.id);
-      const sceneId = existingScene?.id ?? "scene-adaptation-" + activeAdaptation.id;
-      const existingByPlan = new Map(project.panels.filter((panel) => panel.adaptationPanelPlanId).map((panel) => [panel.adaptationPanelPlanId!, panel]));
-      const promptByPanel = new Map(activeAdaptation.imagePrompts.map((prompt) => [prompt.panelId, prompt]));
-      const materialized = activeAdaptation.panelPlans.map((plan, index) => {
-        const existing = existingByPlan.get(plan.id);
-        return {
-          id: existing?.id ?? "panel-" + crypto.randomUUID(),
-          sceneId,
-          order: index + 1,
-          action: plan.visualDescription,
-          dialogue: plan.dialogue.map((item) => item.text).join("\n"),
-          narration: plan.captions.map((item) => item.text).join("\n"),
-          imagePrompt: promptByPanel.get(plan.id)?.prompt ?? existing?.imagePrompt ?? "",
-          characterIds: plan.characterIds,
-          locationId: plan.locationId,
-          adaptationPanelPlanId: plan.id,
-          sourceBeatIds: plan.sourceBeatIds
-        };
-      });
-      const materializedIds = materialized.map((panel) => panel.id);
-      const otherPanels = project.panels.filter((panel) => panel.sceneId !== sceneId);
-      const scenes = existingScene
-        ? project.scenes.map((scene) => scene.id === sceneId ? { ...scene, title: activeAdaptation.name, sourceText: activeAdaptation.sourceText, panelIds: materializedIds } : scene)
-        : [...project.scenes, { id: sceneId, title: activeAdaptation.name, sourceText: activeAdaptation.sourceText, panelIds: materializedIds }];
-      return { ...project, panels: [...otherPanels, ...materialized], scenes };
-    });
-    setSelectedSceneId("scene-adaptation-" + activeAdaptation.id);
-    setProjectTab("scenes");
+    updateActiveProject(project => withAdaptation(project, activeAdaptation));
   };
   const copyPlannedText = async (text: string) => {
     try { await navigator.clipboard.writeText(text); } catch {}
@@ -528,7 +389,7 @@ export function App() {
         if (plan?.sourceBeatIds?.length) { sourceBeatIds = plan.sourceBeatIds; break; }
       }
     }
-    return { ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.map((item) => item.id === placementId ? { ...item, panelId: panelId || undefined, sourceBeatIds: panelId ? sourceBeatIds : undefined } : item) } : page) };
+    return { ...project, pages: project.pages.map((page) => page.id === pageId ? { ...page, placements: page.placements.map((item) => item.id === placementId ? { ...item, panelId: panelId || undefined, adaptationPanelPlanId: selectedPanel?.adaptationPanelPlanId, image: item.image ?? selectedPanel?.image ?? project.adaptations.flatMap(a=>a.panelPlans).find(p=>p.id===selectedPanel?.adaptationPanelPlanId)?.image, sourceBeatIds: panelId ? sourceBeatIds : undefined } : item) } : page) };
   });
   const linkPlacementToPanelPlan = (pageId:string, placementId:string, planId:string) => updateActiveProject((project) => {
     const adaptation = project.adaptations.find((item) => item.panelPlans.some((plan) => plan.id === planId));
@@ -540,6 +401,7 @@ export function App() {
         placements: page.placements.map((placement) => placement.id === placementId ? {
           ...placement,
           adaptationPanelPlanId: planId || undefined,
+          image: placement.image ?? plan?.image,
           sourceBeatIds: plan?.sourceBeatIds ?? placement.sourceBeatIds
         } : placement)
       } : page)
@@ -647,10 +509,8 @@ export function App() {
               <button type="button" className={projectTab==="manus"?"is-active":""} onClick={()=>setProjectTab("manus")}><span>{tr("manuscript")}</span></button>
               <button type="button" className={projectTab==="adaptation"?"is-active":""} onClick={()=>setProjectTab("adaptation")}><span>{tr("adaptation")}</span></button>
               {projectTab==="adaptation"?<div className="adaptation-side-nav" aria-label={tr("adaptation")}>
-                <button type="button" className={adaptationStep===1?"is-active":""} onClick={()=>setAdaptationStep(1)}><span>1</span>{tr("step1").replace(/^1 · /,"")}</button>
-                <button type="button" className={adaptationStep===2?"is-active":""} onClick={()=>setAdaptationStep(2)} disabled={!activeAdaptation}><span>2</span>{tr("step2").replace(/^2 · /,"")}</button>
-                <button type="button" className={adaptationStep===3?"is-active":""} onClick={()=>setAdaptationStep(3)} disabled={!activeAdaptation}><span>3</span>{tr("step3").replace(/^3 · /,"")}</button>
-                <button type="button" className={adaptationStep===4?"is-active":""} onClick={()=>setAdaptationStep(4)} disabled={!activeAdaptation?.panelPlans.length}><span>4</span>{tr("step4").replace(/^4 · /,"")}</button>
+                <button type="button" className={adaptationStep===3?"is-active":""} onClick={()=>setAdaptationStep(3)} disabled={!activeAdaptation}><span>1</span>{tr("step3").replace(/^3 · /,"")}</button>
+                <button type="button" className={adaptationStep===4?"is-active":""} onClick={()=>setAdaptationStep(4)} disabled={!activeAdaptation?.panelPlans.length}><span>2</span>{tr("step4").replace(/^4 · /,"")}</button>
               </div>:null}
               <button type="button" className={projectTab==="characters"?"is-active":""} onClick={()=>setProjectTab("characters")}><span>{tr("characters")}</span></button>
               <button type="button" className={projectTab==="locations"?"is-active":""} onClick={()=>setProjectTab("locations")}><span>{tr("locations")}</span></button>
@@ -660,65 +520,21 @@ export function App() {
             <button className="project-sidebar-style" type="button" onClick={()=>setPanel("styles")}>{tr("imageStyles")}</button>
           </aside>
           <section className="project-workspace">
-          {projectTab === "manus" ? <section className="manuscript-workspace">
-            <div className="manuscript-main">
-              <div className="section-heading"><div><p className="eyebrow">{tr("sourceText")}</p><h2>{tr("manuscript")}</h2></div><span className="save-state">{tr("savedLocally")}</span></div>
-              <textarea className="manuscript-editor" value={activeProject.source.textSnapshot ?? ""} onChange={(e) => updateActiveProject((project) => ({ ...project, source: { ...project.source, textSnapshot: e.target.value } }))} placeholder="Klistra in eller skriv texten som ska adapteras till serie…" aria-label="Manus" />
-              <div className="manuscript-stats"><span>{(activeProject.source.textSnapshot ?? "").trim() ? (activeProject.source.textSnapshot ?? "").trim().split(/\s+/).length : 0} ord</span><span>{(activeProject.source.textSnapshot ?? "").length} tecken</span></div>
-            </div>
-            <aside className="scene-sidebar"><p className="eyebrow">{tr("scenes")}</p><h2>{tr("sceneDivision")}</h2><p className="quiet">{tr("createScenesHelp")}</p>
-              <div className="scene-add"><input value={sceneTitle} onChange={(e) => setSceneTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addScene()} placeholder={tr("sceneName")} /><button className="primary-button" type="button" disabled={!sceneTitle.trim()} onClick={addScene}>{tr("add")}</button></div>
-              <div className="scene-list">{activeProject.scenes.length ? activeProject.scenes.map((scene, index) => <button className="scene-row scene-button" key={scene.id} onClick={() => { setSelectedSceneId(scene.id); setProjectTab("scenes"); }}><span>{index + 1}</span><strong>{scene.title}</strong></button>) : <p className="quiet">{tr("noScenes")}</p>}</div>
-            </aside>
-          </section> : null}
+          {saveFailure ? <p role="alert" className="import-error">{manuscriptText(locale).saveError}</p> : null}
+          {projectTab === "manus" ? <ManuscriptWorkspace key={activeProject.id} project={activeProject} locale={locale} settings={localAiSettings} onUpdate={updateActiveProject} onSettings={()=>setPanel("settings")} /> : null}
           {projectTab === "adaptation" ? <section className="adaptation-workspace">
-            <div className="section-heading adaptation-heading"><div><p className="eyebrow">{tr("adaptation").toUpperCase()}</p><h2>{tr("adaptationTitle")}</h2><p className="quiet">{tr("adaptationIntro")}</p></div>
-              <button className="text-button" type="button" disabled={!(activeProject.source.textSnapshot ?? "").trim()} onClick={runBeatExtraction}>{aiText.basic}</button>
-            </div>
-            {!(activeProject.source.textSnapshot ?? "").trim() ? <div className="adaptation-empty">{tr("noSourceForAdaptation")}</div> : null}
-            {adaptationStep === 1 ? <AiBeatSuggestions key={activeProject.id} project={activeProject} adaptation={activeAdaptation} settings={localAiSettings} locale={locale} onSettings={() => setPanel("settings")} onApply={(adaptation) => { replaceActiveAdaptation(adaptation); setAdaptationStep(1); }} /> : null}
+            <div className="section-heading adaptation-heading"><h2>{tr("adaptationTitle")}</h2><button className="text-button" type="button" onClick={()=>setProjectTab("manus")}>{tr("manuscript")}</button></div>
             {activeAdaptation ? <>
-              <div className="adaptation-summary"><span>{activeAdaptation.beats.length} {tr("beatsFound")}</span><span>{activeAdaptation.sequences.length} {tr("sequences")}</span><span>{activeAdaptation.panelPlans.length} {tr("panelsWanted")}</span><span>{activeAdaptation.imagePrompts.length} {tr("promptReady")}</span></div>
-              {adaptationStep===1?<section className="adaptation-step">
-                <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step1")}</h3></div></div>
-                <div className="beat-grid">{activeAdaptation.beats.map((beat) => {
-                  const explicitPlacement = activeProject.pages
-                    .flatMap((page) => page.placements.map((placement) => ({ page, placement })))
-                    .find(({placement}) => placement.image && placement.sourceBeatIds?.includes(beat.id));
-                  const matchingPlans = activeAdaptation.panelPlans.filter((plan) => plan.sourceBeatIds.includes(beat.id));
-                  const matchingPlanIds = matchingPlans.map((plan) => plan.id);
-                  const adaptationSceneId = "scene-adaptation-" + activeAdaptation.id;
-                  const linkedPanel = activeProject.panels.find((panel) =>
-                    panel.sourceBeatIds?.includes(beat.id) ||
-                    (panel.adaptationPanelPlanId ? matchingPlanIds.includes(panel.adaptationPanelPlanId) : false)
-                  ) ?? activeProject.panels.find((panel) =>
-                    panel.sceneId === adaptationSceneId &&
-                    matchingPlans.some((plan) => plan.order === panel.order)
-                  );
-                  const linkedPlacement = explicitPlacement ?? (linkedPanel
-                    ? activeProject.pages.flatMap((page) => page.placements.map((placement) => ({ page, placement }))).find(({placement}) => placement.panelId === linkedPanel.id && placement.image)
-                    : undefined);
-                  const thumbImage = linkedPlacement?.placement.image;
-                  return <article className="adaptation-card beat-card" key={beat.id}>{thumbImage?<div className="beat-thumbnail"><img src={thumbImage.dataUrl} alt="" style={{objectFit:thumbImage.fit??"cover",objectPosition:`${50+(thumbImage.offsetX??0)/2}% ${50+(thumbImage.offsetY??0)/2}%`,transform:`scale(${thumbImage.zoom??1})`}} /></div>:null}<div className="beat-heading-line"><span>{beat.order}</span><span aria-hidden="true">–</span><input className="beat-title-input" maxLength={30} value={beat.title} onChange={(e)=>updateBeat(beat.id,{title:e.target.value.slice(0,30)})}/></div>
-                  {beat.origin === "ai-generated" ? <p className="quiet">{aiText.generated}</p> : null}
-                  {beat.dialogueCandidates.length ? <details className="beat-section" open><summary>{tr("originalDialogue")}</summary>{beat.dialogueCandidates.map((dialogue) => <textarea className="beat-dialogue-input" rows={2} key={dialogue.id} value={dialogue.text} onChange={(e)=>updateBeatDialogue(beat.id,dialogue.id,e.target.value)}/>)}</details> : null}
-                  {beat.captionCandidates.length ? <details className="beat-section" open><summary>{beat.captionCandidates.some(item => item.source === "ai-generated") ? aiText.caption : tr("adaptedCaption")}</summary>{beat.captionCandidates.map((caption) => <textarea className="beat-caption-input" rows={2} key={caption.id} value={caption.text} onChange={(e)=>updateBeatCaption(beat.id,caption.id,e.target.value)}/>)}</details> : null}
-                  <details className="beat-section source-section"><summary>{tr("sourceExcerptLabel")}</summary><p>{beat.sourceTextExcerpt}</p></details>
-                </article>;})}</div>
-              </section>:null}
-              {adaptationStep===2?<section className="adaptation-step">
-                <div className="adaptation-step-head"><div><span className="adaptation-step-number">2</span><h3>{tr("step2")}</h3></div></div>
-                <div className="sequence-list">{activeAdaptation.sequences.map((sequence) => <article className="adaptation-card sequence-card" key={sequence.id}><div><span className="sequence-order">{sequence.order}</span><h4>{sequence.title}</h4><p className="quiet">{sequence.beatIds.length} beats</p></div><div className="sequence-controls"><label>{tr("sequencePacing")}<select value={sequence.density} onChange={(e)=>setSequenceDensity(sequence.id,e.target.value as PanelDensity)}><option value="compact">{tr("compact")}</option><option value="normal">{tr("normal")}</option><option value="cinematic">{tr("cinematic")}</option></select></label><label>{tr("preferredPanels")}<input type="number" min="1" max="12" value={sequence.preferredPanelCount} onChange={(e)=>setSequencePanelCount(sequence.id,Number(e.target.value)||1)}/></label></div></article>)}</div>
-              </section>:null}
+              <div className="adaptation-summary"><span>{activeAdaptation.beats.length} {tr("beatsFound")}</span><span>{activeAdaptation.panelPlans.length} {tr("panelsWanted")}</span><span>{activeAdaptation.imagePrompts.length} {tr("promptReady")}</span></div>
               {adaptationStep===3?<section className="adaptation-step">
-                <div className="adaptation-step-head"><div><span className="adaptation-step-number">3</span><h3>{tr("step3")}</h3></div><div className="adaptation-step-actions"><button className="text-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={materializeAdaptationPlan}>{tr("createPanelSources")}</button><button className="primary-button" type="button" onClick={runPanelization}>{activeAdaptation.panelPlans.length ? tr("recreatePanels") : tr("createPanels")}</button></div></div>
+                <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step3").replace(/^3 · /,"")}</h3></div><div className="adaptation-step-actions"><button className="text-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={materializeAdaptationPlan}>{tr("createPanelSources")}</button><button className="primary-button" type="button" disabled={!activeAdaptation.beats.some(beat=>beat.status!=="discarded"&&!activeAdaptation.panelPlans.some(plan=>plan.sourceBeatIds.includes(beat.id)))} onClick={runPanelization}>{activeAdaptation.beats.some(beat=>beat.status!=="discarded"&&!activeAdaptation.panelPlans.some(plan=>plan.sourceBeatIds.includes(beat.id))) ? manuscriptText(locale).remaining : manuscriptText(locale).ready}</button></div></div>
                 {activeAdaptation.panelPlans.length ? <div className="panel-plan-grid">{activeAdaptation.panelPlans.map((panel) => {
                   const materializedPanel = activeProject.panels.find((item)=>item.adaptationPanelPlanId===panel.id);
                   const placement = activeProject.pages.flatMap((page)=>page.placements.map((placement)=>({page,placement}))).find(({placement}) =>
                     placement.adaptationPanelPlanId===panel.id ||
                     (materializedPanel ? placement.panelId===materializedPanel.id : false)
                   );
-                  const image = placement?.placement.image;
+                  const image = placement?.placement.image ?? panel.image;
                   const characters = panel.characterIds.map((id)=>activeProject.characters.find((character)=>character.id===id)).filter(Boolean);
                   const location = panel.locationId ? activeProject.locations.find((item)=>item.id===panel.locationId) : undefined;
                   return <article className="adaptation-card panel-plan-card storyboard-card" key={panel.id}>
@@ -736,7 +552,7 @@ export function App() {
                 {activeProject.pages.some((page)=>page.placements.some((placement)=>placement.image && !placement.adaptationPanelPlanId && !activeProject.panels.find((panel)=>panel.id===placement.panelId)?.adaptationPanelPlanId)) ? <div className="unlinked-page-panels"><h4>{tr("unlinkedPagePanels")}</h4><p className="quiet">{tr("unlinkedPagePanelsHelp")}</p><div className="panel-plan-grid">{activeProject.pages.flatMap((page)=>page.placements.map((placement)=>({page,placement}))).filter(({placement})=>placement.image && !placement.adaptationPanelPlanId && !activeProject.panels.find((panel)=>panel.id===placement.panelId)?.adaptationPanelPlanId).map(({page,placement})=><article className="adaptation-card storyboard-card unlinked-storyboard-card" key={placement.id}><div className="storyboard-thumb"><img src={placement.image!.dataUrl} alt="" style={{objectFit:placement.image!.fit??"cover",objectPosition:`${50+(placement.image!.offsetX??0)/2}% ${50+(placement.image!.offsetY??0)/2}%`,transform:`scale(${placement.image!.zoom??1})`}} /></div><div className="adaptation-card-meta"><span>{tr("page")} {page.number}</span><span>{tr("row")} {placement.readingOrder}</span><span>{tr("unlinked")}</span></div><label className="panel-plan-field">{tr("linkToSuggestion")}<select value="" onChange={(e)=>{if(e.target.value)linkPlacementToPanelPlan(page.id,placement.id,e.target.value)}}><option value="">{tr("chooseSuggestion")}</option>{activeAdaptation.panelPlans.map((plan)=><option key={plan.id} value={plan.id}>{plan.order} · {plan.title}</option>)}</select></label></article>)}</div></div> : null}
               </section>:null}
               {adaptationStep===4?<section className="adaptation-step">
-                <div className="adaptation-step-head"><div><span className="adaptation-step-number">4</span><h3>{tr("step4")}</h3></div><button className="primary-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={runPromptGeneration}>{activeAdaptation.imagePrompts.length ? tr("regeneratePrompts") : tr("createPrompts")}</button></div>
+                <div className="adaptation-step-head"><div><span className="adaptation-step-number">2</span><h3>{tr("step4").replace(/^4 · /,"")}</h3></div><button className="primary-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={runPromptGeneration}>{activeAdaptation.imagePrompts.length ? tr("regeneratePrompts") : tr("createPrompts")}</button></div>
                 {activeAdaptation.imagePrompts.length ? <div className="prompt-plan-list">{activeAdaptation.imagePrompts.map((prompt,index) => <article className="adaptation-card prompt-plan-card" key={prompt.id}><div className="prompt-plan-head"><strong>{tr("imagePrompt")} {index+1}</strong><button className="text-button" type="button" onClick={()=>copyAdaptationPrompt(prompt.prompt)}>{tr("copy")}</button></div><p>{prompt.prompt}</p></article>)}</div> : null}
               </section>:null}
             </> : <div className="adaptation-empty">{tr("adaptationEmpty")}</div>}

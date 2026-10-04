@@ -145,6 +145,16 @@ Sekventiell listvy med:
 
 Infogning ändrar ordningsfält, aldrig rutornas ID:n. Vid sammanslagning bevaras källkopplingar och användaren kan granska dialogens nya ordning.
 
+### 7.1 Manuskriptstyrd adaptering i prototypen
+
+Manuset är den primära arbetsytan. Användaren markerar text och skapar ett beat via högerklick eller ber den valda lokala textmodellen föreslå beats för just markeringen. AI-förslag granskas innan de läggs till; befintliga beats, rutor, prompter och bilder bevaras.
+
+Beats visas med diskreta ramar i källtexten. En högerpanel med justerbar bredd visar valt beat, karaktärer, plats, dialog och berättartext. Ett beat länkas direkt till en eller flera serierutor med bildinstruktion, utsnitt, bildprompt och bifogad bild. Tidigare bifogade bilder kan återställas. Sekvenser används tills vidare inte i arbetsflödet; äldre sekvensdata läses för bakåtkompatibilitet.
+
+Textändringar före ett beat flyttar dess källkoppling. Ändringar i ett länkat avsnitt markerar beatet och dess rutor för granskning. Befintlig regi, text, prompter och bilder ersätts inte av källredigeringen. Ett försvunnet avsnitt kan kopplas om till ny markerad text.
+
+Prototypen använder fortfarande webbläsarens lokala projektlagring. Projektmappar, separata bildfiler och atomisk sparning enligt avsnitt 3.2 kvarstår som mål för desktoplagringen.
+
 ## 8. Sidplanerare
 
 Första versionen använder sidmallar. Fri drag-and-drop och rutnät är en senare utbyggnad.
@@ -261,3 +271,4 @@ Första milstolpen är en fungerande kort serie på 1–3 sidor med ett fåtal k
 - Exakta lagrings-, backup- och migrationsdetaljer.
 - Sidformat, upplösning och typsnitt för första exporten.
 - Licens för projektet.
+

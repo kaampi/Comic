@@ -9,7 +9,8 @@
     "start": "vite --open",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",
-    "test:adaptation": "node scripts/test-adaptation.mjs"
+    "test:adaptation": "node scripts/test-adaptation.mjs",
+    "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",
@@ -21,6 +22,9 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.5.4",
-    "vite": "^6.4.3"
+    "vite": "^6.4.3",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.1",
+    "jsdom": "^26.1.0"
   }
 }

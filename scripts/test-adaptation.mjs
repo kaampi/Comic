@@ -9,7 +9,7 @@ import ts from "typescript";
 // Compile only the local domain modules; no app, browser or manuscript fixture is needed.
 const temporary = mkdtempSync(join(tmpdir(), "comicbook-adaptation-"));
 globalThis.crypto ??= { randomUUID };
-const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "localAi", "project", "stylesLibrary"];
+const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "localAi", "project", "stylesLibrary", "manuscriptModel", "adaptation/prompts"];
 for (const file of files) {
   const source = readFileSync(new URL("../src/" + file + ".ts", import.meta.url), "utf8");
   const result = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });
@@ -28,7 +28,7 @@ try {
   const first = createAdaptation("Case", source);
   const again = createAdaptation("Case", source, first);
   assert.deepEqual(again.beats.map(b => b.id), first.beats.map(b => b.id));
-  assert.deepEqual(again.sequences.flatMap(s => s.beatIds), again.beats.map(b => b.id));
+  assert.deepEqual(again.sequences, []);
   assert.ok(panelize(again.beats, again.sequences).length > 0);
   console.log("PASS: repeated extraction preserves IDs and creates panels");
 
@@ -46,7 +46,7 @@ try {
   for (const text of [source, "Det finns ett samband.\n\nPolisen undersöker bevisen.", "Music played.\n\nThey danced together."]) {
     const adaptation = createAdaptation("Other story", text);
     assert.ok(adaptation.sequences.every(s => s.title !== "The dance" && s.density !== "cinematic"));
-    assert.ok(adaptation.sequences[0].title.includes(text.split(".")[0]));
+    assert.deepEqual(adaptation.sequences, []);
   }
   const actionBeats = first.beats.map(b => ({ ...b, beatType: "action" }));
   const withHusband = buildSequences(actionBeats);
@@ -54,7 +54,8 @@ try {
   assert.deepEqual(withHusband.map(s => s.beatIds), withoutHusband.map(s => s.beatIds));
   console.log("PASS: titles use current text; dance keywords and substrings do not control grouping or pacing");
 
-  const legacy = structuredClone(first);
+  const legacySequences = buildSequences(first.beats);
+  const legacy = structuredClone({ ...first, sequences: legacySequences });
   const bogusIds = new Map(first.beats.map((b, i) => [b.id, "buggy-" + i]));
   legacy.sequences = legacy.sequences.map(s => ({ ...s, title: "The dance", density: "cinematic", preferredPanelCount: 7, beatIds: s.beatIds.map(id => bogusIds.get(id)) }));
   legacy.panelPlans = [{ id: "existing-panel", sourceBeatIds: [first.beats[0].id] }];
@@ -70,25 +71,108 @@ try {
   assert.ok(panelize(legacy.beats, legacy.sequences).length > 0);
   console.log("PASS: saved legacy references recover without losing settings, plans, prompts or mutating input");
 
-  const partiallyBroken = structuredClone(first.sequences);
+  const partiallyBroken = structuredClone(legacySequences);
   partiallyBroken[0].beatIds[0] = "stale";
   assert.deepEqual(repairSequenceBeatIds(first.beats, partiallyBroken).flatMap(s => s.beatIds), first.beats.map(b => b.id));
-  const ambiguous = [{ ...first.sequences[0], beatIds: ["missing", "missing"] }];
+  const ambiguous = [{ ...legacySequences[0], beatIds: ["missing", "missing"] }];
   assert.deepEqual(repairSequenceBeatIds(first.beats, ambiguous), ambiguous);
-  const custom = repairLegacyAdaptation({ ...first, sequences: first.sequences.map(s => ({ ...s, title: "My custom title" })) });
+  const custom = repairLegacyAdaptation({ ...first, sequences: legacySequences.map(s => ({ ...s, title: "My custom title" })) });
   assert.ok(custom.sequences.every(s => s.title === "My custom title"));
   console.log("PASS: partial legacy references recover; ambiguous data and custom titles remain unchanged");
+
+  const model = await import(pathToFileURL(join(temporary, "manuscriptModel.mjs")));
+  let working = createProject("Manuscript", "text", BUILTIN_STYLES[0]);
+  working.source.textSnapshot = 'Prelude.\n\n"Wait here," he said.\n\n"Wait here," he said.';
+  const passage = '"Wait here," he said.';
+  const start = working.source.textSnapshot.indexOf(passage);
+  const result = model.addManualBeat(working, { start, end: start + passage.length });
+  working = result.project;
+  const secondStart = working.source.textSnapshot.lastIndexOf(passage);
+  working = model.addManualBeat(working, { start: secondStart, end: secondStart + passage.length }).project;
+  const firstBeatId = result.beatId;
+  assert.equal(working.adaptations[0].beats.length, 2);
+  assert.equal(working.adaptations[0].beats[0].sourceTextExcerpt, passage);
+  assert.equal(working.adaptations[0].beats[1].sourceStart, secondStart);
+  assert.deepEqual(working.adaptations[0].sequences, []);
+  working = model.addBeatPanel(working, firstBeatId);
+  const firstPlanId = working.adaptations[0].panelPlans[0].id;
+  const projectedId = working.panels[0].id;
+  working = model.addBeatPanel(working, firstBeatId);
+  assert.equal(working.adaptations[0].panelPlans.length, 2);
+  assert.equal(working.adaptations[0].panelPlans[1].dialogue.length, 0);
+  const image = { name: "panel.png", dataUrl: "data:image/png;base64,preserved" };
+  working = model.patchBeatPanel(working, firstPlanId, { visualDescription: "Original direction", image });
+  working = model.generateBeatPanelPrompt(working, firstPlanId);
+  const promptId = working.adaptations[0].imagePrompts[0].id;
+  working = model.generateBeatPanelPrompt(working, firstPlanId);
+  assert.equal(working.adaptations[0].imagePrompts[0].id, promptId);
+  assert.ok(working.adaptations[0].imagePrompts[0].prompt.includes("Original direction"));
+  assert.equal(working.panels[0].id, projectedId);
+  const originalPlans = structuredClone(working.adaptations[0].panelPlans);
+  working = model.editManuscript(working, "New opening.\n" + working.source.textSnapshot);
+  assert.equal(working.adaptations[0].beats[0].sourceStart, start + "New opening.\n".length);
+  assert.equal(working.adaptations[0].beats[0].sourceNeedsReview, undefined);
+  assert.deepEqual(working.adaptations[0].panelPlans, originalPlans);
+  working = model.editManuscript(working, working.source.textSnapshot.replace('Wait here,', 'Stay here,'));
+  assert.equal(working.adaptations[0].beats[0].sourceNeedsReview, true);
+  assert.equal(working.adaptations[0].beats[1].sourceNeedsReview, undefined);
+  assert.equal(working.adaptations[0].panelPlans[0].sourceNeedsReview, true);
+  assert.deepEqual(working.adaptations[0].panelPlans[0].image, image);
+  assert.equal(working.adaptations[0].panelPlans[0].visualDescription, "Original direction");
+  assert.equal(working.adaptations[0].beats[0].sourceTextExcerpt, passage);
+  const changedBeat = working.adaptations[0].beats[0];
+  working = model.editManuscript(working, working.source.textSnapshot.slice(0, changedBeat.sourceStart) + working.source.textSnapshot.slice(changedBeat.sourceEnd));
+  assert.equal(working.adaptations[0].beats[0].sourceStart, working.adaptations[0].beats[0].sourceEnd);
+  assert.equal(working.adaptations[0].beats[0].id, firstBeatId);
+  const planIds = working.adaptations[0].panelPlans.map(p => p.id);
+  working = model.appendAiBeats(working, [{ ...working.adaptations[0].beats[1], id: "new-ai-beat", summary: "AI summary" }]);
+  assert.equal(working.adaptations[0].beats.length, 3);
+  assert.deepEqual(working.adaptations[0].panelPlans.map(p => p.id), planIds);
+  working.panels[0] = {...working.panels[0],action:"Edited in panel workspace"};
+  working.scenes[0] = {...working.scenes[0],title:"Custom scene",panelIds:[working.panels[1].id,working.panels[0].id]};
+  working = model.patchManuscriptBeat(working, firstBeatId, {title:"New beat title"});
+  assert.equal(working.panels[0].action,"Edited in panel workspace");
+  assert.equal(working.scenes[0].title,"Custom scene");
+  assert.deepEqual(working.scenes[0].panelIds,[working.panels[1].id,working.panels[0].id]);
+  working = model.patchBeatPanel(working, firstPlanId, {visualDescription:"Explicitly revised direction"});
+  assert.equal(working.panels[0].action,"Explicitly revised direction");
+  const replacementImage = { name: "new.png", dataUrl: "data:image/png;base64,replacement" };
+  working = model.patchBeatPanel(working, firstPlanId, { image: replacementImage });
+  assert.deepEqual(working.adaptations[0].panelPlans[0].imageVersions, [image]);
+  working = model.patchBeatPanel(working, firstPlanId, { image });
+  assert.deepEqual(working.adaptations[0].panelPlans[0].imageVersions, [replacementImage]);
+  assert.deepEqual(working.adaptations[0].panelPlans[0].image, image);
+  const manuallyPlaced = { name: "manual.png", dataUrl: "data:image/png;base64,manual" };
+  working.pages = [{ id: "page", number: 1, gridColumns: 3, gridRows: 5, placements: [
+    { id: "empty", panelId: projectedId, readingOrder: 1, x: 0, y: 0, width: 1, height: 1, overlays: [] },
+    { id: "manual", adaptationPanelPlanId: firstPlanId, readingOrder: 2, x: 1, y: 0, width: 1, height: 1, overlays: [], image: manuallyPlaced }
+  ] }];
+  working = model.withAdaptation(working, working.adaptations[0]);
+  assert.deepEqual(working.pages[0].placements[0].image, image);
+  assert.deepEqual(working.pages[0].placements[1].image, manuallyPlaced);
+  const legacyAnchors = model.anchorBeats('Same. Same.', [
+    { ...working.adaptations[0].beats[0], sourceTextExcerpt: 'Same.', sourceStart: undefined, sourceEnd: undefined, sourceNeedsReview: undefined },
+    { ...working.adaptations[0].beats[1], sourceTextExcerpt: 'Same.', sourceStart: undefined, sourceEnd: undefined }
+  ]);
+  assert.deepEqual(legacyAnchors.map(b => b.sourceStart), [0, 6]);
+  assert.throws(() => model.addManualBeat(working, { start: 0, end: 0 }));
+  console.log("PASS: manuscript selections, repeated anchors, source edits/deletion, stable multi-panel prompts/images, additive AI beats and page image preservation");
 
   const storage = new Map();
   globalThis.localStorage = { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) };
   const project = createProject("Saved", "blank", BUILTIN_STYLES[0]);
   project.adaptations = [legacy];
   project.pages = [{ id: "page", number: 1, gridColumns: 3, gridRows: 5, placements: [{ id: "placement", x: 0, y: 0, width: 1, height: 1, readingOrder: 1, overlays: [], image: { name: "image", dataUrl: "data:image/png;base64,example", zoom: 2, offsetX: 10, offsetY: 20, fit: "contain" } }] }];
-  saveProjects([project]);
+  assert.equal(saveProjects([project]), true);
   const loaded = readProjects()[0];
   assert.ok(loaded.adaptations[0].sequences.every(s => s.title !== "The dance"));
   assert.deepEqual(loaded.pages[0].placements[0].image, project.pages[0].placements[0].image);
   assert.ok(panelize(loaded.adaptations[0].beats, loaded.adaptations[0].sequences).length > 0);
+  const validStorage = globalThis.localStorage;
+  globalThis.localStorage = { ...validStorage, setItem() { throw new Error("Quota exceeded"); } };
+  assert.equal(saveProjects([working]), false);
+  globalThis.localStorage = validStorage;
+  assert.equal(readProjects()[0].id, project.id);
   console.log("PASS: normal project loading repairs legacy adaptation and preserves page images");
 
   const local = await import(pathToFileURL(join(temporary, "localAi.mjs")));

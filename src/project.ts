@@ -1,5 +1,5 @@
 import { BUILTIN_STYLES, type IllustrationStyle } from "./stylesLibrary";
-import type { StoryAdaptation } from "./adaptation/types";
+import type { PanelImage, StoryAdaptation } from "./adaptation/types";
 import { repairLegacyAdaptation } from "./adaptation/repair";
 
 export const PROJECT_FORMAT = 1;
@@ -41,6 +41,7 @@ export type ComicProject = {
   panels: Array<{
     id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string;
     characterIds: string[]; locationId?: string; adaptationPanelPlanId?: string; sourceBeatIds?: string[];
+    image?: PanelImage;
   }>;
   pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number; overlays: TextOverlay[]; image?: { name: string; dataUrl: string; zoom?: number; offsetX?: number; offsetY?: number; fit?: "cover" | "contain" }; sourceBeatIds?: string[]; adaptationPanelPlanId?: string }> }>;
   adaptations: StoryAdaptation[];
@@ -88,6 +89,6 @@ export function readProjects(): ComicProject[] {
   } catch { return []; }
 }
 
-export function saveProjects(projects: ComicProject[]): void {
-  try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects)); } catch {}
+export function saveProjects(projects: ComicProject[]): boolean {
+  try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects)); return true; } catch { return false; }
 }

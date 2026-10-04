@@ -20,22 +20,30 @@ Servern måste tillåta anslutningar från adressen där ComicBook körs. Om ans
 
 ## Föreslå beats
 
-1. Öppna ett projekt och **Adaptering → 1 · Beats**.
-2. Fäll ut **AI-analys av beats**.
-3. Kontrollera texten och den valda servern/modellen. Markera ett avsnitt för att analysera bara markeringen, eller använd hela manuset. Räknaren visar vilket urval som kommer att skickas.
-4. Klicka **Analysera text**. Endast den valda texten och namn på kända karaktärer/platser som förekommer i den skickas till servern. Ingen bild eller StoryBook-fil skickas.
-5. Granska förslagen. Ändra rubrik, sammanfattning och visuellt förslag, och välj vilka beats som ska tas med.
-6. Klicka **Använd valda beats** för att bygga sekvenser från förslagen. Därefter används **Skapa paneler** som vanligt.
+1. Öppna ett projekt och **Manus**.
+2. Markera det avsnitt du vill analysera direkt i manuset.
+3. Högerklicka och välj **Föreslå beats för markeringen**, eller använd samma knapp ovanför manuset. Räknaren visar markeringens antal tecken. Server och modell väljs i **AI-inställningar**.
+4. Endast den markerade texten och namn på kända karaktärer/platser som förekommer i den skickas till servern. Ingen bild eller StoryBook-fil skickas.
+5. Granska förslagen i högerpanelen. Ändra rubrik och sammanfattning och välj vilka beats som ska tas med.
+6. Klicka **Lägg till valda beats**. Förslagen läggs till bredvid befintliga beats; rutor, prompter, bilder och sidlayouter bevaras.
 
-AI-förslag ersätter inte din nuvarande plan förrän du väljer att använda dem. Att använda förslagen ersätter beats, sekvenser och genererade panelförslag/bildprompter; befintliga bilder och sidlayouter behålls. Du kan kasta förslagen eller avbryta analysen. Felaktiga svar ändrar inte projektet.
+Förslagen ändrar inte projektet innan du väljer att lägga till dem. Du kan kasta förslagen eller avbryta analysen. Felaktiga svar ändrar inte projektet. Om manuset ändras måste gamla förslag analyseras på nytt.
+
+Du kan också högerklicka på en markering och välja **Skapa beat** utan AI. Beatet får en diskret ram i manuset. Klicka på ramen eller välj beatet i högerpanelens lista för att redigera det. Panelens bredd kan ändras med draghandtaget eller reglaget.
+
+Varje beat kan ha flera **serierutor**. Använd **Lägg till ruta**, redigera bildinstruktion, dialog och berättartext, skapa/kopiera bildprompt och lägg in en PNG-, JPG- eller WebP-bild via filval eller drag och släpp. Tidigare bifogade bilder kan återställas under **Tidigare bilder**. Rutor blir automatiskt tillgängliga under **Bildrutor** och **Sidor**. En bifogad bild följer med när rutan väljs på en sida; en redan placerad bild ersätts inte automatiskt.
+
+**Sekvenser ingår inte i arbetsflödet.** Äldre projekt behåller sina tidigare data och rutor. I adapteringsöversikten kan du skapa rutor för återstående beats utan att befintliga rutor eller bildprompter ersätts.
+
+Om du redigerar text före ett beat flyttas dess källkoppling. Om du ändrar beatets eget avsnitt visas en granskningsmarkering för beatet och dess rutor. Kontrollera sammanfattning, bildinstruktion och dialog innan du bekräftar granskningen. Om avsnittet har försvunnit kan du markera ny text och koppla beatet till den.
 
 Texten delas upp i numrerade avsnitt. Modellen svarar med en kort rubrik, en sammanfattning, beat-typ samt första och sista avsnittsnummer för varje beat. Appen hämtar källtexten själv och plockar ut citerad originaldialog direkt ur den. Modellen behöver därför inte kopiera text eller dialog perfekt. Okända eller felordnade avsnittsnummer avvisas utan att ändra projektet.
 
-Prompten ber om högst 15 beats per textdel, högst 8 ord i rubriken och högst 30 ord i sammanfattningen. Svarslimiten är 35 procent av kontextstorleken, högst 2 048 token. Bildinstruktionen börjar som beatets sammanfattning och kan justeras vid granskning och under panelsteget. Beats-analysen genererar inte separat visuell regi eller berättartext.
+Prompten ber om högst 15 beats per textdel, högst 8 ord i rubriken och högst 30 ord i sammanfattningen. Svarslimiten är 35 procent av kontextstorleken, högst 2 048 token. Bildinstruktionen börjar som beatets sammanfattning och kan justeras i rutans högerpanel. Beats-analysen genererar inte separat visuell regi eller berättartext.
 
 Långa texter delas upp i mindre textdelar som analyseras i följd, med visad progress. En hel roman kan därför ta lång tid; ett kapitel åt gången ger bättre möjlighet att granska resultatet. Kortare svar minskar genereringsarbetet men garanterar inte en viss analystid på din dator.
 
-Det går fortfarande att välja **Extrahera beats utan AI**. Detta använder den befintliga lokala regelbaserade analysen.
+**Skapa beat** använder lokal regelbaserad analys av markeringen och kräver ingen AI-anslutning.
 
 Text-AI-inställningen är separat från bildgenerering. Den här funktionen genererar beats och textinstruktioner, inte bilder.
 
@@ -43,6 +51,7 @@ Text-AI-inställningen är separat från bildgenerering. Den här funktionen gen
 
 ```sh
 npm run test:adaptation
+npm run test:manuscript-ui
 npm run typecheck
 npm run build
 ```

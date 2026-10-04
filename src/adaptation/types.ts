@@ -37,6 +37,7 @@ export type AdaptationBeat = {
   sourceStart?: number;
   sourceEnd?: number;
   origin?: "heuristic" | "ai-generated";
+  sourceNeedsReview?: boolean;
   characterIds: string[];
   locationId?: string;
   dialogueCandidates: DialogueCandidate[];
@@ -78,7 +79,7 @@ export type PanelCaption = {
 
 export type PanelPlan = {
   id: string;
-  sequenceId: string;
+  sequenceId?: string; // Read older projects; new panels are linked directly to beats.
   sourceBeatIds: string[];
   order: number;
   title: string;
@@ -93,7 +94,12 @@ export type PanelPlan = {
   captions: PanelCaption[];
   imagePromptId?: string;
   status: "suggested" | "approved" | "edited";
+  sourceNeedsReview?: boolean;
+  image?: PanelImage;
+  imageVersions?: PanelImage[];
 };
+
+export type PanelImage = { name: string; dataUrl: string; zoom?: number; offsetX?: number; offsetY?: number; fit?: "cover" | "contain" };
 
 export type ImagePrompt = {
   id: string;
