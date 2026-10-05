@@ -45,3 +45,11 @@ Markera en pratbubbla eller tankebubbla i bildrutans editor. Handtaget vid kontu
 Välj **Lägg till SFX** i bildrutans editor, eller byt ett textlagers typ till SFX. Välj sedan en miniatyr i **SFX-bibliotek**: enbart text, explosion, smäll, puff, blixt, fartstreck, svep, spiral, stjärna, stjärnkluster, utrop, frågetecken, hjärta eller pil. Formerna är egna SVG-original.
 
 Texten är fortsatt redigerbar och kan döljas med **Visa text** utan att raderas. Storlek och proportioner ändras med lagrets hörnhandtag; rotation anges numeriskt. Fyllning, konturfärg, linjetjocklek och textfärg kan ställas separat. Val och inställningar sparas med textlagret och följer med albumbackupen. Befintliga SFX-lager visas som enbart text tills en form väljs.
+
+## Sidans bakgrund
+
+I **Sidor → Sidans bakgrund** kan du ge sidan en bild som fyller hela ytan, under de vanliga bildrutorna. **Välj från rutbiblioteket** markerar bakgrunden som mål; välj sedan ett oplacerat innehåll i biblioteket. Bild, dialog och berättartext följer med som en redigerbar kopia, precis som för vanliga rutor. Biblioteket räknar också innehåll i bakgrunden som placerat.
+
+**Redigera bakgrund och text** öppnar bildredigeraren. Använd **Ladda upp bild…** eller **Byt bild…**, justera beskärning, zoom och position och lägg till pratbubblor, tankebubblor, berättartext eller SFX direkt på sidan. Bakgrunden är ett eget lager och tar ingen plats i rutnätet. Du kan ha bara bakgrunden eller valfritt antal vanliga bildrutor ovanpå.
+
+**Ta bort bakgrund** kräver bekräftelse och tar bort bakgrundslagret med dess textlager. Bildrutorna ovanpå och originalinnehållet i rutbiblioteket finns kvar. Bakgrund, beskärning och textlager sparas med albumet och ingår i backup och återställning.

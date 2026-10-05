@@ -1,0 +1,42 @@
+.page-background-controls {
+  margin-top: 0.8rem;
+  padding: 0.7rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 5px;
+}
+.page-background-controls summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.page-background-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.page-background-layer > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.page-background-layer > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.has-page-background .grid-cell {
+  background: transparent;
+}
+.has-page-background .drawn-panel {
+  background: var(--paper);
+}
+
+.background-image-upload {
+  cursor: pointer;
+}
+.background-image-upload input {
+  display: none;
+}

@@ -1,3 +1,4 @@
+import { pageLayers } from "./pageBackground";
 import { overlayDefaults } from "./overlayTypography";
 import type { ComicProject, TextOverlay } from "./project";
 
@@ -7,7 +8,7 @@ export function libraryEntries(project: ComicProject) {
       .flatMap((a) => a.panelPlans)
       .find((p) => p.id === panel.adaptationPanelPlanId);
     const pages = project.pages.filter((page) =>
-      page.placements.some(
+      pageLayers(page).some(
         (p) =>
           p.panelId === panel.id ||
           (!!plan && p.adaptationPanelPlanId === plan.id),
@@ -43,7 +44,7 @@ export function assignLibraryPanel(
     return project;
   if (
     project.pages.some((page) =>
-      page.placements.some(
+      pageLayers(page).some(
         (p) =>
           !(page.id === pageId && p.id === placementId) &&
           (p.panelId === panelId ||

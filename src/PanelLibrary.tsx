@@ -22,7 +22,10 @@ export function PanelLibrary({
   const [unplacedOnly, setUnplacedOnly] = useState(false);
   const sv = locale === "sv";
   const page = project.pages.find((p) => p.id === pageId);
-  const target = page?.placements.find((p) => p.id === placementId);
+  const target =
+    page && page.background?.id === placementId && page.background
+      ? page.background
+      : page?.placements.find((p) => p.id === placementId);
   const entries = libraryEntries(project);
   const empty = !!target && !target.panelId && !target.adaptationPanelPlanId;
   return (
@@ -43,10 +46,17 @@ export function PanelLibrary({
           {sv ? "Bildruta på sidan" : "Page frame"}
           <select
             aria-label={sv ? "Bildruta på sidan" : "Page frame"}
-            value={target?.id ?? ""}
+            value={
+              target?.id === page?.background?.id && target
+                ? "__background__"
+                : (target?.id ?? "")
+            }
             onChange={(e) => onSelect(e.target.value)}
           >
             <option value="">{sv ? "Välj bildruta…" : "Choose frame…"}</option>
+            <option value="__background__">
+              {sv ? "Sidans bakgrund" : "Page background"}
+            </option>
             {page.placements.map((p) => (
               <option key={p.id} value={p.id}>
                 {sv ? "Ruta" : "Frame"} {p.readingOrder}

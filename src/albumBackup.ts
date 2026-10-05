@@ -1,3 +1,4 @@
+import { pageLayers } from "./pageBackground";
 import type { ComicProject } from "./project";
 export const ALBUM_BACKUP_KIND = "comicbook-ai.album";
 export function packAlbumBackup(
@@ -101,7 +102,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   }
   for (const page of objects(p.pages)) {
     for (const key of ["number", "gridColumns", "gridRows"]) number(page[key]);
-    for (const place of objects(page.placements)) {
+    for (const place of objects(pageLayers(page))) {
       for (const key of ["x", "y", "width", "height", "readingOrder"])
         number(place[key]);
       if (place.width <= 0 || place.height <= 0)

@@ -29,6 +29,8 @@ export type BubbleSwatch = {
   characterId?: string;
 };
 
+export type PageLayer={ id:string;panelId?:string;x:number;y:number;width:number;height:number;readingOrder:number;overlays:TextOverlay[];image?:PanelImage;sourceBeatIds?:string[];adaptationPanelPlanId?:string };
+
 export type ComicProject = {
   format: 1;
   id: string;
@@ -48,7 +50,7 @@ export type ComicProject = {
     characterIds: string[]; locationId?: string; adaptationPanelPlanId?: string; sourceBeatIds?: string[];
     image?: PanelImage;
   }>;
-  pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; placements: Array<{ id: string; panelId?: string; x: number; y: number; width: number; height: number; readingOrder: number; overlays: TextOverlay[]; image?: { name: string; dataUrl: string; zoom?: number; offsetX?: number; offsetY?: number; fit?: "cover" | "contain" }; sourceBeatIds?: string[]; adaptationPanelPlanId?: string }> }>;
+  pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; background?: PageLayer; placements: PageLayer[] }>;
   adaptations: StoryAdaptation[];
   overlayDefaults?: Partial<Record<OverlayType, Partial<import("./overlayTypography").OverlayTypography>>>;
   bubbleSwatches: BubbleSwatch[];
@@ -81,7 +83,7 @@ export function readProjects(): ComicProject[] {
       adaptations: Array.isArray(p.adaptations) ? p.adaptations.map(repairLegacyAdaptation) : [],
       bubbleSwatches: Array.isArray(p.bubbleSwatches) ? p.bubbleSwatches : [],
       pages: Array.isArray(p.pages) ? p.pages.map((page: any) => ({
-        ...page, gridColumns: page.gridColumns ?? 3, gridRows: page.gridRows ?? 5,
+        ...page, background:page.background?{...page.background,overlays:Array.isArray(page.background.overlays)?page.background.overlays:[],image:page.background.image?{...page.background.image,zoom:page.background.image.zoom??1,offsetX:page.background.image.offsetX??0,offsetY:page.background.image.offsetY??0,fit:page.background.image.fit??"cover"}:undefined}:undefined, gridColumns: page.gridColumns ?? 3, gridRows: page.gridRows ?? 5,
         placements: Array.isArray(page.placements) ? page.placements.filter((item: any) => typeof item?.x === "number" && typeof item?.y === "number").map((item:any)=>({...item,sourceBeatIds:Array.isArray(item.sourceBeatIds)?item.sourceBeatIds:undefined,adaptationPanelPlanId:typeof item.adaptationPanelPlanId==="string"?item.adaptationPanelPlanId:undefined,image:item.image?{...item.image,zoom:item.image.zoom??1,offsetX:item.image.offsetX??0,offsetY:item.image.offsetY??0,fit:item.image.fit??"cover"}:undefined,overlays:Array.isArray(item.overlays)?item.overlays.map((overlay:any)=>({
           ...overlay,
           tailEnabled:overlay.type==="speech"?(overlay.tailEnabled??true):overlay.tailEnabled,
