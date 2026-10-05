@@ -1,3 +1,4 @@
+import { validPanelShape } from "./panelShape";
 import { normalizeProjectTypography } from "./pageTypography";
 import { validPageFormat } from "./pageFormat";
 import { pageLayers } from "./pageBackground";
@@ -110,6 +111,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
         number(place[key]);
       if (place.width <= 0 || place.height <= 0)
         throw new Error("invalid-backup");
+      if (place.shapePoints !== undefined && !validPanelShape(place.shapePoints)) throw new Error("invalid-backup");
       image(place.image);
       for (const overlay of objects(place.overlays)) {
         string(overlay.text);

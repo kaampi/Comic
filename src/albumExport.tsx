@@ -1,5 +1,6 @@
 import { pageLayerTextMetrics } from "./pageTypography";
 import { overlayFont } from "./overlayTypography";
+import { panelShapePoints, shapedPanel } from "./panelShape";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SvgOverlay } from "./SvgOverlay";
 import type { ComicProject, PageLayer } from "./project";
@@ -43,11 +44,14 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
   const layers=[...(page.background?[page.background]:[]),...page.placements];
   for(const [i,layer] of layers.entries()) {
     const background=layer===page.background, r=background?{x:0,y:0,width:700,height}:layerRect(page,layer,format), border=background?0:PANEL_BORDER;
-    if(!background) body.push(`<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}" fill="#fffdf7"/>`);
+    const shaped=!background&&shapedPanel(layer);
+    if(!background&&!shaped) body.push(`<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}" fill="#fffdf7"/>`);
     const x=r.x+border, y=r.y+border, w=r.width-2*border, h=r.height-2*border, id=`layer-${i}`;
     if(w<=0||h<=0)throw new Error("invalid-layout");
-    defs.push(`<clipPath id="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}"/></clipPath>`);
+    const polygon=panelShapePoints(layer).map(p=>`${x+p.x/4*w},${y+p.y/4*h}`).join(" ");
+    defs.push(`<clipPath id="${id}">${shaped?`<polygon points="${polygon}"/>`:`<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`}</clipPath>`);
     body.push(`<g clip-path="url(#${id})">`);
+    if(shaped)body.push(`<polygon points="${polygon}" fill="#fffdf7"/>`);
     if(layer.image) {
       let url=layer.image.dataUrl;
       if(url.startsWith("blob:"))url=await blobData(await (await fetch(url)).blob());
@@ -61,7 +65,8 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
     // Non-scaling strokes stay proportional to the canonical 700px page at every DPI.
     overlays=overlays.replace(/<[^>]+vector-effect="non-scaling-stroke"[^>]*>/g,tag=>tag.replace(/stroke-width="([^"]+)"/,(_,v)=>`stroke-width="${Number(v)*outputScale}"`));
     body.push(overlays,"</g>");
-    if(!background)body.push(`<rect x="${r.x+border/2}" y="${r.y+border/2}" width="${r.width-border}" height="${r.height-border}" fill="none" stroke="#27211b" stroke-width="${border}"/>`);
+    if(shaped)body.push(`<polygon points="${polygon}" fill="none" stroke="#27211b" stroke-width="${border}" stroke-linejoin="round"/>`);
+    else if(!background)body.push(`<rect x="${r.x+border/2}" y="${r.y+border/2}" width="${r.width-border}" height="${r.height-border}" fill="none" stroke="#27211b" stroke-width="${border}"/>`);
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${700*outputScale}" height="${height*outputScale}" viewBox="0 0 700 ${height}"><defs>${defs.join("")}<style>${fontCss}</style></defs>${body.join("")}</svg>`;
 }

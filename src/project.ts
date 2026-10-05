@@ -1,3 +1,4 @@
+import type { ShapePoint } from "./panelShape";
 import { normalizeProjectTypography } from "./pageTypography";
 import { DEFAULT_PAGE_FORMAT, albumPageFormat, type PageFormat } from "./pageFormat";
 import { BUILTIN_STYLES, type IllustrationStyle } from "./stylesLibrary";
@@ -31,7 +32,7 @@ export type BubbleSwatch = {
   characterId?: string;
 };
 
-export type PageLayer={ id:string;panelId?:string;x:number;y:number;width:number;height:number;readingOrder:number;overlays:TextOverlay[];image?:PanelImage;sourceBeatIds?:string[];adaptationPanelPlanId?:string };
+export type PageLayer={ shapePoints?:ShapePoint[];id:string;panelId?:string;x:number;y:number;width:number;height:number;readingOrder:number;overlays:TextOverlay[];image?:PanelImage;sourceBeatIds?:string[];adaptationPanelPlanId?:string };
 
 export type ComicProject = {
   format: 1;

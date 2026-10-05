@@ -1,0 +1,18 @@
+.panel-shape-controls { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 0; }
+.panel-shape-controls label { display:flex; align-items:center; gap:8px; }
+.panel-shape-controls p { flex-basis:100%; margin:0; }
+.layout-canvas .drawn-panel.is-shaped { border-color:transparent; background:transparent; overflow:visible; }
+.panel-shape-fill, .panel-shape-outline { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.panel-shape-fill { z-index:0; }
+.panel-shape-outline { z-index:3; overflow:visible; }
+.panel-shape-outline polygon { fill:none; stroke:#27211b; stroke-width:3; vector-effect:non-scaling-stroke; }
+.layout-canvas .drawn-panel.is-shaped > b { z-index:4; }
+.panel-shape-surface { position:absolute; inset:0; z-index:7; pointer-events:none; }
+.panel-shape-surface > svg { width:100%; height:100%; overflow:visible; }
+.panel-shape-surface path { fill:none; stroke:#bd5d36; stroke-opacity:.6; stroke-width:1; vector-effect:non-scaling-stroke; stroke-dasharray:3 3; }
+.panel-shape-surface circle { fill:#bd5d36; }
+.panel-shape-handle { position:absolute; transform:translate(-50%,-50%); width:18px; height:18px; min-height:0; padding:0; border:2px solid #bd5d36; border-radius:50%; background:var(--paper); pointer-events:auto; touch-action:none; }
+.panel-shape-handle:focus-visible { outline:3px solid var(--ink); outline-offset:2px; }
+.panel-editor-stage.is-shaped { background:transparent; }
+
+.layout-canvas .panel-shape-outline polygon { stroke-width:.428571cqw; }

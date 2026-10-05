@@ -58,3 +58,7 @@ Textstorlek anges i **pt** i textlagrens egenskaper och albumets standardvärden
 Äldre album och importerade säkerhetskopior räknas automatiskt om till punkter en gång. De nya siffervärdena kan därför skilja sig från de gamla; textens tidigare höjd behålls ungefärligt.
 
 Radbrytningen mäter textens faktiska bredd i valt typsnitt och vikt. **Sidmarginal (%)** lägger lika stort avstånd på vänster och höger sida. Vid vänsterjustering blir högerkanten fortfarande ojämn eftersom hela ord flyttas till nästa rad. Manuella radbrytningar behålls.
+
+## Rutor med olika former
+
+Markera en ruta under **Sidor**, välj **Rutans form** och använd **Redigera form** för hörn som fäster på ett 4×4-rutnät. Rektangel, romb, parallellogram, trapets och triangel stöds. **Klar med formen** återgår till storleksändring. Bild och text beskärs efter konturen i sidvy, redigerare och export. Former sparas med albumet och följer med backup. Se [PAGE_LAYOUT.md](PAGE_LAYOUT.md).

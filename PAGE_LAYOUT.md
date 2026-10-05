@@ -2,7 +2,7 @@
 
 Öppna **Sidor** och klicka på en befintlig ruta. Fyra hörnhandtag och sidans rutnät visas. Dra ett hörn för att ändra bredd och höjd samtidigt. Hörnen fäster vid rutnätets cellgränser; motsatt hörn ligger kvar.
 
-Rutan förblir rektangulär. Breda panoramarutor och stående rutor kan blandas på samma sida. Storleken begränsas till sidans rutnät och minst en cell i varje riktning. Ändringar som skulle överlappa en annan ruta avvisas.
+Storleksändringen behåller rutans valda form. Breda panoramarutor och stående rutor kan blandas på samma sida. Storleken begränsas till sidans rutnät och minst en cell i varje riktning. Ändringar som skulle överlappa en annan ruta avvisas.
 
 - Klicka utanför rutan för att dölja handtagen och rutnätet.
 - Fokusera ett hörnhandtag och använd piltangenterna för att flytta hörnet ett rutnätssteg.
@@ -53,3 +53,9 @@ I **Sidor → Sidans bakgrund** kan du ge sidan en bild som fyller hela ytan, un
 **Redigera bakgrund och text** öppnar bildredigeraren. Använd **Ladda upp bild…** eller **Byt bild…**, justera beskärning, zoom och position och lägg till pratbubblor, tankebubblor, berättartext eller SFX direkt på sidan. Bakgrunden är ett eget lager och tar ingen plats i rutnätet. Du kan ha bara bakgrunden eller valfritt antal vanliga bildrutor ovanpå.
 
 **Ta bort bakgrund** kräver bekräftelse och tar bort bakgrundslagret med dess textlager. Bildrutorna ovanpå och originalinnehållet i rutbiblioteket finns kvar. Bakgrund, beskärning och textlager sparas med albumet och ingår i backup och återställning.
+
+## Rutans form
+
+Markera en bildruta på sidan och välj **Rutans form**: rektangel, romb, parallellogram, trapets eller triangel. Välj **Redigera form** för att flytta hörnen. Varje ruta har ett eget 4×4-rutnät med 25 fästpunkter, inklusive kanterna och mitten. Hörnen fäster vid närmaste punkt; piltangenterna flyttar ett steg. Escape eller avbruten pekardragning ångrar den pågående dragningen. Korsande hörn och kollapsade former tillåts inte.
+
+**Klar med formen** återgår till handtagen för rutans storlek. Formen sparas relativt bildrutan och följer med när dess storlek ändras. Bilder och textlager beskärs efter polygonen i sidvy, bildredigerare och PDF/PNG/JPEG-export. Punktstorleken på text påverkas inte av formvalet. Formen ingår i albumbackupen; äldre rutor är rektangulära. Sidbakgrunden behåller hela sidans form.

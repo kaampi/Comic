@@ -10,6 +10,7 @@ import "./stylePreviews.css";
 import "./localAi.css";
 import "./albumExport.css";
 import "./fontPicker.css";
+import "./panelShape.css";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("ComicBook AI kunde inte hitta appens rot.");
@@ -19,3 +20,4 @@ createRoot(root).render(
     <App />
   </React.StrictMode>
 );
+

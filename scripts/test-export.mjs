@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
 try {
-  for(const name of ['pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+  for(const name of ['panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
     const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
     fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
@@ -110,6 +110,31 @@ try {
     if(oldCanvas===undefined)delete globalThis.CanvasRenderingContext2D;else globalThis.CanvasRenderingContext2D=oldCanvas;
   }
   console.log('PASS: proportional font widths, equal padding, long words, authored blank lines, selected font/weight and font-loaded SVG export.');
+  const shapes=await import(pathToFileURL(path.join(dir,'panelShape.mjs')));
+  for(const preset of shapes.PANEL_SHAPE_PRESETS){
+    assert.ok(shapes.validPanelShape(preset.points));
+    assert.equal(shapes.shapePreset({shapePoints:preset.points}),preset.id);
+    const shapedPage={...page,placements:[{...layer,shapePoints:preset.points}]};
+    const svg=await pageSvg(project,shapedPage,'',1);
+    if(preset.id!=='rectangle'){
+      assert.match(svg,/<clipPath[^>]*><polygon/);
+      assert.equal((svg.match(/<polygon/g)||[]).length,3);
+      assert.match(svg,/stroke-linejoin="round"/);
+    }else assert.match(svg,/<clipPath[^>]*><rect/);
+    assert.ok(!svg.includes('panel-shape-handle')&&!svg.includes('stroke-dasharray'));
+  }
+  const rectangle=shapes.panelShapePoints({});
+  const snapped=shapes.moveShapeCorner(rectangle,0,.7,.1);
+  assert.deepEqual(snapped[0],{x:1,y:0});
+  assert.deepEqual(rectangle[0],{x:0,y:0});
+  assert.strictEqual(shapes.moveShapeCorner(rectangle,0,4,4),rectangle);
+  assert.strictEqual(shapes.moveShapeCorner(rectangle,0,4,0),rectangle);
+  assert.equal(shapes.validPanelShape([{x:0,y:0},{x:4,y:4},{x:4,y:0},{x:0,y:4}]),false);
+  assert.equal(shapes.validPanelShape([{x:0,y:0},{x:1.5,y:0},{x:4,y:4}]),false);
+  assert.equal(shapes.validPanelShape([{x:0,y:0},{x:5,y:0},{x:4,y:4}]),false);
+  assert.equal(shapes.validPanelShape([{x:0,y:0},{x:1,y:1},{x:2,y:2}]),false);
+  assert.equal(shapes.shapeClipPath({shapePoints:shapes.PANEL_SHAPE_PRESETS[1].points}),'polygon(50% 0%,100% 50%,50% 100%,0% 50%)');
+  console.log('PASS: all panel shapes, 4×4 corner snapping, invalid/crossing rejection and polygon artwork/export contours.');
   const controller=new AbortController();controller.abort();
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:['page'],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{},controller.signal),{name:'AbortError'});
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:[],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{}),/no-pages/);
