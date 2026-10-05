@@ -1304,6 +1304,49 @@ try {
   assert.deepEqual(restoredProjects[1], beforeBackup);
   assert.deepEqual(restoredProjects[0].pages, beforeBackup.pages);
   assert.deepEqual(restoredProjects[0].adaptations, beforeBackup.adaptations);
+  view.unmount();
+  const edgeProject=structuredClone(beforeBackup);
+  edgeProject.id='edge-album';edgeProject.title='Diagonaltest';edgeProject.pageFormat={preset:'a4',orientation:'portrait',widthMm:210,heightMm:297};
+  const baseFrame=edgeProject.pages[0].placements[0];
+  const rightEdgeFrame={...baseFrame,id:'right-edge',x:0,y:0,width:3,height:1,readingOrder:1,shapePoints:[{x:8/3,y:0},{x:4,y:0},{x:4,y:4},{x:2,y:4}]};
+  const leftEdgeFrame={...baseFrame,id:'left-edge',x:0,y:0,width:1,height:1,readingOrder:5,shapePoints:undefined};
+  edgeProject.pages=[{id:'edge-page',number:1,gridColumns:3,gridRows:5,placements:[rightEdgeFrame,leftEdgeFrame]}];
+  localStorage.setItem('comicbook-ai.projects',JSON.stringify([edgeProject]));
+  const edgeView=render(React.createElement(App));
+  try{
+    await user.click(screen.getByRole('button',{name:/Diagonaltest/}));
+    await user.click(screen.getByRole('button',{name:'Sidor',exact:true}));
+    await user.click(screen.getByLabelText('ruta 5',{exact:true}));
+    assert.equal(screen.getByLabelText('Marginal mellan rutor (mm)').value,'2');
+    const contentsBefore=structuredClone(saved().pages[0].placements[1]);
+    await user.click(screen.getByRole('button',{name:'Passa kanten',exact:true}));
+    assert.equal(screen.queryByRole('alert'),null);
+    assert.equal(saved().pages[0].placements[1].width,3);
+    assert.deepEqual(saved().pages[0].placements[1].image,contentsBefore.image);
+    assert.deepEqual(saved().pages[0].placements[1].overlays,contentsBefore.overlays);
+    assert.deepEqual(saved().pages[0].placements[0],rightEdgeFrame);
+    const sharedHitStyle=document.createElement('style');
+    sharedHitStyle.textContent=readFileSync(join(sourceRoot,'panelShape.css'),'utf8');document.head.append(sharedHitStyle);
+    const rightHit=screen.getByLabelText('ruta 1',{exact:true}).querySelector('.panel-shape-fill polygon');
+    const leftHit=screen.getByLabelText('ruta 5',{exact:true}).querySelector('.panel-shape-fill polygon');
+    assert.equal(window.getComputedStyle(rightHit).pointerEvents,'visiblePainted');
+    await user.click(rightHit);
+    assert.equal(screen.getByLabelText('Grannruta').value,'left-edge');
+    await user.click(leftHit);
+    assert.equal(screen.getByLabelText('Grannruta').value,'right-edge');
+    sharedHitStyle.remove();
+    const firstFit=structuredClone(saved().pages[0].placements[1].shapePoints);
+    fireEvent.change(screen.getByLabelText('Marginal mellan rutor (mm)'),{target:{value:'3'}});
+    await user.click(screen.getByRole('button',{name:'Passa kanten',exact:true}));
+    assert.notDeepEqual(saved().pages[0].placements[1].shapePoints,firstFit);
+    assert.deepEqual(parseAlbumBackup(packAlbumBackup(saved())).pages,saved().pages);
+    assert.deepEqual(readProjects()[0].pages[0].placements[1].shapePoints,saved().pages[0].placements[1].shapePoints);
+    // Turning the fitted panel into a rectangle would overlap its neighbor.
+    const acceptedShape=structuredClone(saved().pages[0].placements[1].shapePoints);
+    await user.selectOptions(screen.getByLabelText('Rutans form'),'rectangle');
+    assert.deepEqual(saved().pages[0].placements[1].shapePoints,acceptedShape);
+  }finally{edgeView.unmount();}
+  console.log('PASS: screenshot-style shared middle cell, neighbor-fit controls, adjustable gap, stable frame contents, overlap prevention and backup/load.');
   console.log(
     "PASS: manuscript frames/CRLF, prompt/image/history/dialogue inspector, selected-only AI append/failure/cancel, source edits/caret, no sequences, stable panel IDs and page images",
   );

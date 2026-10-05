@@ -1,3 +1,5 @@
+import { fitPanelToNeighbor, panelsOverlap, type PanelSide } from "./panelGeometry";
+import { PanelEdgeFitControls } from "./PanelEdgeFitControls";
 import { imageViewStyle, framePosition, panFramePosition } from "./imageView";
 import { PanelShapeControls, PanelShapeHandles } from "./PanelShapeControls";
 import { panelShapePoints, shapeClipPath, shapePolygon, shapedPanel, validPanelShape, type ShapePoint } from "./panelShape";
@@ -25,7 +27,7 @@ import { BUILTIN_STYLES, createCustomStyleId, readCustomStyles, saveCustomStyles
 import { optimizeStylePreview } from "./stylePreview";
 import { createProject, readProjects, saveProjects, type BubbleSwatch, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
-import { PAGE_PRESETS, overlaps } from "./pageTemplates";
+import { PAGE_PRESETS } from "./pageTemplates";
 import { parseStoryBookExport, parseStoryBookCards, cardMatchesBook, type StoryBookImport, type StoryBookCardsImport } from "./storybookImport";
 import { SvgOverlay, thoughtTailEndpoint, bubbleTailStart, bubbleTailStartAngle } from "./SvgOverlay";
 import type { OverlayType } from "./project";
@@ -314,7 +316,7 @@ export function App() {
     const rect={x:Math.min(layoutStart.x,layoutEnd.x),y:Math.min(layoutStart.y,layoutEnd.y),width:Math.abs(layoutEnd.x-layoutStart.x)+1,height:Math.abs(layoutEnd.y-layoutStart.y)+1};
     setLayoutStart(null); setLayoutEnd(null);
     updateActiveProject((project)=>({...project,pages:project.pages.map((page)=>{
-      if(page.id!==pageId||page.placements.some((item)=>overlaps(item,rect))) return page;
+      if(page.id!==pageId||page.placements.some((item)=>panelsOverlap(page,item,{id:"candidate",readingOrder:0,overlays:[],...rect},albumPageFormat(project)))) return page;
       const id="placement-"+crypto.randomUUID();setSelectedLayoutPlacement({pageId,placementId:id});
       return {...page,placements:[...page.placements,{id,...rect,readingOrder:page.placements.length+1,overlays:[]}]};
     })}));
@@ -323,7 +325,7 @@ export function App() {
     if(page.id!==pageId)return page;
     const next={...rect,width:Math.max(1,rect.width),height:Math.max(1,rect.height)};
     if(next.x<0||next.y<0||next.x+next.width>page.gridColumns||next.y+next.height>page.gridRows)return page;
-    if(page.placements.some((p)=>p.id!==placementId&&overlaps(p,next)))return page;
+    if(page.placements.some((p)=>p.id!==placementId&&panelsOverlap(page,p,{...page.placements.find(item=>item.id===placementId)!,...next},albumPageFormat(project))))return page;
     return {...page,placements:page.placements.map((p)=>p.id===placementId?{...p,...next}:p)};
   })}));
   const beginResize=(event:React.PointerEvent, pageId:string, placement:ComicProject["pages"][number]["placements"][number], corner:PanelCorner, columns:number, rows:number)=>{
@@ -344,7 +346,21 @@ export function App() {
   };
   const setPlacementShape=(pageId:string,placementId:string,points:ShapePoint[])=>{
     if(!validPanelShape(points))return;
-    updateActiveProject(project=>({...project,pages:project.pages.map(page=>page.id!==pageId?page:{...page,placements:page.placements.map(layer=>layer.id===placementId?{...layer,shapePoints:points.map(p=>({...p}))}:layer)})}));
+    updateActiveProject(project=>({...project,pages:project.pages.map(page=>{
+      if(page.id!==pageId)return page;
+      const layer=page.placements.find(p=>p.id===placementId);if(!layer)return page;
+      const candidate={...layer,shapePoints:points};
+      if(page.placements.some(p=>p.id!==placementId&&panelsOverlap(page,p,candidate,albumPageFormat(project))))return page;
+      return {...page,placements:page.placements.map(p=>p.id===placementId?candidate:p)};
+    })}));
+  };
+  const fitPlacementEdge=(pageId:string,placementId:string,neighborId:string,side:PanelSide,margin:number)=>{
+    const project=projectsRef.current.find(p=>p.id===activeProjectId),page=project?.pages.find(p=>p.id===pageId);
+    const layer=page?.placements.find(p=>p.id===placementId),neighbor=page?.placements.find(p=>p.id===neighborId);
+    if(!project||!page||!layer||!neighbor)return false;
+    const fitted=fitPanelToNeighbor(page,layer,neighbor,side,margin,albumPageFormat(project));if(!fitted)return false;
+    updateActiveProject(p=>({...p,pages:p.pages.map(pg=>pg.id===pageId?{...pg,placements:pg.placements.map(item=>item.id===placementId?fitted:item)}:pg)}));
+    return true;
   };
   const loadPlacementImage=(pageId:string,placementId:string,file:File,background=false)=>{
     if(!file.type.startsWith("image/"))return;
@@ -631,7 +647,7 @@ export function App() {
               return <div className="page-planner"><div className="section-heading"><div><p className="eyebrow">SIDA {page.number}</p><h2>Rita sidlayout</h2><p className="quiet">{layoutControlsText(locale).hint}</p></div><div className="edit-actions"><button className="text-button" disabled={page.number===1} onClick={()=>movePage(page.id,-1)}>← Sida</button><button className="text-button" disabled={page.number===activeProject.pages.length} onClick={()=>movePage(page.id,1)}>Sida →</button><button className="text-button danger-button" onClick={()=>deletePage(page.id)}>{tr("deletePage")}</button><select className="preset-select" defaultValue="" onChange={(e)=>{if(e.target.value)applyPreset(page.id,e.target.value);e.currentTarget.value="";}}><option value="">{tr("usePreset")}</option>{PAGE_PRESETS.map((preset)=><option key={preset.id} value={preset.id}>{preset.name}</option>)}</select></div></div>
                 <div className="grid-settings"><div><strong>{tr("projectDefault")}</strong><label>{tr("columns")} <input type="number" min="2" max="6" value={activeProject.pageDefaults.gridColumns} onChange={(e)=>setProjectGridDefaults(Number(e.target.value),activeProject.pageDefaults.gridRows)} /></label><label>{tr("rows")} <input type="number" min="2" max="8" value={activeProject.pageDefaults.gridRows} onChange={(e)=>setProjectGridDefaults(activeProject.pageDefaults.gridColumns,Number(e.target.value))} /></label><span className="quiet">{tr("appliesNewPages")}</span></div><div><strong>{tr("thisPage")}</strong><label>{tr("columns")} <input type="number" min="2" max="6" value={page.gridColumns} onChange={(e)=>setPageGrid(page.id,Number(e.target.value),page.gridRows)} /></label><label>{tr("rows")} <input type="number" min="2" max="8" value={page.gridRows} onChange={(e)=>setPageGrid(page.id,page.gridColumns,Number(e.target.value))} /></label><span className="quiet">{tr("resetLayout")}</span></div></div>
                 <details className="page-background-controls"><summary>{locale==="sv"?"Sidans bakgrund":"Page background"}</summary><label className="page-background-upload">{locale==="sv"?(page.background?.image?"Byt bakgrundsbild":"Ladda upp bakgrundsbild"):(page.background?.image?"Change background image":"Upload background image")}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const file=e.target.files?.[0];if(file)loadPlacementImage(page.id,page.background?.id??`background-${page.id}`,file,true);e.currentTarget.value="";}}/></label>{page.background?.image?<p className="quiet">{page.background.image.name}</p>:null}<div className="edit-actions"><button className="text-button" onClick={()=>{updateActiveProject(p=>ensurePageBackground(p,page.id));setSelectedLayoutPlacement({pageId:page.id,placementId:page.background?.id??`background-${page.id}`});}}>{locale==="sv"?"Välj från rutbiblioteket":"Choose from panel library"}</button><button className="text-button" onClick={()=>{updateActiveProject(p=>ensurePageBackground(p,page.id));setPanelEditor({pageId:page.id,placementId:page.background?.id??`background-${page.id}`});setSelectedOverlayId(page.background?.overlays[0]?.id??null);}}>{locale==="sv"?"Redigera bakgrund och text":"Edit background and text"}</button>{page.background?<button className="text-button danger-button" onClick={()=>{if(!window.confirm(locale==="sv"?"Ta bort bakgrundslagret och dess text? Bildrutorna ovanpå finns kvar.":"Remove background and its text? Foreground frames remain."))return;updateActiveProject(p=>({...p,pages:p.pages.map(item=>item.id===page.id?{...item,background:undefined}:item)}));setSelectedLayoutPlacement(null);}}>{locale==="sv"?"Ta bort bakgrund":"Remove background"}</button>:null}</div><p className="quiet">{locale==="sv"?"Bakgrunden är en stor bildruta under sidans vanliga rutor. Ladda upp bilden här. Öppna redigeraren för att beskära och lägga till bubblor.":"The background is a full-page layer behind the frames. Upload the image here. Open the editor to crop and add text."}</p></details>
-                {(()=>{const layer=selectedLayoutPlacement?.pageId===page.id?page.placements.find(p=>p.id===selectedLayoutPlacement.placementId):undefined;return layer?<PanelShapeControls layer={layer} locale={locale} editing={shapeEditing} onEditing={setShapeEditing} onChange={points=>setPlacementShape(page.id,layer.id,points)}/>:null;})()}
+                {(()=>{const layer=selectedLayoutPlacement?.pageId===page.id?page.placements.find(p=>p.id===selectedLayoutPlacement.placementId):undefined;return layer?<><PanelShapeControls layer={layer} locale={locale} editing={shapeEditing} onEditing={setShapeEditing} onChange={points=>setPlacementShape(page.id,layer.id,points)}/><PanelEdgeFitControls key={layer.id} page={page} layer={layer} locale={locale} onFit={(neighborId,side,margin)=>fitPlacementEdge(page.id,layer.id,neighborId,side,margin)}/></>:null;})()}
                 <div style={{aspectRatio:String(pageAspect(albumPageFormat(activeProject)))}} className={`layout-canvas${page.background?.image?" has-page-background":""}${layoutStart?" is-drawing":""}`} onClick={(e)=>{if(!(e.target as HTMLElement).closest(".drawn-panel"))setSelectedLayoutPlacement(null);}}>
                   {page.background?<div className="page-background-layer">{page.background.image?<img src={page.background.image.dataUrl} alt="" style={imageViewStyle(page.background.image)}/>:null}<svg viewBox="0 0 100 100" preserveAspectRatio="none">{page.background.overlays.map(o=><SvgOverlay key={o.id} overlay={o} textMetrics={pageLayerTextMetrics(activeProject,page,page.background!)}/>)}</svg></div>:null}
                   {selectedLayoutPlacement?.pageId===page.id && page.placements.some(p=>p.id===selectedLayoutPlacement.placementId)?<div className="layout-snap-grid" aria-hidden="true" style={{gridTemplateColumns:`repeat(${page.gridColumns},1fr)`,gridTemplateRows:`repeat(${page.gridRows},1fr)`}}>{Array.from({length:page.gridColumns*page.gridRows},(_,i)=><span key={i}/>)}</div>:null}

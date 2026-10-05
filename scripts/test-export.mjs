@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
 try {
-  for(const name of ['imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+  for(const name of ['panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
     const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
     fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
@@ -177,6 +177,35 @@ try {
     assert.ok(Math.abs(y-(layerBox.y+3+expected.y))<1e-9);
   }finally{if(previousImage===undefined)delete globalThis.Image;else globalThis.Image=previousImage;}
   console.log('PASS: direct image panning on both axes at every zoom/fit, legacy crop preservation and matching CSS/export placement.');
+  const geometry=await import(pathToFileURL(path.join(dir,'panelGeometry.mjs')));
+  const rightPanel={...layer,id:'right',x:0,y:0,width:3,height:1,readingOrder:1,shapePoints:[{x:8/3,y:0},{x:4,y:0},{x:4,y:4},{x:2,y:4}]};
+  const leftPanel={...layer,id:'left',x:0,y:0,width:1,height:1,readingOrder:5};
+  const sharedPage={...page,placements:[rightPanel,leftPanel]};
+  const fitted=geometry.fitPanelToNeighbor(sharedPage,leftPanel,rightPanel,'left',2,project.pageFormat);
+  assert.ok(fitted);
+  assert.equal(fitted.width,3);
+  assert.equal(fitted.id,leftPanel.id);
+  assert.deepEqual(fitted.overlays,leftPanel.overlays);
+  assert.equal(geometry.panelsOverlap(sharedPage,fitted,rightPanel,project.pageFormat),false);
+  const neighborOutline=geometry.panelOutline(sharedPage,rightPanel,project.pageFormat);
+  const edgeA=neighborOutline.at(-1),edgeB=neighborOutline[0],length=Math.hypot(edgeB.x-edgeA.x,edgeB.y-edgeA.y);
+  const nx=(edgeB.y-edgeA.y)/length,ny=(edgeA.x-edgeB.x)/length;
+  const expectedGap=2*700/210+3;
+  const fittedOutline=geometry.panelOutline(sharedPage,fitted,project.pageFormat);
+  for(const point of [fittedOutline[1],fittedOutline[2]])assert.ok(Math.abs((point.x-edgeA.x)*nx+(point.y-edgeA.y)*ny-expectedGap)<1e-7,'exact perpendicular 2mm gap between visible frames');
+  assert.equal(geometry.panelsOverlap(sharedPage,{...fitted,shapePoints:undefined},rightPanel,project.pageFormat),true);
+  const blocker={...layer,id:'blocker',x:0,y:0,width:1,height:1,overlays:[]};
+  assert.equal(geometry.fitPanelToNeighbor({...sharedPage,placements:[rightPanel,leftPanel,blocker]},leftPanel,rightPanel,'left',2,project.pageFormat),null);
+  assert.equal(geometry.fitPanelToNeighbor(sharedPage,leftPanel,rightPanel,'left',NaN,project.pageFormat),null);
+  for(const side of ['left','right','above','below']){
+    const center={...layer,id:'center',x:1,y:2,width:1,height:1,overlays:[]};
+    const outside={...layer,id:'outside',x:side==='right'?2:side==='left'?0:1,y:side==='below'?3:side==='above'?1:2,width:1,height:1,overlays:[]};
+    const pg={...page,placements:[center,outside]};
+    assert.ok(geometry.fitPanelToNeighbor(pg,outside,center,side,1,project.pageFormat));
+  }
+  const fittedSvg=await pageSvg(project,{...sharedPage,placements:[rightPanel,fitted]},'',1);
+  assert.equal((fittedSvg.match(/<clipPath[^>]*><polygon/g)||[]).length,2);
+  console.log('PASS: shared-cell polygon placement, parallel neighbor fitting, physical frame gap, all four sides and collision rejection.');
   const controller=new AbortController();controller.abort();
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:['page'],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{},controller.signal),{name:'AbortError'});
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:[],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{}),/no-pages/);

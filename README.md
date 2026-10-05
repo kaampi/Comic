@@ -66,3 +66,9 @@ Markera en ruta under **Sidor**, välj **Rutans form** och använd **Redigera fo
 ## Flytta bilden i rutan
 
 Öppna bildrutans eller bakgrundens redigerare och välj **Redigera bild**. Bilden följer musen uppåt, nedåt och åt sidorna även när dess höjd eller bredd redan passar rutan. **X-position** och **Y-position** anges i procent av rutans mått; positiva värden flyttar åt höger respektive nedåt. Zoom ändrar bildens storlek utan att ändra förflyttningens känslighet. Escape eller avbruten pekardragning återställer den pågående flytten. Äldre sparade beskärningar behålls tills du ändrar bildens visning.
+
+## Dela yta mellan sneda rutor
+
+Markera rutan som ska anpassas och välj **Grannruta** under **Passa mot grannruta**. Välj vänster, höger, ovanför eller under, ange **Marginal mellan rutor (mm)** och klicka **Passa kanten**. Standardmarginalen är 2 mm. Den valda rutan utökas och klipps längs en parallell kant, så att formerna kan dela på samma enkelpanel utan att deras synliga ytor överlappar. Avståndet mäts mellan ramarna, även längs diagonaler. Bilder, text och rutans ID behålls.
+
+Passningen sparas som rutans form och ingår i export och backup. Klicka **Passa kanten** igen om grannrutan ändras. Rutor som skulle överlappa en annan synlig form tillåts inte.

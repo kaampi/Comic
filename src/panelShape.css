@@ -16,3 +16,10 @@
 .panel-editor-stage.is-shaped { background:transparent; }
 
 .layout-canvas .panel-shape-outline polygon { stroke-width:.428571cqw; }
+
+.panel-edge-fit-controls { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px; border:1px solid var(--border); margin-bottom:12px; }
+.panel-edge-fit-controls label { display:grid; gap:4px; }
+.panel-edge-fit-controls p { flex-basis:100%; margin:0; }
+.layout-canvas .drawn-panel.is-shaped { pointer-events:none; }
+.panel-shape-fill polygon { pointer-events:visiblePainted; }
+.layout-canvas .drawn-panel.is-shaped .panel-corner-handle { pointer-events:auto; }

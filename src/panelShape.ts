@@ -8,7 +8,7 @@ export const PANEL_SHAPE_PRESETS = [
 ] as const;
 
 export function validPanelShape(value: unknown): value is ShapePoint[] {
-  if (!Array.isArray(value) || value.length < 3 || value.length > 4) return false;
+  if (!Array.isArray(value) || value.length < 3 || value.length > 8) return false;
   if (!value.every(p => p && Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= 0 && p.x <= 4 && p.y >= 0 && p.y <= 4)) return false;
   if (new Set(value.map(p => `${p.x},${p.y}`)).size !== value.length) return false;
   let area = 0;
