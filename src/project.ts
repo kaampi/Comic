@@ -1,3 +1,4 @@
+import { normalizeProjectTypography } from "./pageTypography";
 import { DEFAULT_PAGE_FORMAT, albumPageFormat, type PageFormat } from "./pageFormat";
 import { BUILTIN_STYLES, type IllustrationStyle } from "./stylesLibrary";
 import type { PanelImage, StoryAdaptation } from "./adaptation/types";
@@ -43,6 +44,7 @@ export type ComicProject = {
   style: IllustrationStyle;
   renderOptions: { linesOnly: boolean };
   pageFormat?: PageFormat;
+  typographyVersion?: 2;
   pageDefaults: { gridColumns: number; gridRows: number };
   characters: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string; pronoun?: string; approximateAge?: number }>;
   locations: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string }>;
@@ -67,7 +69,7 @@ export function stableId(prefix: string): string {
 export function createProject(title: string, source: ProjectSource, style: IllustrationStyle = BUILTIN_STYLES[0]): ComicProject {
   const now = new Date().toISOString();
   return {
-    format: PROJECT_FORMAT, id: stableId("project"), title: title.trim(), createdAt: now, updatedAt: now,
+    typographyVersion: 2, format: PROJECT_FORMAT, id: stableId("project"), title: title.trim(), createdAt: now, updatedAt: now,
     pageFormat: { ...DEFAULT_PAGE_FORMAT }, source: { type: source, textSnapshot: "" }, style: { ...style }, renderOptions: { linesOnly: false }, pageDefaults: { gridColumns: 3, gridRows: 5 }, characters: [], locations: [], scenes: [], panels: [], pages: [], adaptations: [], bubbleSwatches: []
   };
 }
@@ -96,7 +98,7 @@ export function readProjects(): ComicProject[] {
           fillOpacity:overlay.fillOpacity??1
         })):[]})) : []
       })) : []
-    })) : [];
+    })).map(normalizeProjectTypography) : [];
   } catch { return []; }
 }
 

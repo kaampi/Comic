@@ -1,3 +1,4 @@
+import { pageLayerTextMetrics } from "./pageTypography";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SvgOverlay } from "./SvgOverlay";
 import type { ComicProject, PageLayer } from "./project";
@@ -50,7 +51,7 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
       const ix=x+w/2+((w-iw)*(50+(layer.image.offsetX??0)/2)/100-w/2)*zoom, iy=y+h/2+((h-ih)*(50+(layer.image.offsetY??0)/2)/100-h/2)*zoom;
       body.push(`<image href="${xml(url)}" x="${ix}" y="${iy}" width="${iw*zoom}" height="${ih*zoom}" preserveAspectRatio="none"/>`);
     }
-    let overlays=renderToStaticMarkup(<svg x={x} y={y} width={w} height={h} viewBox="0 0 100 100" preserveAspectRatio="none">{(layer.overlays??[]).map(o=><SvgOverlay key={o.id} overlay={o}/>)}</svg>);
+    let overlays=renderToStaticMarkup(<svg x={x} y={y} width={w} height={h} viewBox="0 0 100 100" preserveAspectRatio="none">{(layer.overlays??[]).map(o=><SvgOverlay key={o.id} overlay={o} textMetrics={pageLayerTextMetrics(project,page,layer)}/>)}</svg>);
     // Non-scaling strokes stay proportional to the canonical 700px page at every DPI.
     overlays=overlays.replace(/<[^>]+vector-effect="non-scaling-stroke"[^>]*>/g,tag=>tag.replace(/stroke-width="([^"]+)"/,(_,v)=>`stroke-width="${Number(v)*outputScale}"`));
     body.push(overlays,"</g>");

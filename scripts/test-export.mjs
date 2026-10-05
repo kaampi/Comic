@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
 try {
-  for(const name of ['pageFormat.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+  for(const name of ['pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
     const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
     fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
@@ -39,6 +39,44 @@ try {
   assert.match(markup,/<svg[^>]+width="2100"/);assert.match(markup,/stroke-width="6"[^>]*vector-effect="non-scaling-stroke"/);
   assert.match(markup,/ÅÄÖ/);assert.match(markup,/Second line/);assert.match(markup,/clip-path/);
   assert.ok(!markup.includes('readingOrder')&&!markup.includes('panel-corner-handle')&&!markup.includes('grid-cell'));
+  const typography=await import(pathToFileURL(path.join(dir,'pageTypography.mjs')));
+  const sized={...layer.overlays[0],text:'Same size',fontSize:12};
+  const background={...layer,id:'background',overlays:[sized]};
+  const small={...layer,id:'small',overlays:[sized]};
+  const large={...layer,id:'large',x:1,width:2,height:3,overlays:[sized]};
+  const typedPage={...page,background,placements:[small,large]};
+  const typedProject={...project,typographyVersion:2,pages:[typedPage]};
+  const metrics=[background,small,large].map(l=>typography.pageLayerTextMetrics(typedProject,typedPage,l));
+  const canonicalSize=12*25.4/72*700/210;
+  for(const metric of metrics) assert.ok(Math.abs(typography.overlayTextLayout(sized,metric).fontSize-canonicalSize)<1e-9);
+  const typedMarkup=await pageSvg(typedProject,typedPage,'',1);
+  assert.equal([...typedMarkup.matchAll(/font-size="([^"]+)"/g)].length,3);
+  for(const match of typedMarkup.matchAll(/font-size="([^"]+)"/g)) assert.ok(Math.abs(Number(match[1])-canonicalSize)<1e-9);
+  const inverses=[...typedMarkup.matchAll(/scale\(([^ ]+) ([^)]+)\)/g)];
+  assert.equal(inverses.length,3);
+  inverses.forEach((match,i)=>{
+    // The layer viewBox scaling and text's inverse scaling cancel on both axes.
+    assert.ok(Math.abs(metrics[i].width/100*Number(match[1])-1)<1e-9);
+    assert.ok(Math.abs(metrics[i].height/100*Number(match[2])-1)<1e-9);
+  });
+  const resized={...typedPage,placements:[{...small,width:3,height:4}]};
+  assert.equal(typography.overlayTextLayout(sized,typography.pageLayerTextMetrics(typedProject,resized,resized.placements[0])).fontSize,canonicalSize);
+  assert.equal(typography.overlayTextLayout({...sized,width:20,height:10},metrics[1]).fontSize,canonicalSize);
+  const legacy={...typedProject,typographyVersion:undefined,overlayDefaults:{speech:{fontSize:8}}};
+  const snapshot=structuredClone(legacy),normalized=typography.normalizeProjectTypography(legacy);
+  assert.deepEqual(legacy,snapshot);
+  assert.equal(normalized.typographyVersion,2);
+  assert.strictEqual(typography.normalizeProjectTypography(normalized),normalized);
+  [normalized.pages[0].background,...normalized.pages[0].placements].forEach((l,i)=>{
+    assert.equal(l.id,[background,small,large][i].id);
+    assert.equal(l.overlays[0].id,sized.id);
+    const physical=typography.overlayTextLayout(l.overlays[0],metrics[i]).fontSize;
+    assert.ok(Math.abs(physical-12*.6*metrics[i].height/100)<.02,'legacy visual height is preserved to 0.01pt rounding');
+  });
+  const portrait=typography.overlayTextLayout(sized,metrics[1]).fontSize*210/700;
+  const landscape=typography.overlayTextLayout(sized,{...metrics[1],pageWidthMm:297}).fontSize*297/700;
+  assert.ok(Math.abs(portrait-landscape)<1e-9,'physical point size survives page format changes');
+  console.log('PASS: equal point sizes across background, small/large panels, resize, page formats and SVG export; no glyph stretching; one-time legacy migration.');
   const controller=new AbortController();controller.abort();
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:['page'],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{},controller.signal),{name:'AbortError'});
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:[],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{}),/no-pages/);

@@ -1,3 +1,4 @@
+import { normalizeProjectTypography } from "./pageTypography";
 import { validPageFormat } from "./pageFormat";
 import { pageLayers } from "./pageBackground";
 import type { ComicProject } from "./project";
@@ -163,12 +164,13 @@ export function parseAlbumBackup(input: unknown): ComicProject {
         throw new Error("invalid-backup");
     }
   }
-  return structuredClone(p) as ComicProject;
+  if (p.typographyVersion !== undefined && p.typographyVersion !== 2) throw new Error("unsupported-backup");
+  return normalizeProjectTypography(structuredClone(p) as ComicProject);
 }
 export function restoredAlbumCopy(project: ComicProject): ComicProject {
   const now = new Date().toISOString();
   return {
-    ...structuredClone(project),
+    ...normalizeProjectTypography(structuredClone(project)),
     id: `project-${crypto.randomUUID()}`,
     createdAt: now,
     updatedAt: now,

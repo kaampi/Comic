@@ -69,18 +69,18 @@ export function OverlayDefaultsEditor({
                 onChange={fontFamily => patch({ fontFamily })}
               />
               <label>
-                {sv ? "Textstorlek" : "Text size"}
+                {sv ? "Textstorlek (pt)" : "Text size (pt)"}
                 <input
                   type="number"
-                  min="1"
-                  max="120"
+                  min="0.1"
+                  max="600"
                   step="0.5"
                   value={value.fontSize}
                   onChange={(e) =>
                     patch({
                       fontSize: Math.max(
-                        1,
-                        Math.min(120, Number(e.target.value)),
+                        .1,
+                        Math.min(600, Number(e.target.value)),
                       ),
                     })
                   }
@@ -147,3 +147,4 @@ export function OverlayDefaultsEditor({
     </details>
   );
 }
+

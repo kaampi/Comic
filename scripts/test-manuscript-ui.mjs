@@ -636,6 +636,18 @@ try {
     parseAlbumBackup(JSON.parse(JSON.stringify(backup))),
     backedUpProject,
   );
+  const { normalizeProjectTypography } = await import(pathToFileURL(join(compiledRoot,"pageTypography.mjs")));
+  const legacyBackup = structuredClone(backup);
+  delete legacyBackup.project.typographyVersion;
+  const legacySnapshot = structuredClone(legacyBackup);
+  const migratedBackup = parseAlbumBackup(legacyBackup);
+  assert.deepEqual(legacyBackup,legacySnapshot);
+  assert.deepEqual(migratedBackup,normalizeProjectTypography(legacyBackup.project));
+  assert.deepEqual(parseAlbumBackup(packAlbumBackup(migratedBackup)),migratedBackup);
+  assert.deepEqual(restoredAlbumCopy(legacyBackup.project).pages,migratedBackup.pages);
+  const unknownTypography = structuredClone(backup);
+  unknownTypography.project.typographyVersion=99;
+  assert.throws(()=>parseAlbumBackup(unknownTypography),/unsupported-backup/);
   const copiedProject = restoredAlbumCopy(backedUpProject);
   assert.notEqual(copiedProject.id, backedUpProject.id);
   assert.deepEqual(copiedProject.pages, backedUpProject.pages);
@@ -738,7 +750,7 @@ try {
   await user.click(speechDefaults.querySelector("summary"));
   await user.click(within(speechDefaults).getByRole("combobox", {name:"Font",exact:true}));
   await user.click(within(speechDefaults).getByRole("option", {name:"Permanent Marker",exact:true}));
-  fireEvent.change(within(speechDefaults).getByLabelText("Textstorlek"), {
+  fireEvent.change(within(speechDefaults).getByLabelText("Textstorlek (pt)"), {
     target: { value: "12" },
   });
   fireEvent.change(within(speechDefaults).getByLabelText("Rundning"), {
