@@ -1,7 +1,7 @@
 {
   "name": "comicbook-ai",
   "version": "0.1.0",
-  "description": "ComicBook AI — local-first comic creation workspace.",
+  "description": "ComicBook AI \u2014 local-first comic creation workspace.",
   "type": "module",
   "private": true,
   "scripts": {
@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test:module-paths": "node scripts/test-module-paths.mjs",
     "test:adaptation": "node scripts/test-adaptation.mjs",
-    "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs"
+    "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs",
+    "test:export": "node scripts/test-export.mjs"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",

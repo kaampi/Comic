@@ -27,3 +27,21 @@ Ett komplett flöde för en kort serie på 1–3 sidor: text eller StoryBook-imp
 
 Teknikförslaget är React, TypeScript, Vite och Tauri. Val av AI-tjänster och övriga bibliotek fastställs vid implementation.
 
+
+
+## Sidformat och export
+
+Öppna **Albuminställningar → Sidformat** och välj A4, Letter eller eget format i millimeter, stående eller liggande. Formatet gäller alla albumets sidor och sparas i albumbackupen. Nya album börjar i A4. Äldre album behåller tidigare 3:5-proportioner som ett eget format (180 × 300 mm) tills du ändrar inställningen. Ändrade proportioner kan ändra bildbeskärningen; bilder, bubblor och rutkopplingar finns kvar.
+
+Välj **Exportera** i albummenyn:
+
+- **PDF:** en fil med de valda sidorna i sidordning och rätt fysiska mått. Sidorna rasteriseras i vald dpi med JPEG-kvalitet 98%; texten är inte sökbar.
+- **PNG:** en förlustfri bild per sida.
+- **JPEG:** en bild per sida, med valbar kvalitet 50–100%.
+- En vald bildsida laddas ner direkt. Flera PNG/JPEG-sidor samlas i en vanlig ZIP med numrerade filnamn. Detta är inte en CBZ-export.
+
+Välj hela albumet eller markera sidor individuellt, samt 72, 150, 300 eller 600 dpi. Exportens sidformat kan ändras utan att albumets inställningar ändras. Vid andra proportioner bevaras hela sidan med vita marginaler som standard; **Fyll sidan och beskär kanterna** är ett aktivt val. Exporten innehåller sidbakgrund, beskärning, textlager, bubblor, lokala fonter och SFX, utan rutnät, läsordningsnummer eller redigeringshandtag. Tomma bildrutor exporteras vita med ram.
+
+Exporten körs lokalt och kan avbrytas. En sida får ha högst 40 miljoner pixlar och högst 16 384 pixlar per kant; minska dpi för större egna format. Tryckutfall, CMYK, CBZ och EPUB ingår inte i denna första exportversion.
+
+Kontroller: `npm run test:export`, `npm run test:module-paths`, `npm run test:adaptation`, `npm run test:manuscript-ui` och `npm run build`.

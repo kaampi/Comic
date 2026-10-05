@@ -8,6 +8,7 @@ import "./adaptation.css";
 import "./formTheme.css";
 import "./stylePreviews.css";
 import "./localAi.css";
+import "./albumExport.css";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("ComicBook AI kunde inte hitta appens rot.");

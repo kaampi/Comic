@@ -972,8 +972,38 @@ try {
   });
   assert.equal(saved().pageDefaults.gridColumns, 4);
   assert.equal(saved().pages[0].gridColumns, 3);
+  const originalPageLayers = structuredClone(saved().pages);
+  await user.selectOptions(within(albumDialog).getByLabelText("Format", {exact:true}),"letter");
+  await user.selectOptions(within(albumDialog).getByLabelText("Orientering", {exact:true}),"landscape");
+  assert.equal(saved().pageFormat.preset,"letter");
+  assert.equal(saved().pageFormat.orientation,"landscape");
+  assert.deepEqual(saved().pages,originalPageLayers);
+  await user.selectOptions(within(albumDialog).getByLabelText("Format", {exact:true}),"custom");
+  fireEvent.change(within(albumDialog).getByLabelText("Bredd (mm)"),{target:{value:"170"}});
+  fireEvent.change(within(albumDialog).getByLabelText("Höjd (mm)"),{target:{value:"260"}});
+  assert.equal(saved().pageFormat.widthMm,170);
+  assert.equal(saved().pageFormat.heightMm,260);
+  assert.deepEqual(readProjects()[0].pageFormat,saved().pageFormat);
+  const formatBackup=packAlbumBackup(saved());
+  assert.deepEqual(parseAlbumBackup(formatBackup).pageFormat,saved().pageFormat);
+  const invalidFormatBackup=structuredClone(formatBackup);invalidFormatBackup.project.pageFormat.widthMm=-1;
+  assert.throws(()=>parseAlbumBackup(invalidFormatBackup),/invalid-backup/);
   fireEvent.keyDown(window, { key: "Escape" });
   assert.equal(screen.queryByRole("dialog"), null);
+  await user.click(screen.getByRole("button", {name:"Exportera",exact:true}));
+  const exportDialog=screen.getByRole("dialog",{name:"Exportera",exact:true});
+  assert.equal(within(exportDialog).getByLabelText("Format",{exact:true}).value,"custom");
+  assert.equal(within(exportDialog).getByLabelText("Upplösning (dpi)").value,"300");
+  assert.equal(within(exportDialog).getByLabelText("Filformat").value,"pdf");
+  const beforeExportSettings=structuredClone(saved());
+  await user.selectOptions(within(exportDialog).getByLabelText("Format",{exact:true}),"a4");
+  assert.equal(within(exportDialog).getByLabelText("Anpassning till annat format").value,"contain");
+  await user.selectOptions(within(exportDialog).getByLabelText("Filformat"),"jpeg");
+  assert.equal(within(exportDialog).getByLabelText("JPEG-kvalitet (%)").value,"95");
+  await user.click(within(exportDialog).getByLabelText("Sida 1",{exact:true}));
+  assert.equal(within(exportDialog).getByRole("button",{name:"Ladda ner export",exact:true}).disabled,true);
+  assert.deepEqual(saved(),beforeExportSettings);
+  fireEvent.keyDown(window,{key:"Escape"});
   await user.click(screen.getByRole("button", { name: "Backup", exact: true }));
   const originalCreate = URL.createObjectURL,
     originalRevoke = URL.revokeObjectURL,

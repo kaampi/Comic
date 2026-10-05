@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_FORMAT, albumPageFormat, type PageFormat } from "./pageFormat";
 import { BUILTIN_STYLES, type IllustrationStyle } from "./stylesLibrary";
 import type { PanelImage, StoryAdaptation } from "./adaptation/types";
 import { repairLegacyAdaptation } from "./adaptation/repair";
@@ -41,6 +42,7 @@ export type ComicProject = {
   references?: { characterPortraits?: Record<string, string> };
   style: IllustrationStyle;
   renderOptions: { linesOnly: boolean };
+  pageFormat?: PageFormat;
   pageDefaults: { gridColumns: number; gridRows: number };
   characters: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string; pronoun?: string; approximateAge?: number }>;
   locations: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string }>;
@@ -66,7 +68,7 @@ export function createProject(title: string, source: ProjectSource, style: Illus
   const now = new Date().toISOString();
   return {
     format: PROJECT_FORMAT, id: stableId("project"), title: title.trim(), createdAt: now, updatedAt: now,
-    source: { type: source, textSnapshot: "" }, style: { ...style }, renderOptions: { linesOnly: false }, pageDefaults: { gridColumns: 3, gridRows: 5 }, characters: [], locations: [], scenes: [], panels: [], pages: [], adaptations: [], bubbleSwatches: []
+    pageFormat: { ...DEFAULT_PAGE_FORMAT }, source: { type: source, textSnapshot: "" }, style: { ...style }, renderOptions: { linesOnly: false }, pageDefaults: { gridColumns: 3, gridRows: 5 }, characters: [], locations: [], scenes: [], panels: [], pages: [], adaptations: [], bubbleSwatches: []
   };
 }
 
@@ -76,6 +78,7 @@ export function readProjects(): ComicProject[] {
     return Array.isArray(data) ? data.filter((p) => p?.format === PROJECT_FORMAT && typeof p?.id === "string").map((p) => ({
       ...p,
       renderOptions: { linesOnly: Boolean(p.renderOptions?.linesOnly) },
+      pageFormat: albumPageFormat(p),
       pageDefaults: p.pageDefaults ?? { gridColumns: 3, gridRows: 5 },
       characters: Array.isArray(p.characters) ? p.characters.map((item: any) => ({ ...item, visualIdentity: item.visualIdentity ?? "" })) : [],
       locations: Array.isArray(p.locations) ? p.locations.map((item: any) => ({ ...item, visualIdentity: item.visualIdentity ?? "" })) : [],

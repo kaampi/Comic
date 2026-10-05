@@ -1,0 +1,8 @@
+/* Scale gutters with the page so preview and export share the same geometry. */
+.page-planner .layout-canvas { padding: 0; container-type: inline-size; border: 0; outline: 1px solid var(--border); background: #fffdf7; }
+.layout-canvas .construction-grid, .layout-canvas .layout-panels, .layout-canvas .layout-snap-grid { inset: 1.428571cqw; gap: .857143cqw; }
+.layout-canvas .drawn-panel { border-width: .428571cqw; background: #fffdf7; }
+.export-page-list { display: flex; flex-wrap: wrap; gap: .8rem; }
+.export-page-list label { display: flex; align-items: center; gap: .4rem; }
+.export-page-list input { width: auto; }
+.export-progress { width: 100%; }

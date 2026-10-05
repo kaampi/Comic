@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import ts from 'typescript';
+import { pathToFileURL } from 'node:url';
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
+fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
+try {
+  for(const name of ['pageFormat.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+    const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
+    const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
+    fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
+  }
+  const f=await import(pathToFileURL(path.join(dir,'pageFormat.mjs'))), files=await import(pathToFileURL(path.join(dir,'exportFiles.mjs')));
+  assert.equal(f.pageAspect(f.albumPageFormat({})),.6);
+  assert.deepEqual(f.pageDimensions(f.DEFAULT_PAGE_FORMAT),{widthMm:210,heightMm:297});
+  assert.deepEqual(f.pageDimensions({...f.DEFAULT_PAGE_FORMAT,preset:'letter',orientation:'landscape'}),{widthMm:279.4,heightMm:215.9});
+  assert.deepEqual(f.pageDimensions({...f.DEFAULT_PAGE_FORMAT,preset:'custom',widthMm:170,heightMm:260}),{widthMm:170,heightMm:260});
+  assert.deepEqual(f.rasterDimensions(f.DEFAULT_PAGE_FORMAT,300),{width:2480,height:3508});
+  assert.deepEqual(f.rasterDimensions({...f.DEFAULT_PAGE_FORMAT,orientation:'landscape'},300),{width:3508,height:2480});
+  assert.equal(f.validPageFormat({...f.DEFAULT_PAGE_FORMAT,widthMm:NaN}),false);
+  assert.throws(()=>f.rasterDimensions({...f.DEFAULT_PAGE_FORMAT,preset:'custom',widthMm:1000,heightMm:1000},600),/export-too-large/);
+  const rect=f.layerRect({gridColumns:3,gridRows:5},{x:0,y:0,width:3,height:5},f.LEGACY_PAGE_FORMAT);
+  assert.equal(rect.x,10);assert.equal(rect.width,680);assert.equal(rect.height,700/.6-20);
+  assert.equal(files.crc32(new TextEncoder().encode('123456789')),0xcbf43926);
+  const archive=Buffer.from(await files.imageArchive([{name:'Å-001.png',bytes:new Uint8Array([1,2,3])},{name:'Å-002.png',bytes:new Uint8Array([4,5])}]).arrayBuffer());
+  assert.equal(archive.readUInt32LE(0),0x04034b50);assert.equal(archive.readUInt16LE(6),0x800);assert.equal(archive.readUInt16LE(archive.length-12),2);
+  const pdf=Buffer.from(await files.rasterPdf([{bytes:new Uint8Array([255,216,255,217]),width:20,height:30},{bytes:new Uint8Array([255,216,255,217]),width:20,height:30}],210,297).arrayBuffer());
+  const text=pdf.toString('latin1');assert.match(text,/\/Count 2/);assert.match(text,/\/MediaBox \[0 0 595\.27559 841\.88976\]/);
+  const xref=Number(text.match(/startxref\n(\d+)/)[1]);assert.equal(text.slice(xref,xref+4),'xref');
+  for(const [i,line] of text.slice(xref).split('\n').slice(3,11).entries()) assert.equal(text.slice(Number(line.slice(0,10)),Number(line.slice(0,10))+7),`${i+1} 0 obj`);
+  const jpeg=files.imageDensity(new Uint8Array([255,216,255,217]),'image/jpeg',300);assert.equal(jpeg[13],1);assert.equal((jpeg[14]<<8)|jpeg[15],300);assert.equal(jpeg.at(-1),217);
+  const {pageSvg,exportAlbum,exportFilename}=await import(pathToFileURL(path.join(dir,'albumExport.mjs')));
+  assert.equal(exportFilename('My:/album?'), 'My--album-');
+  const layer={id:'frame',x:0,y:0,width:1,height:1,readingOrder:9,overlays:[{id:'text',type:'speech',text:'ÅÄÖ\nSecond line',fontFamily:'Comic Neue, sans-serif',x:5,y:5,width:85,height:45,fontSize:8,rotation:0,tailEnabled:true,tailX:30,tailY:65}]};
+  const page={id:'page',number:1,gridColumns:3,gridRows:5,placements:[layer]}, project={pageFormat:f.DEFAULT_PAGE_FORMAT,pages:[page]};
+  const markup=await pageSvg(project,page,'@font-face{font-family:test}',3);
+  assert.match(markup,/<svg[^>]+width="2100"/);assert.match(markup,/stroke-width="6"[^>]*vector-effect="non-scaling-stroke"/);
+  assert.match(markup,/ÅÄÖ/);assert.match(markup,/Second line/);assert.match(markup,/clip-path/);
+  assert.ok(!markup.includes('readingOrder')&&!markup.includes('panel-corner-handle')&&!markup.includes('grid-cell'));
+  const controller=new AbortController();controller.abort();
+  await assert.rejects(exportAlbum(project,{format:'png',pageIds:['page'],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{},controller.signal),{name:'AbortError'});
+  await assert.rejects(exportAlbum(project,{format:'png',pageIds:[],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{}),/no-pages/);
+  console.log('SVG artwork, local text, stroke scaling and export cancellation passed.');
+  console.log('Export formats, legacy geometry, pixel sizes, PDF cross references, ZIP CRC and JPEG density passed.');
+}finally{fs.rmSync(dir,{recursive:true,force:true});}

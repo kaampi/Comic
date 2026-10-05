@@ -1,3 +1,6 @@
+import { AlbumExportPanel } from "./AlbumExportPanel";
+import { PageFormatEditor } from "./PageFormatEditor";
+import { albumPageFormat } from "./pageFormat";
 import { useEffect, useRef, useState } from "react";
 import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
@@ -9,7 +12,7 @@ import {
   parseAlbumBackup,
 } from "./albumBackup";
 import "./AlbumMenu.css";
-export type AlbumTool = "settings" | "backup" | null;
+export type AlbumTool = "settings" | "backup" | "export" | null;
 export function AlbumMenu({
   project,
   locale,
@@ -53,7 +56,7 @@ export function AlbumMenu({
       if (e.key === "Tab") {
         const controls = Array.from(
           dialog.current?.querySelectorAll<HTMLElement>(
-            "button:not(:disabled),input:not(:disabled),select,textarea,summary",
+            "button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary",
           ) ?? [],
         ).filter(
           (el) =>
@@ -157,6 +160,7 @@ export function AlbumMenu({
           <button onClick={() => onMode("settings")}>
             {sv ? "Albuminställningar" : "Album settings"}
           </button>
+          <button onClick={() => onMode("export")}>{sv ? "Exportera" : "Export"}</button>
           <button onClick={() => onMode("backup")}>Backup</button>
           <button onClick={() => onMode("backup")}>
             {sv ? "Återställ backup" : "Restore backup"}
@@ -187,7 +191,7 @@ export function AlbumMenu({
                   ? sv
                     ? "Albuminställningar"
                     : "Album settings"
-                  : "Backup"}
+                  : mode === "export" ? (sv ? "Exportera" : "Export") : "Backup"}
               </h2>
               <button className="text-button" onClick={() => onMode(null)}>
                 {sv ? "Stäng" : "Close"}
@@ -273,6 +277,8 @@ export function AlbumMenu({
                     </label>
                   ))}
                 </fieldset>
+                <PageFormatEditor value={albumPageFormat(project)} locale={locale} onChange={pageFormat => onUpdate(p => ({...p,pageFormat}))}/>
+                <p className="quiet">{sv ? "Sidformatet gäller alla sidor. Ändrade proportioner påverkar beskärningen av befintliga bilder." : "The format applies to all pages. Changing proportions affects cropping of existing images."}</p>
                 <OverlayDefaultsEditor
                   project={project}
                   locale={locale}
@@ -290,6 +296,7 @@ export function AlbumMenu({
                 </p>
               </>
             ) : null}
+            {mode === "export" && project ? <AlbumExportPanel key={project.id} project={project} locale={locale}/> : null}
             {mode === "backup" && (
               <>
                 {project && (

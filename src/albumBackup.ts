@@ -1,3 +1,4 @@
+import { validPageFormat } from "./pageFormat";
 import { pageLayers } from "./pageBackground";
 import type { ComicProject } from "./project";
 export const ALBUM_BACKUP_KIND = "comicbook-ai.album";
@@ -71,6 +72,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   record(p.renderOptions);
   if (typeof p.renderOptions.linesOnly !== "boolean")
     throw new Error("invalid-backup");
+  if (p.pageFormat !== undefined && !validPageFormat(p.pageFormat)) throw new Error("invalid-backup");
   record(p.pageDefaults);
   for (const key of ["gridColumns", "gridRows"]) {
     number(p.pageDefaults[key]);
