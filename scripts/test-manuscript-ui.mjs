@@ -947,6 +947,27 @@ try {
   // A full-page layer uses the existing editor without adding layout frames.
   const framesBeforeBackground = saved().pages[0].placements;
   await user.click(document.querySelector(".page-background-controls summary"));
+  assert.equal(saved().pages[0].background,undefined);
+  await user.upload(screen.getByLabelText("Ladda upp bakgrundsbild",{exact:true}),new window.File(["direct background"],"direct-background.png",{type:"image/png"}));
+  await screen.findByLabelText("Byt bakgrundsbild",{exact:true});
+  const directBackgroundId=saved().pages[0].background.id;
+  assert.equal(saved().pages[0].background.image.name,"direct-background.png");
+  assert.deepEqual(saved().pages[0].placements,framesBeforeBackground);
+  assert.ok(document.querySelector(".page-background-layer img"));
+  await user.click(screen.getByRole("button",{name:"Redigera bakgrund och text",exact:true}));
+  const directEditor=document.querySelector(".panel-editor-modal");
+  await user.click(within(directEditor.querySelector("header")).getByRole("button",{name:"Lägg till textruta",exact:true}));
+  const directBackgroundOverlays=structuredClone(saved().pages[0].background.overlays);
+  await user.click(within(directEditor.querySelector("header")).getByRole("button",{name:"Stäng",exact:true}));
+  await user.upload(screen.getByLabelText("Byt bakgrundsbild",{exact:true}),new window.File(["replacement background"],"replacement.png",{type:"image/png"}));
+  await waitFor(()=>assert.equal(saved().pages[0].background.image.name,"replacement.png"));
+  assert.equal(saved().pages[0].background.id,directBackgroundId);
+  assert.deepEqual(saved().pages[0].background.overlays,directBackgroundOverlays);
+  assert.deepEqual(saved().pages[0].placements,framesBeforeBackground);
+  window.confirm=()=>true;
+  await user.click(screen.getByRole("button",{name:"Ta bort bakgrund",exact:true}));
+  assert.equal(saved().pages[0].background,undefined);
+
   await user.click(screen.getByRole("button", {name:"Välj från rutbiblioteket",exact:true}));
   assert.equal(screen.getByLabelText("Bildruta på sidan").value,"__background__");
   assert.deepEqual(saved().pages[0].placements,framesBeforeBackground);
@@ -1127,3 +1148,4 @@ try {
   dom.window.close();
   rmSync(compiledRoot, { recursive: true, force: true });
 }
+

@@ -40,3 +40,15 @@
 .background-image-upload input {
   display: none;
 }
+
+.page-background-upload {
+  display: grid;
+  gap: .4rem;
+  margin: .8rem 0;
+  font-weight: 600;
+}
+.page-background-upload input {
+  width: 100%;
+  min-width: 0;
+  font-weight: 400;
+}

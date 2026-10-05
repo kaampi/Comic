@@ -45,3 +45,7 @@ Välj hela albumet eller markera sidor individuellt, samt 72, 150, 300 eller 600
 Exporten körs lokalt och kan avbrytas. En sida får ha högst 40 miljoner pixlar och högst 16 384 pixlar per kant; minska dpi för större egna format. Tryckutfall, CMYK, CBZ och EPUB ingår inte i denna första exportversion.
 
 Kontroller: `npm run test:export`, `npm run test:module-paths`, `npm run test:adaptation`, `npm run test:manuscript-ui` och `npm run build`.
+
+## Ladda upp sidbakgrund
+
+Under **Sidor → Sidans bakgrund** kan du välja **Ladda upp bakgrundsbild** direkt, utan att först öppna bildredigeraren. PNG, JPEG och WebP stöds. När sidan har en bild visas **Byt bakgrundsbild**. Bildbytet behåller bakgrundens textlager och de vanliga bildrutorna ovanpå. Öppna **Redigera bakgrund och text** för beskärning, zoom och bubblor.
