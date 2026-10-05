@@ -9,7 +9,7 @@ export const PANEL_SHAPE_PRESETS = [
 
 export function validPanelShape(value: unknown): value is ShapePoint[] {
   if (!Array.isArray(value) || value.length < 3 || value.length > 4) return false;
-  if (!value.every(p => p && Number.isInteger(p.x) && Number.isInteger(p.y) && p.x >= 0 && p.x <= 4 && p.y >= 0 && p.y <= 4)) return false;
+  if (!value.every(p => p && Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= 0 && p.x <= 4 && p.y >= 0 && p.y <= 4)) return false;
   if (new Set(value.map(p => `${p.x},${p.y}`)).size !== value.length) return false;
   let area = 0;
   for (let i=0;i<value.length;i++) {
@@ -23,8 +23,14 @@ export function validPanelShape(value: unknown): value is ShapePoint[] {
 export function panelShapePoints(layer: { shapePoints?: ShapePoint[] }): ShapePoint[] {
   return validPanelShape(layer.shapePoints) ? layer.shapePoints : PANEL_SHAPE_PRESETS[0].points.map(p=>({...p}));
 }
-export function moveShapeCorner(points: ShapePoint[], index: number, x: number, y: number): ShapePoint[] {
-  const next=points.map((p,i)=>i===index?{x:Math.max(0,Math.min(4,Math.round(x))),y:Math.max(0,Math.min(4,Math.round(y)))}:{...p});
+// Stored coordinates stay normalized to 0..4, preserving previously saved forms.
+// Subdivide every single page-grid cell, rather than the whole bounding panel.
+export function panelShapeGrid(layer: { width: number; height: number }) {
+  return { columns: Math.max(4, Math.round(layer.width * 4)), rows: Math.max(4, Math.round(layer.height * 4)) };
+}
+export function moveShapeCorner(points: ShapePoint[], index: number, x: number, y: number, columns=4, rows=4): ShapePoint[] {
+  const snap=(value:number,divisions:number)=>Math.max(0,Math.min(4,Math.round(value*divisions/4)*4/divisions));
+  const next=points.map((p,i)=>i===index?{x:snap(x,columns),y:snap(y,rows)}:{...p});
   return validPanelShape(next) ? next : points;
 }
 export function shapePolygon(points: ShapePoint[]) { return points.map(p=>`${p.x*25},${p.y*25}`).join(" "); }

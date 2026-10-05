@@ -61,4 +61,4 @@ Radbrytningen mäter textens faktiska bredd i valt typsnitt och vikt. **Sidmargi
 
 ## Rutor med olika former
 
-Markera en ruta under **Sidor**, välj **Rutans form** och använd **Redigera form** för hörn som fäster på ett 4×4-rutnät. Rektangel, romb, parallellogram, trapets och triangel stöds. **Klar med formen** återgår till storleksändring. Bild och text beskärs efter konturen i sidvy, redigerare och export. Former sparas med albumet och följer med backup. Se [PAGE_LAYOUT.md](PAGE_LAYOUT.md).
+Markera en ruta under **Sidor**, välj **Rutans form** och använd **Redigera form** för hörn som fäster på ett rutnät med fyra delningar per enkelpanel i sidlayouten. Större bildrutor får fler fästpunkter. Rektangel, romb, parallellogram, trapets och triangel stöds. **Klar med formen** återgår till storleksändring. Bild och text beskärs efter konturen i sidvy, redigerare och export. Former sparas med albumet och följer med backup. Se [PAGE_LAYOUT.md](PAGE_LAYOUT.md).

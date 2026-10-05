@@ -56,6 +56,6 @@ I **Sidor → Sidans bakgrund** kan du ge sidan en bild som fyller hela ytan, un
 
 ## Rutans form
 
-Markera en bildruta på sidan och välj **Rutans form**: rektangel, romb, parallellogram, trapets eller triangel. Välj **Redigera form** för att flytta hörnen. Varje ruta har ett eget 4×4-rutnät med 25 fästpunkter, inklusive kanterna och mitten. Hörnen fäster vid närmaste punkt; piltangenterna flyttar ett steg. Escape eller avbruten pekardragning ångrar den pågående dragningen. Korsande hörn och kollapsade former tillåts inte.
+Markera en bildruta på sidan och välj **Rutans form**: rektangel, romb, parallellogram, trapets eller triangel. Välj **Redigera form** för att flytta hörnen. Varje enkelpanel i sidans rutnät delas i 4×4. En bildruta som täcker 3 kolumner och 5 rader får därför 12×20 delningar och 13×21 fästpunkter. En ruta på en enda cell har 25 punkter. Fästnätet blir tätare när rutan täcker fler celler. Hörnen fäster vid närmaste punkt; piltangenterna flyttar ett steg. Escape eller avbruten pekardragning ångrar den pågående dragningen. Korsande hörn och kollapsade former tillåts inte.
 
 **Klar med formen** återgår till handtagen för rutans storlek. Formen sparas relativt bildrutan och följer med när dess storlek ändras. Bilder och textlager beskärs efter polygonen i sidvy, bildredigerare och PDF/PNG/JPEG-export. Punktstorleken på text påverkas inte av formvalet. Formen ingår i albumbackupen; äldre rutor är rektangulära. Sidbakgrunden behåller hela sidans form.
