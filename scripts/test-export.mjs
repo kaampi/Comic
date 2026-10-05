@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
 try {
-  for(const name of ['panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+  for(const name of ['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
     const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
     fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
@@ -206,6 +206,35 @@ try {
   const fittedSvg=await pageSvg(project,{...sharedPage,placements:[rightPanel,fitted]},'',1);
   assert.equal((fittedSvg.match(/<clipPath[^>]*><polygon/g)||[]).length,2);
   console.log('PASS: shared-cell polygon placement, parallel neighbor fitting, physical frame gap, all four sides and collision rejection.');
+  const borders=await import(pathToFileURL(path.join(dir,'panelBorder.mjs')));
+  assert.ok(Math.abs(borders.panelBorderWidth(project,layer)-3)<1e-9,'legacy frame width retained');
+  const redDefault={color:'#cc2233',thicknessPt:3,visible:true};
+  const blueOverride={color:'#2244cc',thicknessPt:6,visible:true};
+  const borderedProject={...project,panelBorderDefaults:redDefault};
+  assert.deepEqual(borders.panelBorderStyle(borderedProject,layer),redDefault);
+  assert.deepEqual(borders.panelBorderStyle(borderedProject,{...layer,panelBorder:blueOverride}),blueOverride);
+  assert.equal(borders.panelBorderWidth(borderedProject,{...layer,panelBorder:{...blueOverride,visible:false}}),0);
+  assert.equal(borders.validPanelBorder({...redDefault,color:'red'}),false);
+  assert.equal(borders.validPanelBorder({...redDefault,thicknessPt:-1}),false);
+  const coloredPage={...page,placements:[{...layer,id:'red'},{...layer,id:'blue',x:1,shapePoints:shapes.PANEL_SHAPE_PRESETS[1].points,panelBorder:blueOverride},{...layer,id:'hidden',x:2,panelBorder:{...blueOverride,visible:false}}]};
+  const coloredSvg=await pageSvg(borderedProject,coloredPage,'',1);
+  assert.match(coloredSvg,/stroke="#cc2233"/);
+  assert.match(coloredSvg,/stroke="#2244cc"/);
+  assert.equal((coloredSvg.match(/stroke="#2244cc"/g)||[]).length,1,'hidden frame omits its stroke');
+  assert.ok(coloredSvg.includes(`stroke-width="${borders.panelBorderWidth(borderedProject,coloredPage.placements[1])}"`));
+  const thickRight={...rightPanel,panelBorder:blueOverride},thinLeft={...leftPanel,panelBorder:{...redDefault,thicknessPt:1}};
+  const variablePage={...sharedPage,placements:[thickRight,thinLeft]};
+  const variableFit=geometry.fitPanelToNeighbor(variablePage,thinLeft,thickRight,'left',2,project.pageFormat,redDefault);
+  assert.ok(variableFit);
+  const variableOutline=geometry.panelOutline(variablePage,variableFit,project.pageFormat);
+  const clearance=(borders.panelBorderWidth(borderedProject,thickRight)+borders.panelBorderWidth(borderedProject,thinLeft))/2;
+  for(const point of [variableOutline[1],variableOutline[2]])assert.ok(Math.abs((point.x-edgeA.x)*nx+(point.y-edgeA.y)*ny-(2*700/210+clearance))<1e-7,'gutter uses both actual border widths');
+  const borderlessRight={...thickRight,panelBorder:{...blueOverride,visible:false}},borderlessLeft={...thinLeft,panelBorder:{...redDefault,visible:false}};
+  const borderlessPage={...sharedPage,placements:[borderlessRight,borderlessLeft]};
+  const borderlessFit=geometry.fitPanelToNeighbor(borderlessPage,borderlessLeft,borderlessRight,'left',2,project.pageFormat);
+  assert.ok(borderlessFit);
+  assert.deepEqual(typography.pageLayerTextMetrics(borderedProject,page,layer),typography.pageLayerTextMetrics(project,page,layer),'border style never rescales text or images');
+  console.log('PASS: border defaults/overrides, colors and point thickness in export, hidden strokes, unchanged content metrics and variable-width edge gutters.');
   const controller=new AbortController();controller.abort();
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:['page'],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{},controller.signal),{name:'AbortError'});
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:[],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{}),/no-pages/);

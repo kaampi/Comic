@@ -1,3 +1,4 @@
+import type { PanelBorderStyle } from "./panelBorder";
 import type { ShapePoint } from "./panelShape";
 import { normalizeProjectTypography } from "./pageTypography";
 import { DEFAULT_PAGE_FORMAT, albumPageFormat, type PageFormat } from "./pageFormat";
@@ -32,7 +33,7 @@ export type BubbleSwatch = {
   characterId?: string;
 };
 
-export type PageLayer={ shapePoints?:ShapePoint[];id:string;panelId?:string;x:number;y:number;width:number;height:number;readingOrder:number;overlays:TextOverlay[];image?:PanelImage;sourceBeatIds?:string[];adaptationPanelPlanId?:string };
+export type PageLayer={ panelBorder?:PanelBorderStyle;shapePoints?:ShapePoint[];id:string;panelId?:string;x:number;y:number;width:number;height:number;readingOrder:number;overlays:TextOverlay[];image?:PanelImage;sourceBeatIds?:string[];adaptationPanelPlanId?:string };
 
 export type ComicProject = {
   format: 1;
@@ -46,6 +47,7 @@ export type ComicProject = {
   renderOptions: { linesOnly: boolean };
   pageFormat?: PageFormat;
   typographyVersion?: 2;
+  panelBorderDefaults?: PanelBorderStyle;
   pageDefaults: { gridColumns: number; gridRows: number };
   characters: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string; pronoun?: string; approximateAge?: number }>;
   locations: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string }>;

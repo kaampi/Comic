@@ -1,3 +1,4 @@
+import { panelBorderStyle, panelBorderWidth } from "./panelBorder";
 import { imagePlacement } from "./imageView";
 import { pageLayerTextMetrics } from "./pageTypography";
 import { overlayFont } from "./overlayTypography";
@@ -64,8 +65,9 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
     // Non-scaling strokes stay proportional to the canonical 700px page at every DPI.
     overlays=overlays.replace(/<[^>]+vector-effect="non-scaling-stroke"[^>]*>/g,tag=>tag.replace(/stroke-width="([^"]+)"/,(_,v)=>`stroke-width="${Number(v)*outputScale}"`));
     body.push(overlays,"</g>");
-    if(shaped)body.push(`<polygon points="${polygon}" fill="none" stroke="#27211b" stroke-width="${border}" stroke-linejoin="round"/>`);
-    else if(!background)body.push(`<rect x="${r.x+border/2}" y="${r.y+border/2}" width="${r.width-border}" height="${r.height-border}" fill="none" stroke="#27211b" stroke-width="${border}"/>`);
+    const frameWidth=background?0:panelBorderWidth(project,layer),frameColor=panelBorderStyle(project,layer).color;
+    if(shaped&&frameWidth>0)body.push(`<polygon points="${polygon}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}" stroke-linejoin="round"/>`);
+    else if(!background&&frameWidth>0)body.push(`<rect x="${r.x+border/2}" y="${r.y+border/2}" width="${r.width-border}" height="${r.height-border}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}"/>`);
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${700*outputScale}" height="${height*outputScale}" viewBox="0 0 700 ${height}"><defs>${defs.join("")}<style>${fontCss}</style></defs>${body.join("")}</svg>`;
 }

@@ -1345,6 +1345,40 @@ try {
     const acceptedShape=structuredClone(saved().pages[0].placements[1].shapePoints);
     await user.selectOptions(screen.getByLabelText('Rutans form'),'rectangle');
     assert.deepEqual(saved().pages[0].placements[1].shapePoints,acceptedShape);
+    const beforeBorderContents=structuredClone(saved().pages[0].placements);
+    await user.click(screen.getByRole('button',{name:'Albuminställningar',exact:true}));
+    const borderDialog=screen.getByRole('dialog',{name:'Albuminställningar',exact:true});
+    fireEvent.change(within(borderDialog).getByLabelText('Ramfärg (hex)'),{target:{value:'#aa2233'}});
+    fireEvent.change(within(borderDialog).getByLabelText('Ramtjocklek (pt)'),{target:{value:'2'}});
+    fireEvent.keyDown(window,{key:'Escape'});
+    assert.equal(saved().panelBorderDefaults.color,'#aa2233');
+    const selectedFrame=screen.getByLabelText('ruta 5',{exact:true});
+    const selectedOutline=selectedFrame.querySelector('.panel-frame-outline polygon');
+    assert.equal(selectedOutline.getAttribute('stroke'),'#aa2233');
+    assert.equal(screen.getByLabelText('Använd albumets standardram').checked,true);
+    fireEvent.change(screen.getByLabelText('Ramfärg (hex)'),{target:{value:'#22aa44'}});
+    fireEvent.change(screen.getByLabelText('Ramtjocklek (pt)'),{target:{value:'6'}});
+    assert.equal(screen.getByLabelText('Använd albumets standardram').checked,false);
+    assert.equal(selectedOutline.getAttribute('stroke'),'#22aa44');
+    assert.equal(saved().pages[0].placements[1].panelBorder.thicknessPt,6);
+    assert.equal(screen.getByLabelText('ruta 1',{exact:true}).querySelector('.panel-frame-outline polygon').getAttribute('stroke'),'#aa2233');
+    await user.click(screen.getByLabelText('Visa ram'));
+    assert.equal(selectedFrame.querySelector('.panel-frame-outline'),null);
+    assert.equal(saved().pages[0].placements[1].panelBorder.visible,false);
+    await user.click(screen.getByLabelText('Använd albumets standardram'));
+    assert.equal(saved().pages[0].placements[1].panelBorder,undefined);
+    assert.equal(selectedFrame.querySelector('.panel-frame-outline polygon').getAttribute('stroke'),'#aa2233');
+    const afterBorderContents=saved().pages[0].placements;
+    for(let i=0;i<afterBorderContents.length;i++){
+      assert.deepEqual(afterBorderContents[i].image,beforeBorderContents[i].image);
+      assert.deepEqual(afterBorderContents[i].overlays,beforeBorderContents[i].overlays);
+      assert.deepEqual(afterBorderContents[i].shapePoints,beforeBorderContents[i].shapePoints);
+    }
+    assert.deepEqual(parseAlbumBackup(packAlbumBackup(saved())).panelBorderDefaults,saved().panelBorderDefaults);
+    const badBorderBackup=packAlbumBackup(structuredClone(saved()));badBorderBackup.project.panelBorderDefaults.thicknessPt=-1;
+    assert.throws(()=>parseAlbumBackup(badBorderBackup),/invalid-backup/);
+    console.log('PASS: inherited album border, custom color/hex/thickness, hidden border, restoring defaults and intact frame contents/backup.');
+
   }finally{edgeView.unmount();}
   console.log('PASS: screenshot-style shared middle cell, neighbor-fit controls, adjustable gap, stable frame contents, overlap prevention and backup/load.');
   console.log(

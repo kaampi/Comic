@@ -1,3 +1,4 @@
+import { validPanelBorder } from "./panelBorder";
 import { validPanelShape } from "./panelShape";
 import { normalizeProjectTypography } from "./pageTypography";
 import { validPageFormat } from "./pageFormat";
@@ -76,6 +77,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   if (typeof p.renderOptions.linesOnly !== "boolean")
     throw new Error("invalid-backup");
   if (p.pageFormat !== undefined && !validPageFormat(p.pageFormat)) throw new Error("invalid-backup");
+  if (p.panelBorderDefaults !== undefined && !validPanelBorder(p.panelBorderDefaults)) throw new Error("invalid-backup");
   record(p.pageDefaults);
   for (const key of ["gridColumns", "gridRows"]) {
     number(p.pageDefaults[key]);
@@ -113,6 +115,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
       if (place.width <= 0 || place.height <= 0)
         throw new Error("invalid-backup");
       if (place.shapePoints !== undefined && !validPanelShape(place.shapePoints)) throw new Error("invalid-backup");
+      if (place.panelBorder !== undefined && !validPanelBorder(place.panelBorder)) throw new Error("invalid-backup");
       image(place.image);
       for (const overlay of objects(place.overlays)) {
         string(overlay.text);

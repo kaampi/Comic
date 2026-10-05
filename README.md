@@ -72,3 +72,9 @@ Markera en ruta under **Sidor**, välj **Rutans form** och använd **Redigera fo
 Markera rutan som ska anpassas och välj **Grannruta** under **Passa mot grannruta**. Välj vänster, höger, ovanför eller under, ange **Marginal mellan rutor (mm)** och klicka **Passa kanten**. Standardmarginalen är 2 mm. Den valda rutan utökas och klipps längs en parallell kant, så att formerna kan dela på samma enkelpanel utan att deras synliga ytor överlappar. Avståndet mäts mellan ramarna, även längs diagonaler. Bilder, text och rutans ID behålls.
 
 Passningen sparas som rutans form och ingår i export och backup. Klicka **Passa kanten** igen om grannrutan ändras. Rutor som skulle överlappa en annan synlig form tillåts inte.
+
+## Rutornas ramar
+
+I **Albuminställningar → Standardram för rutor** väljer du färg med färgväljare eller hexkod, tjocklek i punkter (pt) och om ramen ska visas. Under **Sidor**, markera en ruta och ändra **Rutans ram** för att ge just den rutan egna värden. **Använd albumets standardram** återställer ärvda värden. Rutor utan eget val följer albumstandarden när den ändras.
+
+Ramändringar flyttar inte bilder eller textlager. Färg, tjocklek och dolda ramar följer med export och backup. **Passa kanten** tar hänsyn till båda rutornas aktuella ramtjocklek; passa kanten igen efter att tjockleken ändrats för att återställa önskad marginal. Äldre album behåller sina tidigare svarta ramar tills inställningarna ändras.

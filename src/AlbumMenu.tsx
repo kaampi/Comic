@@ -1,3 +1,5 @@
+import { PanelBorderControls } from "./PanelBorderControls";
+import { albumPanelBorder } from "./panelBorder";
 import { AlbumExportPanel } from "./AlbumExportPanel";
 import { PageFormatEditor } from "./PageFormatEditor";
 import { albumPageFormat } from "./pageFormat";
@@ -279,6 +281,7 @@ export function AlbumMenu({
                 </fieldset>
                 <PageFormatEditor value={albumPageFormat(project)} locale={locale} onChange={pageFormat => onUpdate(p => ({...p,pageFormat}))}/>
                 <p className="quiet">{sv ? "Sidformatet gäller alla sidor. Ändrade proportioner påverkar beskärningen av befintliga bilder." : "The format applies to all pages. Changing proportions affects cropping of existing images."}</p>
+                <PanelBorderControls value={albumPanelBorder(project)} locale={locale} onChange={panelBorderDefaults=>onUpdate(p=>({...p,panelBorderDefaults}))}/>
                 <OverlayDefaultsEditor
                   project={project}
                   locale={locale}
