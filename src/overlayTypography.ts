@@ -57,3 +57,44 @@ export function wrapOverlayText(text: string, maxChars: number): string[] {
   }
   return result;
 }
+
+export type MeasureText = (text: string) => number;
+// Measure whole candidate lines so proportional letters, spaces and kerning count.
+export function wrapOverlayTextToWidth(text: string, width: number, measure: MeasureText): string[] {
+  const result: string[] = [];
+  for (const paragraph of text.replace(/\r\n?/g, "\n").split("\n")) {
+    let line = "";
+    for (const word of paragraph.trim().split(/\s+/).filter(Boolean)) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (measure(candidate) <= width) { line = candidate; continue; }
+      if (line) { result.push(line); line = ""; }
+      // An unbroken word must also respect both margins; never shrink the font.
+      for (const character of Array.from(word)) {
+        if (line && measure(line + character) > width) { result.push(line); line = ""; }
+        line += character;
+      }
+    }
+    result.push(line);
+  }
+  return result;
+}
+
+export function overlayFont(overlay: TextOverlay, pixelSize: number): string {
+  const weight = overlay.fontWeight ?? (overlay.type === "sfx" ? 800 : 600);
+  const family = overlay.fontFamily ?? (overlay.type === "sfx" ? "Impact, sans-serif" : "Comic Neue, sans-serif");
+  return `${weight} ${pixelSize}px ${family}`;
+}
+
+let measuringContext: CanvasRenderingContext2D | null | undefined;
+export function overlayTextMeasure(overlay: TextOverlay, pixelSize: number): MeasureText {
+  // The DOM-free fallback supports static rendering and non-browser consumers.
+  if (typeof document !== "undefined" && typeof CanvasRenderingContext2D !== "undefined") {
+    measuringContext ??= document.createElement("canvas").getContext("2d");
+    if (measuringContext) {
+      const context = measuringContext;
+      const font = overlayFont(overlay, pixelSize);
+      return text => { context.font = font; return context.measureText(text).width; };
+    }
+  }
+  return text => Array.from(text).length * pixelSize * .5;
+}

@@ -1,4 +1,5 @@
 import { pageLayerTextMetrics } from "./pageTypography";
+import { overlayFont } from "./overlayTypography";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SvgOverlay } from "./SvgOverlay";
 import type { ComicProject, PageLayer } from "./project";
@@ -32,6 +33,11 @@ async function embeddedFonts(families: Set<string>, signal?: AbortSignal) {
 }
 // Images and SVG artwork are rendered together, with no editor UI in the output.
 export async function pageSvg(project: ComicProject, page: ComicProject["pages"][number], fontCss: string, outputScale: number) {
+  // Server-rendered SVG has no effects: load the fonts before measuring its lines.
+  if (typeof document !== "undefined" && document.fonts) {
+    const overlays = [...(page.background ? [page.background] : []), ...page.placements].flatMap(layer => layer.overlays ?? []);
+    await Promise.all(overlays.map(overlay => document.fonts.load(overlayFont(overlay,16),overlay.text || "ÅÄÖ abc")));
+  }
   const format=albumPageFormat(project), height=PAGE_RENDER_WIDTH/pageAspect(format), defs:string[]=[], body:string[]=[];
   body.push(`<rect width="700" height="${height}" fill="#fffdf7"/>`);
   const layers=[...(page.background?[page.background]:[]),...page.placements];

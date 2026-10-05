@@ -1,6 +1,6 @@
 import type { ComicProject, PageLayer, TextOverlay } from "./project";
 import { albumPageFormat, layerRect, pageDimensions, pageAspect, PAGE_RENDER_WIDTH, PANEL_BORDER } from "./pageFormat";
-import { wrapOverlayText } from "./overlayTypography";
+import { overlayTextMeasure, wrapOverlayTextToWidth, type MeasureText } from "./overlayTypography";
 export type LayerTextMetrics = { width: number; height: number; pageWidthMm: number };
 export function pageLayerTextMetrics(project: ComicProject, page: ComicProject["pages"][number], layer: PageLayer): LayerTextMetrics {
   const format = albumPageFormat(project);
@@ -8,11 +8,11 @@ export function pageLayerTextMetrics(project: ComicProject, page: ComicProject["
   const border = layer.id === page.background?.id ? 0 : 2 * PANEL_BORDER;
   return { width: Math.max(1, rect.width - border), height: Math.max(1, rect.height - border), pageWidthMm: pageDimensions(format).widthMm };
 }
-export function overlayTextLayout(overlay: TextOverlay, metrics: LayerTextMetrics) {
+export function overlayTextLayout(overlay: TextOverlay, metrics: LayerTextMetrics, measureText?: MeasureText) {
   const width = overlay.width * metrics.width / 100, height = overlay.height * metrics.height / 100;
   const padding = width * Math.max(0, Math.min(25, overlay.textPadding ?? 4)) / 100;
   const fontSize = (overlay.fontSize ?? (overlay.type === "sfx" ? 28 : 8)) * 25.4 / 72 * PAGE_RENDER_WIDTH / metrics.pageWidthMm;
-  const textLines = wrapOverlayText(overlay.text, Math.max(1, Math.floor((width - 2 * padding) / (fontSize * .5))));
+  const textLines = wrapOverlayTextToWidth(overlay.text, Math.max(1, width - 2 * padding), measureText ?? overlayTextMeasure(overlay, fontSize));
   const align = overlay.textAlign ?? "center";
   return { fontSize, textLines, textX: align === "left" ? padding : align === "right" ? width - padding : width / 2, textY: height / 2 - (textLines.length - 1) * fontSize * .575, width, height };
 }

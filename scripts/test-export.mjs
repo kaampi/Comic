@@ -77,6 +77,39 @@ try {
   const landscape=typography.overlayTextLayout(sized,{...metrics[1],pageWidthMm:297}).fontSize*297/700;
   assert.ok(Math.abs(portrait-landscape)<1e-9,'physical point size survives page format changes');
   console.log('PASS: equal point sizes across background, small/large panels, resize, page formats and SVG export; no glyph stretching; one-time legacy migration.');
+  const {wrapOverlayTextToWidth}=await import(pathToFileURL(path.join(dir,'overlayTypography.mjs')));
+  const proportional=text=>Array.from(text).reduce((sum,c)=>sum+(c==='W'?10:c===' '?3:2),0);
+  assert.deepEqual(wrapOverlayTextToWidth('iiii iiii iiii iiii',24,proportional),['iiii iiii','iiii iiii']);
+  assert.deepEqual(wrapOverlayTextToWidth('WW WW WW',24,proportional),['WW','WW','WW']);
+  assert.deepEqual(wrapOverlayTextToWidth('ÅÄÖ\r\n\r\nTest',24,proportional),['ÅÄÖ','','Test']);
+  assert.deepEqual(wrapOverlayTextToWidth('WWWWWW',24,proportional),['WW','WW','WW']);
+  const paddingOverlay={...sized,width:100,height:80,text:'iiii iiii iiii iiii',textPadding:10};
+  const paddingMetrics={width:40,height:100,pageWidthMm:210};
+  const layout=typography.overlayTextLayout(paddingOverlay,paddingMetrics,proportional);
+  assert.deepEqual(layout.textLines,['iiii iiii iiii','iiii']);
+  for(const padding of [0,10,25]){
+    const left=typography.overlayTextLayout({...paddingOverlay,textAlign:'left',textPadding:padding},paddingMetrics,proportional);
+    const right=typography.overlayTextLayout({...paddingOverlay,textAlign:'right',textPadding:padding},paddingMetrics,proportional);
+    assert.equal(left.textX,40-right.textX,'equal left and right inset');
+    for(const line of left.textLines)assert.ok(proportional(line)<=40-2*40*padding/100);
+  }
+  // Exercise the browser measurer and font loading used by the actual export path.
+  const fontsRequested=[],fontDeclarations=[];
+  const oldDocument=globalThis.document,oldCanvas=globalThis.CanvasRenderingContext2D;
+  let loaded=false;
+  globalThis.CanvasRenderingContext2D=class {};
+  globalThis.document={fonts:{load:async(font)=>{fontsRequested.push(font);loaded=true;return [];}},createElement:()=>({getContext:()=>({font:'',measureText(text){assert.ok(loaded);fontDeclarations.push(this.font);return {width:proportional(text)};}})})};
+  try {
+    const measuredPage={...typedPage,background:undefined,placements:[{...small,overlays:[{...paddingOverlay,text:'iiii iiii iiii iiii',textAlign:'left',fontWeight:700,fontFamily:'Patrick Hand, cursive'}]}]};
+    const svg=await pageSvg(typedProject,measuredPage,'',1);
+    assert.ok(fontsRequested[0].includes('700 16px Patrick Hand'));
+    assert.ok(fontDeclarations.every(font=>font.includes('700')&&font.includes('Patrick Hand')));
+    assert.match(svg,/iiii iiii iiii iiii/);
+  }finally{
+    if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;
+    if(oldCanvas===undefined)delete globalThis.CanvasRenderingContext2D;else globalThis.CanvasRenderingContext2D=oldCanvas;
+  }
+  console.log('PASS: proportional font widths, equal padding, long words, authored blank lines, selected font/weight and font-loaded SVG export.');
   const controller=new AbortController();controller.abort();
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:['page'],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{},controller.signal),{name:'AbortError'});
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:[],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{}),/no-pages/);

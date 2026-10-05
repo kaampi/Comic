@@ -56,3 +56,5 @@ Under **Sidor → Sidans bakgrund** kan du välja **Ladda upp bakgrundsbild** di
 Textstorlek anges i **pt** i textlagrens egenskaper och albumets standardvärden. Samma värde ger samma storlek på sidan i stora och små bildrutor och på sidbakgrunden. När du ändrar rutans eller bubblans mått behåller texten sin storlek och radbryts efter det tillgängliga utrymmet. Bokstävernas proportioner bevaras även i avlånga rutor. Sidvy och export använder samma beräkning.
 
 Äldre album och importerade säkerhetskopior räknas automatiskt om till punkter en gång. De nya siffervärdena kan därför skilja sig från de gamla; textens tidigare höjd behålls ungefärligt.
+
+Radbrytningen mäter textens faktiska bredd i valt typsnitt och vikt. **Sidmarginal (%)** lägger lika stort avstånd på vänster och höger sida. Vid vänsterjustering blir högerkanten fortfarande ojämn eftersom hela ord flyttas till nästa rad. Manuella radbrytningar behålls.

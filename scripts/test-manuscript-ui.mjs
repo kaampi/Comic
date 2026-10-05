@@ -145,6 +145,32 @@ assert.ok(legacyThought.includes('class="thought-cloud"'));
 const { render, screen, waitFor, fireEvent, within } =
   await import("@testing-library/react");
 const user = (await import("@testing-library/user-event")).default.setup();
+// Font metrics arrive asynchronously; reflow the editor once the selected font loads.
+const originalCreateElement=document.createElement.bind(document);
+let fontLoaded=false,resolveFont;
+const fontListeners=new Set();
+const requestedFonts=[];
+const canvasContext={font:'',measureText(text){return {width:text.length*(fontLoaded?1:10)};}};
+globalThis.CanvasRenderingContext2D=class {};
+document.createElement=function(tag,...args){return tag==='canvas'?{getContext:()=>canvasContext}:originalCreateElement(tag,...args);};
+Object.defineProperty(document,'fonts',{configurable:true,value:{
+  load(font){requestedFonts.push(font);return new Promise(resolve=>{resolveFont=resolve;});},
+  addEventListener(event,listener){fontListeners.add(listener);},
+  removeEventListener(event,listener){fontListeners.delete(listener);}
+}});
+const measuredOverlay={id:'font-metrics',type:'caption',text:'iiii iiii',x:0,y:0,width:100,height:80,rotation:0,fontSize:12,textPadding:10,fontFamily:'Patrick Hand, cursive',fontWeight:400};
+const metricsFixture=render(React.createElement('svg',null,React.createElement(SvgOverlay,{overlay:measuredOverlay,textMetrics:{width:60,height:100,pageWidthMm:210}})));
+assert.equal(metricsFixture.container.querySelectorAll('tspan').length,2);
+await React.act(async()=>{fontLoaded=true;resolveFont([]);});
+assert.equal(metricsFixture.container.querySelectorAll('tspan').length,1);
+assert.ok(requestedFonts[0].includes('400 16px Patrick Hand'));
+await React.act(async()=>{fontLoaded=false;for(const listener of fontListeners)listener();});
+assert.equal(metricsFixture.container.querySelectorAll('tspan').length,2);
+metricsFixture.unmount();
+assert.equal(fontListeners.size,0);
+document.createElement=originalCreateElement;
+delete document.fonts;
+delete globalThis.CanvasRenderingContext2D;
 const { FontPicker } = await import(pathToFileURL(join(compiledRoot, "FontPicker.mjs")));
 const { uiText } = await import(pathToFileURL(join(compiledRoot, "i18n.mjs")));
 function FontPickerFixture() {
