@@ -54,6 +54,7 @@ function objects(value: unknown) {
 function image(value: unknown) {
   if (value === undefined) return;
   record(value);
+  if (value.positionMode !== undefined && value.positionMode !== "frame") throw new Error("invalid-backup");
   string(value.name);
   string(value.dataUrl);
 }

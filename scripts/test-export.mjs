@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
 try {
-  for(const name of ['panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+  for(const name of ['imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
     const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
     fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
@@ -145,6 +145,38 @@ try {
   assert.match(await pageSvg(project,fractionalPage,'',1),/<clipPath[^>]*><polygon/);
   console.log('PASS: snap spacing scales with panel cell spans and fractional normalized corners remain valid/exportable.');
   console.log('PASS: all panel shapes, 4×4 corner snapping, invalid/crossing rejection and polygon artwork/export contours.');
+  const view=await import(pathToFileURL(path.join(dir,'imageView.mjs')));
+  const oldCrop={fit:'cover',zoom:2,offsetX:40,offsetY:60};
+  const oldPlaced=view.imagePlacement(oldCrop,100,100,200,100);
+  const converted=view.framePosition(oldCrop,100,100,200,100);
+  assert.deepEqual(converted,{offsetX:-40,offsetY:0});
+  assert.deepEqual(view.imagePlacement({...oldCrop,...converted,positionMode:'frame'},100,100,200,100),oldPlaced);
+  const moving={fit:'cover',zoom:2,offsetX:0,offsetY:25,positionMode:'frame'};
+  assert.equal(view.imagePlacement(moving,100,100,200,100).y,-25,'move down works when intrinsic cover height matches frame height');
+  assert.equal(view.imagePlacement({...moving,offsetY:-25},100,100,200,100).y,-75);
+  for(const fit of ['cover','contain'])for(const zoom of [1,2,4]){
+    const centered=view.imagePlacement({fit,zoom,positionMode:'frame'},200,100,400,300);
+    const moved=view.imagePlacement({fit,zoom,positionMode:'frame',offsetX:15,offsetY:20},200,100,400,300);
+    assert.ok(Math.abs(moved.x-centered.x-30)<1e-9);
+    assert.ok(Math.abs(moved.y-centered.y-20)<1e-9);
+  }
+  assert.deepEqual(view.panFramePosition({offsetX:0,offsetY:0},40,-20,400,200),{offsetX:10,offsetY:-10});
+  assert.deepEqual(view.panFramePosition({offsetX:90,offsetY:-90},400,-200,400,200),{offsetX:100,offsetY:-100});
+  assert.equal(view.imageViewStyle(moving).transform,'translate(0%, 25%) scale(2)');
+  const previousImage=globalThis.Image;
+  globalThis.Image=class{async decode(){this.naturalWidth=200;this.naturalHeight=100;}};
+  try {
+    const exportImage={...moving,name:'position.png',dataUrl:'data:image/png;base64,eA=='};
+    const positionedPage={...page,placements:[{...layer,image:exportImage}]};
+    const svg=await pageSvg(project,positionedPage,'',1);
+    const imageTag=svg.match(/<image [^>]+/)[0];
+    const layerBox=f.layerRect(positionedPage,layer,project.pageFormat);
+    const expected=view.imagePlacement(exportImage,layerBox.width-6,layerBox.height-6,200,100);
+    const x=Number(imageTag.match(/ x="([^"]+)"/)[1]),y=Number(imageTag.match(/ y="([^"]+)"/)[1]);
+    assert.ok(Math.abs(x-(layerBox.x+3+expected.x))<1e-9);
+    assert.ok(Math.abs(y-(layerBox.y+3+expected.y))<1e-9);
+  }finally{if(previousImage===undefined)delete globalThis.Image;else globalThis.Image=previousImage;}
+  console.log('PASS: direct image panning on both axes at every zoom/fit, legacy crop preservation and matching CSS/export placement.');
   const controller=new AbortController();controller.abort();
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:['page'],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{},controller.signal),{name:'AbortError'});
   await assert.rejects(exportAlbum(project,{format:'png',pageIds:[],pageFormat:f.DEFAULT_PAGE_FORMAT,dpi:300,fit:'contain',jpegQuality:.95},()=>{}),/no-pages/);

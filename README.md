@@ -62,3 +62,7 @@ Radbrytningen mäter textens faktiska bredd i valt typsnitt och vikt. **Sidmargi
 ## Rutor med olika former
 
 Markera en ruta under **Sidor**, välj **Rutans form** och använd **Redigera form** för hörn som fäster på ett rutnät med fyra delningar per enkelpanel i sidlayouten. Större bildrutor får fler fästpunkter. Rektangel, romb, parallellogram, trapets och triangel stöds. **Klar med formen** återgår till storleksändring. Bild och text beskärs efter konturen i sidvy, redigerare och export. Former sparas med albumet och följer med backup. Se [PAGE_LAYOUT.md](PAGE_LAYOUT.md).
+
+## Flytta bilden i rutan
+
+Öppna bildrutans eller bakgrundens redigerare och välj **Redigera bild**. Bilden följer musen uppåt, nedåt och åt sidorna även när dess höjd eller bredd redan passar rutan. **X-position** och **Y-position** anges i procent av rutans mått; positiva värden flyttar åt höger respektive nedåt. Zoom ändrar bildens storlek utan att ändra förflyttningens känslighet. Escape eller avbruten pekardragning återställer den pågående flytten. Äldre sparade beskärningar behålls tills du ändrar bildens visning.

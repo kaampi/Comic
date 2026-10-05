@@ -99,7 +99,7 @@ export type PanelPlan = {
   imageVersions?: PanelImage[];
 };
 
-export type PanelImage = { name: string; dataUrl: string; zoom?: number; offsetX?: number; offsetY?: number; fit?: "cover" | "contain" };
+export type PanelImage = { positionMode?: "frame"; name: string; dataUrl: string; zoom?: number; offsetX?: number; offsetY?: number; fit?: "cover" | "contain" };
 
 export type ImagePrompt = {
   id: string;
