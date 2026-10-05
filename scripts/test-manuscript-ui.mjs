@@ -145,6 +145,47 @@ assert.ok(legacyThought.includes('class="thought-cloud"'));
 const { render, screen, waitFor, fireEvent, within } =
   await import("@testing-library/react");
 const user = (await import("@testing-library/user-event")).default.setup();
+const { FontPicker } = await import(pathToFileURL(join(compiledRoot, "FontPicker.mjs")));
+const { uiText } = await import(pathToFileURL(join(compiledRoot, "i18n.mjs")));
+function FontPickerFixture() {
+  const [font, setFont] = React.useState("Comic Neue, sans-serif");
+  return React.createElement("div", null,
+    React.createElement(FontPicker, {label:"Preview font", value:font, onChange:setFont}),
+    React.createElement("button", {type:"button"}, "Outside font picker"));
+}
+const fontFixture = render(React.createElement(FontPickerFixture));
+const fontTrigger = screen.getByRole("combobox", {name:"Preview font"});
+assert.equal(fontTrigger.getAttribute("aria-expanded"), "false");
+await user.click(fontTrigger);
+const fontList = screen.getByRole("listbox", {name:"Preview font"});
+for (const option of within(fontList).getAllByRole("option")) {
+  const preview = option.querySelector(".font-picker-preview");
+  assert.equal(preview.style.fontFamily.replace(/["\']/g, "").split(",")[0], preview.textContent);
+}
+await user.click(within(fontList).getByRole("option", {name:"Permanent Marker", exact:true}));
+assert.ok(fontTrigger.textContent.includes("Permanent Marker"));
+assert.equal(screen.queryByRole("listbox"), null);
+await user.click(fontTrigger);
+await user.keyboard("{Home}{ArrowDown}{Enter}");
+assert.ok(fontTrigger.textContent.includes("Patrick Hand"));
+assert.equal(screen.queryByRole("listbox"), null);
+await user.click(fontTrigger);
+let escaped = false;
+const fontEscape = event => { if(event.key === "Escape") escaped = true; };
+window.addEventListener("keydown", fontEscape);
+await user.keyboard("{Escape}");
+assert.equal(screen.queryByRole("listbox"), null);
+assert.equal(escaped, false);
+window.removeEventListener("keydown", fontEscape);
+await user.click(fontTrigger);
+await user.keyboard("rub");
+await user.keyboard("{Enter}");
+assert.ok(fontTrigger.textContent.includes("Rubik Bubbles"));
+await user.click(fontTrigger);
+await user.click(screen.getByRole("button", {name:"Outside font picker",exact:true}));
+assert.equal(screen.queryByRole("listbox"), null);
+fontFixture.unmount();
+
 const { assignLibraryPanel } = await import(
   pathToFileURL(join(compiledRoot, "comicPanelLibrary.mjs"))
 );
@@ -695,6 +736,8 @@ try {
   await user.click(defaults.querySelector("summary"));
   const speechDefaults = defaults.querySelector("details");
   await user.click(speechDefaults.querySelector("summary"));
+  await user.click(within(speechDefaults).getByRole("combobox", {name:"Font",exact:true}));
+  await user.click(within(speechDefaults).getByRole("option", {name:"Permanent Marker",exact:true}));
   fireEvent.change(within(speechDefaults).getByLabelText("Textstorlek"), {
     target: { value: "12" },
   });
@@ -719,10 +762,14 @@ try {
   );
   assert.equal(readProjects()[0].overlayDefaults.speech.fontSize, 12);
   assert.equal(createdText.fontSize, 12);
+  assert.equal(createdText.fontFamily, "Permanent Marker, cursive");
   assert.equal(createdText.fontWeight, 700);
   assert.equal(createdText.roundness, 80);
   assert.equal(createdText.textAlign, "left");
   const properties = document.querySelector(".selected-panel-tool");
+  await user.click(within(properties).getByRole("combobox", {name:uiText("sv","font"),exact:true}));
+  await user.click(within(properties).getByRole("option", {name:"Comic Neue",exact:true}));
+  assert.equal(saved().pages[0].placements[0].overlays.at(-1).fontFamily,"Comic Neue, sans-serif");
   fireEvent.change(properties.querySelector("textarea"), {
     target: { value: "First\n\nSecond" },
   });

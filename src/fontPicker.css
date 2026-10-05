@@ -1,0 +1,23 @@
+/* Real HTML previews avoid platform-specific native select rendering. */
+.font-picker { position: relative; min-width: 0; margin: .8rem 0; }
+.font-picker-label { display: block; margin-bottom: .4rem; color: var(--text-dim); font-size: .8rem; }
+.font-picker .font-picker-trigger,
+.font-picker .font-picker-option {
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  width: 100%; min-height: 44px; padding: .55rem .7rem;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--paper); color: var(--text); text-align: left;
+  cursor: pointer; text-transform: none; letter-spacing: normal;
+}
+.font-picker .font-picker-preview { font-size: 20px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+.font-picker .font-picker-trigger:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.font-picker-list {
+  position: relative; z-index: 10; margin-top: .3rem;
+  max-height: 280px; overflow-y: auto; overscroll-behavior: contain;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--paper); box-shadow: var(--shadow);
+}
+.font-picker .font-picker-option { border: 0; border-radius: 0; border-bottom: 1px solid var(--border-soft); }
+.font-picker .font-picker-option:last-child { border-bottom: 0; }
+.font-picker .font-picker-option[data-active="true"] { background: var(--panel); outline: 2px solid var(--border); outline-offset: -2px; }
+.font-picker-check { flex-shrink: 0; width: 1em; font-family: system-ui, sans-serif; }

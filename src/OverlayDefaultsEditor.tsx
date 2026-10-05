@@ -1,8 +1,8 @@
+import { FontPicker } from "./FontPicker";
 import type { ComicProject, OverlayType } from "./project";
 import type { Locale } from "./settings";
 import {
   overlayDefaults,
-  OVERLAY_FONTS,
   type OverlayTypography,
 } from "./overlayTypography";
 export function OverlayDefaultsEditor({
@@ -63,19 +63,11 @@ export function OverlayDefaultsEditor({
                   }
                 />
               </label>
-              <label>
-                {sv ? "Font" : "Font"}
-                <select
-                  value={value.fontFamily}
-                  onChange={(e) => patch({ fontFamily: e.target.value })}
-                >
-                  {OVERLAY_FONTS.map((font) => (
-                    <option key={font} value={font}>
-                      {font.split(",")[0]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <FontPicker
+                label="Font"
+                value={value.fontFamily}
+                onChange={fontFamily => patch({ fontFamily })}
+              />
               <label>
                 {sv ? "Textstorlek" : "Text size"}
                 <input
