@@ -39,3 +39,9 @@ När ett album är öppet visas en andra menyrad under appens huvudmeny. Den vis
 ## Startpunkt för svans och bubbelkedja
 
 Markera en pratbubbla eller tankebubbla i bildrutans editor. Handtaget vid konturen flyttar svansens eller bubbelkedjans start runt bubblan. Det yttre handtaget flyttar slutpunkten. Starten fäster vid konturen och följer med när textlagret flyttas eller ändrar storlek. Startbredd och böjning styrs separat av de numeriska fälten.
+
+## SFX-bibliotek
+
+Välj **Lägg till SFX** i bildrutans editor, eller byt ett textlagers typ till SFX. Välj sedan en miniatyr i **SFX-bibliotek**: enbart text, explosion, smäll, puff, blixt, fartstreck, svep, spiral, stjärna, stjärnkluster, utrop, frågetecken, hjärta eller pil. Formerna är egna SVG-original.
+
+Texten är fortsatt redigerbar och kan döljas med **Visa text** utan att raderas. Storlek och proportioner ändras med lagrets hörnhandtag; rotation anges numeriskt. Fyllning, konturfärg, linjetjocklek och textfärg kan ställas separat. Val och inställningar sparas med textlagret och följer med albumbackupen. Befintliga SFX-lager visas som enbart text tills en form väljs.

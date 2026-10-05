@@ -1,3 +1,4 @@
+import { SfxArtwork } from "./SfxArtwork";
 import { thoughtCloudGeometry, thoughtTrailGeometry, thoughtTrailStart } from "./thoughtBubble";
 export { thoughtTailEndpoint } from "./thoughtBubble";
 import { wrapOverlayText } from "./overlayTypography";
@@ -80,7 +81,8 @@ export function SvgOverlay({overlay}:{overlay:TextOverlay}){
   {overlay.type==="speech"?<path d={style==="shout"?shoutPath(overlay):speechPath(overlay,style)} {...common} strokeDasharray={style==="whisper"?"4 3":undefined}/>:null}
   {overlay.type==="thought"?<><g className="thought-trail">{thoughtTrailGeometry(overlay,cloud!.outline).map((circle,i)=><circle key={i} cx={circle.x} cy={circle.y} r={circle.r} {...common}/>)}</g><path className="thought-cloud" d={cloud!.path} {...common} strokeLinejoin="round" strokeLinecap="round"/></>:null}
   {overlay.type==="caption"?<path d={bodyPath({...overlay,roundness:overlay.roundness??18},"organic")} {...common}/>:null}
-  <text x={textX} y={h/2-(textLines.length-1)*fontSize*.575} textAnchor={anchor} dominantBaseline="middle" fontFamily={overlay.fontFamily??(overlay.type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif")} fontWeight={overlay.fontWeight??(overlay.type==="sfx"?800:600)} fontSize={fontSize} fill="#171411" stroke={overlay.type==="sfx"?"#fffdf7":"none"} strokeWidth={overlay.type==="sfx"?3:0} paintOrder="stroke">{textLines.map((line,i)=><tspan key={i} x={textX} dy={i===0?0:fontSize*1.15}>{line||"\u00a0"}</tspan>)}</text>
+  {overlay.type==="sfx"?<SfxArtwork shape={overlay.sfxShapeId??"none"} width={w} height={h} fill={overlay.fillColor} stroke={overlay.strokeColor} strokeWidth={overlay.strokeWidth} opacity={overlay.fillOpacity}/>:null}
+  {overlay.type!=="sfx"||!overlay.sfxTextHidden?<text x={textX} y={h/2-(textLines.length-1)*fontSize*.575} textAnchor={anchor} dominantBaseline="middle" fontFamily={overlay.fontFamily??(overlay.type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif")} fontWeight={overlay.fontWeight??(overlay.type==="sfx"?800:600)} fontSize={fontSize} fill={overlay.sfxTextColor??"#171411"} stroke={overlay.type==="sfx"?"#fffdf7":"none"} strokeWidth={overlay.type==="sfx"?3:0} paintOrder="stroke">{textLines.map((line,i)=><tspan key={i} x={textX} dy={i===0?0:fontSize*1.15}>{line||"\u00a0"}</tspan>)}</text>:null}
  </g>;
 }
 

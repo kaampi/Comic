@@ -769,6 +769,22 @@ try {
   assert.equal(changedText.text, "First\n\nSecond");
   assert.equal(changedText.textAlign, "center");
   assert.equal(saved().overlayDefaults.speech.textAlign, "left");
+  await user.selectOptions(within(properties).getByLabelText("Typ"),"sfx");
+  const sfxBefore=saved().pages[0].placements[0].overlays.at(-1);
+  await user.click(within(properties).getByRole("button",{name:"Explosion",exact:true}));
+  assert.equal(saved().pages[0].placements[0].overlays.at(-1).sfxShapeId,"burst");
+  assert.ok(document.querySelector('.panel-editor-stage [data-sfx-shape="burst"] path'));
+  await user.click(within(properties).getByLabelText("Visa text"));
+  fireEvent.change(within(properties).getByLabelText("Rotation (grader)"),{target:{value:"25"}});
+  const sfxAfter=saved().pages[0].placements[0].overlays.at(-1);
+  assert.equal(sfxAfter.sfxTextHidden,true);
+  assert.equal(sfxAfter.text,sfxBefore.text);
+  assert.equal(sfxAfter.rotation,25);
+  assert.equal(sfxAfter.id,sfxBefore.id);
+  await user.click(within(properties).getByRole("button",{name:"Fartstreck",exact:true}));
+  assert.equal(saved().pages[0].placements[0].overlays.at(-1).sfxShapeId,"speed");
+  assert.ok(document.querySelector('.panel-editor-stage [data-sfx-shape="speed"] path[fill="none"]'));
+
   await user.click(
     within(document.querySelector(".panel-editor-modal header")).getByRole(
       "button",

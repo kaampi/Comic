@@ -10,6 +10,7 @@ export type OverlayType = "speech" | "thought" | "caption" | "sfx";
 export type BubbleStyle = "organic" | "wide" | "tall" | "oval" | "rounded" | "shout" | "whisper";
 export type TextOverlay = {
   id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number;
+  sfxShapeId?: string; sfxTextHidden?: boolean; sfxTextColor?: string;
   sourcePanelId?: string; sourceTextId?: string;
   textAlign?: "left" | "center" | "right"; textPadding?: number;
   fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle;
