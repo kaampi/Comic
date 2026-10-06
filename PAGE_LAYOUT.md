@@ -56,9 +56,9 @@ I **Sidor → Sidans bakgrund** kan du ge sidan en bild som fyller hela ytan, un
 
 ## Rutans form
 
-Markera en bildruta på sidan och välj **Rutans form**: rektangel, romb, parallellogram, trapets eller triangel. Välj **Redigera form** för att flytta hörnen. Varje enkelpanel i sidans rutnät delas i 4×4. En bildruta som täcker 3 kolumner och 5 rader får därför 12×20 delningar och 13×21 fästpunkter. En ruta på en enda cell har 25 punkter. Fästnätet blir tätare när rutan täcker fler celler. Hörnen fäster vid närmaste punkt; piltangenterna flyttar ett steg. Escape eller avbruten pekardragning ångrar den pågående dragningen. Korsande hörn och kollapsade former tillåts inte.
+Markera en bildruta på sidan och välj **Rutans form**: rektangel, romb, parallellogram, trapets eller triangel. Slå på växeln **Fri form** ovanför rutans inställningar för att flytta hörnen. Läget är kvar efter varje punktändring och när du markerar en annan ruta eller klickar utanför rutan. I fri form skapas inga nya rutor genom dragning på sidans rutnät. Byter du sida eller projekt börjar du i normalt läge. Varje enkelpanel i sidans rutnät delas i 4×4. En bildruta som täcker 3 kolumner och 5 rader får därför 12×20 delningar och 13×21 fästpunkter. En ruta på en enda cell har 25 punkter. Fästnätet blir tätare när rutan täcker fler celler. Hörnen fäster vid närmaste punkt; piltangenterna flyttar ett steg. Escape eller avbruten pekardragning ångrar den pågående dragningen. Korsande hörn och kollapsade former tillåts inte.
 
-**Klar med formen** återgår till handtagen för rutans storlek. Formen sparas relativt bildrutan och följer med när dess storlek ändras. Bilder och textlager beskärs efter polygonen i sidvy, bildredigerare och PDF/PNG/JPEG-export. Punktstorleken på text påverkas inte av formvalet. Formen ingår i albumbackupen; äldre rutor är rektangulära. Sidbakgrunden behåller hela sidans form.
+Slå av **Fri form** för att återgå till **Normalt läge** och handtagen för rutans storlek. Växeln ändrar bara redigeringsläget; din redigerade form behålls. Formen sparas relativt bildrutan och följer med när dess storlek ändras. Bilder och textlager beskärs efter polygonen i sidvy, bildredigerare och PDF/PNG/JPEG-export. Punktstorleken på text påverkas inte av formvalet. Formen ingår i albumbackupen; äldre rutor är rektangulära. Sidbakgrunden behåller hela sidans form.
 
 ## Passa kanten mot en grannruta
 
@@ -67,3 +67,4 @@ Två polygonrutor kan dela samma celler i sidans rutnät. Placering, storleksän
 För exemplet med ruta 5 till vänster om en sned ruta 1: markera ruta 5, välj **Grannruta → Ruta 1**, **Placera på sidan → Till vänster** och en marginal, exempelvis **2 mm**. Klicka **Passa kanten**. Ruta 5 utökas i bredd och får en högerkant parallell med ruta 1:s vänsterkant. Marginalen mäts vinkelrätt mellan de synliga ramarna. Motsvarande passning finns åt höger, ovanför och under.
 
 Passningen ändrar endast den valda rutans utbredning och polygon. Grannrutan, rutans bild, textlager och läsordning behålls. Formen sparas med albumet, backupen och exporten. Passa kanten igen efter ändringar av grannrutan. Om formen inte ryms eller träffar en tredje ruta visas ett meddelande och ingen ändring görs.
+
