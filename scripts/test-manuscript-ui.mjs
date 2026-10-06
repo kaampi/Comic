@@ -8,7 +8,7 @@ import {
   rmSync,
   symlinkSync,
 } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
@@ -66,6 +66,8 @@ function compile(directory = "") {
         },
       })
       .outputText.replace(/import "[^"\n]+\.css";?/g, "")
+      .replace(/import (\w+) from "(\.[^"]+\.json)";/g, (_, name, imported) =>
+        `const ${name} = ${readFileSync(resolve(sourceRoot, directory, imported), "utf8")};`)
       .replace(/from "(\.[^"]+)"/g, 'from "$1.mjs"');
     mkdirSync(join(compiledRoot, directory), { recursive: true });
     writeFileSync(join(compiledRoot, path.replace(/\.tsx?$/, ".mjs")), output);
@@ -193,7 +195,7 @@ assert.ok(fontTrigger.textContent.includes("Permanent Marker"));
 assert.equal(screen.queryByRole("listbox"), null);
 await user.click(fontTrigger);
 await user.keyboard("{Home}{ArrowDown}{Enter}");
-assert.ok(fontTrigger.textContent.includes("Patrick Hand"));
+assert.ok(fontTrigger.textContent.includes("Action Man"));
 assert.equal(screen.queryByRole("listbox"), null);
 await user.click(fontTrigger);
 let escaped = false;
@@ -1472,5 +1474,4 @@ try {
   dom.window.close();
   rmSync(compiledRoot, { recursive: true, force: true });
 }
-
 

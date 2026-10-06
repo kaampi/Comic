@@ -10,6 +10,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",
     "test:module-paths": "node scripts/test-module-paths.mjs",
+    "test:about": "node scripts/test-about.mjs",
     "test:adaptation": "node scripts/test-adaptation.mjs",
     "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs",
     "test:export": "node scripts/test-export.mjs"

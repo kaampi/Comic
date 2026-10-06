@@ -1,0 +1,19 @@
+.about-backdrop { z-index: 1200; }
+.about-dialog { width: min(820px, 100%); max-height: 90vh; overflow-y: auto; }
+.about-header, .about-font-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.about-header h1 { margin: 0; font-size: clamp(1.5rem, 4vw, 2rem); }
+.about-header .text-button { flex-shrink: 0; }
+.about-dialog h2 { margin: 1.8rem 0 .5rem; font-size: 1.2rem; }
+.about-font-group > h3 { margin: 1.2rem 0 .5rem; font-size: 1rem; }
+.about-font { padding: 1rem 0; border-bottom: 1px solid var(--border-soft); }
+.about-font h4, .about-font-heading p { margin: 0 0 .3rem; }
+.about-dialog a { color: var(--text); text-decoration: underline; text-underline-offset: .2em; overflow-wrap: anywhere; }
+.about-font-heading a { flex-shrink: 0; font-size: .85rem; }
+.about-font-sample { margin: .6rem 0; font-size: 1.3rem; }
+.about-font-license { margin: .4rem 0; color: var(--text-dim); font-size: .85rem; }
+.about-font summary { cursor: pointer; font-size: .85rem; }
+.about-license-text { margin: .75rem 0 0; padding: 1rem; background: var(--panel); border: 1px solid var(--border-soft); border-radius: 6px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; line-height: 1.5; }
+@media (max-width: 550px) {
+  .about-dialog { padding: 1.1rem; }
+  .about-font-heading { flex-direction: column; gap: .4rem; }
+}
