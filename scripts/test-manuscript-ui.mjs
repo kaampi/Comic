@@ -232,7 +232,7 @@ const project = {
   },
   renderOptions: { linesOnly: false },
   pageDefaults: { gridColumns: 3, gridRows: 5 },
-  characters: [{ id: "holmes", name: "Holmes", visualIdentity: "" }],
+  characters: [{ id: "holmes", name: "Holmes", visualIdentity: "", description: "" }],
   locations: [],
   scenes: [],
   panels: [],
@@ -1211,6 +1211,18 @@ try {
   const visibleAlbumMenu = screen.getByRole("navigation",{name:"Albummeny",exact:true});
   assert.equal(window.getComputedStyle(visibleAlbumMenu).display,"flex");
   assert.ok(within(visibleAlbumMenu).getByRole("button",{name:"Backup",exact:true}));
+  const albumSections=within(visibleAlbumMenu).getByRole("group",{name:"Projektinnehåll",exact:true});
+  assert.deepEqual(within(albumSections).getAllByRole("button").map(button=>button.textContent),["Manus","Adaptering","Karaktärer","Platser","Bildrutor","Sidor"]);
+  assert.equal(document.querySelector('.project-side-nav'),null);
+  const leftSettings=screen.getByRole("complementary",{name:"Arbetsinställningar",exact:true});
+  assert.ok(within(leftSettings).getByRole("region",{name:"Sidinställningar",exact:true}));
+  assert.ok(leftSettings.querySelector('.grid-settings'));
+  assert.equal(document.querySelector('.page-planner .grid-settings'),null);
+  for(const [label,selector] of [["Karaktärer",".library-workspace"],["Platser",".library-workspace"],["Bildrutor",".scene-workspace"],["Sidor",".page-workspace"]]){
+    await user.click(within(albumSections).getByRole("button",{name:label,exact:true}));
+    assert.ok(document.querySelector(selector));
+    assert.equal(within(albumSections).getByRole("button",{name:label,exact:true}).getAttribute('aria-current'),'page');
+  }
   albumMenuStyles.remove();
   await user.click(
     screen.getByRole("button", { name: "Albuminställningar", exact: true }),

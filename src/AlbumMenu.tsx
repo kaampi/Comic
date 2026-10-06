@@ -14,7 +14,9 @@ import {
   parseAlbumBackup,
 } from "./albumBackup";
 import "./AlbumMenu.css";
+import { uiText } from "./i18n";
 export type AlbumTool = "settings" | "backup" | "export" | null;
+export type AlbumSection = "manus" | "adaptation" | "characters" | "locations" | "scenes" | "pages";
 export function AlbumMenu({
   project,
   locale,
@@ -25,6 +27,8 @@ export function AlbumMenu({
   styles,
   onClose,
   saveError,
+  section,
+  onSection,
 }: {
   project: ComicProject | null;
   locale: Locale;
@@ -35,6 +39,8 @@ export function AlbumMenu({
   styles: IllustrationStyle[];
   onClose: () => void;
   saveError?: string;
+  section: AlbumSection;
+  onSection: (section: AlbumSection) => void;
 }) {
   const sv = locale === "sv";
   const [preview, setPreview] = useState<ComicProject | null>(null),
@@ -158,6 +164,11 @@ export function AlbumMenu({
             {project.pages.length} {sv ? "sidor" : "pages"} ·{" "}
             {project.panels.length} {sv ? "rutor" : "panels"}
           </span>
+          <div className="album-section-nav" role="group" aria-label={uiText(locale,"projectContent")}>
+            {([ ["manus","manuscript"], ["adaptation","adaptation"], ["characters","characters"], ["locations","locations"], ["scenes","panels"], ["pages","pages"] ] as const).map(([value,label]) =>
+              <button key={value} type="button" className={section===value?"is-active":""} aria-current={section===value?"page":undefined} onClick={()=>onSection(value)}>{uiText(locale,label)}</button>
+            )}
+          </div>
           <span className="project-topbar-spacer" />
           <button onClick={() => onMode("settings")}>
             {sv ? "Albuminställningar" : "Album settings"}

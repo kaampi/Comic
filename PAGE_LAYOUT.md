@@ -1,5 +1,9 @@
 # Rutor och hörnhandtag
 
+Albumets toppmeny innehåller **Manus**, **Adaptering**, **Karaktärer**, **Platser**, **Bildrutor** och **Sidor**. Den aktiva vyn markeras i menyn.
+
+Vänsterspalten används för arbetsinställningar och är 440 px bred i stora fönster (tidigare 220 px). Under **Sidor** finns sidans rutnät, bakgrund, sidmallar och kontroller för den markerade rutans form, ram och kantpassning här. Spalten och sidlistan anpassas till mindre fönster.
+
 Öppna **Sidor** och klicka på en befintlig ruta. Fyra hörnhandtag och sidans rutnät visas. Dra ett hörn för att ändra bredd och höjd samtidigt. Hörnen fäster vid rutnätets cellgränser; motsatt hörn ligger kvar.
 
 Storleksändringen behåller rutans valda form. Breda panoramarutor och stående rutor kan blandas på samma sida. Storleken begränsas till sidans rutnät och minst en cell i varje riktning. Ändringar som skulle överlappa en annan ruta avvisas.
