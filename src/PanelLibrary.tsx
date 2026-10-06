@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
 import { libraryEntries } from "./comicPanelLibrary";
+import { LIBRARY_DRAG_TYPE } from "./libraryDrop";
 import "./PanelLibrary.css";
 
 export function PanelLibrary({
@@ -10,12 +11,16 @@ export function PanelLibrary({
   placementId,
   locale,
   onAssign,
+  onDragStart,
+  onDragEnd,
 }: {
   project: ComicProject;
   pageId?: string;
   placementId?: string;
   locale: Locale;
   onAssign: (panelId: string) => void;
+  onDragStart?: (panelId: string) => void;
+  onDragEnd?: () => void;
 }) {
   const [unplacedOnly, setUnplacedOnly] = useState(false);
   const sv = locale === "sv";
@@ -51,11 +56,12 @@ export function PanelLibrary({
         />
         {sv ? "Visa bara oplacerade" : "Show unplaced only"}
       </label>
+      <p className="panel-library-drag-hint">{sv ? "Dra en oplacerad bild till en ruta eller till en tom plats på sidan." : locale === "nb" ? "Dra et uplassert bilde til en rute eller til et tomt sted på siden." : "Drag an unplaced image to a frame or an empty spot on the page."}</p>
       <div className="panel-library-list">
         {groups.map(group=><section className="panel-library-beat" key={group.id} aria-label={group.label}>
           <h4>{group.label}</h4>
-          {group.entries.map(entry=><button type="button" className="panel-library-card" data-panel-id={entry.panel.id} key={entry.panel.id} aria-label={entry.title} title={entry.title} disabled={!empty||!!entry.pages.length} onClick={()=>onAssign(entry.panel.id)}>
-            {entry.image?<img src={entry.image.dataUrl} alt=""/>:<span className="panel-library-placeholder">{sv?"Ingen bild ännu":"No image yet"}</span>}
+          {group.entries.map(entry=><button type="button" className="panel-library-card" data-panel-id={entry.panel.id} key={entry.panel.id} aria-label={entry.title} title={entry.title} disabled={!!entry.pages.length||(!empty&&!entry.image)} draggable={!!entry.image&&!entry.pages.length} onClick={()=>{if(empty&&!entry.pages.length)onAssign(entry.panel.id);}} onDragStart={event=>{if(!entry.image||entry.pages.length){event.preventDefault();return;}event.dataTransfer.setData(LIBRARY_DRAG_TYPE,JSON.stringify({projectId:project.id,panelId:entry.panel.id}));event.dataTransfer.effectAllowed="copy";onDragStart?.(entry.panel.id);}} onDragEnd={()=>onDragEnd?.()}>
+            {entry.image?<img src={entry.image.dataUrl} alt="" draggable={false}/>:<span className="panel-library-placeholder">{sv?"Ingen bild ännu":"No image yet"}</span>}
             <span className="panel-library-info"><small>{entry.pages.length?entry.pages.map(p=>`${sv?"Sida":"Page"} ${p.number}`).join(", "):(sv?"Oplacerad":"Unplaced")}</small></span>
           </button>)}
         </section>)}
