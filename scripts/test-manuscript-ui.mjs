@@ -1079,7 +1079,7 @@ try {
     assert.deepEqual(unchanged,shapeFrameBefore);
   }
   await user.selectOptions(shapeSelect,'diamond');
-  await user.click(screen.getByRole('button',{name:'Redigera form',exact:true}));
+  await user.click(screen.getByRole('switch',{name:'Fri form',exact:true}));
   assert.equal(shapeFrame.querySelectorAll('.panel-corner-handle').length,0);
   assert.equal(shapeFrame.querySelectorAll('.panel-shape-surface circle').length,25);
   assert.equal(shapeFrame.querySelectorAll('.panel-shape-handle').length,4);
@@ -1090,11 +1090,17 @@ try {
   const beforeShapeDrag=structuredClone(saved().pages[0].placements[0].shapePoints);
   const shapeSurface=shapeFrame.querySelector('.panel-shape-surface');
   shapeSurface.getBoundingClientRect=()=>({left:100,top:100,width:400,height:400,right:500,bottom:500});
+  const captures=[];
+  let captured=false;
+  formCorner.setPointerCapture=id=>{captures.push(['capture',id]);captured=true;};
+  formCorner.hasPointerCapture=()=>captured;
+  formCorner.releasePointerCapture=id=>{captures.push(['release',id]);captured=false;};
   fireEvent.pointerDown(formCorner,{button:0,clientX:300,clientY:200});
   fireEvent.pointerMove(window,{clientX:305,clientY:115});
   assert.deepEqual(saved().pages[0].placements[0].shapePoints[0],{x:2,y:0});
   fireEvent.keyDown(window,{key:'Escape'});
   assert.deepEqual(saved().pages[0].placements[0].shapePoints,beforeShapeDrag);
+  assert.deepEqual(captures.map(item=>item[0]),['capture','release'],'Escape releases pointer capture');
   fireEvent.pointerDown(formCorner,{button:0,clientX:300,clientY:200});
   fireEvent.pointerMove(window,{clientX:305,clientY:115});
   fireEvent.pointerUp(window);
@@ -1109,7 +1115,25 @@ try {
   assert.deepEqual(saved().pages[0].placements[0].shapePoints[0],{x:1,y:0});
   fireEvent.pointerCancel(window);
   assert.deepEqual(saved().pages[0].placements[0].shapePoints[0],{x:2,y:0});
-  await user.click(screen.getByRole('button',{name:'Klar med formen',exact:true}));
+  assert.equal(captured,false,'completed and cancelled drags release capture');
+  assert.equal(screen.getByRole('switch',{name:'Fri form',exact:true}).checked,true);
+  assert.equal(shapeFrame.querySelectorAll('.panel-shape-handle').length,4,'handles remain after repeated edits');
+  // A release click on the canvas used to clear selection and reset the mode.
+  const beforeModeChange=structuredClone(saved().pages[0].placements[0]);
+  fireEvent.click(document.querySelector('.layout-canvas'));
+  assert.equal(document.querySelector('.is-layout-selected'),null);
+  assert.equal(screen.getByRole('switch',{name:'Fri form',exact:true}).checked,true);
+  const panelCount=saved().pages[0].placements.length;
+  fireEvent.pointerDown(document.querySelector('.grid-cell'),{button:0});
+  fireEvent.pointerUp(document.querySelector('.construction-grid'));
+  assert.equal(saved().pages[0].placements.length,panelCount,'free shape does not draw new panels');
+  await user.click(shapeFrame);
+  assert.equal(shapeFrame.querySelectorAll('.panel-shape-handle').length,4,'reselecting retains free shape mode');
+  fireEvent.keyDown(within(shapeFrame).getByRole('button',{name:'Formhörn 2',exact:true}),{key:'ArrowLeft'});
+  assert.equal(saved().pages[0].placements[0].shapePoints[1].x,3,'a second corner remains editable');
+  fireEvent.keyDown(within(shapeFrame).getByRole('button',{name:'Formhörn 2',exact:true}),{key:'ArrowRight'});
+  await user.click(screen.getByRole('switch',{name:'Fri form',exact:true}));
+  assert.deepEqual(saved().pages[0].placements[0],beforeModeChange,'switching to normal keeps the edited shape and contents');
   assert.equal(shapeFrame.querySelectorAll('.panel-shape-handle').length,0);
   assert.equal(shapeFrame.querySelectorAll('.panel-corner-handle').length,4);
   const beforeShapedResize=structuredClone(saved().pages[0].placements[0]);
@@ -1119,7 +1143,7 @@ try {
   assert.deepEqual(saved().pages[0].placements[0].overlays,beforeShapedResize.overlays);
   assert.deepEqual(saved().pages[0].placements[0].image,beforeShapedResize.image);
   assert.deepEqual(readProjects()[0].pages[0].placements[0].shapePoints,saved().pages[0].placements[0].shapePoints);
-  await user.click(screen.getByRole('button',{name:'Redigera form',exact:true}));
+  await user.click(screen.getByRole('switch',{name:'Fri form',exact:true}));
   assert.equal(shapeFrame.querySelectorAll('.panel-shape-surface circle').length,45,'two-cell panel has an 8×4 subdivision grid');
   const wideCorner=within(shapeFrame).getByRole('button',{name:'Formhörn 1',exact:true});
   fireEvent.keyDown(wideCorner,{key:'ArrowLeft'});
@@ -1131,7 +1155,7 @@ try {
   assert.deepEqual(saved().pages[0].placements[0].shapePoints[0],{x:2.5,y:0});
   fireEvent.keyDown(window,{key:'Escape'});
   assert.deepEqual(saved().pages[0].placements[0].shapePoints[0],{x:1.5,y:0});
-  await user.click(screen.getByRole('button',{name:'Klar med formen',exact:true}));
+  await user.click(screen.getByRole('switch',{name:'Fri form',exact:true}));
   const {PanelShapeHandles}=await import(pathToFileURL(join(compiledRoot,'PanelShapeControls.mjs')));
   const fullPageGrid=renderToStaticMarkup(React.createElement(PanelShapeHandles,{layer:{...saved().pages[0].placements[0],width:3,height:5},locale:'sv',onChange:()=>{}}));
   assert.equal((fullPageGrid.match(/<circle /g)||[]).length,273,'full 3×5 page has 12×20 subdivisions');
@@ -1389,4 +1413,5 @@ try {
   dom.window.close();
   rmSync(compiledRoot, { recursive: true, force: true });
 }
+
 
