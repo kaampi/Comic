@@ -627,6 +627,14 @@ try {
     `[data-panel-id="${originalPanel}"]`,
   );
   assert.ok(libraryCard.querySelector("img"));
+  assert.equal(document.querySelector('.page-sidebar h3').firstChild.textContent.trim(),'Bildbibliotek');
+  assert.equal(document.querySelector('.page-sidebar .page-list'),null);
+  assert.ok(document.querySelector('.page-canvas-header .page-new-button'));
+  assert.equal(within(document.querySelector('.page-sidebar')).queryByRole('button',{name:'Ny sida',exact:true}),null);
+  assert.ok(libraryCard.closest('.panel-library-beat').querySelector('h4').textContent.startsWith('Beat '));
+  assert.ok(document.querySelector('.project-sidebar .page-frame-picker select'));
+  assert.equal(document.querySelector('.page-sidebar select'),null);
+
   await user.click(document.querySelectorAll(".drawn-panel")[0]);
   await user.click(libraryCard);
   assert.ok(
@@ -975,7 +983,7 @@ try {
     screen.getByRole("button", { name: "Radera sida", exact: true }),
   );
   assert.equal(saved().pages.length, 0);
-  assert.ok(screen.getByRole("region", { name: "Rutbibliotek" }));
+  assert.ok(screen.getByRole("region", { name: "Bildbibliotek" }));
   assert.equal(document.querySelector(".layout-canvas"), null);
   await user.click(
     screen.getAllByRole("button", { name: "Ny sida", exact: true })[0],
@@ -1045,7 +1053,7 @@ try {
   await user.click(screen.getByRole("button",{name:"Ta bort bakgrund",exact:true}));
   assert.equal(saved().pages[0].background,undefined);
 
-  await user.click(screen.getByRole("button", {name:"Välj från rutbiblioteket",exact:true}));
+  await user.click(screen.getByRole("button", {name:"Välj från bildbiblioteket",exact:true}));
   assert.equal(screen.getByLabelText("Bildruta på sidan").value,"__background__");
   assert.deepEqual(saved().pages[0].placements,framesBeforeBackground);
   const backgroundLibrary = document.querySelector(".panel-library");
@@ -1094,7 +1102,7 @@ try {
   await new Promise(resolve=>setTimeout(resolve,20));
   await user.click(within(backgroundEditor.querySelector("header")).getByRole("button",{name:"Stäng",exact:true}));
   // Shape presets and 4×4 handles edit geometry without replacing frame contents.
-  await user.click(document.querySelector(".page-nav"));
+  await user.selectOptions(screen.getByLabelText("Bildruta på sidan"), "");
   if(!document.querySelector('.drawn-panel')){
     fireEvent.pointerDown(document.querySelector('.grid-cell'),{button:0});
     fireEvent.pointerUp(document.querySelector('.construction-grid'));

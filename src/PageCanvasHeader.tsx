@@ -1,8 +1,9 @@
 import type { Locale } from "./settings";
 
-export function PageCanvasHeader({number,hasPrevious,hasNext,locale,onPrevious,onNext,onDelete}:{number:number;hasPrevious:boolean;hasNext:boolean;locale:Locale;onPrevious:()=>void;onNext:()=>void;onDelete:()=>void}) {
+export function PageCanvasHeader({number,hasPrevious,hasNext,locale,onPrevious,onNext,onDelete,onNew}:{number:number;hasPrevious:boolean;hasNext:boolean;locale:Locale;onPrevious:()=>void;onNext:()=>void;onDelete:()=>void;onNew:()=>void}) {
   const sv=locale==="sv";
   return <header className="page-canvas-header">
+    <button type="button" className="primary-button page-new-button" onClick={onNew}>{sv?"Ny sida":"New page"}</button>
     <div className="page-canvas-navigation">
       {hasPrevious?<button type="button" className="text-button" aria-label={sv?"Föregående sida":"Previous page"} onClick={onPrevious}>←</button>:<span className="page-canvas-arrow-space"/>}
       <h2>{sv?"Sid":"Page"} {number}</h2>

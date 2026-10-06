@@ -14,9 +14,12 @@ export function libraryEntries(project: ComicProject) {
           (!!plan && p.adaptationPanelPlanId === plan.id),
       ),
     );
+    const sourceBeatIds = new Set([...(panel.sourceBeatIds ?? []), ...(plan?.sourceBeatIds ?? [])]);
+    const beat = project.adaptations.flatMap(a => a.beats).find(b => sourceBeatIds.has(b.id));
     return {
       panel,
       plan,
+      beat,
       title: plan?.title || panel.action || `Ruta ${panel.order}`,
       image: plan?.image ?? panel.image,
       pages,

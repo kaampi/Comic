@@ -58,6 +58,15 @@
 .page-grid-steppers button:disabled { opacity: .35; cursor: default; }
 .page-grid-mode { color: var(--text-dim); font-size: .8rem; }
 .page-canvas-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin-bottom: 12px; }
+.page-canvas-header .page-new-button { grid-column: 1; justify-self: start; padding: 7px 12px; font-size: .8rem; white-space: nowrap; }
+.page-frame-picker label { display: grid; gap: 6px; margin: 12px 0; font-size: .8rem; }
+.page-frame-picker select { width: 100%; min-width: 0; }
+@media (max-width: 480px) {
+  .page-canvas-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px; }
+  .page-canvas-navigation { justify-content: center; gap: 2px; }
+  .page-canvas-header .page-new-button { padding: 6px; }
+  .page-canvas-navigation button, .page-canvas-arrow-space { width: 24px; }
+}
 .page-canvas-navigation { grid-column: 2; display: flex; align-items: center; gap: 12px; }
 .page-canvas-navigation h2 { margin: 0; white-space: nowrap; font-size: 1.1rem; }
 .page-canvas-navigation button, .page-canvas-arrow-space { width: 32px; min-height: 32px; }

@@ -1,7 +1,6 @@
 .panel-library {
-  border-top: 1px solid var(--border-soft);
-  margin-top: 1rem;
-  padding-top: 1rem;
+  margin-top: 0;
+  padding-top: 0;
   min-width: 0;
 }
 .panel-library h3 {
@@ -27,14 +26,13 @@
 .panel-library-list {
   display: grid;
   gap: 0.6rem;
-  max-height: 55vh;
+  max-height: 75vh;
   overflow: auto;
   padding: 2px;
 }
 .panel-library-card {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
+  display: grid;
+  gap: 0.4rem;
   text-align: left;
   width: 100%;
   padding: 0.45rem;
@@ -52,8 +50,9 @@
 }
 .panel-library-card img,
 .panel-library-placeholder {
-  width: 64px;
-  height: 76px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
   object-fit: contain;
   flex-shrink: 0;
   background: rgba(127, 127, 127, 0.08);
@@ -78,3 +77,5 @@
 .panel-library-info small {
   font-size: 0.75rem;
 }
+.panel-library-beat { min-width: 0; display: grid; gap: 8px; margin-bottom: 8px; }
+.panel-library-beat h4 { margin: 0; font-size: .9rem; }

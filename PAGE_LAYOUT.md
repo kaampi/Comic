@@ -2,7 +2,7 @@
 
 Albumets toppmeny innehåller **Manus**, **Adaptering**, **Karaktärer**, **Platser**, **Bildrutor** och **Sidor**. Den aktiva vyn markeras i menyn.
 
-Vänsterspalten används för arbetsinställningar och är 440 px bred i stora fönster (tidigare 220 px). Under **Sidor** finns sidans rutnät, bakgrund och kontroller för den markerade rutans form, ram och kantpassning här. Spalten och sidlistan anpassas till mindre fönster.
+Vänsterspalten används för arbetsinställningar och är 440 px bred i stora fönster (tidigare 220 px). Under **Sidor** finns sidans rutnät, bakgrund och kontroller för den markerade rutans form, ram och kantpassning här. Spalterna anpassas till mindre fönster.
 
 Öppna **Sidor** och klicka på en befintlig ruta. Fyra hörnhandtag och sidans rutnät visas. Dra ett hörn för att ändra bredd och höjd samtidigt. Hörnen fäster vid rutnätets cellgränser; motsatt hörn ligger kvar.
 
@@ -18,9 +18,9 @@ Rutans ID, koppling till manus, läsordning, bild och textlager bevaras vid stor
 
 Fria hörn, sneda rutor och polygonformer ingår inte i detta första steg.
 
-## Rutbibliotek i Sidor
+## Bildbibliotek i Sidor
 
-Rutorna från manusvyn finns automatiskt i **Rutbibliotek** bredvid sidan, med rubrik och bild när en sådan lagts till. Rita en tom bildruta eller markera en befintlig tom ruta och klicka på innehållet i biblioteket. Nya bildrutor markeras direkt efter ritning. Du kan också välja bildruta i bibliotekets lista.
+Rutorna från manusvyn finns automatiskt i **Bildbibliotek** till höger om sidan. Bilderna visas i större kort under rubriker som **Beat 1**, **Beat 2** och så vidare. Flera rutor för samma beat visas tillsammans; äldre rutor utan beatkoppling visas som **Bildruta** med rutnumret. Rita en tom bildruta eller markera en befintlig tom ruta och klicka på innehållet i biblioteket. Nya bildrutor markeras direkt efter ritning. Du kan också välja bildruta eller sidbakgrund i vänsterspaltens lista **Bildruta på sidan**.
 
 Bilden, dialogen och berättartexten följer med. Texten blir redigerbara textlager; dubbelklicka på bildrutan för att justera dem. Befintliga bilder och textlager i bildrutan bevaras. Placeringen är en sparad kopia; senare ändringar i manusrutans text skriver inte över sidans redigerade textlager.
 
@@ -52,7 +52,7 @@ Texten är fortsatt redigerbar och kan döljas med **Visa text** utan att radera
 
 ## Sidans bakgrund
 
-I **Sidor → Sidans bakgrund** kan du ge sidan en bild som fyller hela ytan, under de vanliga bildrutorna. **Välj från rutbiblioteket** markerar bakgrunden som mål; välj sedan ett oplacerat innehåll i biblioteket. Bild, dialog och berättartext följer med som en redigerbar kopia, precis som för vanliga rutor. Biblioteket räknar också innehåll i bakgrunden som placerat.
+I **Sidor → Sidans bakgrund** kan du ge sidan en bild som fyller hela ytan, under de vanliga bildrutorna. **Välj från bildbiblioteket** markerar bakgrunden som mål; välj sedan ett oplacerat innehåll i biblioteket. Bild, dialog och berättartext följer med som en redigerbar kopia, precis som för vanliga rutor. Biblioteket räknar också innehåll i bakgrunden som placerat.
 
 **Redigera bakgrund och text** öppnar bildredigeraren. Använd **Ladda upp bild…** eller **Byt bild…**, justera beskärning, zoom och position och lägg till pratbubblor, tankebubblor, berättartext eller SFX direkt på sidan. Bakgrunden är ett eget lager och tar ingen plats i rutnätet. Du kan ha bara bakgrunden eller valfritt antal vanliga bildrutor ovanpå.
 
@@ -62,7 +62,7 @@ I **Sidor → Sidans bakgrund** kan du ge sidan en bild som fyller hela ytan, un
 
 Vänsterspalten har rubriken **Sidinställningar**. Sidans kolumner och rader visas som två sifferfält, exempelvis **[3] × [5] (Preset)**. Använd upp-/nedpilarna bredvid siffrorna eller skriv ett värde. En manuell ändring märks **Custom** och märkningen sparas med sidan, även om måtten senare ändras tillbaka. Albumets standardrutnät för nya sidor finns under **Albuminställningar**. Ändring av en sida med befintliga rutor kräver fortfarande bekräftelse eftersom layouten återställs.
 
-Ovanför själva sidan visas **Sid 1** med pilar till föregående/nästa sida när de finns. Pilarna byter vald sida utan att ändra sidordningen. Soptunnan till höger på samma rad raderar den visade sidan efter bekräftelse. Layoutmallarnas dropdown finns inte längre i vänsterspalten.
+Ovanför själva sidan finns **Ny sida** längst till vänster på samma rad som sidnumret och soptunnan. Högerspalten används för bildbiblioteket. Mitt på raden visas **Sid 1** med pilar till föregående/nästa sida när de finns. Pilarna byter vald sida utan att ändra sidordningen. Soptunnan till höger på samma rad raderar den visade sidan efter bekräftelse. Layoutmallarnas dropdown finns inte längre i vänsterspalten.
 
 ## Rutans form
 
