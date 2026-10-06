@@ -2,7 +2,7 @@
 
 Albumets toppmeny innehåller **Manus**, **Adaptering**, **Karaktärer**, **Platser**, **Bildrutor** och **Sidor**. Den aktiva vyn markeras i menyn.
 
-Vänsterspalten används för arbetsinställningar och är 440 px bred i stora fönster (tidigare 220 px). Under **Sidor** finns sidans rutnät, bakgrund, sidmallar och kontroller för den markerade rutans form, ram och kantpassning här. Spalten och sidlistan anpassas till mindre fönster.
+Vänsterspalten används för arbetsinställningar och är 440 px bred i stora fönster (tidigare 220 px). Under **Sidor** finns sidans rutnät, bakgrund och kontroller för den markerade rutans form, ram och kantpassning här. Spalten och sidlistan anpassas till mindre fönster.
 
 Öppna **Sidor** och klicka på en befintlig ruta. Fyra hörnhandtag och sidans rutnät visas. Dra ett hörn för att ändra bredd och höjd samtidigt. Hörnen fäster vid rutnätets cellgränser; motsatt hörn ligger kvar.
 
@@ -57,6 +57,12 @@ I **Sidor → Sidans bakgrund** kan du ge sidan en bild som fyller hela ytan, un
 **Redigera bakgrund och text** öppnar bildredigeraren. Använd **Ladda upp bild…** eller **Byt bild…**, justera beskärning, zoom och position och lägg till pratbubblor, tankebubblor, berättartext eller SFX direkt på sidan. Bakgrunden är ett eget lager och tar ingen plats i rutnätet. Du kan ha bara bakgrunden eller valfritt antal vanliga bildrutor ovanpå.
 
 **Ta bort bakgrund** kräver bekräftelse och tar bort bakgrundslagret med dess textlager. Bildrutorna ovanpå och originalinnehållet i rutbiblioteket finns kvar. Bakgrund, beskärning och textlager sparas med albumet och ingår i backup och återställning.
+
+## Sidinställningar och sidnavigering
+
+Vänsterspalten har rubriken **Sidinställningar**. Sidans kolumner och rader visas som två sifferfält, exempelvis **[3] × [5] (Preset)**. Använd upp-/nedpilarna bredvid siffrorna eller skriv ett värde. En manuell ändring märks **Custom** och märkningen sparas med sidan, även om måtten senare ändras tillbaka. Albumets standardrutnät för nya sidor finns under **Albuminställningar**. Ändring av en sida med befintliga rutor kräver fortfarande bekräftelse eftersom layouten återställs.
+
+Ovanför själva sidan visas **Sid 1** med pilar till föregående/nästa sida när de finns. Pilarna byter vald sida utan att ändra sidordningen. Soptunnan till höger på samma rad raderar den visade sidan efter bekräftelse. Layoutmallarnas dropdown finns inte längre i vänsterspalten.
 
 ## Rutans form
 

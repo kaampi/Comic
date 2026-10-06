@@ -57,7 +57,7 @@ export type ComicProject = {
     characterIds: string[]; locationId?: string; adaptationPanelPlanId?: string; sourceBeatIds?: string[];
     image?: PanelImage;
   }>;
-  pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; background?: PageLayer; placements: PageLayer[] }>;
+  pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; gridMode?: "preset" | "custom"; background?: PageLayer; placements: PageLayer[] }>;
   adaptations: StoryAdaptation[];
   overlayDefaults?: Partial<Record<OverlayType, Partial<import("./overlayTypography").OverlayTypography>>>;
   bubbleSwatches: BubbleSwatch[];
@@ -108,3 +108,4 @@ export function readProjects(): ComicProject[] {
 export function saveProjects(projects: ComicProject[]): boolean {
   try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects)); return true; } catch { return false; }
 }
+

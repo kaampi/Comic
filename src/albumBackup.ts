@@ -108,6 +108,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
     image(panel.image);
   }
   for (const page of objects(p.pages)) {
+    if (page.gridMode !== undefined && page.gridMode !== "preset" && page.gridMode !== "custom") throw new Error("invalid-backup");
     for (const key of ["number", "gridColumns", "gridRows"]) number(page[key]);
     for (const place of objects(pageLayers(page))) {
       for (const key of ["x", "y", "width", "height", "readingOrder"])
