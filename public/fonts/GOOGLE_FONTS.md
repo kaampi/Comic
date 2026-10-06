@@ -21,3 +21,14 @@ Comic Neue is bundled in real Light (300), Regular (400) and Bold (700) faces. I
 - [ComicNeue-Light.ttf](https://github.com/google/fonts/blob/main/ofl/comicneue/ComicNeue-Light.ttf), source Git blob `42448d3709fc5cb9380b4390195986a8647b6531`.
 - [ComicNeue-Regular.ttf](https://github.com/google/fonts/blob/main/ofl/comicneue/ComicNeue-Regular.ttf), source Git blob `88e9417f0e247c141adbcaa2464107d8d5b55aa1`.
 - [ComicNeue-Bold.ttf](https://github.com/google/fonts/blob/main/ofl/comicneue/ComicNeue-Bold.ttf), source Git blob `378eb2004a5bdb5ff06e97fc709ec4f1fc205d80`.
+
+## Comic Relief
+
+Comic Relief is bundled in real Regular (400) and Bold (700) faces, converted to full WOFF files without subsetting. Both contain Swedish ÅÄÖåäö. The original SIL Open Font License is included in `licenses/comicrelief/OFL.txt`.
+
+- https://github.com/google/fonts/blob/main/ofl/comicrelief/ComicRelief-Regular.ttf
+- https://github.com/google/fonts/blob/main/ofl/comicrelief/ComicRelief-Bold.ttf
+
+## Action Man (system font)
+
+Action Man is available in the overlay font picker, like Impact, through a local OS installation. Its font files are not bundled or converted. The original Readme.txt in https://www.iconian.com/fonts/action10.zip prohibits inclusion as part of another product. Install the original Action Man family on the computer used for editing and export; without it, the browser uses the sans-serif fallback. Distribution or commercial use requires appropriate permission from the author; see https://www.iconian.com/commercial.html.

@@ -12,6 +12,8 @@ export type OverlayTypography = Required<
 >;
 export const OVERLAY_FONTS = [
   "Comic Neue, sans-serif",
+  "Action Man, sans-serif",
+  "Comic Relief, sans-serif",
   "Patrick Hand, cursive",
   "Handlee, cursive",
   "Bad Script, cursive",
