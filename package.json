@@ -14,7 +14,8 @@
     "test:library-drop": "node scripts/test-library-drop.mjs",
     "test:adaptation": "node scripts/test-adaptation.mjs",
     "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs",
-    "test:export": "node scripts/test-export.mjs"
+    "test:export": "node scripts/test-export.mjs",
+    "test:idml": "node scripts/test-idml.mjs"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",

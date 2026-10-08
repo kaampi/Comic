@@ -8,7 +8,7 @@ import { SvgOverlay } from "./SvgOverlay";
 import type { ComicProject, PageLayer } from "./project";
 import { albumPageFormat, layerRect, pageAspect, pageDimensions, rasterDimensions, PAGE_RENDER_WIDTH, PANEL_BORDER, type PageFormat } from "./pageFormat";
 import { imageArchive, imageDensity, rasterPdf, type PdfRasterPage } from "./exportFiles";
-export type ExportOptions = { format: "pdf" | "png" | "jpeg"; pageIds: string[]; pageFormat: PageFormat; dpi: number; fit: "contain" | "cover"; jpegQuality: number };
+export type ExportOptions = { format: "pdf" | "png" | "jpeg" | "idml"; pageIds: string[]; pageFormat: PageFormat; dpi: number; fit: "contain" | "cover"; jpegQuality: number };
 const xml = (value: string) => value.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]!));
 function check(signal?: AbortSignal) { if (signal?.aborted) throw new DOMException("Cancelled", "AbortError"); }
 async function loadImage(url: string): Promise<HTMLImageElement> {
@@ -87,6 +87,7 @@ export async function renderExportPage(project: ComicProject, page: ComicProject
 }
 export function exportFilename(title:string) { return title.normalize("NFC").replace(/[<>:"/\\|?*\u0000-\u001f]/g,"-").replace(/[. ]+$/g,"").trim().slice(0,100)||"comicbook"; }
 export async function exportAlbum(project:ComicProject,options:ExportOptions,onProgress:(done:number,total:number)=>void,signal?:AbortSignal) {
+  if(options.format==="idml") { const {exportIdml}=await import("./idmlExport");return exportIdml(project,options,onProgress,signal); }
   const pages=[...project.pages].sort((a,b)=>a.number-b.number).filter(p=>options.pageIds.includes(p.id));
   if(!pages.length)throw new Error("no-pages"); rasterDimensions(options.pageFormat,options.dpi);
   check(signal);
@@ -102,3 +103,4 @@ export async function exportAlbum(project:ComicProject,options:ExportOptions,onP
   if(options.format==="pdf") { const d=pageDimensions(options.pageFormat);return {blob:rasterPdf(images,d.widthMm,d.heightMm),name:`${base}.pdf`}; }
   return files.length===1?{blob:new Blob([files[0].bytes as BlobPart],{type:options.format==="png"?"image/png":"image/jpeg"}),name:files[0].name}:{blob:imageArchive(files),name:`${base}-${ext}.zip`};
 }
+

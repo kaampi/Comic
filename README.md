@@ -78,3 +78,18 @@ Passningen sparas som rutans form och ingår i export och backup. Klicka **Passa
 I **Albuminställningar → Standardram för rutor** väljer du färg med färgväljare eller hexkod, tjocklek i punkter (pt) och om ramen ska visas. Under **Sidor**, markera en ruta och ändra **Rutans ram** för att ge just den rutan egna värden. **Använd albumets standardram** återställer ärvda värden. Rutor utan eget val följer albumstandarden när den ändras.
 
 Ramändringar flyttar inte bilder eller textlager. Färg, tjocklek och dolda ramar följer med export och backup. **Passa kanten** tar hänsyn till båda rutornas aktuella ramtjocklek; passa kanten igen efter att tjockleken ändrats för att återställa önskad marginal. Äldre album behåller sina tidigare svarta ramar tills inställningarna ändras.
+
+
+## IDML-export för InDesign och Affinity (beta)
+
+Under albumets export väljer du **IDML — InDesign / Affinity (beta)**. Exportera hela albumet eller valda sidor. Sidformat och contain/cover följer exportens inställningar; DPI-valet används inte för IDML. Bilderna behåller sin pixelupplösning.
+
+Exporten ger en ZIP med en `.idml`, `Links/` med bilderna och `README.txt` med typsnittslista. **Packa upp hela ZIP-filen innan du öppnar IDML-filen.** Om programmet frågar efter bilder, peka på `Links/`. Installera de använda typsnitten eller välj ersättare i mottagarprogrammet. Affinity sparar fortsatt redigering i sitt eget format.
+
+Dokumentet har fem lager: Text, Bubbles and SFX, Panel borders, Images och Background. Bildernas ramar och beskärning är redigerbara; själva illustrationerna är rasterbilder. Bubblor, svansar, tankemoln och SFX-former exporteras som vektorbanor. Texten ligger i separata, redigerbara textramar. Exporten ändrar inte projektet eller dess bildversioner och kräver ingen AI-tjänst eller installerad InDesign.
+
+Betaversionen behöver importtestas i InDesign och Affinity. Kontrollera särskilt radbrytning, textöverflöd, typsnitt/vikt, lagerordning, bildpositioner och sidkanter. Typsnittsfiler bäddas inte in. Textvikter översätts till tillgängliga Regular/Bold-stilar. Text och bubblor som sticker utanför en panel klipps ännu inte mot panelkonturen. Exporten har inte verifierats med faktisk import i dessa två program i utvecklingsmiljön.
+
+Ett bra testalbum innehåller en bakgrundsbild, en sned panel, en inzoomad/flyttad bild, en roterad pratbubbla med böjd svans, en tankebubbla, en berättarruta och en ljudeffekt. Jämför med PDF-export från samma album och prova att ändra en replik och flytta en bild i respektive program.
+
+Utvecklingskontroll: `npm run test:idml` kontrollerar XML, paketkopplingar, lager, sidordning, text, kurvor, bildpaketering, avbrott och att projektet inte ändras.

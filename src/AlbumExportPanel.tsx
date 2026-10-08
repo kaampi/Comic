@@ -26,8 +26,8 @@ export function AlbumExportPanel({project, locale}: {project: ComicProject; loca
   }
   return <div>
     <fieldset disabled={busy}><legend>{sv?"Exportera serien":"Export comic"}</legend>
-      <label>{sv?"Filformat":"File format"}<select value={options.format} onChange={e=>setOptions({...options,format:e.target.value as ExportOptions["format"]})}><option value="pdf">PDF</option><option value="jpeg">JPEG</option><option value="png">PNG</option></select></label>
-      <p className="quiet">{sv?"PDF samlar sidorna i en fil. PNG och JPEG ger en bild per sida; flera bilder laddas ner som ZIP.":"PDF contains all selected pages. PNG and JPEG create one image per page; multiple images are downloaded as ZIP."}</p>
+      <label>{sv?"Filformat":"File format"}<select value={options.format} onChange={e=>setOptions({...options,format:e.target.value as ExportOptions["format"]})}><option value="pdf">PDF</option><option value="jpeg">JPEG</option><option value="png">PNG</option><option value="idml">IDML — InDesign / Affinity (beta)</option></select></label>
+      {options.format!=="idml"?<p className="quiet">{sv?"PDF samlar sidorna i en fil. PNG och JPEG ger en bild per sida; flera bilder laddas ner som ZIP.":"PDF contains all selected pages. PNG and JPEG create one image per page; multiple images are downloaded as ZIP."}</p>:null}
       <label>{sv?"Sidor":"Pages"}<select value={options.pageIds.length===pages.length?"all":"selected"} onChange={e=>setOptions({...options,pageIds:e.target.value==="all"?pages.map(p=>p.id):[]})}><option value="all">{sv?"Hela albumet":"Whole album"}</option><option value="selected">{sv?"Valda sidor":"Selected pages"}</option></select></label>
       <div className="export-page-list">{pages.map(p=><label key={p.id}><input type="checkbox" checked={options.pageIds.includes(p.id)} onChange={e=>setOptions({...options,pageIds:e.target.checked?[...options.pageIds,p.id]:options.pageIds.filter(id=>id!==p.id)})}/>{sv?"Sida":"Page"} {p.number}</label>)}</div>
       {!pages.length?<p>{sv?"Skapa en sida under Sidor före export.":"Create a page in Pages before exporting."}</p>:null}
@@ -35,13 +35,16 @@ export function AlbumExportPanel({project, locale}: {project: ComicProject; loca
       <p className="quiet">{sv?"Formatet här gäller bara exporten. Albumets layout och inställningar behålls.":"This format applies to this export. The album layout and settings are preserved."}</p>
       {changedAspect?<label>{sv?"Anpassning till annat format":"Fit to another format"}<select value={options.fit} onChange={e=>setOptions({...options,fit:e.target.value as ExportOptions["fit"]})}><option value="contain">{sv?"Bevara hela sidan med marginaler":"Keep whole page with margins"}</option><option value="cover">{sv?"Fyll sidan och beskär kanterna":"Fill page and crop edges"}</option></select></label>:null}
       {changedAspect&&options.fit==="cover"?<p>{sv?"Kanterna beskärs; bildrutor och text nära kanten kan försvinna.":"Edges will be cropped; frames and text near the edge may be cut off."}</p>:null}
-      <label>{sv?"Upplösning (dpi)":"Resolution (dpi)"}<select value={options.dpi} onChange={e=>setOptions({...options,dpi:Number(e.target.value)})}><option value="72">72</option><option value="150">150</option><option value="300">300</option><option value="600">600</option></select></label>
+      {options.format!=="idml"?<><label>{sv?"Upplösning (dpi)":"Resolution (dpi)"}<select value={options.dpi} onChange={e=>setOptions({...options,dpi:Number(e.target.value)})}><option value="72">72</option><option value="150">150</option><option value="300">300</option><option value="600">600</option></select></label>
       {dimensions?<p className="quiet">{dimensions.width} × {dimensions.height} px {sv?"per sida":"per page"}</p>:<p role="alert">{sv?"För stor bild. Välj lägre dpi eller mindre sidformat.":"Image too large. Choose a lower DPI or smaller page size."}</p>}
+      </>:null}
+      {options.format==="idml"?<p className="quiet">{sv?"ZIP med IDML och bildmapp. Packa upp allt före öppning. Bilder, panelramar, bubblor och text ligger på separata lager. Installera använda typsnitt och kontrollera radbrytning i InDesign eller Affinity. Text och bubblor som går utanför en panel beskärs inte i denna betaversion.":"ZIP with IDML and images. Extract everything before opening. Images, panel borders, bubbles and text use separate layers. Install the fonts used and check wrapping in InDesign or Affinity. Text and bubbles extending beyond a panel are not clipped in this beta."}</p>:null}
       {options.format==="jpeg"?<label>{sv?"JPEG-kvalitet (%)":"JPEG quality (%)"}<input type="number" min="50" max="100" value={Math.round(options.jpegQuality*100)} onChange={e=>setOptions({...options,jpegQuality:Math.max(.5,Math.min(1,Number(e.target.value)/100))})}/></label>:null}
       {emptyImages?<p className="quiet">{emptyImages} {sv?"bildrutor saknar bild och exporteras med vit bakgrund.":"frames have no image and will export with a white background."}</p>:null}
-      <button type="button" className="primary-button" disabled={!selected.length||!dimensions} onClick={()=>void run()}>{sv?"Ladda ner export":"Download export"}</button>
+      <button type="button" className="primary-button" disabled={!selected.length||(options.format!=="idml"&&!dimensions)} onClick={()=>void run()}>{sv?"Ladda ner export":"Download export"}</button>
     </fieldset>
     {busy?<><progress className="export-progress" value={progress[0]} max={progress[1]||1}/><p role="status">{sv?"Skapar sida":"Rendering page"} {progress[0]} / {progress[1]}</p><button type="button" onClick={()=>{abort.current?.abort();setBusy(false);}}>{sv?"Avbryt export":"Cancel export"}</button></>:null}
     {error?<p role="alert">{error}</p>:null}{complete?<p role="status">{sv?"Exportfil skapad":"Export file created"}: {complete}</p>:null}
   </div>;
 }
+
