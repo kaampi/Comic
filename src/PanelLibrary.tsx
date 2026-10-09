@@ -92,7 +92,7 @@ export function PageFramePicker({project,pageId,placementId,locale,onSelect}:{pr
   return <div className="page-frame-picker">
       {page && (
         <label>
-          {sv ? "Bildruta på sidan" : "Page frame"}
+          <span className="page-frame-heading">{sv ? "Bildruta på sidan" : "Page frame"}</span>
           <select
             aria-label={sv ? "Bildruta på sidan" : "Page frame"}
             value={
@@ -121,3 +121,4 @@ export function PageFramePicker({project,pageId,placementId,locale,onSelect}:{pr
       )}
   </div>;
 }
+

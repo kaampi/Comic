@@ -6,6 +6,10 @@
 }
 .page-background-controls summary {
   cursor: pointer;
+}
+.page-background-controls summary,
+.page-frame-picker .page-frame-heading {
+  font-size: 1rem;
   font-weight: 600;
 }
 .page-background-layer {
