@@ -9,7 +9,7 @@ import ts from "typescript";
 // Compile only the local domain modules; no app, browser or manuscript fixture is needed.
 const temporary = mkdtempSync(join(tmpdir(), "comicbook-adaptation-"));
 globalThis.crypto ??= { randomUUID };
-const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "localAi", "project", "stylesLibrary", "manuscriptModel", "adaptation/prompts", "pageLayout", "overlayTypography", "pageFormat", "pageTypography"];
+const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "localAi", "project", "stylesLibrary", "styleColorMode", "painterlyStyles", "manuscriptModel", "adaptation/prompts", "pageLayout", "overlayTypography", "pageFormat", "pageTypography"];
 for (const file of files) {
   const source = readFileSync(new URL("../src/" + file + ".ts", import.meta.url), "utf8");
   const result = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });
@@ -312,6 +312,45 @@ try {
   assert.equal(splitDialogue[1].dialogueCandidates[0].text, "Keep the gate open.");
   assert.ok(splitDialogue.every(beat => beat.dialogueCandidates.every(line => beat.sourceTextExcerpt.includes(line.text))));
   console.log("PASS: numbered references restore exact original text and dialogue, handle repetition/overlap/whitespace, reject invalid IDs/order, and send compact prompts");
+  {
+  const { renderOptionsForStyle, resolveColorMode } = await import(pathToFileURL(join(temporary, "styleColorMode.mjs")));
+  const { buildImagePrompt, generateImagePrompts } = await import(pathToFileURL(join(temporary, "adaptation/prompts.mjs")));
+  const charcoal = BUILTIN_STYLES.find(s => s.id === 'draw-expressive-charcoal');
+  const oil = BUILTIN_STYLES.find(s => s.id === 'paint-zorn-alla-prima');
+  const vintage = BUILTIN_STYLES.find(s => s.id === 'print-vintage-halftone');
+  const silk = BUILTIN_STYLES.find(s => s.id === 'paint-east-asian-silk');
+  assert.equal(createProject('Charcoal', 'manual', charcoal).renderOptions.colorMode, 'grayscale');
+  assert.equal(renderOptionsForStyle(oil, { linesOnly: true }).colorMode, 'color');
+  assert.equal(renderOptionsForStyle(charcoal, { colorMode: 'color' }).colorMode, 'grayscale');
+  assert.equal(resolveColorMode(BUILTIN_STYLES[0], { linesOnly: true }), 'line-art');
+  const samplePanel = { id: 'panel-mode', visualDescription: 'A woman opens a door.', characterIds: [], shotType: 'medium', sizeHint: 'wide' };
+  for (const mode of ['short', 'medium', 'full']) {
+    const grayscaleProject = { ...createProject('Vintage', 'manual', vintage), renderOptions: { linesOnly: false, colorMode: 'grayscale' } };
+    const prompt = buildImagePrompt(grayscaleProject, samplePanel, mode);
+    assert.match(prompt, /visible black halftone dots/);
+    assert.doesNotMatch(prompt, /dusty reds|warm off-white or pale beige/);
+    assert.match(prompt, /neutral grayscale/);
+    const negative = generateImagePrompts(grayscaleProject, [samplePanel], mode)[0].negativePrompt;
+    assert.match(negative, /sepia/);
+    assert.doesNotMatch(negative, /painted rendering|grayscale wash/);
+    const colorPrompt = buildImagePrompt({ ...createProject('Oil', 'manual', oil), renderOptions: { linesOnly: true } }, samplePanel, mode);
+    assert.match(colorPrompt, /exclusively in color/);
+    assert.doesNotMatch(colorPrompt, /line art only/);
+  }
+  const saved = createProject('Saved gray', 'manual', charcoal);
+  saveProjects([saved]);
+  const loaded = readProjects().find(p => p.id === saved.id);
+  assert.equal(loaded.renderOptions.colorMode, 'grayscale');
+  assert.equal(loaded.style.supportedColorModes[0], 'grayscale');
+  const originalSnapshot = JSON.stringify(saved.style);
+  const changedStyle = { ...saved, style: oil, renderOptions: renderOptionsForStyle(oil, saved.renderOptions) };
+  assert.equal(changedStyle.renderOptions.colorMode, 'color');
+  assert.equal(JSON.stringify(saved.style), originalSnapshot);
+  assert.match(buildImagePrompt(createProject('Silk', 'manual', silk), samplePanel), /DECORATIVE|decorative calligraphic/);
+  assert.doesNotMatch(generateImagePrompts(createProject('Silk', 'manual', silk), [samplePanel])[0].negativePrompt, /signature|lettering/);
+  console.log('PASS: style mode restrictions, legacy line mode, gray prompt variants in every length, negative prompts, save/load and snapshot preservation');
+  }
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }
+
