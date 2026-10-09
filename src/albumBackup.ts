@@ -1,7 +1,7 @@
 import { validPanelBorder } from "./panelBorder";
 import { validPanelShape } from "./panelShape";
 import { normalizeProjectTypography } from "./pageTypography";
-import { validPageFormat } from "./pageFormat";
+import { validPageFormat, spacingFitsAlbum } from "./pageFormat";
 import { pageLayers } from "./pageBackground";
 import type { ComicProject } from "./project";
 export const ALBUM_BACKUP_KIND = "comicbook-ai.album";
@@ -127,6 +127,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
       }
     }
   }
+  if (p.pageFormat?.spacing && !spacingFitsAlbum(p.pageFormat, [p.pageDefaults, ...p.pages])) throw new Error("invalid-backup");
   for (const a of objects(p.adaptations)) {
     string(a.sourceText);
     for (const beat of objects(a.beats)) {
@@ -183,3 +184,4 @@ export function restoredAlbumCopy(project: ComicProject): ComicProject {
     updatedAt: now,
   };
 }
+

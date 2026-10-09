@@ -27,7 +27,7 @@ function roundedBodyPoint(o:TextOverlay,style:string,a:number){
  return{x:cx+sx*rx,y:cy+sy*ry};
 }
 
-function bodyPath(o:TextOverlay,style:string){
+export function bodyPath(o:TextOverlay,style:string){
  const tau=Math.PI*2,steps=96;
  const start=roundedBodyPoint(o,style,0);
  let d=`M ${start.x.toFixed(2)} ${start.y.toFixed(2)}`;
@@ -51,7 +51,7 @@ export function bubbleTailStartAngle(o:TextOverlay,x:number,y:number){
  const a=-o.rotation*Math.PI/180,dx=x-o.x-o.width/2,dy=y-o.y-o.height/2;
  return Math.atan2(dx*Math.sin(a)+dy*Math.cos(a),dx*Math.cos(a)-dy*Math.sin(a));
 }
-function speechPath(o:TextOverlay,style:string){
+export function speechPath(o:TextOverlay,style:string){
  if(o.tailEnabled===false)return bodyPath(o,style);
  const w=o.width,h=o.height,cx=w/2,cy=h/2;
  const tx=(o.tailX??o.x+w*.58)-o.x,ty=(o.tailY??o.y+h*1.12)-o.y;
@@ -67,7 +67,7 @@ function speechPath(o:TextOverlay,style:string){
  for(let i=1;i<=steps;i++){const q=p(a2+sweep*i/steps);d+=` L ${q.x.toFixed(2)} ${q.y.toFixed(2)}`;}
  return d+" Z";
 }
-function shoutPath(o:TextOverlay){const w=o.width,h=o.height,cx=w/2,cy=h/2,pts=18;return Array.from({length:pts},(_,i)=>{const a=-Math.PI/2+i*Math.PI*2/pts,r=i%2?0.72:1,x=cx+Math.cos(a)*w*.48*r,y=cy+Math.sin(a)*h*.48*r;return(i?"L":"M")+" "+x+" "+y}).join(" ")+" Z";}
+export function shoutPath(o:TextOverlay){const w=o.width,h=o.height,cx=w/2,cy=h/2,pts=18;return Array.from({length:pts},(_,i)=>{const a=-Math.PI/2+i*Math.PI*2/pts,r=i%2?0.72:1,x=cx+Math.cos(a)*w*.48*r,y=cy+Math.sin(a)*h*.48*r;return(i?"L":"M")+" "+x+" "+y}).join(" ")+" Z";}
 
 export function SvgOverlay({overlay,textMetrics}:{overlay:TextOverlay;textMetrics?:LayerTextMetrics}){
  const [,refreshFontMetrics]=useReducer((n:number)=>n+1,0);
@@ -99,3 +99,4 @@ export function SvgOverlay({overlay,textMetrics}:{overlay:TextOverlay;textMetric
   {overlay.type!=="sfx"||!overlay.sfxTextHidden?<text x={textX} y={pointLayout?.textY??h/2-(textLines.length-1)*fontSize*.575} textAnchor={anchor} dominantBaseline="middle" fontFamily={overlay.fontFamily??(overlay.type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif")} fontWeight={overlay.fontWeight??(overlay.type==="sfx"?800:600)} fontSize={fontSize} fill={overlay.sfxTextColor??"#171411"} stroke={overlay.type==="sfx"?"#fffdf7":"none"} strokeWidth={overlay.type==="sfx"?3:0} paintOrder="stroke">{textLines.map((line,i)=><tspan key={i} x={textX} dy={i===0?0:fontSize*1.15}>{line||"\u00a0"}</tspan>)}</text>:null}
  </g></>;
 }
+

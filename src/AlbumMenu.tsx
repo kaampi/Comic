@@ -1,8 +1,9 @@
 import { PanelBorderControls } from "./PanelBorderControls";
 import { albumPanelBorder } from "./panelBorder";
 import { AlbumExportPanel } from "./AlbumExportPanel";
+import { PageSpacingEditor } from "./PageSpacingEditor";
 import { PageFormatEditor } from "./PageFormatEditor";
-import { albumPageFormat } from "./pageFormat";
+import { albumPageFormat, spacingFitsAlbum } from "./pageFormat";
 import { useEffect, useRef, useState } from "react";
 import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
@@ -49,7 +50,7 @@ export function AlbumMenu({
   const sv = locale === "sv";
   const [preview, setPreview] = useState<ComicProject | null>(null),
     [error, setError] = useState(""),
-    [download, setDownload] = useState("");
+    [download, setDownload] = useState(""), [layoutError, setLayoutError] = useState(false);
   const request = useRef(0),
     dialog = useRef<HTMLElement>(null),
     lastFocus = useRef<HTMLElement | null>(null);
@@ -58,6 +59,7 @@ export function AlbumMenu({
     setPreview(null);
     setError("");
     setDownload("");
+    setLayoutError(false);
   }, [mode, project?.id]);
   useEffect(() => {
     if (!mode) return;
@@ -258,26 +260,24 @@ export function AlbumMenu({
                         min="2"
                         max={i ? 8 : 6}
                         value={project.pageDefaults[key]}
-                        onChange={(e) =>
-                          onUpdate((p) => ({
-                            ...p,
-                            pageDefaults: {
-                              ...p.pageDefaults,
-                              [key]: Math.max(
-                                2,
-                                Math.min(
-                                  i ? 8 : 6,
-                                  Math.round(Number(e.target.value) || 2),
-                                ),
-                              ),
-                            },
-                          }))
-                        }
+                        onChange={(e) => {
+                          const value = e.currentTarget.valueAsNumber;
+                          if (!Number.isFinite(value)) return;
+                          const pageDefaults = { ...project.pageDefaults, [key]: Math.max(2, Math.min(i ? 8 : 6, Math.round(value))) };
+                          if (!spacingFitsAlbum(albumPageFormat(project), [...project.pages, pageDefaults])) { setLayoutError(true); return; }
+                          setLayoutError(false); onUpdate(p => ({ ...p, pageDefaults }));
+                        }}
                       />
                     </label>
                   ))}
                 </fieldset>
-                <PageFormatEditor value={albumPageFormat(project)} locale={locale} onChange={pageFormat => onUpdate(p => ({...p,pageFormat}))}/>
+                <PageFormatEditor value={albumPageFormat(project)} locale={locale} onChange={pageFormat => {
+                  if (!spacingFitsAlbum(pageFormat, [...project.pages, project.pageDefaults])) { setLayoutError(true); return; }
+                  setLayoutError(false); onUpdate(p => ({...p,pageFormat}));
+                }}/>
+                {layoutError?<p role="alert">{sv ? "Sidformatet eller rutnätet lämnar inte plats för marginaler och bildrutor. Minska marginalerna eller mellanrummen först." : "The page size or grid leaves no room for margins and panels. Reduce margins or spacing first."}</p>:null}
+                <PageSpacingEditor format={albumPageFormat(project)} grids={[...project.pages, project.pageDefaults]} locale={locale} onChange={spacing => { setLayoutError(false); onUpdate(p => ({...p,pageFormat:{...albumPageFormat(p),spacing}})); }}/>
+
                 <p className="quiet">{sv ? "Sidformatet gäller alla sidor. Ändrade proportioner påverkar beskärningen av befintliga bilder." : "The format applies to all pages. Changing proportions affects cropping of existing images."}</p>
                 <PanelBorderControls value={albumPanelBorder(project)} locale={locale} onChange={panelBorderDefaults=>onUpdate(p=>({...p,panelBorderDefaults}))}/>
                 <OverlayDefaultsEditor
