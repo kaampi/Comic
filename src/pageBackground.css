@@ -41,14 +41,59 @@
   display: none;
 }
 
-.page-background-upload {
+/* The stored image is the source of truth, not the temporary file input. */
+.page-background-image-picker {
   display: grid;
-  gap: .4rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .6rem;
   margin: .8rem 0;
-  font-weight: 600;
+  align-items: center;
 }
-.page-background-upload input {
+.page-background-file-input { display: none; }
+.page-background-thumbnail {
+  grid-column: 1 / -1;
   width: 100%;
-  min-width: 0;
-  font-weight: 400;
+  height: 112px;
+  object-fit: contain;
+  background: var(--paper);
+  border: 1px solid var(--border-soft);
+  border-radius: 5px;
 }
+.page-background-filename {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .8rem;
+}
+.page-background-image-actions { display: flex; gap: .35rem; }
+.page-background-icon-button,
+.page-background-action-button {
+  border: 1px solid var(--border-soft);
+  border-radius: 5px;
+  background: var(--paper);
+  color: inherit;
+  cursor: pointer;
+}
+.page-background-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: .45rem;
+}
+.page-background-icon-button svg { width: 20px; height: 20px; }
+.page-background-actions { display: grid; gap: .5rem; }
+.page-background-action-button {
+  width: 100%;
+  padding: .65rem .75rem;
+  font-size: .85rem;
+  font-weight: 600;
+  text-align: left;
+}
+.page-background-image-picker > .page-background-action-button { grid-column: 1 / -1; }
+.page-background-icon-button:hover,
+.page-background-action-button:hover { border-color: currentColor; }
+.page-background-icon-button:focus-visible,
+.page-background-action-button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
