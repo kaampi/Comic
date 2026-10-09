@@ -171,6 +171,10 @@ Läsordning lagras uttryckligen, separat från rutornas geometriska placering. H
 
 Ändrad layout ska markera när en befintlig bild inte längre passar. Användaren väljer beskärning, omkomposition eller ny generering; layoutändring får inte starta en kostnadsbelagd generering automatiskt.
 
+### 8.1 Sidmarginaler och rutmellanrum
+
+Albuminställningarna erbjuder fyra oberoende sidmarginaler och mellanrum mellan kolumner respektive rader, i millimeter. Dessa gäller alla albumets sidor och sparas i sidformatets `spacing`. Förhandsvisning, rutgeometri och export använder samma mått. Sidbakgrunden fyller hela sidan. Ändringar bevarar rut-ID:n, gridplaceringar, bildversioner och text; beskärning och radbrytning kan förändras när rutornas mått ändras. Om inställningarna saknas bevaras äldre layout. Om måtten inte lämnar plats för rutnätet ska ändringen avvisas.
+
 ## 9. Stilmotor och promptbyggare
 
 Stilbiblioteket ska stödja inbyggda och egna stilar med:
@@ -271,4 +275,5 @@ Första milstolpen är en fungerande kort serie på 1–3 sidor med ett fåtal k
 - Exakta lagrings-, backup- och migrationsdetaljer.
 - Sidformat, upplösning och typsnitt för första exporten.
 - Licens för projektet.
+
 

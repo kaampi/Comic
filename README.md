@@ -16,6 +16,7 @@ En fristående desktopapp som omvandlar litterär text till illustrerade serier 
 
 ## Dokumentation
 
+- [TODO.md](TODO.md): aktuella uppgifter och nästa steg.
 - [PROJECT_SPEC.md](PROJECT_SPEC.md): funktioner, arkitektur, datamodell och utvecklingsplan.
 - [AGENTS.md](AGENTS.md): regler för arbete i detta repository.
 - [PAGE_LAYOUT.md](PAGE_LAYOUT.md): markera rutor och ändra deras storlek med hörn som fäster i rutnätet.
@@ -93,3 +94,14 @@ Betaversionen behöver importtestas i InDesign och Affinity. Kontrollera särski
 Ett bra testalbum innehåller en bakgrundsbild, en sned panel, en inzoomad/flyttad bild, en roterad pratbubbla med böjd svans, en tankebubbla, en berättarruta och en ljudeffekt. Jämför med PDF-export från samma album och prova att ändra en replik och flytta en bild i respektive program.
 
 Utvecklingskontroll: `npm run test:idml` kontrollerar XML, paketkopplingar, lager, sidordning, text, kurvor, bildpaketering, avbrott och att projektet inte ändras.
+
+
+## Sidmarginaler och mellanrum mellan bildrutor
+
+I **Albuminställningar → Sidmarginaler och rutmellanrum** anger du överkant, underkant, vänster och höger marginal samt mellanrum mellan kolumner och rader. Alla mått anges i millimeter och gäller albumets sidor. Noll tillåts. Värden som inte lämnar plats för alla bildrutor sparas inte; minska först marginaler eller mellanrum om du vill använda ett mindre sidformat eller tätare rutnät.
+
+Rutornas ID:n, gridplaceringar, bilder och texter behålls. Rutornas fysiska storlek ändras när marginalerna eller mellanrummen ändras, vilket kan påverka beskärning och radbrytning; textstorlek i punkter behålls. Sidbakgrunden fyller hela sidan. De nya måtten används av förhandsvisning, fästpunkter, drag/släpp, PDF/PNG/JPEG- och IDML-export och följer med albumbackupen. Äldre album utan dessa inställningar behåller sina tidigare marginaler och mellanrum.
+
+Mellanrummen gäller sidans rutnät. För fria sneda rutor används fortfarande **Passa mot grannruta** och dess marginal mellan konturerna. Passa kanten igen efter att sidmåtten ändrats. Mycket tjocka panelramar kan sträcka sig utanför rutnätets bildrutor.
+
+Kontroll: `npm run test:page-spacing`.

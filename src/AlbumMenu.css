@@ -162,3 +162,7 @@
     padding: 0.6rem;
   }
 }
+
+
+.page-spacing-editor { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.page-spacing-editor p { grid-column: 1 / -1; margin: 0; }

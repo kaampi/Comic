@@ -7,11 +7,12 @@ import type { ComicProject, PageLayer } from "./project";
 export const LIBRARY_DRAG_TYPE = "application/x-comicbook-panel";
 export type LibraryDropTarget = { kind: "frame"; placementId: string } | { kind: "new"; x: number; y: number };
 export type LibraryDropUndo = { projectId: string; pageId: string; placementId: string; previous?: PageLayer; applied: PageLayer };
-type GridMetrics = { width: number; height: number; gapX: number; gapY: number };
+type GridMetrics = { width: number; height: number; gapX: number; gapY: number; border?: number };
 
 export function libraryDropTarget(project: ComicProject, pageId: string, x: number, y: number, grid: GridMetrics): LibraryDropTarget | null {
   const page = project.pages.find(page => page.id === pageId);
-  if (!page || ![x, y, grid.width, grid.height, grid.gapX, grid.gapY].every(Number.isFinite) || x < 0 || y < 0 || x >= grid.width || y >= grid.height) return null;
+  const border = grid.border ?? PANEL_BORDER;
+  if (!page || ![x, y, grid.width, grid.height, grid.gapX, grid.gapY, border].every(Number.isFinite) || x < 0 || y < 0 || x >= grid.width || y >= grid.height) return null;
   const cellW = (grid.width - (page.gridColumns - 1) * grid.gapX) / page.gridColumns;
   const cellH = (grid.height - (page.gridRows - 1) * grid.gapY) / page.gridRows;
   if (cellW <= 0 || cellH <= 0) return null;
@@ -22,8 +23,8 @@ export function libraryDropTarget(project: ComicProject, pageId: string, x: numb
     const height = layer.height * cellH + (layer.height - 1) * grid.gapY;
     if (x < left || y < top || x > left + width || y > top + height) continue;
     if (shapedPanel(layer)) {
-      const px = (x - left - PANEL_BORDER) / (width - 2 * PANEL_BORDER) * 4;
-      const py = (y - top - PANEL_BORDER) / (height - 2 * PANEL_BORDER) * 4;
+      const px = (x - left - border) / (width - 2 * border) * 4;
+      const py = (y - top - border) / (height - 2 * border) * 4;
       const points = panelShapePoints(layer);
       if (!points.every((a, index) => {
         const b = points[(index + 1) % points.length];
@@ -76,3 +77,4 @@ export function undoLibraryDrop(project: ComicProject, undo: LibraryDropUndo): C
     ...page, placements: undo.previous ? page.placements.map(layer => layer.id === undo.placementId ? undo.previous! : layer) : page.placements.filter(layer => layer.id !== undo.placementId),
   }) };
 }
+

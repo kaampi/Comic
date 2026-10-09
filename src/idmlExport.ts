@@ -1,7 +1,7 @@
 import type { ComicProject, TextOverlay } from "./project";
 import type { ExportOptions } from "./albumExport";
 import { exportFilename } from "./albumExport";
-import { albumPageFormat, layerRect, pageAspect, pageDimensions, PANEL_BORDER, validPageFormat } from "./pageFormat";
+import { albumPageFormat, layerRect, pageGridMetrics, pageAspect, pageDimensions, PANEL_BORDER, validPageFormat } from "./pageFormat";
 import { panelOutline } from "./panelGeometry";
 import { panelShapePoints } from "./panelShape";
 import { panelBorderStyle } from "./panelBorder";
@@ -78,7 +78,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
   }
   onProgress(0,pages.length);
   for(const [index,page] of pages.entries()) {
-    check(signal);const items:string[]=[];
+    check(signal);const items:string[]=[],gridMetrics=pageGridMetrics(page,sourceFormat);
     items.push(shape([rectanglePath(0,0,w,h)],"cbBackground","Page background","#fffdf7"));
     for(const layer of [...(page.background?[page.background]:[]),...page.placements]) {
       const background=layer.id===page.background?.id,r=background?{x:0,y:0,width:700,height:sourceH}:layerRect(page,layer,sourceFormat),inset=background?0:PANEL_BORDER;
@@ -114,7 +114,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
       }
     }
     const spread=id(),spreadPath=`Spreads/Spread_${spread}.xml`;
-    add(spreadPath,part("Spread",`<Spread Self="${spread}" PageCount="1" BindingLocation="0" AllowPageShuffle="false" ItemTransform="1 0 0 1 0 0"><Page Self="${id()}" Name="${page.number}" GeometricBounds="0 0 ${num(h)} ${num(w)}" ItemTransform="1 0 0 1 0 0" AppliedMaster="n"><MarginPreference Top="0" Bottom="0" Left="0" Right="0" ColumnCount="1" ColumnGutter="0"/></Page>${items.join("")}</Spread>`));spreads.push(spreadPath);
+    add(spreadPath,part("Spread",`<Spread Self="${spread}" PageCount="1" BindingLocation="0" AllowPageShuffle="false" ItemTransform="1 0 0 1 0 0"><Page Self="${id()}" Name="${page.number}" GeometricBounds="0 0 ${num(h)} ${num(w)}" ItemTransform="1 0 0 1 0 0" AppliedMaster="n"><MarginPreference Top="${num(Math.max(0,dy+gridMetrics.top*scale))}" Bottom="${num(Math.max(0,dy+gridMetrics.bottom*scale))}" Left="${num(Math.max(0,dx+gridMetrics.left*scale))}" Right="${num(Math.max(0,dx+gridMetrics.right*scale))}" ColumnCount="1" ColumnGutter="0"/></Page>${items.join("")}</Spread>`));spreads.push(spreadPath);
     onProgress(index+1,pages.length);await new Promise(resolve=>setTimeout(resolve,0));
   }
   add("Resources/Graphic.xml",part("Graphic",`<Swatch Self="Swatch/None" Name="$ID/None" ColorEditable="false" ColorRemovable="false"/>${[...colors].map(([hex,self])=>`<Color Self="${self}" Name="CB ${hex}" Model="Process" Space="RGB" ColorValue="${[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)).join(" ")}"/>`).join("")}<StrokeStyle Self="StrokeStyle/$ID/Solid" Name="$ID/Solid"/><StrokeStyle Self="StrokeStyle/$ID/Dashed" Name="$ID/Dashed"/>`));
