@@ -1069,9 +1069,7 @@ try {
   assert.deepEqual(saved().pages[0].placements,framesBeforeBackground);
   assert.equal(document.querySelector('.page-background-thumbnail'),null);
   assert.ok(screen.getByRole('button',{name:'Ladda upp bakgrundsbild',exact:true}));
-  window.confirm=()=>true;
-  await user.click(screen.getByRole("button",{name:"Ta bort bakgrund",exact:true}));
-  assert.equal(saved().pages[0].background,undefined);
+  assert.equal(screen.queryByRole("button",{name:"Ta bort bakgrund",exact:true}),null);
 
   await user.click(screen.getByRole("button", {name:"Välj från bildbiblioteket",exact:true}));
   assert.equal(screen.getByLabelText("Bildruta på sidan").value,"__background__");
@@ -1108,14 +1106,12 @@ try {
   assert.ok(document.querySelector(".page-background-layer img"));
   const backgroundSaved = saved().pages[0].background;
   assert.deepEqual(readProjects()[0].pages[0].background,backgroundSaved);
-  window.confirm=()=>false;
-  await user.click(screen.getByRole("button",{name:"Ta bort bakgrund",exact:true}));
-  assert.deepEqual(saved().pages[0].background,backgroundSaved);
-  window.confirm=()=>true;
-  await user.click(screen.getByRole("button",{name:"Ta bort bakgrund",exact:true}));
-  assert.equal(saved().pages[0].background,undefined);
+  await user.click(screen.getByRole("button",{name:"Ta bort bakgrundsbild",exact:true}));
+  assert.equal(saved().pages[0].background.image,undefined);
+  assert.equal(saved().pages[0].background.id,backgroundSaved.id);
+  assert.deepEqual(saved().pages[0].background.overlays,backgroundSaved.overlays);
   assert.deepEqual(saved().pages[0].placements,framesBeforeBackground);
-  // Recreate a background so the following download/restore checks cover it too.
+  // Replace the image so the following download/restore checks cover it too.
   await user.click(screen.getByRole("button",{name:"Redigera bakgrund och text",exact:true}));
   backgroundEditor=document.querySelector(".panel-editor-modal");
   await user.upload(backgroundEditor.querySelector('input[type="file"]'),new window.File(["synthetic image"],"backup-background.png",{type:"image/png"}));
