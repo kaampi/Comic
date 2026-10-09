@@ -15,7 +15,8 @@
     "test:adaptation": "node scripts/test-adaptation.mjs",
     "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs",
     "test:export": "node scripts/test-export.mjs",
-    "test:style-modes": "node scripts/test-style-modes.mjs"
+    "test:style-modes": "node scripts/test-style-modes.mjs",
+    "test:save-errors": "node scripts/test-save-errors.mjs"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",

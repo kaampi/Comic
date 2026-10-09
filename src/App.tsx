@@ -29,6 +29,7 @@ import { manuscriptText } from "./manuscriptText";
 import { useEffect, useRef, useState } from "react";
 import { AI_MODES, type AiMode } from "./ai";
 import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, readPageGridDefaults, savePageGridDefaults, type Locale, type Theme } from "./settings";
+import { getProjectSaveFailure, projectSaveErrorText, type ProjectSaveFailure } from "./projectSaveStatus";
 import { ColorModeSelect } from "./ColorModeSelect";
 import { renderOptionsForStyle, resolveColorMode, supportedColorModes, stylePromptForMode } from "./styleColorMode";
 import { BUILTIN_STYLES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
@@ -176,7 +177,19 @@ export function App() {
     decorativeSeals: style.decorativeSeals,
     linePreviewImage: style.linePreviewImage
   });
-  const [saveFailure, setSaveFailure] = useState(false);
+  const [saveFailure, setSaveFailure] = useState<ProjectSaveFailure | null>(null);
+  const persistProjects = (next: ComicProject[]) => {
+    const success = saveProjects(next);
+    setSaveFailure(success ? null : getProjectSaveFailure());
+    return success;
+  };
+  const saveErrorMessage = saveFailure ? projectSaveErrorText(saveFailure, locale) : undefined;
+  useEffect(() => {
+    if (!saveFailure) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saveFailure]);
   const projectsRef = useRef(projects);
   projectsRef.current = projects;
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
@@ -186,7 +199,7 @@ export function App() {
     const next = projectsRef.current.map(project => project.id === activeProjectId ? { ...(panelEditor&&project.pages.some(p=>p.id===panelEditor.pageId&&p.background?.id===panelEditor.placementId)?editPageBackground(project,panelEditor.pageId,update):update(project)), updatedAt: new Date().toISOString() } : project);
     projectsRef.current = next;
     setProjects(next);
-    setSaveFailure(!saveProjects(next));
+    persistProjects(next);
   };
   const updateStyleDraftImage = async (field: "previewImage" | "linePreviewImage", file?: File) => {
     if (!file) return;
@@ -563,13 +576,13 @@ export function App() {
       locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:""})):[],
       scenes:storyBookImport.chapters.filter((chapter)=>chapter.text).map((chapter)=>({id:"scene-"+crypto.randomUUID(),title:chapter.title,sourceText:chapter.text,panelIds:[]}))
     };
-    const next=[project,...projects];setProjects(next);saveProjects(next);setActiveProjectId(project.id);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
+    const next=[project,...projects];projectsRef.current=next;setProjects(next);persistProjects(next);setActiveProjectId(project.id);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
   };
   const deleteProject = (projectId:string) => {
     const project=projects.find((item)=>item.id===projectId);
     if(!project || !window.confirm(`Radera projektet "${project.title}"? Detta tar bort ComicBook AI:s lokala kopia och kan inte ångras. StoryBook-filer påverkas inte.`)) return;
     const next=projects.filter((item)=>item.id!==projectId);
-    setProjects(next); saveProjects(next);
+    projectsRef.current=next;setProjects(next); persistProjects(next);
     if(activeProjectId===projectId){setActiveProjectId(null);setSelectedSceneId(null);setSelectedPageId(null);setLayoutStart(null);setProjectTab("manus");}
     setProjectMenuOpen(false);
   };
@@ -577,7 +590,7 @@ export function App() {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
     const project = createProject(newTitle, newSource, style);
-    const next = [project, ...projects]; setProjects(next); saveProjects(next); setActiveProjectId(project.id);
+    const next = [project, ...projects]; projectsRef.current=next;setProjects(next); persistProjects(next); setActiveProjectId(project.id);
     setNewTitle(""); setNewSource("blank"); setPanel(null); setProjectMenuOpen(false);
   };
 
@@ -611,9 +624,9 @@ export function App() {
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? tr("dark") : tr("light")}</button>
         </div>
       </header>
+      {saveErrorMessage ? <div role="alert" className="import-error"><p>{saveErrorMessage}</p><button type="button" className="text-button" onClick={() => persistProjects(projectsRef.current)}>{locale === "sv" ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button>{activeProject ? <button type="button" className="text-button" onClick={() => setAlbumTool("backup")}>{locale === "sv" ? "Exportera albumbackup" : locale === "nb" ? "Eksporter albumbackup" : "Export album backup"}</button> : null}</div> : null}
 
-
-      <AlbumMenu section={projectTab} onSection={setProjectTab} saveError={saveFailure?manuscriptText(locale).saveError:undefined} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={project=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];if(!saveProjects(next))throw new Error(manuscriptText(locale).saveError);projectsRef.current=next;setProjects(next);setActiveProjectId(restored.id);setSaveFailure(false);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
+      <AlbumMenu section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={project=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];if(!saveProjects(next))throw new Error(projectSaveErrorText(getProjectSaveFailure()!,locale));projectsRef.current=next;setProjects(next);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
       <main className="home">
         {activeProject ? <section className="project-shell album-workspace-shell">
           <aside className="project-sidebar" aria-label={locale==="sv"?"Arbetsinställningar":"Workspace settings"}>
@@ -632,7 +645,7 @@ export function App() {
             <button className="project-sidebar-style" type="button" onClick={()=>setPanel("styles")}>{tr("imageStyles")}</button>
           </aside>
           <section className="project-workspace">
-          {saveFailure ? <p role="alert" className="import-error">{manuscriptText(locale).saveError}</p> : null}
+
           {projectTab === "manus" ? <ManuscriptWorkspace key={activeProject.id} project={activeProject} locale={locale} settings={localAiSettings} onUpdate={updateActiveProject} onSettings={()=>setPanel("settings")} /> : null}
           {projectTab === "adaptation" ? <section className="adaptation-workspace">
             <div className="section-heading adaptation-heading"><h2>{tr("adaptationTitle")}</h2><button className="text-button" type="button" onClick={()=>setProjectTab("manus")}>{tr("manuscript")}</button></div>

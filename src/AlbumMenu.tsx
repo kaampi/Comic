@@ -29,6 +29,7 @@ export function AlbumMenu({
   styles,
   onClose,
   saveError,
+  onRetrySave,
   section,
   onSection,
 }: {
@@ -41,6 +42,7 @@ export function AlbumMenu({
   styles: IllustrationStyle[];
   onClose: () => void;
   saveError?: string;
+  onRetrySave?: () => void;
   section: AlbumSection;
   onSection: (section: AlbumSection) => void;
 }) {
@@ -288,11 +290,11 @@ export function AlbumMenu({
                     }))
                   }
                 />
-                <p className="quiet">
+                {!saveError ? <p className="quiet">
                   {sv
                     ? "Ändringar sparas automatiskt i albumet."
                     : "Changes are saved automatically in this album."}
-                </p>
+                </p> : null}
               </>
             ) : null}
             {mode === "export" && project ? <AlbumExportPanel key={project.id} project={project} locale={locale}/> : null}
@@ -364,9 +366,10 @@ export function AlbumMenu({
               </>
             )}
             {saveError && (
-              <p role="alert" className="import-error">
-                {saveError}
-              </p>
+              <div role="alert" className="import-error">
+                <p>{saveError}</p>
+                {onRetrySave ? <button className="text-button" type="button" onClick={onRetrySave}>{sv ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button> : null}
+              </div>
             )}
             {error && (
               <p role="alert" className="import-error">

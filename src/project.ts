@@ -1,3 +1,4 @@
+import { saveProjectData } from "./projectSaveStatus";
 import { renderOptionsForStyle, type RenderOptions } from "./styleColorMode";
 import type { PanelBorderStyle } from "./panelBorder";
 import type { ShapePoint } from "./panelShape";
@@ -107,7 +108,7 @@ export function readProjects(): ComicProject[] {
 }
 
 export function saveProjects(projects: ComicProject[]): boolean {
-  try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects)); return true; } catch { return false; }
+  return saveProjectData(PROJECTS_KEY, projects);
 }
 
 

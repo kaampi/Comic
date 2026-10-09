@@ -69,7 +69,7 @@ const en = {
   dirtyPanel: "Source changed — review panel direction and dialogue.",
   readError: "Could not read the image.",
   saveError:
-    "The project could not be saved. Browser storage may be full. Your current edits remain open.",
+    "The project could not be saved. Your current edits remain open. Export an album backup before reloading or closing.",
   aiLabel: "AI suggestion",
   basic: "Extract beats from all text without AI",
 };
@@ -143,7 +143,7 @@ const sv: typeof en = {
   dirtyPanel: "Källan har ändrats — granska rutans bildinstruktion och dialog.",
   readError: "Kunde inte läsa bilden.",
   saveError:
-    "Projektet kunde inte sparas. Webbläsarens lagring kan vara full. Dina ändringar finns kvar i det öppna projektet.",
+    "Projektet kunde inte sparas. Dina ändringar finns kvar i det öppna projektet. Exportera en albumbackup innan du laddar om eller stänger.",
   aiLabel: "AI-förslag",
   basic: "Extrahera beats från hela texten utan AI",
 };
@@ -209,9 +209,10 @@ const nb: typeof en = {
     "Kilden er endret — se gjennom rutens bildeinstruksjon og dialog.",
   readError: "Kunne ikke lese bildet.",
   saveError:
-    "Prosjektet kunne ikke lagres. Nettleserens lagring kan være full. Endringene finnes fortsatt i det åpne prosjektet.",
+    "Prosjektet kunne ikke lagres. Endringene finnes fortsatt i det åpne prosjektet. Eksporter en albumbackup før du laster på nytt eller lukker.",
   aiLabel: "AI-forslag",
   basic: "Trekk ut beats fra hele teksten uten AI",
 };
 export const manuscriptText = (locale: Locale) =>
   locale === "sv" ? sv : locale === "nb" ? nb : en;
+
