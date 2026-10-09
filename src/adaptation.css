@@ -582,6 +582,7 @@
   overflow:hidden;
 }
 .storyboard-thumb{
+  position:relative;
   width:calc(100% + 32px);
   aspect-ratio:4 / 3;
   margin:-15px -16px 2px;
@@ -692,3 +693,4 @@
 @media(max-width:900px){
   .storyboard-controls{grid-template-columns:1fr}
 }
+

@@ -214,6 +214,46 @@ await user.click(screen.getByRole("button", {name:"Outside font picker",exact:tr
 assert.equal(screen.queryByRole("listbox"), null);
 fontFixture.unmount();
 
+// A wide original remains whole when moved behind a narrow clipping frame.
+const { PositionedImage } = await import(pathToFileURL(join(compiledRoot,'PositionedImage.mjs')));
+let cropImage={name:'wide.png',dataUrl:'data:image/png;base64,wide',fit:'cover',positionMode:'frame',zoom:1,offsetX:0,offsetY:0};
+const cropFixture=render(React.createElement('div',{style:{position:'relative',overflow:'hidden'}},React.createElement(PositionedImage,{image:cropImage})));
+const cropFrame=cropFixture.container.firstChild,cropElement=cropFrame.querySelector('img');
+let cropBox={width:200,height:200};
+cropFrame.getBoundingClientRect=()=>({...cropBox,left:0,top:0});
+Object.defineProperty(cropElement,'naturalWidth',{configurable:true,value:400});
+Object.defineProperty(cropElement,'naturalHeight',{configurable:true,value:200});
+fireEvent.load(cropElement);
+assert.equal(cropElement.style.width,'400px');
+assert.equal(cropElement.style.left,'-100px');
+cropImage={...cropImage,offsetX:-50};
+cropFixture.rerender(React.createElement('div',{style:{position:'relative',overflow:'hidden'}},React.createElement(PositionedImage,{image:cropImage})));
+assert.equal(cropElement.style.left,'-200px');
+assert.equal(Number.parseFloat(cropElement.style.left)+Number.parseFloat(cropElement.style.width),200,'original right edge reaches the frame right edge');
+assert.equal(cropElement.style.objectFit,'fill','the image element contains the full original without an internal crop');
+assert.equal(cropElement.style.transform,'none');
+cropImage={...cropImage,offsetX:50};
+cropFixture.rerender(React.createElement('div',{style:{position:'relative',overflow:'hidden'}},React.createElement(PositionedImage,{image:cropImage})));
+assert.equal(cropElement.style.left,'0px','moving right reveals the original left edge');
+cropImage={...cropImage,offsetX:0,fit:'contain'};
+cropFixture.rerender(React.createElement('div',{style:{position:'relative',overflow:'hidden'}},React.createElement(PositionedImage,{image:cropImage})));
+assert.equal(cropElement.style.width,'200px');
+assert.equal(cropElement.style.height,'100px');
+assert.equal(cropElement.style.top,'50px');
+cropBox={width:400,height:200};
+fireEvent(window,new window.Event('resize'));
+assert.equal(cropElement.style.width,'400px','resizing recomputes fit from the parent frame');
+cropImage={...cropImage,fit:'cover',offsetY:-50};
+Object.defineProperty(cropElement,'naturalWidth',{configurable:true,value:200});
+Object.defineProperty(cropElement,'naturalHeight',{configurable:true,value:400});
+cropBox={width:200,height:200};
+fireEvent.load(cropElement);
+cropFixture.rerender(React.createElement('div',{style:{position:'relative',overflow:'hidden'}},React.createElement(PositionedImage,{image:cropImage})));
+assert.equal(cropElement.style.height,'400px');
+assert.equal(cropElement.style.top,'-200px','moving up reveals the original bottom edge');
+cropFixture.unmount();
+console.log('PASS: full original image survives cover crop; horizontal/vertical pan reveals hidden edges, contain and resize retain proportions.');
+
 const { assignLibraryPanel } = await import(
   pathToFileURL(join(compiledRoot, "comicPanelLibrary.mjs"))
 );
@@ -1231,15 +1271,21 @@ try {
   imageStage.getBoundingClientRect=()=>({left:0,top:0,width:400,height:200,right:400,bottom:200});
   const panLayer=shapedEditor.querySelector('.panel-editor-image-layer');
   const panImage=panLayer.querySelector('img');
+  panLayer.getBoundingClientRect=imageStage.getBoundingClientRect;
   Object.defineProperty(panImage,'naturalWidth',{configurable:true,value:800});
   Object.defineProperty(panImage,'naturalHeight',{configurable:true,value:400});
+  fireEvent.load(panImage);
   fireEvent.change(within(shapedEditor).getByLabelText(/^Zoom/),{target:{value:'200'}});
   const frameBeforePan=structuredClone(saved().pages[0].placements[0]);
   fireEvent.pointerDown(panLayer,{button:0,clientX:100,clientY:100});
   fireEvent.pointerMove(window,{clientX:140,clientY:140});
   assert.equal(saved().pages[0].placements[0].image.offsetX,10);
   assert.equal(saved().pages[0].placements[0].image.offsetY,20);
-  assert.equal(panImage.style.transform,'translate(10%, 20%) scale(2)');
+  assert.equal(panImage.style.width,'800px');
+  assert.equal(panImage.style.height,'400px');
+  assert.equal(panImage.style.left,'-160px');
+  assert.equal(panImage.style.top,'-60px');
+  assert.equal(panImage.style.transform,'none');
   fireEvent.pointerUp(window);
   fireEvent.pointerDown(panLayer,{button:0,clientX:140,clientY:140});
   fireEvent.pointerMove(window,{clientX:100,clientY:100});
@@ -1251,7 +1297,8 @@ try {
   fireEvent.pointerCancel(window);
   assert.equal(saved().pages[0].placements[0].image.offsetY,20);
   fireEvent.change(within(shapedEditor).getByLabelText('Y-position'),{target:{value:'-15'}});
-  assert.equal(panImage.style.transform,'translate(10%, -15%) scale(2)');
+  assert.equal(panImage.style.left,'-160px');
+  assert.equal(panImage.style.top,'-130px');
   assert.deepEqual(saved().pages[0].placements[0].shapePoints,frameBeforePan.shapePoints);
   assert.deepEqual(saved().pages[0].placements[0].overlays,frameBeforePan.overlays);
   await user.click(within(shapedEditor).getByRole('button',{name:'Klar med bild',exact:true}));
