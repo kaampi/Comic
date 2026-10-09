@@ -1,3 +1,4 @@
+import { resolveColorMode, stylePromptForMode, grayscaleModifier } from "./styleColorMode";
 import type { ComicProject } from "./project";
 
 const lineOnlyModifier = "Line art only. Black ink drawing with clean contour lines and controlled hatching. No color, no painted fills, no grayscale wash, no colored lighting. Preserve the selected comic style through line quality, shape language, anatomy, expression, composition, and background detail.";
@@ -10,8 +11,10 @@ export function buildPanelPrompt(project: ComicProject, panelId: string): string
   const location = panel.locationId ? project.locations.find((item) => item.id === panel.locationId) : undefined;
 
   const sections: string[] = [];
-  sections.push("STYLE\n" + project.style.promptText);
-  if (project.renderOptions?.linesOnly) sections.push("RENDERING MODE\n" + lineOnlyModifier);
+  const colorMode = resolveColorMode(project.style, project.renderOptions);
+  sections.push("STYLE\n" + stylePromptForMode(project.style, colorMode));
+  if (colorMode === "line-art") sections.push("RENDERING MODE\n" + lineOnlyModifier);
+  if (colorMode === "grayscale") sections.push("RENDERING MODE\n" + grayscaleModifier);
 
   if (characters.length) {
     sections.push("CHARACTERS\n" + characters.map((character) =>
@@ -28,5 +31,7 @@ export function buildPanelPrompt(project: ComicProject, panelId: string): string
 
   sections.push("REQUIREMENTS\nSingle comic panel. Preserve the established visual identity of recurring characters and locations. Leave appropriate clear space for planned speech balloons or captions. Do not render dialogue, captions, lettering, speech balloons, watermarks, signatures, or UI elements into the image.");
 
+  if (project.style.decorativeSeals) sections.push("DECORATIVE EXCEPTION\nPeripheral decorative calligraphic marks and red seal impressions are allowed as specified by the style; no narrative text or dialogue.");
   return sections.join("\n\n");
 }
+

@@ -7,6 +7,8 @@ import { albumPageFormat, spacingFitsAlbum } from "./pageFormat";
 import { useEffect, useRef, useState } from "react";
 import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
+import { ColorModeSelect } from "./ColorModeSelect";
+import { renderOptionsForStyle } from "./styleColorMode";
 import type { IllustrationStyle } from "./stylesLibrary";
 import { OverlayDefaultsEditor } from "./OverlayDefaultsEditor";
 import {
@@ -28,6 +30,7 @@ export function AlbumMenu({
   styles,
   onClose,
   saveError,
+  onRetrySave,
   section,
   onSection,
 }: {
@@ -40,6 +43,7 @@ export function AlbumMenu({
   styles: IllustrationStyle[];
   onClose: () => void;
   saveError?: string;
+  onRetrySave?: () => void;
   section: AlbumSection;
   onSection: (section: AlbumSection) => void;
 }) {
@@ -230,7 +234,7 @@ export function AlbumMenu({
                     onChange={(e) => {
                       const style = styles.find((s) => s.id === e.target.value);
                       if (style)
-                        onUpdate((p) => ({ ...p, style: { ...style } }));
+                        onUpdate((p) => ({ ...p, style: { ...style }, renderOptions: renderOptionsForStyle(style, p.renderOptions) }));
                     }}
                   >
                     {[
@@ -243,24 +247,7 @@ export function AlbumMenu({
                     ))}
                   </select>
                 </label>
-                <label className="album-check">
-                  <input
-                    type="checkbox"
-                    checked={project.renderOptions.linesOnly}
-                    onChange={(e) =>
-                      onUpdate((p) => ({
-                        ...p,
-                        renderOptions: {
-                          ...p.renderOptions,
-                          linesOnly: e.target.checked,
-                        },
-                      }))
-                    }
-                  />
-                  {sv
-                    ? "Enbart linjer i bildprompter"
-                    : "Lines only in image prompts"}
-                </label>
+                <ColorModeSelect style={project.style} options={project.renderOptions} locale={locale} onChange={renderOptions => onUpdate(p => ({ ...p, renderOptions }))} />
                 <fieldset>
                   <legend>
                     {sv ? "Rutnät för nya sidor" : "Grid for new pages"}
@@ -303,11 +290,11 @@ export function AlbumMenu({
                     }))
                   }
                 />
-                <p className="quiet">
+                {!saveError ? <p className="quiet">
                   {sv
                     ? "Ändringar sparas automatiskt i albumet."
                     : "Changes are saved automatically in this album."}
-                </p>
+                </p> : null}
               </>
             ) : null}
             {mode === "export" && project ? <AlbumExportPanel key={project.id} project={project} locale={locale}/> : null}
@@ -379,9 +366,10 @@ export function AlbumMenu({
               </>
             )}
             {saveError && (
-              <p role="alert" className="import-error">
-                {saveError}
-              </p>
+              <div role="alert" className="import-error">
+                <p>{saveError}</p>
+                {onRetrySave ? <button className="text-button" type="button" onClick={onRetrySave}>{sv ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button> : null}
+              </div>
             )}
             {error && (
               <p role="alert" className="import-error">

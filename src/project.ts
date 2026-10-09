@@ -1,3 +1,5 @@
+import { saveProjectData } from "./projectSaveStatus";
+import { renderOptionsForStyle, type RenderOptions } from "./styleColorMode";
 import type { PanelBorderStyle } from "./panelBorder";
 import type { ShapePoint } from "./panelShape";
 import { normalizeProjectTypography } from "./pageTypography";
@@ -44,7 +46,7 @@ export type ComicProject = {
   source: { type: ProjectSource; textSnapshot?: string; storyBookId?: string };
   references?: { characterPortraits?: Record<string, string> };
   style: IllustrationStyle;
-  renderOptions: { linesOnly: boolean };
+  renderOptions: RenderOptions;
   pageFormat?: PageFormat;
   typographyVersion?: 2;
   panelBorderDefaults?: PanelBorderStyle;
@@ -73,7 +75,7 @@ export function createProject(title: string, source: ProjectSource, style: Illus
   const now = new Date().toISOString();
   return {
     typographyVersion: 2, format: PROJECT_FORMAT, id: stableId("project"), title: title.trim(), createdAt: now, updatedAt: now,
-    pageFormat: { ...DEFAULT_PAGE_FORMAT }, source: { type: source, textSnapshot: "" }, style: { ...style }, renderOptions: { linesOnly: false }, pageDefaults: { gridColumns: 3, gridRows: 5 }, characters: [], locations: [], scenes: [], panels: [], pages: [], adaptations: [], bubbleSwatches: []
+    pageFormat: { ...DEFAULT_PAGE_FORMAT }, source: { type: source, textSnapshot: "" }, style: { ...style }, renderOptions: renderOptionsForStyle(style), pageDefaults: { gridColumns: 3, gridRows: 5 }, characters: [], locations: [], scenes: [], panels: [], pages: [], adaptations: [], bubbleSwatches: []
   };
 }
 
@@ -82,7 +84,7 @@ export function readProjects(): ComicProject[] {
     const data = JSON.parse(localStorage.getItem(PROJECTS_KEY) ?? "[]");
     return Array.isArray(data) ? data.filter((p) => p?.format === PROJECT_FORMAT && typeof p?.id === "string").map((p) => ({
       ...p,
-      renderOptions: { linesOnly: Boolean(p.renderOptions?.linesOnly) },
+      renderOptions: renderOptionsForStyle(p.style, p.renderOptions),
       pageFormat: albumPageFormat(p),
       pageDefaults: p.pageDefaults ?? { gridColumns: 3, gridRows: 5 },
       characters: Array.isArray(p.characters) ? p.characters.map((item: any) => ({ ...item, visualIdentity: item.visualIdentity ?? "" })) : [],
@@ -106,6 +108,7 @@ export function readProjects(): ComicProject[] {
 }
 
 export function saveProjects(projects: ComicProject[]): boolean {
-  try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects)); return true; } catch { return false; }
+  return saveProjectData(PROJECTS_KEY, projects);
 }
+
 

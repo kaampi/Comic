@@ -1,3 +1,4 @@
+import { resolveColorMode, stylePromptForMode, grayscaleModifier } from "../styleColorMode";
 import type { ComicProject } from "../project";
 import type { ImagePrompt, PanelPlan } from "./types";
 
@@ -20,22 +21,29 @@ function locationText(project: ComicProject, locationId?: string): string {
 }
 
 export function buildImagePrompt(project: ComicProject, panel: PanelPlan, mode: ImagePrompt["mode"] = "full"): string {
-  const parts = [
+  const colorMode = resolveColorMode(project.style, project.renderOptions);
+  const renderingMode = colorMode === "line-art" ? lineOnlyModifier : colorMode === "grayscale" ? grayscaleModifier : "";
+  const scene = [
     "Comic panel illustration.",
     panel.visualDescription.trim(),
     panel.shotType ? `Shot: ${panel.shotType}.` : "",
     panel.sizeHint ? `Composition should read clearly in a ${panel.sizeHint} comic panel.` : "",
     characterText(project, panel.characterIds) ? `Characters: ${characterText(project, panel.characterIds)}.` : "",
-    locationText(project, panel.locationId) ? `Location: ${locationText(project, panel.locationId)}.` : "",
-    project.style?.promptText ? `Illustration style: ${project.style.promptText}` : "",
-    project.renderOptions?.linesOnly ? lineOnlyModifier : "",
+    locationText(project, panel.locationId) ? `Location: ${locationText(project, panel.locationId)}.` : ""
+  ];
+  const style = `Illustration style: ${stylePromptForMode(project.style, colorMode)}`;
+  const requirements = [
     "Preserve character identity and clothing continuity with adjacent panels.",
     "Leave natural negative space for later speech balloons or captions.",
-    "Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI."
-  ].filter(Boolean);
-  if (mode === "short") return parts.slice(0, 4).join(" ");
-  if (mode === "medium") return [...parts.slice(0, 8), parts[parts.length - 1]].join(" ");
-  return parts.join(" ");
+    project.style.decorativeSeals
+      ? "Do not render dialogue, narrative text, speech bubbles, watermarks, or UI. Peripheral decorative calligraphic marks and red seal impressions are allowed."
+      : "Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI."
+  ];
+  return [
+    ...(mode === "short" ? scene.slice(0, 4) : scene),
+    style, renderingMode,
+    ...(mode === "short" ? requirements.slice(-1) : requirements)
+  ].filter(Boolean).join(" ");
 }
 
 export function generateImagePrompts(project: ComicProject, panels: PanelPlan[], mode: ImagePrompt["mode"] = "full"): ImagePrompt[] {
@@ -45,10 +53,12 @@ export function generateImagePrompts(project: ComicProject, panels: PanelPlan[],
     panelId: panel.id,
     mode,
     prompt: buildImagePrompt(project, panel, mode),
-    negativePrompt: project.renderOptions?.linesOnly
-      ? "color, colored fills, painted rendering, grayscale wash, text, lettering, speech bubbles, captions, watermark, signature, UI"
-      : "text, lettering, speech bubbles, captions, watermark, signature, UI",
+    negativePrompt: [
+      resolveColorMode(project.style, project.renderOptions) === "line-art" ? "color, colored fills, painted rendering, grayscale wash" : resolveColorMode(project.style, project.renderOptions) === "grayscale" ? "color, sepia, colored accents, tinted paper" : "",
+      project.style.decorativeSeals ? "dialogue, narrative text, speech bubbles, captions, watermark, UI" : "text, lettering, speech bubbles, captions, watermark, signature, UI"
+    ].filter(Boolean).join(", "),
     createdAt: now,
     updatedAt: now
   }));
 }
+

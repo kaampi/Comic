@@ -29,6 +29,9 @@ import { manuscriptText } from "./manuscriptText";
 import { useEffect, useRef, useState } from "react";
 import { AI_MODES, type AiMode } from "./ai";
 import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, readPageGridDefaults, savePageGridDefaults, type Locale, type Theme } from "./settings";
+import { getProjectSaveFailure, projectSaveErrorText, type ProjectSaveFailure } from "./projectSaveStatus";
+import { ColorModeSelect } from "./ColorModeSelect";
+import { renderOptionsForStyle, resolveColorMode, supportedColorModes, stylePromptForMode } from "./styleColorMode";
 import { BUILTIN_STYLES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
 import { optimizeStylePreview } from "./stylePreview";
 import { createProject, readProjects, saveProjects, type BubbleSwatch, type ComicProject, type ProjectSource } from "./project";
@@ -47,7 +50,7 @@ import { LocalAiSettings } from "./LocalAiSettings";
 import { localAiText } from "./localAiText";
 
 type Panel = "styles" | "guide" | "settings" | "new-project" | "about" | null;
-type StyleDraft = { id?: string; name: string; genre: string; promptText: string; previewImage?: string; linePreviewImage?: string };
+type StyleDraft = Omit<IllustrationStyle, "id"> & { id?: string };
 type ProjectTab = AlbumSection;
 
 export function App() {
@@ -158,6 +161,9 @@ export function App() {
       genre: styleDraft.genre.trim() || "Custom",
       promptText: styleDraft.promptText.trim(),
       previewImage: styleDraft.previewImage,
+      supportedColorModes: styleDraft.supportedColorModes,
+      modePromptText: styleDraft.modePromptText,
+      decorativeSeals: styleDraft.decorativeSeals,
       linePreviewImage: styleDraft.linePreviewImage
     };
     persistCustomStyles(styleDraft.id ? customStyles.map((item) => item.id === styleDraft.id ? style : item) : [...customStyles, style]);
@@ -168,9 +174,24 @@ export function App() {
     genre: style.genre,
     promptText: style.promptText,
     previewImage: style.previewImage,
+    supportedColorModes: style.supportedColorModes,
+    modePromptText: style.modePromptText,
+    decorativeSeals: style.decorativeSeals,
     linePreviewImage: style.linePreviewImage
   });
-  const [saveFailure, setSaveFailure] = useState(false);
+  const [saveFailure, setSaveFailure] = useState<ProjectSaveFailure | null>(null);
+  const persistProjects = (next: ComicProject[]) => {
+    const success = saveProjects(next);
+    setSaveFailure(success ? null : getProjectSaveFailure());
+    return success;
+  };
+  const saveErrorMessage = saveFailure ? projectSaveErrorText(saveFailure, locale) : undefined;
+  useEffect(() => {
+    if (!saveFailure) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saveFailure]);
   const projectsRef = useRef(projects);
   projectsRef.current = projects;
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
@@ -180,7 +201,7 @@ export function App() {
     const next = projectsRef.current.map(project => project.id === activeProjectId ? { ...(panelEditor&&project.pages.some(p=>p.id===panelEditor.pageId&&p.background?.id===panelEditor.placementId)?editPageBackground(project,panelEditor.pageId,update):update(project)), updatedAt: new Date().toISOString() } : project);
     projectsRef.current = next;
     setProjects(next);
-    setSaveFailure(!saveProjects(next));
+    persistProjects(next);
   };
   const updateStyleDraftImage = async (field: "previewImage" | "linePreviewImage", file?: File) => {
     if (!file) return;
@@ -189,11 +210,8 @@ export function App() {
       setStyleDraft((current) => current ? { ...current, [field]: dataUrl } : current);
     } catch {}
   };
-  const setLinesOnly = (linesOnly: boolean) => {
-    updateActiveProject((project) => ({ ...project, renderOptions: { ...project.renderOptions, linesOnly } }));
-  };
   const applyStyleToActiveProject = (style: IllustrationStyle) => {
-    updateActiveProject((project) => ({ ...project, style: { ...style } }));
+    updateActiveProject((project) => ({ ...project, style: { ...style }, renderOptions: renderOptionsForStyle(style, project.renderOptions) }));
   };
   const replaceActiveAdaptation = (adaptation: StoryAdaptation) => {
     updateActiveProject(project => withAdaptation(project, adaptation));
@@ -563,13 +581,13 @@ export function App() {
       locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:""})):[],
       scenes:storyBookImport.chapters.filter((chapter)=>chapter.text).map((chapter)=>({id:"scene-"+crypto.randomUUID(),title:chapter.title,sourceText:chapter.text,panelIds:[]}))
     };
-    const next=[project,...projects];setProjects(next);saveProjects(next);setActiveProjectId(project.id);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
+    const next=[project,...projects];projectsRef.current=next;setProjects(next);persistProjects(next);setActiveProjectId(project.id);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
   };
   const deleteProject = (projectId:string) => {
     const project=projects.find((item)=>item.id===projectId);
     if(!project || !window.confirm(`Radera projektet "${project.title}"? Detta tar bort ComicBook AI:s lokala kopia och kan inte ångras. StoryBook-filer påverkas inte.`)) return;
     const next=projects.filter((item)=>item.id!==projectId);
-    setProjects(next); saveProjects(next);
+    projectsRef.current=next;setProjects(next); persistProjects(next);
     if(activeProjectId===projectId){setActiveProjectId(null);setSelectedSceneId(null);setSelectedPageId(null);setLayoutStart(null);setProjectTab("manus");}
     setProjectMenuOpen(false);
   };
@@ -577,7 +595,7 @@ export function App() {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
     const project = createProject(newTitle, newSource, style);
-    const next = [project, ...projects]; setProjects(next); saveProjects(next); setActiveProjectId(project.id);
+    const next = [project, ...projects]; projectsRef.current=next;setProjects(next); persistProjects(next); setActiveProjectId(project.id);
     setNewTitle(""); setNewSource("blank"); setPanel(null); setProjectMenuOpen(false);
   };
 
@@ -611,9 +629,9 @@ export function App() {
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? tr("dark") : tr("light")}</button>
         </div>
       </header>
+      {saveErrorMessage ? <div role="alert" className="import-error"><p>{saveErrorMessage}</p><button type="button" className="text-button" onClick={() => persistProjects(projectsRef.current)}>{locale === "sv" ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button>{activeProject ? <button type="button" className="text-button" onClick={() => setAlbumTool("backup")}>{locale === "sv" ? "Exportera albumbackup" : locale === "nb" ? "Eksporter albumbackup" : "Export album backup"}</button> : null}</div> : null}
 
-
-      <AlbumMenu section={projectTab} onSection={setProjectTab} saveError={saveFailure?manuscriptText(locale).saveError:undefined} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={project=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];if(!saveProjects(next))throw new Error(manuscriptText(locale).saveError);projectsRef.current=next;setProjects(next);setActiveProjectId(restored.id);setSaveFailure(false);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
+      <AlbumMenu section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={project=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];if(!saveProjects(next))throw new Error(projectSaveErrorText(getProjectSaveFailure()!,locale));projectsRef.current=next;setProjects(next);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
       <main className="home">
         {activeProject ? <section className="project-shell album-workspace-shell">
           <aside className="project-sidebar" aria-label={locale==="sv"?"Arbetsinställningar":"Workspace settings"}>
@@ -632,7 +650,7 @@ export function App() {
             <button className="project-sidebar-style" type="button" onClick={()=>setPanel("styles")}>{tr("imageStyles")}</button>
           </aside>
           <section className="project-workspace">
-          {saveFailure ? <p role="alert" className="import-error">{manuscriptText(locale).saveError}</p> : null}
+
           {projectTab === "manus" ? <ManuscriptWorkspace key={activeProject.id} project={activeProject} locale={locale} settings={localAiSettings} onUpdate={updateActiveProject} onSettings={()=>setPanel("settings")} /> : null}
           {projectTab === "adaptation" ? <section className="adaptation-workspace">
             <div className="section-heading adaptation-heading"><h2>{tr("adaptationTitle")}</h2><button className="text-button" type="button" onClick={()=>setProjectTab("manus")}>{tr("manuscript")}</button></div>
@@ -750,10 +768,10 @@ export function App() {
               <div className="style-library-head">
                 <div><p className="eyebrow">{tr("styleTemplates")}</p><p className="style-library-subtitle">{activeProject ? `${activeProject.title} · ${activeProject.style.name}` : tr("styleTemplatesLead")}</p></div>
                 <div className="style-library-head-actions">
-                  {activeProject ? <label className="style-render-toggle"><input type="checkbox" checked={activeProject.renderOptions?.linesOnly ?? false} onChange={(e)=>setLinesOnly(e.target.checked)} /><span>Lines only, no colors</span></label> : null}
+                  {activeProject ? <ColorModeSelect style={activeProject.style} options={activeProject.renderOptions} locale={locale} onChange={renderOptions => updateActiveProject(project => ({ ...project, renderOptions }))} /> : null}
                   <button className="text-button" type="button" onClick={() => {
                     const source = activeProject?.style;
-                    setStyleDraft(source ? { name: source.name + " – kopia", genre: source.genre, promptText: source.promptText, previewImage: source.previewImage, linePreviewImage: source.linePreviewImage } : { name: "", genre: "Custom", promptText: "" });
+                    setStyleDraft(source ? { ...source, id: undefined, name: source.name + " – kopia" } : { name: "", genre: "Custom", promptText: "" });
                   }}>{tr("saveCurrentStyleAsNew")}</button>
                 </div>
               </div>
@@ -770,23 +788,26 @@ export function App() {
                     <label>{tr("name")}<input value={styleDraft.name} onChange={(e) => setStyleDraft({ ...styleDraft, name: e.target.value })} /></label>
                     <label>{tr("genre")}<input value={styleDraft.genre} onChange={(e) => setStyleDraft({ ...styleDraft, genre: e.target.value })} /></label>
                     <label>{tr("prompt")}<textarea rows={6} value={styleDraft.promptText} onChange={(e) => setStyleDraft({ ...styleDraft, promptText: e.target.value })} /></label>
+                    <label>{locale === "sv" ? "Tillåtna färglägen" : "Supported color modes"}<select value={styleDraft.supportedColorModes?.join(",") ?? "color,grayscale,line-art"} onChange={e => setStyleDraft({ ...styleDraft, supportedColorModes: e.target.value.split(",") as IllustrationStyle["supportedColorModes"] })}><option value="color,grayscale,line-art">{locale === "sv" ? "Alla lägen" : "All modes"}</option><option value="color,grayscale">{locale === "sv" ? "Färg och gråskala" : "Color and grayscale"}</option><option value="color">{locale === "sv" ? "Endast färg" : "Color only"}</option><option value="grayscale">{locale === "sv" ? "Endast gråskala" : "Grayscale only"}</option><option value="line-art">{locale === "sv" ? "Enbart linjer" : "Lines only"}</option></select></label>
+                    {(["color", "grayscale", "line-art"] as const).filter(mode => styleDraft.modePromptText?.[mode] !== undefined).map(mode => <label key={mode}>{locale === "sv" ? "Promptvariant" : "Prompt variant"}: {mode}<textarea rows={6} value={styleDraft.modePromptText?.[mode] ?? ""} onChange={e => setStyleDraft({ ...styleDraft, modePromptText: { ...styleDraft.modePromptText, [mode]: e.target.value } })}/></label>)}
                     <div className="style-editor-images">
                       <div className="style-editor-image-slot"><span>Color preview</span>{styleDraft.previewImage?<div className="style-editor-image-preview"><img src={styleDraft.previewImage} alt="" /></div>:<div className="style-editor-image-empty">{tr("noImage")}</div>}<div className="style-editor-image-actions"><label className="text-button style-image-upload">{styleDraft.previewImage?tr("changeImage"):tr("uploadImage")}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e)=>{const file=e.target.files?.[0];if(file)void updateStyleDraftImage("previewImage",file);e.currentTarget.value="";}} /></label>{styleDraft.previewImage?<button className="text-button danger-button" type="button" onClick={()=>setStyleDraft({...styleDraft,previewImage:undefined})}>{tr("deleteImage")}</button>:null}</div></div>
-                      <div className="style-editor-image-slot"><span>Lines only preview</span>{styleDraft.linePreviewImage?<div className="style-editor-image-preview"><img src={styleDraft.linePreviewImage} alt="" /></div>:<div className="style-editor-image-empty">{tr("noImage")}</div>}<div className="style-editor-image-actions"><label className="text-button style-image-upload">{styleDraft.linePreviewImage?tr("changeImage"):tr("uploadImage")}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e)=>{const file=e.target.files?.[0];if(file)void updateStyleDraftImage("linePreviewImage",file);e.currentTarget.value="";}} /></label>{styleDraft.linePreviewImage?<button className="text-button danger-button" type="button" onClick={()=>setStyleDraft({...styleDraft,linePreviewImage:undefined})}>{tr("deleteImage")}</button>:null}</div></div>
+                      <div className="style-editor-image-slot"><span>Black and white preview</span>{styleDraft.linePreviewImage?<div className="style-editor-image-preview"><img src={styleDraft.linePreviewImage} alt="" /></div>:<div className="style-editor-image-empty">{tr("noImage")}</div>}<div className="style-editor-image-actions"><label className="text-button style-image-upload">{styleDraft.linePreviewImage?tr("changeImage"):tr("uploadImage")}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e)=>{const file=e.target.files?.[0];if(file)void updateStyleDraftImage("linePreviewImage",file);e.currentTarget.value="";}} /></label>{styleDraft.linePreviewImage?<button className="text-button danger-button" type="button" onClick={()=>setStyleDraft({...styleDraft,linePreviewImage:undefined})}>{tr("deleteImage")}</button>:null}</div></div>
                     </div>
                     <div className="style-editor-actions"><button className="text-button" type="button" onClick={() => setStyleDraft(null)}>{tr("cancel")}</button><button className="primary-button" type="button" onClick={saveDraft}>{tr("save")}</button></div>
                   </div> : null}
                   <div className="style-grid">{visibleStyles.map((style) => {
                     const custom = style.id.startsWith("custom-");
                     const active = activeProject?.style.id===style.id;
-                    const linesOnly = activeProject?.renderOptions?.linesOnly ?? false;
+                    const colorMode = resolveColorMode(style, activeProject?.renderOptions);
+                    const linesOnly = colorMode !== "color";
                     const previewImage = linesOnly ? (style.linePreviewImage ?? style.previewImage) : style.previewImage;
                     const resolvedPreviewImage = previewImage;
                     const lineFallback = linesOnly && !style.linePreviewImage && Boolean(style.previewImage);
                     return <article className={active?"style-card is-active":"style-card"} key={style.id} onClick={()=>activeProject&&applyStyleToActiveProject(style)}>
-                      <div className={lineFallback?"style-card-preview is-line-fallback":"style-card-preview"}>{resolvedPreviewImage?<img key={resolvedPreviewImage} src={resolvedPreviewImage} alt="" loading="lazy" decoding="async" />:<span>{tr("noImage")}</span>}{linesOnly?<span className="style-preview-mode-badge">LINES ONLY</span>:null}</div>
+                      <div className={lineFallback?"style-card-preview is-line-fallback":"style-card-preview"}>{resolvedPreviewImage?<img key={resolvedPreviewImage} src={resolvedPreviewImage} alt="" loading="lazy" decoding="async" />:<span>{tr("noImage")}</span>}<span className="style-preview-mode-badge">{supportedColorModes(style).map(mode => mode === "color" ? (locale === "sv" ? "FÄRG" : "COLOR") : mode === "grayscale" ? (locale === "sv" ? "GRÅSKALA" : "GRAYSCALE") : (locale === "sv" ? "LINJER" : "LINES")).join(" / ")}</span></div>
                       <button className="style-card-edit" type="button" title={custom?tr("edit"):tr("duplicate")} onClick={(e)=>{e.stopPropagation(); custom?setStyleDraft({...style}):duplicateStyle(style);}}>✎</button>
-                      <div className="style-card-copy"><h2>{style.name}</h2><p>{style.promptText}</p><span className="style-genre">{style.genre}{active?` · ${tr("activeStyle")}`:""}</span></div>
+                      <div className="style-card-copy"><h2>{style.name}</h2><p>{stylePromptForMode(style, colorMode)}</p><span className="style-genre">{style.genre}{active?` · ${tr("activeStyle")}`:""}</span></div>
                     </article>;
                   })}</div>
                   {!visibleStyles.length?<p className="style-empty">{tr("noStylesFound")}</p>:null}

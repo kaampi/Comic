@@ -1,3 +1,6 @@
+import { PAINTERLY_STYLES } from "./painterlyStyles";
+import type { ColorMode } from "./styleColorMode";
+
 export type IllustrationStyle = {
   id: string;
   name: string;
@@ -5,6 +8,9 @@ export type IllustrationStyle = {
   genre: string;
   previewImage?: string;
   linePreviewImage?: string;
+  supportedColorModes?: ColorMode[];
+  modePromptText?: Partial<Record<ColorMode, string>>;
+  decorativeSeals?: boolean;
 };
 
 export const BUILTIN_STYLES: IllustrationStyle[] = [
@@ -67,7 +73,7 @@ export const BUILTIN_STYLES: IllustrationStyle[] = [
 ["anchor-1","Classic clear-line Belgian","Franco-Belgian","clear-line European comic style inspired by classic Belgian adventure albums, precise uniform linework, flat clean colors, strong readability, simplified but accurate forms, uncluttered detailed backgrounds, calm polished storytelling, timeless adventure-comic clarity, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Franco_Belgian/thumb_classic_clear_line_belgian.jpg","/Styles/Franco_Belgian/thumb_classic_clear_line_belgian_lines.jpg"],
 ["anchor-2","Dynamic Marcinelle classic","Franco-Belgian","dynamic European comic cartooning inspired by classic Marcinelle-school adventure comics, elastic movement, energetic expressive line, playful exaggeration, lively acting, rich visual humor, vibrant colors, fluid and charming adventure storytelling, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Franco_Belgian/thumb_dynamic_marcinelle_classic.jpg","/Styles/Franco_Belgian/thumb_dynamic_marcinelle_classic_lines.jpg"],
 ["anchor-3","Elegant adult European realism","European Realist","elegant mature European realistic comic style, graceful anatomy, sophisticated body language, refined linework, warm naturalistic color, subtle facial expression, stylish atmospheric environments, polished adult graphic storytelling, single comic panel illustration, no speech bubbles, no captions, no text"]
-].map(([id,name,genre,promptText,previewImage,linePreviewImage]) => ({ id, name, genre, promptText, previewImage, linePreviewImage }));
+].map<IllustrationStyle>(([id,name,genre,promptText,previewImage,linePreviewImage]) => ({ id, name, genre, promptText, previewImage, linePreviewImage })).concat(PAINTERLY_STYLES);
 
 export const STYLE_GENRES = [...new Set(BUILTIN_STYLES.map((style) => style.genre))];
 const CUSTOM_STYLES_KEY = "comicbook-ai.custom-styles";
@@ -89,3 +95,4 @@ export function saveCustomStyles(styles: IllustrationStyle[]): void {
 export function createCustomStyleId(): string {
   return "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
 }
+

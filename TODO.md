@@ -1,8 +1,8 @@
 # ComicBook AI — aktuella uppgifter
 
-Uppdaterad 2026-10-09. Genomförda ändringar på testgrenen behöver slås ihop innan de finns på main.
+Uppdaterad 2026-10-09. IDML-export (beta), sidmarginaler och mellanrum mellan bildrutor finns på main.
 
-## Genomfört på testgrenen
+## Genomfört
 
 - [x] Sidmarginaler för överkant, underkant, vänster och höger i millimeter.
 - [x] Mellanrum mellan bildrutornas kolumner och rader i millimeter.
