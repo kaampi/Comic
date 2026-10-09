@@ -30,6 +30,7 @@ export function AlbumMenu({
   styles,
   onClose,
   saveError,
+  saving,
   onRetrySave,
   section,
   onSection,
@@ -39,10 +40,11 @@ export function AlbumMenu({
   mode: AlbumTool;
   onMode: (mode: AlbumTool) => void;
   onUpdate: (update: (p: ComicProject) => ComicProject) => void;
-  onRestore: (p: ComicProject) => void;
+  onRestore: (p: ComicProject) => void | Promise<void>;
   styles: IllustrationStyle[];
   onClose: () => void;
   saveError?: string;
+  saving?: boolean;
   onRetrySave?: () => void;
   section: AlbumSection;
   onSection: (section: AlbumSection) => void;
@@ -290,10 +292,8 @@ export function AlbumMenu({
                     }))
                   }
                 />
-                {!saveError ? <p className="quiet">
-                  {sv
-                    ? "Ändringar sparas automatiskt i albumet."
-                    : "Changes are saved automatically in this album."}
+                {!saveError ? <p className="quiet" role="status">
+                  {saving ? (sv ? "Sparar albumet…" : locale === "nb" ? "Lagrer albumet…" : "Saving album…") : (sv ? "Ändringar sparas automatiskt i albumet." : "Changes are saved automatically in this album.")}
                 </p> : null}
               </>
             ) : null}
@@ -347,9 +347,10 @@ export function AlbumMenu({
                       </p>
                       <button
                         className="primary-button"
-                        onClick={() => {
+                        disabled={saving}
+                        onClick={async () => {
                           try {
-                            onRestore(preview);
+                            await onRestore(preview);
                             onMode(null);
                           } catch (err) {
                             setError(

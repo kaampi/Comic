@@ -105,3 +105,9 @@ Rutornas ID:n, gridplaceringar, bilder och texter behålls. Rutornas fysiska sto
 Mellanrummen gäller sidans rutnät. För fria sneda rutor används fortfarande **Passa mot grannruta** och dess marginal mellan konturerna. Passa kanten igen efter att sidmåtten ändrats. Mycket tjocka panelramar kan sträcka sig utanför rutnätets bildrutor.
 
 Kontroll: `npm run test:page-spacing`.
+
+## Lokal albumlagring
+
+Album och bilder sparas i IndexedDB, så att bilder inte behöver rymmas inom localStorage-gränsen. Befintliga sparade album överförs automatiskt och textkopian tas bort först efter verifierad databassparning. Inställningar och egna stilmallar ligger fortsatt i localStorage.
+
+Om en äldre version har visat ett sparfel: exportera en albumbackup från den öppna appen innan omladdning. Osparade ändringar finns bara i minnet och kan sedan återställas från backupen. Överföringen kan endast läsa sådant som den äldre versionen faktiskt lyckades spara. Behåll backupen tills albumet har kontrollerats.

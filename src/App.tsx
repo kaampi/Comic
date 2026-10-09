@@ -29,12 +29,13 @@ import { manuscriptText } from "./manuscriptText";
 import { useEffect, useRef, useState } from "react";
 import { AI_MODES, type AiMode } from "./ai";
 import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, readPageGridDefaults, savePageGridDefaults, type Locale, type Theme } from "./settings";
-import { getProjectSaveFailure, projectSaveErrorText, type ProjectSaveFailure } from "./projectSaveStatus";
+import { hasProjectDatabase, loadProjectCollection, saveProjectCollection, ProjectStorageError } from "./projectDatabase";
+import { classifyProjectSaveError, projectSaveErrorText, type ProjectSaveFailure } from "./projectSaveStatus";
 import { ColorModeSelect } from "./ColorModeSelect";
 import { renderOptionsForStyle, resolveColorMode, supportedColorModes, stylePromptForMode } from "./styleColorMode";
 import { BUILTIN_STYLES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
 import { optimizeStylePreview } from "./stylePreview";
-import { createProject, readProjects, saveProjects, type BubbleSwatch, type ComicProject, type ProjectSource } from "./project";
+import { createProject, readProjects, type BubbleSwatch, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
 import { PageGridControls } from "./PageGridControls";
 import { PageCanvasHeader } from "./PageCanvasHeader";
@@ -65,7 +66,9 @@ export function App() {
   const [styleQuery, setStyleQuery] = useState("");
   const [customStyles, setCustomStyles] = useState<IllustrationStyle[]>(readCustomStyles);
   const [styleDraft, setStyleDraft] = useState<StyleDraft | null>(null);
-  const [projects, setProjects] = useState<ComicProject[]>(readProjects);
+  const [projects, setProjects] = useState<ComicProject[]>(() => hasProjectDatabase() ? [] : readProjects());
+  const [projectsReady, setProjectsReady] = useState(() => !hasProjectDatabase());
+  const [loadFailure, setLoadFailure] = useState<ProjectSaveFailure | null>(null);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newSource, setNewSource] = useState<ProjectSource>("blank");
@@ -180,20 +183,48 @@ export function App() {
     linePreviewImage: style.linePreviewImage
   });
   const [saveFailure, setSaveFailure] = useState<ProjectSaveFailure | null>(null);
-  const persistProjects = (next: ComicProject[]) => {
-    const success = saveProjects(next);
-    setSaveFailure(success ? null : getProjectSaveFailure());
-    return success;
+  const [saving, setSaving] = useState(false);
+  const saveRevision = useRef(0);
+  const persistProjects = async (next: ComicProject[]): Promise<ProjectSaveFailure | null> => {
+    const revision = ++saveRevision.current;
+    setSaving(true);
+    try {
+      await saveProjectCollection(next);
+      if (revision === saveRevision.current) setSaveFailure(null);
+      return null;
+    } catch (error) {
+      const failure = error instanceof ProjectStorageError ? error.failure : classifyProjectSaveError(error, "storage", "indexedDB");
+      if (revision === saveRevision.current) setSaveFailure(failure);
+      return failure;
+    } finally { if (revision === saveRevision.current) setSaving(false); }
   };
   const saveErrorMessage = saveFailure ? projectSaveErrorText(saveFailure, locale) : undefined;
   useEffect(() => {
-    if (!saveFailure) return;
+    if (!saveFailure && !saving) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [saveFailure]);
+  }, [saveFailure, saving]);
   const projectsRef = useRef(projects);
   projectsRef.current = projects;
+  const loadRevision = useRef(0);
+  const loadStoredProjects = async () => {
+    const revision = ++loadRevision.current;
+    setLoadFailure(null);
+    try {
+      const loaded = await loadProjectCollection();
+      if (revision !== loadRevision.current) return;
+      projectsRef.current = loaded;
+      setProjects(loaded);
+      setProjectsReady(true);
+    } catch (error) {
+      if (revision === loadRevision.current) setLoadFailure(error instanceof ProjectStorageError ? error.failure : classifyProjectSaveError(error, "storage", "indexedDB"));
+    }
+  };
+  useEffect(() => {
+    if (hasProjectDatabase()) void loadStoredProjects();
+    return () => { loadRevision.current++; saveRevision.current++; };
+  }, []);
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
   const activeAdaptation = activeProject?.adaptations?.[0] ?? null;
   const updateActiveProject = (update: (project: ComicProject) => ComicProject) => {
@@ -599,6 +630,7 @@ export function App() {
     setNewTitle(""); setNewSource("blank"); setPanel(null); setProjectMenuOpen(false);
   };
 
+  if (!projectsReady) return <div className="app-shell"><main className="home"><section className="workspace-card">{loadFailure ? <><p role="alert">{locale === "sv" ? "Albumen kunde inte läsas. Inga sparade album har skrivits över." : locale === "nb" ? "Albumene kunne ikke leses. Ingen lagrede album er overskrevet." : "Albums could not be loaded. No saved albums have been overwritten."} ({loadFailure.errorName})</p><button type="button" onClick={() => void loadStoredProjects()}>{locale === "sv" ? "Försök igen" : locale === "nb" ? "Prøv igjen" : "Retry"}</button></> : <p role="status">{locale === "sv" ? "Läser sparade album…" : locale === "nb" ? "Leser lagrede album…" : "Loading saved albums…"}</p>}</section></main></div>;
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -631,7 +663,7 @@ export function App() {
       </header>
       {saveErrorMessage ? <div role="alert" className="import-error"><p>{saveErrorMessage}</p><button type="button" className="text-button" onClick={() => persistProjects(projectsRef.current)}>{locale === "sv" ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button>{activeProject ? <button type="button" className="text-button" onClick={() => setAlbumTool("backup")}>{locale === "sv" ? "Exportera albumbackup" : locale === "nb" ? "Eksporter albumbackup" : "Export album backup"}</button> : null}</div> : null}
 
-      <AlbumMenu section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={project=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];if(!saveProjects(next))throw new Error(projectSaveErrorText(getProjectSaveFailure()!,locale));projectsRef.current=next;setProjects(next);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
+      <AlbumMenu section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} saving={saving} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={async project=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];const error=await persistProjects(next);if(error)throw new Error(projectSaveErrorText(error,locale));projectsRef.current=next;setProjects(next);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
       <main className="home">
         {activeProject ? <section className="project-shell album-workspace-shell">
           <aside className="project-sidebar" aria-label={locale==="sv"?"Arbetsinställningar":"Workspace settings"}>

@@ -928,7 +928,7 @@ try {
     target: { value: "Saved title" },
   });
   assert.equal(saved().adaptations[0].beats[0].title, "Saved title");
-  assert.equal(screen.queryByText(/Projektet kunde inte sparas/), null);
+  await waitFor(() => assert.ok(screen.queryByText(/Projektet kunde inte sparas/) === null));
   const beforeDelete = saved();
   const removedId = beforeDelete.adaptations[0].beats[0].id;
   await user.click(
@@ -1380,7 +1380,7 @@ try {
   assert.ok(screen.getByRole("dialog"));
   window.Storage.prototype.setItem = normalSetItem;
   await user.click(restoreButton);
-  assert.equal(screen.queryByRole("dialog"), null);
+  await waitFor(() => assert.ok(screen.queryByRole("dialog") === null));
   const restoredProjects = JSON.parse(
     localStorage.getItem("comicbook-ai.projects"),
   );
@@ -1474,4 +1474,5 @@ try {
   dom.window.close();
   rmSync(compiledRoot, { recursive: true, force: true });
 }
+
 

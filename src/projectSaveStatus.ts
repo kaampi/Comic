@@ -1,6 +1,7 @@
 export type ProjectSaveFailure = {
   reason: 'quota' | 'blocked' | 'serialization' | 'unknown';
   errorName: string;
+  backend?: 'localStorage' | 'indexedDB';
   textBytes?: number;
 };
 let failure: ProjectSaveFailure | null = null;
@@ -21,10 +22,7 @@ export function saveProjectData(key: string, projects: unknown): boolean {
     failure = null;
     return true;
   } catch (error) {
-    const name = errorName(error);
-    const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
-    const quota = name === 'QuotaExceededError' || name === 'NS_ERROR_DOM_QUOTA_REACHED' || code === 22 || code === 1014;
-    failure = { reason: quota ? 'quota' : name === 'SecurityError' ? 'blocked' : 'unknown', errorName: name, textBytes: serialized.length * 2 };
+    failure = classifyProjectSaveError(error, 'storage', 'localStorage', serialized.length * 2);
     return false;
   }
 }
@@ -32,10 +30,17 @@ function errorName(error: unknown): string {
   return error && typeof error === 'object' && 'name' in error && typeof error.name === 'string' ? error.name : 'UnknownError';
 }
 
+export function classifyProjectSaveError(error: unknown, stage: 'storage' | 'serialization', backend: 'localStorage' | 'indexedDB', textBytes?: number): ProjectSaveFailure {
+  const name = errorName(error);
+  const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+  const quota = name === 'QuotaExceededError' || name === 'NS_ERROR_DOM_QUOTA_REACHED' || code === 22 || code === 1014;
+  return { reason: stage === 'serialization' ? 'serialization' : quota ? 'quota' : name === 'SecurityError' ? 'blocked' : 'unknown', errorName: name, backend, textBytes };
+}
+
 export function projectSaveErrorText(error: ProjectSaveFailure, locale: string): string {
   const sv = locale === 'sv', nb = locale === 'nb';
   const cause = error.reason === 'quota'
-    ? sv ? 'Appens textlagring (localStorage) har nått sin lagringsgräns. Det är en separat gräns från ledigt diskutrymme och webbläsarens övriga lagring.' : nb ? 'Appens tekstlagring (localStorage) har nådd lagringsgrensen. Dette er en egen grense, uavhengig av ledig diskplass og nettleserens øvrige lagring.' : 'The app’s text storage (localStorage) reached its storage limit. This is separate from free disk space and other browser storage.'
+    ? error.backend === 'indexedDB' ? (sv ? 'Appens lokala databas har nått sin lagringsgräns.' : nb ? 'Appens lokale database har nådd lagringsgrensen.' : 'The app’s local database reached its storage limit.') : sv ? 'Appens textlagring (localStorage) har nått sin lagringsgräns. Det är en separat gräns från ledigt diskutrymme och webbläsarens övriga lagring.' : nb ? 'Appens tekstlagring (localStorage) har nådd lagringsgrensen. Dette er en egen grense, uavhengig av ledig diskplass og nettleserens øvrige lagring.' : 'The app’s text storage (localStorage) reached its storage limit. This is separate from free disk space and other browser storage.'
     : error.reason === 'blocked'
       ? sv ? 'Webbläsaren blockerar åtkomst till appens lokala lagring.' : nb ? 'Nettleseren blokkerer tilgang til appens lokale lagring.' : 'The browser is blocking access to the app’s local storage.'
       : error.reason === 'serialization'

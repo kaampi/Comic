@@ -79,9 +79,7 @@ export function createProject(title: string, source: ProjectSource, style: Illus
   };
 }
 
-export function readProjects(): ComicProject[] {
-  try {
-    const data = JSON.parse(localStorage.getItem(PROJECTS_KEY) ?? "[]");
+export function normalizeStoredProjects(data: unknown): ComicProject[] {
     return Array.isArray(data) ? data.filter((p) => p?.format === PROJECT_FORMAT && typeof p?.id === "string").map((p) => ({
       ...p,
       renderOptions: renderOptionsForStyle(p.style, p.renderOptions),
@@ -104,7 +102,11 @@ export function readProjects(): ComicProject[] {
         })):[]})) : []
       })) : []
     })).map(normalizeProjectTypography) : [];
-  } catch { return []; }
+}
+
+export function readProjects(): ComicProject[] {
+  try { return normalizeStoredProjects(JSON.parse(localStorage.getItem(PROJECTS_KEY) ?? "[]")); }
+  catch { return []; }
 }
 
 export function saveProjects(projects: ComicProject[]): boolean {

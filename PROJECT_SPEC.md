@@ -153,7 +153,7 @@ Beats visas med diskreta ramar i källtexten. En högerpanel med justerbar bredd
 
 Textändringar före ett beat flyttar dess källkoppling. Ändringar i ett länkat avsnitt markerar beatet och dess rutor för granskning. Befintlig regi, text, prompter och bilder ersätts inte av källredigeringen. Ett försvunnet avsnitt kan kopplas om till ny markerad text.
 
-Prototypen använder fortfarande webbläsarens lokala projektlagring. Projektmappar, separata bildfiler och atomisk sparning enligt avsnitt 3.2 kvarstår som mål för desktoplagringen.
+Prototypen sparar album och bilder i webbläsarens lokala IndexedDB med atomiska transaktioner. Befintliga localStorage-album flyttas först efter validering; textkopian tas bort först när databaskopian är sparad och verifierad. I äldre miljöer utan IndexedDB används localStorage som reserv. Projektmappar, separata bildfiler och atomisk sparning enligt avsnitt 3.2 kvarstår som mål för desktoplagringen.
 
 ## 8. Sidplanerare
 

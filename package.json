@@ -18,7 +18,8 @@
     "test:style-modes": "node scripts/test-style-modes.mjs",
     "test:save-errors": "node scripts/test-save-errors.mjs",
     "test:idml": "node scripts/test-idml.mjs",
-    "test:page-spacing": "node scripts/test-page-spacing.mjs"
+    "test:page-spacing": "node scripts/test-page-spacing.mjs",
+    "test:project-storage": "node scripts/test-project-storage.mjs"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",
@@ -33,6 +34,7 @@
     "vite": "^6.4.3",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.1",
-    "jsdom": "^26.1.0"
+    "jsdom": "^26.1.0",
+    "fake-indexeddb": "^6.2.4"
   }
 }
