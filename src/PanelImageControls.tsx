@@ -27,8 +27,8 @@ export function PanelImageControls({ image, locale, editing, onToggle, onRemove,
       <label>{tr("imageRotation")} (°)<input type="number" min="-180" max="180" step="1" value={image.rotation ?? 0} onChange={e => onChange({ rotation: normalizedImageRotation(Number(e.target.value) || 0) })}/></label>
     </div>
     {editing ? <div className="image-edit-help">
-      <p className="quiet">{tr("dragImageHint")}</p>
       <button className="text-button" type="button" onClick={onReset}>{tr("resetImageView")}</button>
+      <p className="quiet">{tr("dragImageHint")}</p>
     </div> : null}
   </section>;
 }

@@ -14,7 +14,7 @@
 .panel-image-controls .image-position-grid { grid-template-columns: repeat(2, minmax(0, max-content)); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 8px 28px; width: fit-content; max-width: 100%; }
 .panel-image-controls label { display: grid; grid-template-columns: minmax(0, 1fr) 80px; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
 .panel-image-controls input[type="number"] { width: 100%; font-size: 14px; min-height: 30px; padding: 4px 6px; font-variant-numeric: tabular-nums; }
-.image-edit-help { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.image-edit-help { display: flex; align-items: baseline; gap: 16px; }
 .image-edit-help .quiet { margin: 0; line-height: 1.5; font-size: 13px; }
 .image-edit-help button { flex-shrink: 0; }
 .panel-editor-source { flex-shrink: 0; padding: 10px 18px; border-top: 1px solid var(--border); font-size: 14px; }
