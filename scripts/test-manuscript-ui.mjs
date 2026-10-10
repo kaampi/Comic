@@ -1301,7 +1301,17 @@ try {
   assert.equal(panImage.style.top,'-130px');
   assert.deepEqual(saved().pages[0].placements[0].shapePoints,frameBeforePan.shapePoints);
   assert.deepEqual(saved().pages[0].placements[0].overlays,frameBeforePan.overlays);
+  const zoomBeforeWheel=saved().pages[0].placements[0].image.zoom;
+  assert.equal(fireEvent.wheel(panLayer,{deltaY:-100,cancelable:true}),true);
+  assert.equal(saved().pages[0].placements[0].image.zoom,zoomBeforeWheel);
+  assert.equal(fireEvent.wheel(panLayer,{deltaY:-100,ctrlKey:true,cancelable:true}),false,'Ctrl wheel cancels browser zoom');
+  assert.equal(saved().pages[0].placements[0].image.zoom,2.1);
+  assert.equal(fireEvent.wheel(panLayer,{deltaY:100,metaKey:true,cancelable:true}),false,'Command wheel cancels browser zoom');
+  assert.equal(saved().pages[0].placements[0].image.zoom,2);
+  assert.deepEqual(saved().pages[0].placements[0].overlays,frameBeforePan.overlays);
   await user.click(within(shapedEditor).getByRole('button',{name:'Klar med bild',exact:true}));
+  fireEvent.wheel(panLayer,{deltaY:-100,ctrlKey:true,cancelable:true});
+  assert.equal(saved().pages[0].placements[0].image.zoom,2,'zoom requires active image editing');
   const beforeShapeImage=structuredClone(saved().pages[0].placements[0]);
   await user.upload(shapedEditor.querySelector('input[type="file"]'),new window.File(['image'],'shaped.png',{type:'image/png'}));
   await waitFor(()=>assert.equal(saved().pages[0].placements[0].image.name,'shaped.png'));
