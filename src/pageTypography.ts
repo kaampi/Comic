@@ -23,10 +23,11 @@ export function normalizeProjectTypography(project: ComicProject): ComicProject 
   const convertSize = (size: number, metrics: LayerTextMetrics) => Math.round(size * .6 * metrics.height / 100 * metrics.pageWidthMm / PAGE_RENDER_WIDTH * 72 / 25.4 * 100) / 100;
   const convertLayer = (page: ComicProject["pages"][number], layer: PageLayer) => {
     const metrics = pageLayerTextMetrics(project, page, layer);
-    return { ...layer, overlays: layer.overlays.map(o => ({ ...o, fontSize: convertSize(o.fontSize ?? (o.type === "sfx" ? 20 : 12), metrics) })) };
+    return { ...layer, overlays: layer.overlays.map(o => ({ ...o, textStyles:o.textStyles?.map(style=>({...style,...(style.fontSize===undefined?{}:{fontSize:convertSize(style.fontSize,metrics)})})), fontSize: convertSize(o.fontSize ?? (o.type === "sfx" ? 20 : 12), metrics) })) };
   };
   const grid = project.pageDefaults ?? {gridColumns:3,gridRows:5};
   const defaultMetrics = pageLayerTextMetrics(project, {id:"defaults", number:1, ...grid, placements:[]}, {id:"defaults-layer",x:0,y:0,width:1,height:1,readingOrder:1,overlays:[]});
   const overlayDefaults = Object.fromEntries(Object.entries(project.overlayDefaults ?? {}).map(([type, defaults]) => [type, {...defaults, ...(defaults.fontSize === undefined ? {} : {fontSize:convertSize(defaults.fontSize,defaultMetrics)})}]));
   return {...project, typographyVersion:2, overlayDefaults, pages:project.pages.map(page => ({...page, background:page.background ? convertLayer(page,page.background) : undefined, placements:page.placements.map(layer => convertLayer(page,layer))}))};
 }
+

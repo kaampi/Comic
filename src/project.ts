@@ -15,6 +15,7 @@ export type ProjectSource = "blank" | "text" | "storybook";
 export type OverlayType = "speech" | "thought" | "caption" | "sfx";
 export type BubbleStyle = "organic" | "wide" | "tall" | "oval" | "rounded" | "shout" | "whisper";
 export type TextOverlay = {
+  textStyles?: TextStyleRange[];
   bubbleLinks?: { targetId: string; width: number }[];
   id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number;
   sfxShapeId?: string; sfxTextHidden?: boolean; sfxTextColor?: string;
@@ -26,6 +27,8 @@ export type TextOverlay = {
   tailEnabled?: boolean; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number;
   strokeColor?: string; strokeWidth?: number; fillColor?: string; fillOpacity?: number; swatchId?: string;
 };
+export type TextStyle = { fontFamily?: string; fontSize?: number; fontWeight?: number };
+export type TextStyleRange = TextStyle & { start: number; end: number };
 export type BubbleSwatch = {
   id: string;
   name: string;

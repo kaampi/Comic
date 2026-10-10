@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-idml-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform==='win32'?'junction':'dir');
-const names=['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts','idmlExport.ts'];
+const names=['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts','idmlExport.ts'];
 function archive(bytes) {
   const entries=new Map();let offset=0;const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   while(view.getUint32(offset,true)===0x04034b50) {
@@ -35,6 +35,7 @@ try {
   const project={title:'Test <album>',pageFormat:{...DEFAULT_PAGE_FORMAT,spacing},pages:[{id:'second',number:2,gridColumns:3,gridRows:5,placements:[layer]},{id:'first',number:1,gridColumns:3,gridRows:5,background:{...layer,id:'bg',overlays:[]},placements:[layer]}]};
   const {linkBubbles}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
   const linked=linkBubbles([{...overlay,id:'linked-a',text:'Linked first',rotation:0,width:30,height:20,tailEnabled:false},{...overlay,id:'linked-b',text:'Linked second',x:55,y:40,width:30,height:20,tailEnabled:false}],'linked-a','linked-b');
+  linked[1].textStyles=[{start:7,end:13,fontFamily:'Comic Relief, sans-serif',fontSize:18,fontWeight:700}];
   project.pages[1].background.overlays=linked;
   const snapshot=JSON.stringify(project),progress=[];
   const options={format:'idml',pageIds:['second','first'],pageFormat:DEFAULT_PAGE_FORMAT,dpi:600,fit:'contain',jpegQuality:.95};
@@ -54,7 +55,11 @@ try {
   assert.equal(joined[0].getAttribute('StrokeColor'),'Swatch/None','no internal strokes on fill');
   assert.equal(joined[0].querySelectorAll('GeometryPathType').length,1,'one joined contour');
   assert.ok([...docs.values()].some(d=>d.documentElement.outerHTML.includes('Linked first')));
-  assert.ok([...docs.values()].some(d=>d.documentElement.outerHTML.includes('Linked second')));
+  const richStory=[...docs.values()].find(d=>[...d.querySelectorAll('Content')].map(e=>e.textContent).join('').includes('Linked second'));
+  assert.ok(richStory);
+  const richRanges=[...richStory.querySelectorAll('CharacterStyleRange')];assert.equal(richRanges.length,2);
+  assert.equal(richRanges[1].querySelector('AppliedFont').textContent,'Comic Relief');assert.equal(richRanges[1].getAttribute('FontStyle'),'Bold');
+  assert.ok(Number(richRanges[1].getAttribute('PointSize'))>Number(richRanges[0].getAttribute('PointSize')));
   const allIds=new Set();for(const d of docs.values())for(const e of d.querySelectorAll('[Self]')){assert.ok(!allIds.has(e.getAttribute('Self')),'unique Self');allIds.add(e.getAttribute('Self'));}
   for(const d of docs.values()) {
     for(const e of d.querySelectorAll('[ItemLayer]'))assert.ok(allIds.has(e.getAttribute('ItemLayer')));

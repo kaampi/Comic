@@ -125,6 +125,17 @@ export function parseAlbumBackup(input: unknown): ComicProject {
           throw new Error("invalid-backup");
         for (const key of ["x", "y", "width", "height", "rotation"])
           number(overlay[key]);
+        if (overlay.textStyles !== undefined) {
+          list(overlay.textStyles);let end=0;
+          for (const style of overlay.textStyles) {
+            record(style);number(style.start);number(style.end);
+            if (!Number.isInteger(style.start)||!Number.isInteger(style.end)||style.start<end||style.end<=style.start||style.end>overlay.text.length) throw new Error("invalid-backup");
+            end=style.end;
+            if (style.fontFamily!==undefined) string(style.fontFamily);
+            if (style.fontSize!==undefined) {number(style.fontSize);if(style.fontSize<.1||style.fontSize>600)throw new Error("invalid-backup");}
+            if (style.fontWeight!==undefined) {number(style.fontWeight);if(style.fontWeight<100||style.fontWeight>900)throw new Error("invalid-backup");}
+          }
+        }
         if (overlay.bubbleLinks !== undefined) {
           list(overlay.bubbleLinks);
           const targets = new Set<string>();

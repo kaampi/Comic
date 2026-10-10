@@ -1,3 +1,4 @@
+import { textPieces } from "./richText";
 import { panelBorderStyle, panelBorderWidth } from "./panelBorder";
 import { imagePlacement } from "./imageView";
 import { pageLayerTextMetrics } from "./pageTypography";
@@ -41,7 +42,7 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
   // Server-rendered SVG has no effects: load the fonts before measuring its lines.
   if (typeof document !== "undefined" && document.fonts) {
     const overlays = [...(page.background ? [page.background] : []), ...page.placements].flatMap(layer => layer.overlays ?? []);
-    await Promise.all(overlays.map(overlay => document.fonts.load(overlayFont(overlay,16),overlay.text || "ÅÄÖ abc")));
+    await Promise.all(overlays.flatMap(overlay => [overlay,...textPieces(overlay).map(piece=>({...overlay,...Object.fromEntries(Object.entries(piece.style).filter(([,v])=>v!==undefined))}))]).map(overlay => document.fonts.load(overlayFont(overlay,16),overlay.text || "ÅÄÖ abc")));
   }
   const format=albumPageFormat(project), height=PAGE_RENDER_WIDTH/pageAspect(format), defs:string[]=[], body:string[]=[];
   body.push(`<rect width="700" height="${height}" fill="#fffdf7"/>`);
@@ -93,7 +94,7 @@ export async function exportAlbum(project:ComicProject,options:ExportOptions,onP
   const pages=[...project.pages].sort((a,b)=>a.number-b.number).filter(p=>options.pageIds.includes(p.id));
   if(!pages.length)throw new Error("no-pages"); rasterDimensions(options.pageFormat,options.dpi);
   check(signal);
-  const families=new Set(pages.flatMap(p=>[...(p.background?[p.background]:[]),...p.placements].flatMap(l=>(l.overlays??[]).map(o=>(o.fontFamily??(o.type==="sfx"?"Impact":"Comic Neue")).split(",")[0].replace(/["']/g,"").trim()))));
+  const families=new Set(pages.flatMap(p=>[...(p.background?[p.background]:[]),...p.placements].flatMap(l=>(l.overlays??[]).flatMap(o=>[o,...(o.textStyles??[]).map(style=>({...o,...Object.fromEntries(Object.entries(style).filter(([,v])=>v!==undefined))}))]).map(o=>(o.fontFamily??(o.type==="sfx"?"Impact":"Comic Neue")).split(",")[0].replace(/["']/g,"").trim()))));
   await document.fonts.ready; const css=await embeddedFonts(families,signal), images:PdfRasterPage[]=[], files:{name:string;bytes:Uint8Array}[]=[], base=exportFilename(project.title),ext=options.format==="jpeg"?"jpg":"png";
   onProgress(0,pages.length);
   for(const [i,page] of pages.entries()) {

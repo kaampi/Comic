@@ -1,3 +1,4 @@
+import { richTextLayout, textPieces } from "./richText";
 import { useEffect, useReducer } from "react";
 import { overlayTextLayout, type LayerTextMetrics } from "./pageTypography";
 import { SfxArtwork } from "./SfxArtwork";
@@ -76,9 +77,9 @@ export function SvgOverlay({overlay,textMetrics,hideText=false,hideShape=false}:
   let active=true;
   const refresh=()=>{if(active)refreshFontMetrics();};
   document.fonts.addEventListener("loadingdone",refresh);
-  document.fonts.load(overlayFont(overlay,16),overlay.text||"ÅÄÖ abc").then(refresh,()=>{});
+  Promise.all([overlay,...(overlay.textStyles?.length?textPieces(overlay).map(p=>({...overlay,...Object.fromEntries(Object.entries(p.style).filter(([,v])=>v!==undefined))})):[])].map(o=>document.fonts.load(overlayFont(o,16),overlay.text||"ÅÄÖ abc"))).then(refresh,()=>{});
   return ()=>{active=false;document.fonts.removeEventListener("loadingdone",refresh);};
- },[overlay.fontFamily,overlay.fontWeight,overlay.type,overlay.text]);
+ },[overlay.fontFamily,overlay.fontWeight,overlay.type,overlay.text,overlay.textStyles]);
  const sizeValue=overlay.fontSize??(overlay.type==="sfx"?20:12);
  const pointLayout=textMetrics?overlayTextLayout(overlay,textMetrics):undefined;
  const fontSize=pointLayout?.fontSize??sizeValue*.6;
@@ -87,6 +88,7 @@ export function SvgOverlay({overlay,textMetrics,hideText=false,hideShape=false}:
  const textLines=pointLayout?.textLines??wrapOverlayText(overlay.text,Math.max(1,Math.floor((w-2*padding)/(fontSize*.5))));
  const align=overlay.textAlign??"center",textX=pointLayout?.textX??(align==="left"?padding:align==="right"?w-padding:w/2);
  const anchor=align==="left"?"start":align==="right"?"end":"middle";
+ const rich=textMetrics&&overlay.textStyles?.length?richTextLayout(overlay,textMetrics):undefined;
  const common=commonStyle(overlay);
  const cloud=overlay.type==="thought"?thoughtCloudGeometry(w,h):undefined;
  return <><g display={hideShape?"none":undefined} transform={`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>
@@ -96,7 +98,7 @@ export function SvgOverlay({overlay,textMetrics,hideText=false,hideShape=false}:
   {overlay.type==="sfx"?<SfxArtwork shape={overlay.sfxShapeId??"none"} width={w} height={h} fill={overlay.fillColor} stroke={overlay.strokeColor} strokeWidth={overlay.strokeWidth} opacity={overlay.fillOpacity}/>:null}
  </g>
  <g transform={textMetrics&&pointLayout?`translate(${overlay.x} ${overlay.y}) scale(${100/textMetrics.width} ${100/textMetrics.height}) rotate(${overlay.rotation} ${pointLayout.width/2} ${pointLayout.height/2})`:`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>
-  {!hideText&&(overlay.type!=="sfx"||!overlay.sfxTextHidden)?<text x={textX} y={pointLayout?.textY??h/2-(textLines.length-1)*fontSize*.575} textAnchor={anchor} dominantBaseline="middle" fontFamily={overlay.fontFamily??(overlay.type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif")} fontWeight={overlay.fontWeight??(overlay.type==="sfx"?800:600)} fontSize={fontSize} fill={overlay.sfxTextColor??"#171411"} stroke={overlay.type==="sfx"?"#fffdf7":"none"} strokeWidth={overlay.type==="sfx"?3:0} paintOrder="stroke">{textLines.map((line,i)=><tspan key={i} x={textX} dy={i===0?0:fontSize*1.15}>{line||"\u00a0"}</tspan>)}</text>:null}
+  {!hideText&&(overlay.type!=="sfx"||!overlay.sfxTextHidden)?rich?<g className="rich-overlay-text">{rich.rows.map((row,i)=><text key={i} y={row.y} fill={overlay.sfxTextColor??"#171411"} stroke={overlay.type==="sfx"?"#fffdf7":"none"} strokeWidth={overlay.type==="sfx"?3:0} paintOrder="stroke">{row.runs.map((run,j)=><tspan key={j} x={run.x} fontFamily={run.style.fontFamily??(overlay.type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif")} fontWeight={run.style.fontWeight??(overlay.type==="sfx"?800:600)} fontSize={run.size}>{run.text}</tspan>)}</text>)}</g>:<text x={textX} y={pointLayout?.textY??h/2-(textLines.length-1)*fontSize*.575} textAnchor={anchor} dominantBaseline="middle" fontFamily={overlay.fontFamily??(overlay.type==="sfx"?"Impact, sans-serif":"Comic Neue, sans-serif")} fontWeight={overlay.fontWeight??(overlay.type==="sfx"?800:600)} fontSize={fontSize} fill={overlay.sfxTextColor??"#171411"} stroke={overlay.type==="sfx"?"#fffdf7":"none"} strokeWidth={overlay.type==="sfx"?3:0} paintOrder="stroke">{textLines.map((line,i)=><tspan key={i} x={textX} dy={i===0?0:fontSize*1.15}>{line||"\u00a0"}</tspan>)}</text>:null}
  </g></>;
 }
 

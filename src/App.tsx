@@ -1,3 +1,4 @@
+import { editedTextStyles, deletionRange, formatTextRange, clearTextRange, textStyleAt } from "./richText";
 import type { TextOverlay } from "./project";
 import { InlineOverlayEditor } from "./InlineOverlayEditor";
 import { PanelImageControls } from "./PanelImageControls";
@@ -115,7 +116,10 @@ export function App() {
   const [panelEditor, setPanelEditor] = useState<{pageId:string;placementId:string}|null>(null);
   const [imageEditPlacementId, setImageEditPlacementId] = useState<string | null>(null);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
-  const [inlineTextEdit, setInlineTextEdit] = useState<{pageId:string;placementId:string;overlayId:string;initialText:string}|null>(null);
+  const textEditRange=useRef<{overlayId:string;start:number;end:number}|null>(null);
+  const [textSelection,setTextSelection]=useState<{overlayId:string;start:number;end:number}|null>(null);
+  useEffect(()=>setTextSelection(null),[selectedOverlayId,panelEditor,activeProjectId]);
+  const [inlineTextEdit, setInlineTextEdit] = useState<{pageId:string;placementId:string;overlayId:string;initialText:string;initialTextStyles?:TextOverlay["textStyles"]}|null>(null);
   useEffect(()=>setInlineTextEdit(null),[panelEditor,imageEditPlacementId,activeProjectId]);
   const [inspectSourcePanelId, setInspectSourcePanelId] = useState<string | null>(null);
   const [appPageGrid, setAppPageGrid] = useState(readPageGridDefaults);
@@ -142,7 +146,7 @@ export function App() {
   }, [contextPlacement]);
   useEffect(() => {
     if (!panelEditor) return;
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape" && !event.defaultPrevented && !imagePanCleanup.current && !inspectSourcePanelId) { if(inlineTextEdit) { event.preventDefault(); updateOverlay(inlineTextEdit.pageId,inlineTextEdit.placementId,inlineTextEdit.overlayId,{text:inlineTextEdit.initialText}); setInlineTextEdit(null); return; } if(imageEditPlacementId) { setImageEditPlacementId(null); } else { setPanelEditor(null); } } };
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape" && !event.defaultPrevented && !imagePanCleanup.current && !inspectSourcePanelId) { if(inlineTextEdit) { event.preventDefault(); updateOverlay(inlineTextEdit.pageId,inlineTextEdit.placementId,inlineTextEdit.overlayId,{text:inlineTextEdit.initialText,textStyles:inlineTextEdit.initialTextStyles}); setInlineTextEdit(null); return; } if(imageEditPlacementId) { setImageEditPlacementId(null); } else { setPanelEditor(null); } } };
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, [panelEditor, imageEditPlacementId, inspectSourcePanelId, inlineTextEdit]);
@@ -559,7 +563,8 @@ export function App() {
   })})}));
     setSelectedOverlayId(newOverlayId);
   };
-  const updateOverlay=(pageId:string,placementId:string,overlayId:string,patch:any)=>updateActiveProject((project)=>({...project,pages:project.pages.map((page)=>page.id!==pageId?page:{...page,placements:page.placements.map((placement)=>placement.id!==placementId?placement:{...placement,overlays:(()=>{let overlays=placement.overlays??[];if(patch.type&&patch.type!==overlays.find(o=>o.id===overlayId)?.type)overlays=unlinkBubble(overlays,overlayId);const group=bubbleGroups(overlays).find(g=>g.some(o=>o.id===overlayId));const shared=Object.fromEntries(Object.entries(patch).filter(([key])=>["fillColor","fillOpacity","strokeColor","strokeWidth","swatchId"].includes(key)));return overlays.map(overlay=>overlay.id===overlayId?{...overlay,...patch}:group?.some(o=>o.id===overlay.id)?{...overlay,...shared}:overlay);})()})})}));
+  const updateOverlay=(pageId:string,placementId:string,overlayId:string,patch:any)=>updateActiveProject((project)=>({...project,pages:project.pages.map((page)=>page.id!==pageId?page:{...page,placements:page.placements.map((placement)=>placement.id!==placementId?placement:{...placement,overlays:(()=>{let overlays=placement.overlays??[];const original=overlays.find(o=>o.id===overlayId);if(original&&patch.text!==undefined&&!Object.hasOwn(patch,"textStyles"))patch={...patch,textStyles:editedTextStyles(original,patch.text,patch.textEdit)};if(Object.hasOwn(patch,"textEdit")){const {textEdit,...rest}=patch;patch=rest;}if(patch.type&&patch.type!==overlays.find(o=>o.id===overlayId)?.type)overlays=unlinkBubble(overlays,overlayId);const group=bubbleGroups(overlays).find(g=>g.some(o=>o.id===overlayId));const shared=Object.fromEntries(Object.entries(patch).filter(([key])=>["fillColor","fillOpacity","strokeColor","strokeWidth","swatchId"].includes(key)));return overlays.map(overlay=>overlay.id===overlayId?{...overlay,...patch}:group?.some(o=>o.id===overlay.id)?{...overlay,...shared}:overlay);})()})})}));
+  const formatSelectedText=(pageId:string,placementId:string,o:TextOverlay,patch:any)=>{if(textSelection?.overlayId===o.id&&textSelection.end>textSelection.start)updateOverlay(pageId,placementId,o.id,{textStyles:formatTextRange(o,textSelection.start,textSelection.end,patch)});else updateOverlay(pageId,placementId,o.id,patch);};
   const changeBubbleLinks=(pageId:string,placementId:string,change:(overlays:TextOverlay[])=>TextOverlay[])=>updateActiveProject(project=>({...project,pages:project.pages.map(page=>page.id!==pageId?page:{...page,placements:page.placements.map(layer=>layer.id!==placementId?layer:{...layer,overlays:change(layer.overlays)})})}));
   const deleteOverlay=(pageId:string,placementId:string,overlayId:string)=>{updateActiveProject((project)=>({...project,pages:project.pages.map((page)=>page.id!==pageId?page:{...page,placements:page.placements.map((placement)=>placement.id!==placementId?placement:{...placement,overlays:unlinkBubble(placement.overlays??[],overlayId).filter((overlay)=>overlay.id!==overlayId)})})}));if(selectedOverlayId===overlayId)setSelectedOverlayId(null);};
 
@@ -809,7 +814,7 @@ export function App() {
         </>}
       </main>
 
-      {panelEditor && activeProject ? (()=>{const pg=activeProject.pages.find(x=>x.id===panelEditor.pageId),pl=pg?.background?.id===panelEditor.placementId?pg.background:pg?.placements.find(x=>x.id===panelEditor.placementId);if(!pg||!pl)return null;const o=(pl.overlays??[]).find(item=>item.id===selectedOverlayId)??null;const projectPanel=pl.panelId?activeProject.panels.find((item)=>item.id===pl.panelId):undefined;const panelPlan=projectPanel?.adaptationPanelPlanId?activeAdaptation?.panelPlans.find((item)=>item.id===projectPanel.adaptationPanelPlanId):undefined;return <div className="panel-editor-backdrop" onPointerDown={(e)=>{if(e.target===e.currentTarget){setPanelEditor(null);setImageEditPlacementId(null);}}}>
+      {panelEditor && activeProject ? (()=>{const pg=activeProject.pages.find(x=>x.id===panelEditor.pageId),pl=pg?.background?.id===panelEditor.placementId?pg.background:pg?.placements.find(x=>x.id===panelEditor.placementId);if(!pg||!pl)return null;const o=(pl.overlays??[]).find(item=>item.id===selectedOverlayId)??null;const selectedText=o&&textSelection?.overlayId===o.id&&textSelection.end>textSelection.start?textSelection:null;const typeValues=o&&selectedText?{...o,...Object.fromEntries(Object.entries(textStyleAt(o,selectedText.start)).filter(([,v])=>v!==undefined))}:o;const projectPanel=pl.panelId?activeProject.panels.find((item)=>item.id===pl.panelId):undefined;const panelPlan=projectPanel?.adaptationPanelPlanId?activeAdaptation?.panelPlans.find((item)=>item.id===projectPanel.adaptationPanelPlanId):undefined;return <div className="panel-editor-backdrop" onPointerDown={(e)=>{if(e.target===e.currentTarget){setPanelEditor(null);setImageEditPlacementId(null);}}}>
 <section className="panel-editor-modal" role="dialog" aria-modal="true" aria-labelledby="panel-editor-title">
 <header>
 <div>
@@ -830,7 +835,7 @@ export function App() {
 <span>{tr("uploadImage")}</span>
 <small>{tr("dropImageHint")}</small>
 </label>}<svg aria-hidden={imageEditPlacementId===pl.id} style={{display:imageEditPlacementId===pl.id?"none":undefined,clipPath:pl.id!==pg.background?.id&&shapedPanel(pl)?shapeClipPath(pl):undefined}} viewBox="0 0 100 100" preserveAspectRatio="none"><ConnectedBubbles overlays={pl.overlays??[]} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)}/> {(pl.overlays??[]).map((item)=>{const selected=item.id===selectedOverlayId;return <g key={item.id} className={selected?"editable-overlay is-selected":"editable-overlay"}>
-<g className="overlay-drag-surface" onDoubleClick={e=>{e.preventDefault();e.stopPropagation();if(imageEditPlacementId===pl.id||item.type==="sfx"&&item.sfxTextHidden)return;setSelectedOverlayId(item.id);setInlineTextEdit({pageId:pg.id,placementId:pl.id,overlayId:item.id,initialText:item.text});}} onPointerDown={(e)=>{setSelectedOverlayId(item.id);beginOverlayDrag(e,pg.id,pl.id,item,"move");}}><title>{tr("editBubbleHint")}</title>
+<g className="overlay-drag-surface" onDoubleClick={e=>{e.preventDefault();e.stopPropagation();if(imageEditPlacementId===pl.id||item.type==="sfx"&&item.sfxTextHidden)return;setSelectedOverlayId(item.id);setInlineTextEdit({pageId:pg.id,placementId:pl.id,overlayId:item.id,initialText:item.text,initialTextStyles:item.textStyles});}} onPointerDown={(e)=>{setSelectedOverlayId(item.id);beginOverlayDrag(e,pg.id,pl.id,item,"move");}}><title>{tr("editBubbleHint")}</title>
 <SvgOverlay overlay={item} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} hideText={inlineTextEdit?.overlayId===item.id} hideShape={bubbleGroups(pl.overlays??[]).some(g=>g.some(b=>b.id===item.id))}/>
 {bubbleGroups(pl.overlays??[]).some(g=>g.some(b=>b.id===item.id))?<rect x={item.x} y={item.y} width={item.width} height={item.height} fill="transparent" transform={`rotate(${item.rotation} ${item.x+item.width/2} ${item.y+item.height/2})`}/>:null}
 </g>{selected&&inlineTextEdit?.overlayId!==item.id?<>
@@ -838,7 +843,7 @@ export function App() {
 <rect className="overlay-resize-grip" x={item.x+item.width-1.5} y={item.y+item.height-1.5} width="3" height="3" rx=".5" onPointerDown={(e)=>beginOverlayDrag(e,pg.id,pl.id,item,"resize")}/>{(item.type==="thought"||item.type==="speech"&&item.tailEnabled!==false&&item.tailX!==undefined&&item.tailY!==undefined)?<>
 <circle className="overlay-tail-start-grip" aria-label={locale==="sv"?"Svansens start":"Tail start"} cx={bubbleTailStart(item).x} cy={bubbleTailStart(item).y} r="1.6" fill="#fffdf7" stroke="#b06f52" strokeWidth="0.5" style={{cursor:"grab",pointerEvents:"all"}} onPointerDown={e=>beginOverlayDrag(e,pg.id,pl.id,item,"tail-start")}/>
 <circle className="overlay-tail-grip" cx={item.type==="thought"?thoughtTailEndpoint(item).x:item.tailX} cy={item.type==="thought"?thoughtTailEndpoint(item).y:item.tailY} r="1.6" onPointerDown={(e)=>beginOverlayDrag(e,pg.id,pl.id,item,"tail")}/>
-</>:null}</>:null}</g>})}{inlineTextEdit&&inlineTextEdit.pageId===pg.id&&inlineTextEdit.placementId===pl.id&&o?.id===inlineTextEdit.overlayId&&imageEditPlacementId!==pl.id?<InlineOverlayEditor overlay={o} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} label={tr("inlineBubbleText")} onChange={text=>updateOverlay(pg.id,pl.id,o.id,{text})} onFinish={()=>setInlineTextEdit(null)} onCancel={()=>{updateOverlay(pg.id,pl.id,o.id,{text:inlineTextEdit.initialText});setInlineTextEdit(null);}}/>:null}</svg>{pl.id!==pg.background?.id?<PanelFrameOutline project={activeProject} page={pg} layer={pl}/>:null}</div>
+</>:null}</>:null}</g>})}{inlineTextEdit&&inlineTextEdit.pageId===pg.id&&inlineTextEdit.placementId===pl.id&&o?.id===inlineTextEdit.overlayId&&imageEditPlacementId!==pl.id?<InlineOverlayEditor overlay={o} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} label={tr("inlineBubbleText")} onSelection={(start,end)=>setTextSelection({overlayId:o.id,start,end})} onChange={(text,textEdit)=>updateOverlay(pg.id,pl.id,o.id,{text,textEdit})} onFinish={()=>setInlineTextEdit(null)} onCancel={()=>{updateOverlay(pg.id,pl.id,o.id,{text:inlineTextEdit.initialText,textStyles:inlineTextEdit.initialTextStyles});setInlineTextEdit(null);}}/>:null}</svg>{pl.id!==pg.background?.id?<PanelFrameOutline project={activeProject} page={pg} layer={pl}/>:null}</div>
 </div>{pl.image?<PanelImageControls image={pl.image} locale={locale} editing={imageEditPlacementId===pl.id} onToggle={()=>{imagePanCleanup.current?.();setImageEditPlacementId(imageEditPlacementId===pl.id?null:pl.id);}} onRemove={()=>removePlacementImage(pg.id,pl.id)} onChange={patch=>updatePlacementImageView(pg.id,pl.id,patch)} onReset={()=>resetPlacementImageView(pg.id,pl.id)}/>:null}<details className="panel-editor-source">
 <summary>{tr("panelSource")}</summary>
 <section className="panel-source-picker">
@@ -873,11 +878,12 @@ export function App() {
 <option value="sfx">{tr("sfx")}</option>
 </select>
 </label>
-<label>{tr("text")}<textarea rows={4} value={o.text} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{text:e.target.value})}/>
+<label>{tr("text")}<textarea rows={4} value={o.text} onBeforeInput={e=>{textEditRange.current??={overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd};}} onKeyDown={e=>{textEditRange.current={overlayId:o.id,...deletionRange(o.text,e.currentTarget.selectionStart,e.currentTarget.selectionEnd,e.key)};}} onPaste={e=>{textEditRange.current={overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd};}} onSelect={e=>setTextSelection({overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd})} onChange={(e)=>{updateOverlay(pg.id,pl.id,o.id,{text:e.target.value,textEdit:textEditRange.current?.overlayId===o.id?textEditRange.current:undefined});textEditRange.current=null;}}/>
 </label>
-<FontPicker label={tr("font")} value={o.fontFamily??"Comic Neue, sans-serif"} onChange={fontFamily=>updateOverlay(pg.id,pl.id,o.id,{fontFamily})}/>
+<p className="quiet">{selectedText?`${tr("formatSelection")}: “${o.text.slice(selectedText.start,selectedText.end).slice(0,60)}”`:tr("formatWholeText")}</p>
+<FontPicker label={tr("font")} value={typeValues?.fontFamily??"Comic Neue, sans-serif"} onChange={fontFamily=>formatSelectedText(pg.id,pl.id,o,{fontFamily})}/>
 <div className="type-secondary-grid">
-<label>{tr("weight")}<select value={o.fontWeight??600} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{fontWeight:Number(e.target.value)})}>
+<label>{tr("weight")}<select value={typeValues?.fontWeight??600} onChange={(e)=>formatSelectedText(pg.id,pl.id,o,{fontWeight:Number(e.target.value)})}>
 <option value="300">300 Light</option>
 <option value="400">400 Normal</option>
 <option value="500">500 Medium</option>
@@ -887,9 +893,11 @@ export function App() {
 <option value="900">900 Black</option>
 </select>
 </label>
-<label>{tr("size")} (pt)<input className="numeric-field" type="number" min="0.1" max="600" step="0.5" value={o.fontSize??8} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{fontSize:Math.max(.1,Math.min(600,Number(e.target.value)||.1))})}/>
+<label>{tr("size")} (pt)<input className="numeric-field" type="number" min="0.1" max="600" step="0.5" value={typeValues?.fontSize??8} onChange={(e)=>formatSelectedText(pg.id,pl.id,o,{fontSize:Math.max(.1,Math.min(600,Number(e.target.value)||.1))})}/>
 </label>
 </div>
+{o.textStyles?.length?<button type="button" className="text-button" onClick={()=>updateOverlay(pg.id,pl.id,o.id,{textStyles:selectedText?clearTextRange(o,selectedText.start,selectedText.end):undefined})}>{tr("clearTextFormatting")}</button>:null}
+{selectedText?<button type="button" className="text-button" onClick={()=>setTextSelection(null)}>{tr("formatWholeButton")}</button>:null}
 <label>{locale==="sv"?"Textjustering":"Text alignment"}<select value={o.textAlign??"center"} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{textAlign:e.target.value})}>
 <option value="left">{locale==="sv"?"Vänster":"Left"}</option>
 <option value="center">{locale==="sv"?"Centrerad":"Center"}</option>

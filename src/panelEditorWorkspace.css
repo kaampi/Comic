@@ -74,3 +74,5 @@
   .panel-image-controls label { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .panel-editor-modal > header { padding: 10px 12px; }
 }
+
+.panel-editor-stage .rich-inline-text { width: 100%; max-height: 100%; overflow: auto; padding: 0; margin: 0; border: 0; background: transparent; outline: 1px dashed var(--form-focus); outline-offset: 2px; white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; letter-spacing: normal; text-transform: none; }

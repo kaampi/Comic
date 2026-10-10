@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
 try {
-  for(const name of ['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+  for(const name of ['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
     const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
     fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
@@ -67,6 +67,26 @@ try {
   assert.match(connectedMarkup,/connected-bubble-outline/);assert.match(connectedMarkup,/First/);assert.match(connectedMarkup,/Second/);
   assert.match(connectedMarkup,/stroke-width="6"[^>]*vector-effect="non-scaling-stroke"/);
   console.log('PASS: linked speech/thought bubbles, exposed union contours, overlapping/rotated bodies and tails, live geometry, duplicate rejection, disconnect and SVG export.');
+  const {formatTextRange,clearTextRange,editedTextStyles,textStyleAt,richTextLayout}=await import(pathToFileURL(path.join(dir,'richText.mjs')));
+  const mixed={...a,text:'One BIG word\n\nÅ🙂Z',fontSize:8,width:100,height:100,textPadding:5};
+  mixed.textStyles=formatTextRange(mixed,4,7,{fontFamily:'Impact, sans-serif',fontSize:20,fontWeight:900});
+  assert.deepEqual(textStyleAt(mixed,5),{fontFamily:'Impact, sans-serif',fontSize:20,fontWeight:900});
+  assert.equal(textStyleAt(mixed,3).fontSize,undefined);
+  const shifted=editedTextStyles(mixed,'X '+mixed.text);assert.equal(shifted[0].start,6);assert.equal(shifted[0].end,9);
+  const extended=editedTextStyles(mixed,mixed.text.replace('BIG','BIG!'));assert.equal(extended[0].end,8);
+  const shortened=editedTextStyles(mixed,mixed.text.replace('BIG','B'));assert.equal(shortened[0].end,5);
+  const repeated={...mixed,text:'aaa',textStyles:[{start:1,end:2,fontSize:20}]};
+  assert.equal(editedTextStyles(repeated,'aa',{start:0,end:1})[0].start,0,'actual edit position disambiguates repeated letters');
+  const split=clearTextRange(mixed,5,6);assert.deepEqual(split.map(r=>[r.start,r.end]),[[4,5],[6,7]]);
+  const richLayout=richTextLayout(mixed,{width:160,height:250,pageWidthMm:210});
+  assert.ok(richLayout.rows.some(r=>r.start===r.end),'authored blank line survives mixed typography');
+  assert.ok(richLayout.rows.some(r=>r.size>10));
+  for(const row of richLayout.rows)assert.ok(row.lineWidth<=144+1e-7,'mixed font widths respect both margins');
+  const mixedPage={...page,placements:[{...layer,overlays:[mixed]}]};
+  const mixedMarkup=await pageSvg({...project,pages:[mixedPage]},mixedPage,'',1);
+  assert.match(mixedMarkup,/rich-overlay-text/);assert.match(mixedMarkup,/font-family="Impact, sans-serif"/);assert.match(mixedMarkup,/font-weight="900"/);
+  assert.ok([...mixedMarkup.matchAll(/font-size="([^"]+)"/g)].some(m=>Math.abs(Number(m[1])-20*25.4/72*700/210)<1e-7));
+  console.log('PASS: mixed font families/weights/sizes, variable line heights, blank lines, edits/inheritance, reset, Unicode offsets and SVG export.');
   const typography=await import(pathToFileURL(path.join(dir,'pageTypography.mjs')));
   const sized={...layer.overlays[0],text:'Same size',fontSize:12};
   const background={...layer,id:'background',overlays:[sized]};

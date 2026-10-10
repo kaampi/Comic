@@ -1,3 +1,4 @@
+import { textPieces } from "./richText";
 import { bubbleGroups, connectedBubbleGeometry } from "./bubbleConnections";
 import type { ComicProject, TextOverlay } from "./project";
 import type { ExportOptions } from "./albumExport";
@@ -56,7 +57,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
   const layers=[{id:"cbText",name:"Text"},{id:"cbBubbles",name:"Bubbles and SFX"},{id:"cbFrames",name:"Panel borders"},{id:"cbImages",name:"Images"},{id:"cbBackground",name:"Background"}];
   const shape=(paths:GeometryPath[],layer:string,name:string,fill:string,stroke="none",weight=0,extra="",children="",transform="1 0 0 1 0 0",tag="Polygon")=>
     `<${tag} Self="${id()}" Name="${xml(name)}" ItemLayer="${layer}" ItemTransform="${transform}" ContentType="${children.startsWith("<Image ")?"GraphicType":"Unassigned"}" FillColor="${color(fill)}" StrokeColor="${color(stroke)}" StrokeWeight="${num(weight)}" StrokeAlignment="CenterAlignment" EndJoin="RoundEndJoin" AppliedObjectStyle="ObjectStyle/$ID/[None]" Visible="true" Locked="false" ${extra}><Properties>${idmlPathGeometry(paths)}</Properties>${children}</${tag}>`;
-  const fontLoads=pages.flatMap(p=>[...(p.background?[p.background]:[]),...p.placements].flatMap(l=>l.overlays)).map(o=>typeof document!=="undefined"?document.fonts?.load(overlayFont(o,16),o.text||"ÅÄÖ abc"):undefined);
+  const fontLoads=pages.flatMap(p=>[...(p.background?[p.background]:[]),...p.placements].flatMap(l=>l.overlays)).flatMap(o=>[o,...textPieces(o).map(p=>({...o,...Object.fromEntries(Object.entries(p.style).filter(([,v])=>v!==undefined))}))]).map(o=>typeof document!=="undefined"?document.fonts?.load(overlayFont(o,16),o.text||"ÅÄÖ abc"):undefined);
   if(typeof document!=="undefined")await Promise.all(fontLoads);check(signal);
   const imageCache=new Map<string,{name:string;width:number;height:number;mime:string}>();
   async function imageAsset(url:string) {
@@ -117,7 +118,20 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
         // Text rotates in physical page coordinates, matching pageTypography's un-stretched text.
         const matrix=`${num(c)} ${num(s)} ${num(-s)} ${num(c)} ${num(pos.x+cx-c*cx+s*cy)} ${num(pos.y+cy-s*cx-c*cy)}`;
         const justification=o.textAlign==="left"?"LeftAlign":o.textAlign==="right"?"RightAlign":"CenterAlign";
-        const paragraphs=o.text.replace(/\r\n?/g,"\n").split("\n").map(line=>`<ParagraphStyleRange AppliedParagraphStyle="ParagraphStyle/ComicBook" Justification="${justification}" Hyphenation="false" SpaceBefore="0" SpaceAfter="0"><CharacterStyleRange AppliedCharacterStyle="CharacterStyle/$ID/[No character style]" PointSize="${num(size)}" FontStyle="${xml(font.style)}" FillColor="${color(o.sfxTextColor??"#171411")}"${o.type==="sfx"?` StrokeColor="${color("#fffdf7")}" StrokeWeight="${num(3*scale)}"`:""}><Properties><AppliedFont type="string">${xml(font.family)}</AppliedFont><Leading type="unit">${num(size*1.15)}</Leading></Properties><Content>${xml(line)}</Content><Br/></CharacterStyleRange></ParagraphStyleRange>`).join("");
+        const plainParagraphs=o.text.replace(/\r\n?/g,"\n").split("\n").map(line=>`<ParagraphStyleRange AppliedParagraphStyle="ParagraphStyle/ComicBook" Justification="${justification}" Hyphenation="false" SpaceBefore="0" SpaceAfter="0"><CharacterStyleRange AppliedCharacterStyle="CharacterStyle/$ID/[No character style]" PointSize="${num(size)}" FontStyle="${xml(font.style)}" FillColor="${color(o.sfxTextColor??"#171411")}"${o.type==="sfx"?` StrokeColor="${color("#fffdf7")}" StrokeWeight="${num(3*scale)}"`:""}><Properties><AppliedFont type="string">${xml(font.family)}</AppliedFont><Leading type="unit">${num(size*1.15)}</Leading></Properties><Content>${xml(line)}</Content><Br/></CharacterStyleRange></ParagraphStyleRange>`).join("");
+        let textOffset=0;
+        const richParagraphs=o.textStyles?.length?o.text.split("\n").map(line=>{
+          const parts=textPieces(o,textOffset,textOffset+line.length);textOffset+=line.length+1;
+          if(!parts.length)parts.push({text:"",style:{},start:0,end:0});
+          const content=parts.map((piece,i)=>{
+            const styled={...o,...Object.fromEntries(Object.entries(piece.style).filter(([,v])=>v!==undefined))},partFont=idmlFont(styled);
+            fonts.set(`${partFont.family}/${partFont.style}`,partFont);
+            const partSize=(styled.fontSize??(o.type==="sfx"?28:8))*scale/(pageDimensions(sourceFormat).widthMm*72/25.4/700);
+            return `<CharacterStyleRange AppliedCharacterStyle="CharacterStyle/$ID/[No character style]" PointSize="${num(partSize)}" FontStyle="${xml(partFont.style)}" FillColor="${color(o.sfxTextColor??"#171411")}"${o.type==="sfx"?` StrokeColor="${color("#fffdf7")}" StrokeWeight="${num(3*scale)}"`:""}><Properties><AppliedFont type="string">${xml(partFont.family)}</AppliedFont><Leading type="unit">${num(partSize*1.15)}</Leading></Properties><Content>${xml(piece.text.replace(/\r/g,""))}</Content>${i===parts.length-1?"<Br/>":""}</CharacterStyleRange>`;
+          }).join("");
+          return `<ParagraphStyleRange AppliedParagraphStyle="ParagraphStyle/ComicBook" Justification="${justification}" Hyphenation="false" SpaceBefore="0" SpaceAfter="0">${content}</ParagraphStyleRange>`;
+        }).join(""):undefined;
+        const paragraphs=richParagraphs??plainParagraphs;
         add(storyPath,part("Story",`<Story Self="${story}"><StoryPreference StoryOrientation="Horizontal" StoryDirection="LeftToRightDirection"/>${paragraphs}</Story>`));stories.push(storyPath);
         items.push(`<TextFrame Self="${id()}" Name="${xml(`Text ${o.id}`)}" ParentStory="${story}" PreviousTextFrame="n" NextTextFrame="n" ContentType="TextType" ItemLayer="${background?"cbBackground":"cbText"}" ItemTransform="${matrix}" FillColor="Swatch/None" StrokeColor="Swatch/None" AppliedObjectStyle="ObjectStyle/$ID/[None]"><Properties>${idmlPathGeometry([rectanglePath(0,0,tw,th)])}</Properties><TextFramePreference TextColumnCount="1" VerticalJustification="CenterAlign" FirstBaselineOffset="AscentOffset"><Properties><InsetSpacing type="list"><ListItem type="unit">0</ListItem><ListItem type="unit">${num(padding)}</ListItem><ListItem type="unit">0</ListItem><ListItem type="unit">${num(padding)}</ListItem></InsetSpacing></Properties></TextFramePreference></TextFrame>`);
       }

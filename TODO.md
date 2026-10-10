@@ -18,7 +18,7 @@ Uppdaterad 2026-10-09. IDML-export (beta), sidmarginaler och mellanrum mellan bi
 ## Nästa funktioner
 
 - [x] Länka prat- och tankebubblor med förbindelser; separata redigerbara textområden och svansar, justerbar förbindelsebredd, gemensam kontur utan invändiga ramlinjer samt export inklusive IDML.
-- [ ] Blandad typografi inom en textruta: markera text och ändra typsnitt, storlek och vikt/stil för just markeringen. Radbrytning ska ta hänsyn till varje textdel. Bevara vanliga textlager och stöd export inklusive IDML:s teckenformat.
+- [x] Blandad typografi inom en textruta: markera text och ändra typsnitt, storlek och vikt för just markeringen. Radbrytning och radhöjd följer textdelarna. Direktredigering, återställning, lokal lagring, backup och export inklusive IDML:s teckenformat.
 - [ ] Kontroller före export: text som inte får plats, saknade bilder och låg effektiv bildresolution.
 
 ## Senare
