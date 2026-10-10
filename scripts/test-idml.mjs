@@ -64,13 +64,19 @@ try {
   // A tiny source image exercises packaging, deduplication, offsets and 72 dpi bounds.
   const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=';
   globalThis.Image=class {naturalWidth=1;naturalHeight=1;async decode(){}};
-  const image={id:'image',dataUrl:png,zoom:1.4,offsetX:22,offsetY:-10,positionMode:'frame',fit:'cover'};
+  const image={id:'image',dataUrl:png,rotation:30,zoom:1.4,offsetX:22,offsetY:-10,positionMode:'frame',fit:'cover'};
   const pictured={...project,pages:[{...project.pages[1],placements:[{...layer,image},{...layer,id:'repeat',x:2,image}]}]};
   const pictureResult=await exportAlbum(pictured,options,()=>{}),pictureOuter=archive(new Uint8Array(await pictureResult.blob.arrayBuffer()));
   assert.equal([...pictureOuter.keys()].filter(p=>p.startsWith('Links/')).length,1);
   const pictureInner=archive(pictureOuter.get('Test -album-.idml'));
   const pictureSpread=parse([...pictureInner].find(([p])=>p.startsWith('Spreads/'))[1]);
   assert.equal(pictureSpread.querySelectorAll('Image').length,2);
+  for(const element of pictureSpread.querySelectorAll('Image')) {
+    const [a,b,c,d,e,f]=element.getAttribute('ItemTransform').split(' ').map(Number);
+    assert.ok(Math.abs(Math.atan2(b,a)*180/Math.PI-30)<1e-5);
+    assert.ok(Math.abs(Math.atan2(-c,d)*180/Math.PI-30)<1e-5);
+    assert.ok([a,b,c,d,e,f].every(Number.isFinite));
+  }
   for(const link of pictureSpread.querySelectorAll('Link'))assert.ok(pictureOuter.has(link.getAttribute('LinkResourceURI').replace('file:','')));
   console.log('PASS: IDML XML, part references, unique IDs, layers, page ordering, editable Unicode text, curved paths, opacity, image packaging/deduplication, cancellation and immutable project.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

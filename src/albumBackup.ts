@@ -58,6 +58,7 @@ function image(value: unknown) {
   if (value.positionMode !== undefined && value.positionMode !== "frame") throw new Error("invalid-backup");
   string(value.name);
   string(value.dataUrl);
+  if (value.rotation !== undefined) number(value.rotation);
 }
 export function parseAlbumBackup(input: unknown): ComicProject {
   record(input);

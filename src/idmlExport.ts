@@ -5,7 +5,7 @@ import { albumPageFormat, layerRect, pageGridMetrics, pageAspect, pageDimensions
 import { panelOutline } from "./panelGeometry";
 import { panelShapePoints } from "./panelShape";
 import { panelBorderStyle } from "./panelBorder";
-import { imagePlacement } from "./imageView";
+import { imagePlacement, imageAffineTransform } from "./imageView";
 import { imageArchive, imageDensity } from "./exportFiles";
 import { bodyPath, speechPath, shoutPath } from "./SvgOverlay";
 import { thoughtCloudGeometry, thoughtTrailGeometry } from "./thoughtBubble";
@@ -87,8 +87,8 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
       const clip=background?rectanglePath(x,y,lw,lh):polygonPath(panelShapePoints(layer).map(p=>({x:x+p.x/4*lw,y:y+p.y/4*lh})));
       let imageXml="";
       if(layer.image) {
-        const asset=await imageAsset(layer.image.dataUrl),placed=imagePlacement(layer.image,lw,lh,asset.width,asset.height),pos=map({x:x+placed.x,y:y+placed.y});
-        imageXml=`<Image Self="${id()}" ItemTransform="${num(placed.width*scale/asset.width)} 0 0 ${num(placed.height*scale/asset.height)} ${pair(pos)}" ActualPpi="72 72" Space="$ID/#Links_RGB" ImageTypeName="$ID/${asset.mime==="image/jpeg"?"JPEG":"PNG"}" AppliedObjectStyle="ObjectStyle/$ID/[None]"><Properties><Profile type="string">$ID/None</Profile><GraphicBounds Left="0" Top="0" Right="${asset.width}" Bottom="${asset.height}"/></Properties><Link Self="${id()}" LinkResourceURI="file:${asset.name}" LinkResourceFormat="$ID/${asset.mime==="image/jpeg"?"JPEG":"PNG"}" StoredState="Normal" LinkResourceModified="false" LinkObjectModified="false" ShowInUI="true" CanEmbed="true" CanUnembed="true" CanPackage="true" ImportPolicy="NoAutoImport" ExportPolicy="NoAutoExport"/></Image>`;
+        const asset=await imageAsset(layer.image.dataUrl),placed=imagePlacement(layer.image,lw,lh,asset.width,asset.height),matrix=imageAffineTransform(layer.image,placed,asset.width,asset.height),pos=map({x:x+matrix.e,y:y+matrix.f});
+        imageXml=`<Image Self="${id()}" ItemTransform="${num(matrix.a*scale)} ${num(matrix.b*scale)} ${num(matrix.c*scale)} ${num(matrix.d*scale)} ${pair(pos)}" ActualPpi="72 72" Space="$ID/#Links_RGB" ImageTypeName="$ID/${asset.mime==="image/jpeg"?"JPEG":"PNG"}" AppliedObjectStyle="ObjectStyle/$ID/[None]"><Properties><Profile type="string">$ID/None</Profile><GraphicBounds Left="0" Top="0" Right="${asset.width}" Bottom="${asset.height}"/></Properties><Link Self="${id()}" LinkResourceURI="file:${asset.name}" LinkResourceFormat="$ID/${asset.mime==="image/jpeg"?"JPEG":"PNG"}" StoredState="Normal" LinkResourceModified="false" LinkObjectModified="false" ShowInUI="true" CanEmbed="true" CanUnembed="true" CanPackage="true" ImportPolicy="NoAutoImport" ExportPolicy="NoAutoExport"/></Image>`;
       }
       items.push(shape(transformPaths([clip],map),background?"cbBackground":"cbImages",`Image frame ${layer.id}`,"#fffdf7","none",0,"",imageXml));
       if(!background) {

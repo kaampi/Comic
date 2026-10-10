@@ -166,7 +166,7 @@ try {
   const previousImage=globalThis.Image;
   globalThis.Image=class{async decode(){this.naturalWidth=200;this.naturalHeight=100;}};
   try {
-    const exportImage={...moving,name:'position.png',dataUrl:'data:image/png;base64,eA=='};
+    const exportImage={...moving,rotation:30,name:'position.png',dataUrl:'data:image/png;base64,eA=='};
     const positionedPage={...page,placements:[{...layer,image:exportImage}]};
     const svg=await pageSvg(project,positionedPage,'',1);
     const imageTag=svg.match(/<image [^>]+/)[0];
@@ -175,6 +175,17 @@ try {
     const x=Number(imageTag.match(/ x="([^"]+)"/)[1]),y=Number(imageTag.match(/ y="([^"]+)"/)[1]);
     assert.ok(Math.abs(x-(layerBox.x+3+expected.x))<1e-9);
     assert.ok(Math.abs(y-(layerBox.y+3+expected.y))<1e-9);
+    const rotation=imageTag.match(/transform="rotate\(([^)]+)\)"/)[1].split(' ').map(Number);
+    assert.equal(rotation[0],30);
+    assert.ok(Math.abs(rotation[1]-(x+expected.width/2))<1e-9);
+    assert.ok(Math.abs(rotation[2]-(y+expected.height/2))<1e-9);
+    const matrix=view.imageAffineTransform(exportImage,expected,200,100);
+    const centre={x:matrix.a*100+matrix.c*50+matrix.e,y:matrix.b*100+matrix.d*50+matrix.f};
+    assert.ok(Math.abs(centre.x-(expected.x+expected.width/2))<1e-9);
+    assert.ok(Math.abs(centre.y-(expected.y+expected.height/2))<1e-9);
+    assert.equal(view.normalizedImageRotation(181),-179);
+    assert.equal(view.normalizedImageRotation(-181),179);
+    console.log('PASS: rotated SVG keeps the same image centre and clipping; affine IDML coordinates agree.');
   }finally{if(previousImage===undefined)delete globalThis.Image;else globalThis.Image=previousImage;}
   console.log('PASS: direct image panning on both axes at every zoom/fit, legacy crop preservation and matching CSS/export placement.');
   const geometry=await import(pathToFileURL(path.join(dir,'panelGeometry.mjs')));
@@ -241,3 +252,4 @@ try {
   console.log('SVG artwork, local text, stroke scaling and export cancellation passed.');
   console.log('Export formats, legacy geometry, pixel sizes, PDF cross references, ZIP CRC and JPEG density passed.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}
+
