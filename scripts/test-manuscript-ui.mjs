@@ -845,7 +845,7 @@ try {
     "left",
   );
   await user.click(
-    document.querySelector(".panel-editor-modal header button.primary-button"),
+    document.querySelector(".panel-editor-add-actions button.primary-button"),
   );
   const createdText = saved().pages[0].placements[0].overlays.at(-1);
   assert.deepEqual(saved().pages[0].placements[0].overlays[0], oldOverlay);
@@ -1098,7 +1098,7 @@ try {
   assert.ok(document.querySelector(".page-background-layer img"));
   await user.click(screen.getByRole("button",{name:"Redigera bakgrund och text",exact:true}));
   const directEditor=document.querySelector(".panel-editor-modal");
-  await user.click(within(directEditor.querySelector("header")).getByRole("button",{name:"Lägg till textruta",exact:true}));
+  await user.click(within(directEditor.querySelector(".panel-editor-add-actions")).getByRole("button",{name:"Lägg till textruta",exact:true}));
   const directBackgroundOverlays=structuredClone(saved().pages[0].background.overlays);
   await user.click(within(directEditor.querySelector("header")).getByRole("button",{name:"Stäng",exact:true}));
   await user.upload(screen.getByLabelText("Byt bakgrundsbild",{exact:true,selector:"input"}),new window.File(["replacement background"],"replacement.png",{type:"image/png"}));
@@ -1127,21 +1127,22 @@ try {
   await user.click(screen.getByRole("button",{name:"Redigera bakgrund och text",exact:true}));
   let backgroundEditor = document.querySelector(".panel-editor-modal");
   assert.ok(backgroundEditor.textContent.includes("Bakgrund"));
+  await user.click(within(backgroundEditor.querySelector('.panel-image-controls')).getByRole('button',{name:'Ta bort bild',exact:true}));
   const backgroundUpload = backgroundEditor.querySelector('input[type="file"]');
   assert.ok(backgroundUpload);
   await user.upload(backgroundUpload,new window.File(["synthetic image"],"background.png",{type:"image/png"}));
   await screen.findByRole("button",{name:"Lägg till SFX",exact:true});
   await new Promise(resolve=>setTimeout(resolve,20));
   assert.equal(saved().pages[0].background.image.name,"background.png");
-  await user.selectOptions(within(backgroundEditor).getByLabelText("Passning"),"contain");
+  assert.equal(within(backgroundEditor).queryByLabelText("Passning"),null);
   fireEvent.change(within(backgroundEditor).getByLabelText(/^Zoom/),{target:{value:"150"}});
-  fireEvent.change(within(backgroundEditor).getByLabelText("X-position"),{target:{value:"25"}});
-  fireEvent.change(within(backgroundEditor).getByLabelText("Y-position"),{target:{value:"-10"}});
-  assert.equal(saved().pages[0].background.image.fit,"contain");
+  fireEvent.change(within(backgroundEditor).getByLabelText("X-position (%)"),{target:{value:"25"}});
+  fireEvent.change(within(backgroundEditor).getByLabelText("Y-position (%)"),{target:{value:"-10"}});
+  assert.equal(saved().pages[0].background.image.fit,"cover");
   assert.equal(saved().pages[0].background.image.zoom,1.5);
   assert.equal(saved().pages[0].background.image.offsetX,25);
   assert.equal(saved().pages[0].background.image.offsetY,-10);
-  await user.click(within(backgroundEditor.querySelector("header")).getByRole("button",{name:"Lägg till textruta",exact:true}));
+  await user.click(within(backgroundEditor.querySelector(".panel-editor-add-actions")).getByRole("button",{name:"Lägg till textruta",exact:true}));
   const backgroundText = backgroundEditor.querySelector("textarea");
   fireEvent.change(backgroundText,{target:{value:"Text direkt på sidan\nAndra raden"}});
   assert.equal(saved().pages[0].background.overlays.at(-1).text,"Text direkt på sidan\nAndra raden");
@@ -1171,7 +1172,7 @@ try {
   const shapeInitialEditor=document.querySelector('.panel-editor-modal');
   await user.upload(shapeInitialEditor.querySelector('input[type="file"]'),new window.File(['initial shape image'],'shape-initial.png',{type:'image/png'}));
   await waitFor(()=>assert.equal(saved().pages[0].placements[0].image.name,'shape-initial.png'));
-  await user.click(within(shapeInitialEditor.querySelector('header')).getByRole('button',{name:'Lägg till textruta',exact:true}));
+  await user.click(within(shapeInitialEditor.querySelector('.panel-editor-add-actions')).getByRole('button',{name:'Lägg till textruta',exact:true}));
   await user.click(within(shapeInitialEditor.querySelector('header')).getByRole('button',{name:'Stäng',exact:true}));
   const shapeFrameBefore=structuredClone(saved().pages[0].placements[0]);
   let shapeFrame=document.querySelector('.drawn-panel');
@@ -1300,7 +1301,7 @@ try {
   fireEvent.pointerMove(window,{clientX:140,clientY:100});
   fireEvent.pointerCancel(window);
   assert.equal(saved().pages[0].placements[0].image.offsetY,20);
-  fireEvent.change(within(shapedEditor).getByLabelText('Y-position'),{target:{value:'-15'}});
+  fireEvent.change(within(shapedEditor).getByLabelText('Y-position (%)'),{target:{value:'-15'}});
   assert.equal(panImage.style.left,'-160px');
   assert.equal(panImage.style.top,'-130px');
   assert.deepEqual(saved().pages[0].placements[0].shapePoints,frameBeforePan.shapePoints);
@@ -1333,12 +1334,33 @@ try {
   assert.equal(saved().pages[0].placements[0].image.zoom,2,'zoom requires active image editing');
   fireEvent.wheel(panLayer,{deltaY:100,altKey:true,cancelable:true});
   assert.equal(saved().pages[0].placements[0].image.rotation,30,'rotation requires active image editing');
+  await user.click(within(shapedEditor).getByRole('button',{name:'Redigera bild',exact:true}));
   await user.click(within(shapedEditor).getByRole('button',{name:'Återställ bild',exact:true}));
   assert.equal(saved().pages[0].placements[0].image.rotation,0);
   assert.equal(saved().pages[0].placements[0].image.zoom,1);
   const beforeShapeImage=structuredClone(saved().pages[0].placements[0]);
+  assert.equal(shapedEditor.querySelector('.panel-editor-stage > svg').style.display,'none','image mode hides text without removing its data');
+  fireEvent.change(within(shapedEditor).getByLabelText(/^Zoom/),{target:{value:'50'}});
+  assert.equal(saved().pages[0].placements[0].image.zoom,.5,'numeric zoom can leave space around the image');
+  fireEvent.wheel(panLayer,{deltaY:100,ctrlKey:true,cancelable:true});
+  assert.equal(saved().pages[0].placements[0].image.zoom,.4,'wheel zoom uses the same range');
+  fireEvent.keyDown(window,{key:'Escape'});
+  assert.ok(document.querySelector('.panel-editor-modal'),'Escape leaves image mode without closing the editor');
+  assert.equal(shapedEditor.querySelector('.panel-editor-stage > svg').style.display,'');
+  const imageControls=shapedEditor.querySelector('.panel-image-controls');
+  assert.equal(imageControls.querySelectorAll('button').length,2,'two primary image actions outside edit mode');
+  assert.equal(shapedEditor.querySelector('.panel-editor-tools .panel-image-controls'),null,'image controls sit below the artwork');
+  assert.equal(shapedEditor.querySelector('.panel-editor-tools .panel-source-picker'),null,'the text sidebar contains no image source controls');
+  assert.equal(shapedEditor.querySelectorAll('.selected-panel-tool fieldset').length,3,'text, appearance and tail are grouped');
+  await user.click(within(imageControls).getByRole('button',{name:'Ta bort bild',exact:true}));
+  assert.equal(saved().pages[0].placements[0].image,undefined);
+  assert.deepEqual(saved().pages[0].placements[0].overlays,beforeShapeImage.overlays,'removing the image preserves bubbles');
+  assert.deepEqual(saved().pages[0].placements[0].shapePoints,beforeShapeImage.shapePoints,'removing the image preserves the frame');
+  assert.ok(shapedEditor.querySelector('.panel-editor-dropzone'),'empty frame offers image upload');
   await user.upload(shapedEditor.querySelector('input[type="file"]'),new window.File(['image'],'shaped.png',{type:'image/png'}));
   await waitFor(()=>assert.equal(saved().pages[0].placements[0].image.name,'shaped.png'));
+  assert.equal(saved().pages[0].placements[0].image.fit,'cover','replacement starts filling the panel');
+  assert.equal(saved().pages[0].placements[0].image.zoom,1);
   assert.deepEqual(saved().pages[0].placements[0].shapePoints,beforeShapeImage.shapePoints);
   assert.deepEqual(saved().pages[0].placements[0].overlays,beforeShapeImage.overlays);
   await user.click(within(shapedEditor.querySelector('header')).getByRole('button',{name:'Stäng',exact:true}));
@@ -1569,5 +1591,6 @@ try {
   dom.window.close();
   rmSync(compiledRoot, { recursive: true, force: true });
 }
+
 
 

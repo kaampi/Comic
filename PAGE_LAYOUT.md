@@ -54,7 +54,9 @@ Texten är fortsatt redigerbar och kan döljas med **Visa text** utan att radera
 
 I **Sidor → Sidans bakgrund** kan du ge sidan en bild som fyller hela ytan, under de vanliga bildrutorna. **Välj från bildbiblioteket** markerar bakgrunden som mål; välj sedan ett oplacerat innehåll i biblioteket. Bild, dialog och berättartext följer med som en redigerbar kopia, precis som för vanliga rutor. Biblioteket räknar också innehåll i bakgrunden som placerat.
 
-**Redigera bakgrund och text** öppnar bildredigeraren. Använd **Ladda upp bild…** eller **Byt bild…**, justera beskärning, zoom och position och lägg till pratbubblor, tankebubblor, berättartext eller SFX direkt på sidan. Bakgrunden är ett eget lager och tar ingen plats i rutnätet. Du kan ha bara bakgrunden eller valfritt antal vanliga bildrutor ovanpå.
+**Redigera bakgrund och text** öppnar bildredigeraren. Nya bilder fyller ramen. Under bilden finns **Redigera bild** och **Ta bort bild**, följt av numeriska värden för X/Y-position, zoom och rotation. I bildläget döljs textlagren tillfälligt: dra för att flytta, Ctrl/Command + scroll för zoom och Alt + scroll för rotation. **Klar med bild** eller Escape avslutar bildläget; **Återställ bild** återgår till centrerad bild som fyller ramen utan rotation. Byt bild genom att ta bort den och ladda upp en ny i den tomma bildytan; textlagren bevaras.
+
+Högerpanelen rullar separat och innehåller en lista över textlagren samt deras inställningar, grupperade i **Text och typografi**, **Utseende** och **Svans**. Textinmatningen har en egen läsbar storlek oberoende av textens punktstorlek på sidan. Panelkälla och storyboardkoppling finns i en utfällbar sektion under bildkontrollerna. Bakgrunden är ett eget lager och tar ingen plats i rutnätet. Du kan ha bara bakgrunden eller valfritt antal vanliga bildrutor ovanpå.
 
 **Ta bort bakgrund** kräver bekräftelse och tar bort bakgrundslagret med dess textlager. Bildrutorna ovanpå och originalinnehållet i rutbiblioteket finns kvar. Bakgrund, beskärning och textlager sparas med albumet och ingår i backup och återställning.
 
@@ -77,4 +79,5 @@ Två polygonrutor kan dela samma celler i sidans rutnät. Placering, storleksän
 För exemplet med ruta 5 till vänster om en sned ruta 1: markera ruta 5, välj **Grannruta → Ruta 1**, **Placera på sidan → Till vänster** och en marginal, exempelvis **2 mm**. Klicka **Passa kanten**. Ruta 5 utökas i bredd och får en högerkant parallell med ruta 1:s vänsterkant. Marginalen mäts vinkelrätt mellan de synliga ramarna. Motsvarande passning finns åt höger, ovanför och under.
 
 Passningen ändrar endast den valda rutans utbredning och polygon. Grannrutan, rutans bild, textlager och läsordning behålls. Formen sparas med albumet, backupen och exporten. Passa kanten igen efter ändringar av grannrutan. Om formen inte ryms eller träffar en tredje ruta visas ett meddelande och ingen ändring görs.
+
 
