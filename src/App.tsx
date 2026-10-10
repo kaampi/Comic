@@ -1,3 +1,4 @@
+import { InlineOverlayEditor } from "./InlineOverlayEditor";
 import { PanelImageControls } from "./PanelImageControls";
 import { AboutDialog, aboutLabel } from "./AboutDialog";
 import { PanelBorderControls } from "./PanelBorderControls";
@@ -109,6 +110,8 @@ export function App() {
   const [panelEditor, setPanelEditor] = useState<{pageId:string;placementId:string}|null>(null);
   const [imageEditPlacementId, setImageEditPlacementId] = useState<string | null>(null);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
+  const [inlineTextEdit, setInlineTextEdit] = useState<{pageId:string;placementId:string;overlayId:string;initialText:string}|null>(null);
+  useEffect(()=>setInlineTextEdit(null),[panelEditor,imageEditPlacementId,activeProjectId]);
   const [inspectSourcePanelId, setInspectSourcePanelId] = useState<string | null>(null);
   const [appPageGrid, setAppPageGrid] = useState(readPageGridDefaults);
   const [storyBookImport, setStoryBookImport] = useState<StoryBookImport | null>(null);
@@ -134,10 +137,10 @@ export function App() {
   }, [contextPlacement]);
   useEffect(() => {
     if (!panelEditor) return;
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape" && !imagePanCleanup.current && !inspectSourcePanelId) { if(imageEditPlacementId) { setImageEditPlacementId(null); } else { setPanelEditor(null); } } };
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape" && !event.defaultPrevented && !imagePanCleanup.current && !inspectSourcePanelId) { if(inlineTextEdit) { event.preventDefault(); updateOverlay(inlineTextEdit.pageId,inlineTextEdit.placementId,inlineTextEdit.overlayId,{text:inlineTextEdit.initialText}); setInlineTextEdit(null); return; } if(imageEditPlacementId) { setImageEditPlacementId(null); } else { setPanelEditor(null); } } };
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
-  }, [panelEditor, imageEditPlacementId, inspectSourcePanelId]);
+  }, [panelEditor, imageEditPlacementId, inspectSourcePanelId, inlineTextEdit]);
 
   useEffect(() => () => { imagePanCleanup.current?.(); }, [panelEditor, imageEditPlacementId]);
 
@@ -818,14 +821,14 @@ export function App() {
 <span>{tr("uploadImage")}</span>
 <small>{tr("dropImageHint")}</small>
 </label>}<svg aria-hidden={imageEditPlacementId===pl.id} style={{display:imageEditPlacementId===pl.id?"none":undefined,clipPath:pl.id!==pg.background?.id&&shapedPanel(pl)?shapeClipPath(pl):undefined}} viewBox="0 0 100 100" preserveAspectRatio="none">{(pl.overlays??[]).map((item)=>{const selected=item.id===selectedOverlayId;return <g key={item.id} className={selected?"editable-overlay is-selected":"editable-overlay"}>
-<g className="overlay-drag-surface" onPointerDown={(e)=>{setSelectedOverlayId(item.id);beginOverlayDrag(e,pg.id,pl.id,item,"move");}}>
-<SvgOverlay overlay={item} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)}/>
-</g>{selected?<>
+<g className="overlay-drag-surface" onDoubleClick={e=>{e.preventDefault();e.stopPropagation();if(imageEditPlacementId===pl.id||item.type==="sfx"&&item.sfxTextHidden)return;setSelectedOverlayId(item.id);setInlineTextEdit({pageId:pg.id,placementId:pl.id,overlayId:item.id,initialText:item.text});}} onPointerDown={(e)=>{setSelectedOverlayId(item.id);beginOverlayDrag(e,pg.id,pl.id,item,"move");}}><title>{tr("editBubbleHint")}</title>
+<SvgOverlay overlay={item} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} hideText={inlineTextEdit?.overlayId===item.id}/>
+</g>{selected&&inlineTextEdit?.overlayId!==item.id?<>
 <rect className="overlay-selection-frame" x={item.x} y={item.y} width={item.width} height={item.height} rx="1"/>
 <rect className="overlay-resize-grip" x={item.x+item.width-1.5} y={item.y+item.height-1.5} width="3" height="3" rx=".5" onPointerDown={(e)=>beginOverlayDrag(e,pg.id,pl.id,item,"resize")}/>{(item.type==="thought"||item.type==="speech"&&item.tailEnabled!==false&&item.tailX!==undefined&&item.tailY!==undefined)?<>
 <circle className="overlay-tail-start-grip" aria-label={locale==="sv"?"Svansens start":"Tail start"} cx={bubbleTailStart(item).x} cy={bubbleTailStart(item).y} r="1.6" fill="#fffdf7" stroke="#b06f52" strokeWidth="0.5" style={{cursor:"grab",pointerEvents:"all"}} onPointerDown={e=>beginOverlayDrag(e,pg.id,pl.id,item,"tail-start")}/>
 <circle className="overlay-tail-grip" cx={item.type==="thought"?thoughtTailEndpoint(item).x:item.tailX} cy={item.type==="thought"?thoughtTailEndpoint(item).y:item.tailY} r="1.6" onPointerDown={(e)=>beginOverlayDrag(e,pg.id,pl.id,item,"tail")}/>
-</>:null}</>:null}</g>})}</svg>{pl.id!==pg.background?.id?<PanelFrameOutline project={activeProject} page={pg} layer={pl}/>:null}</div>
+</>:null}</>:null}</g>})}{inlineTextEdit&&inlineTextEdit.pageId===pg.id&&inlineTextEdit.placementId===pl.id&&o?.id===inlineTextEdit.overlayId&&imageEditPlacementId!==pl.id?<InlineOverlayEditor overlay={o} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} label={tr("inlineBubbleText")} onChange={text=>updateOverlay(pg.id,pl.id,o.id,{text})} onFinish={()=>setInlineTextEdit(null)} onCancel={()=>{updateOverlay(pg.id,pl.id,o.id,{text:inlineTextEdit.initialText});setInlineTextEdit(null);}}/>:null}</svg>{pl.id!==pg.background?.id?<PanelFrameOutline project={activeProject} page={pg} layer={pl}/>:null}</div>
 </div>{pl.image?<PanelImageControls image={pl.image} locale={locale} editing={imageEditPlacementId===pl.id} onToggle={()=>{imagePanCleanup.current?.();setImageEditPlacementId(imageEditPlacementId===pl.id?null:pl.id);}} onRemove={()=>removePlacementImage(pg.id,pl.id)} onChange={patch=>updatePlacementImageView(pg.id,pl.id,patch)} onReset={()=>resetPlacementImageView(pg.id,pl.id)}/>:null}<details className="panel-editor-source">
 <summary>{tr("panelSource")}</summary>
 <section className="panel-source-picker">

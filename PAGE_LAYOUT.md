@@ -58,6 +58,8 @@ I **Sidor → Sidans bakgrund** kan du ge sidan en bild som fyller hela ytan, un
 
 Högerpanelen rullar separat och innehåller en lista över textlagren samt deras inställningar, grupperade i **Text och typografi**, **Utseende** och **Svans**. Textinmatningen har en egen läsbar storlek oberoende av textens punktstorlek på sidan. Panelkälla och storyboardkoppling finns i en utfällbar sektion under bildkontrollerna. Bakgrunden är ett eget lager och tar ingen plats i rutnätet. Du kan ha bara bakgrunden eller valfritt antal vanliga bildrutor ovanpå.
 
+Dubbelklicka i en bubbla för att skriva direkt på bilden med bubblans typsnitt, storlek, justering och rotation. Ett vanligt klick markerar fortfarande bubblan och drag flyttar den. Enter ger radbrytning; klick utanför textredigeringen avslutar och behåller ändringen. Escape återställer texten från innan dubbelklicket. Högerpanelens textfält hålls synkroniserat. Direktredigering fungerar även för berättartext, synlig SFX-text och text på sidbakgrunden; i bildläget är den avstängd.
+
 **Ta bort bakgrund** kräver bekräftelse och tar bort bakgrundslagret med dess textlager. Bildrutorna ovanpå och originalinnehållet i rutbiblioteket finns kvar. Bakgrund, beskärning och textlager sparas med albumet och ingår i backup och återställning.
 
 ## Sidinställningar och sidnavigering
