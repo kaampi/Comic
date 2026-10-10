@@ -4,6 +4,8 @@ import { pageLayerTextMetrics } from "./pageTypography";
 import { overlayFont } from "./overlayTypography";
 import { panelShapePoints, shapedPanel } from "./panelShape";
 import { renderToStaticMarkup } from "react-dom/server";
+import { ConnectedBubbles } from "./ConnectedBubbles";
+import { bubbleGroups } from "./bubbleConnections";
 import { SvgOverlay } from "./SvgOverlay";
 import type { ComicProject, PageLayer } from "./project";
 import { albumPageFormat, layerRect, pageAspect, pageDimensions, rasterDimensions, PAGE_RENDER_WIDTH, PANEL_BORDER, type PageFormat } from "./pageFormat";
@@ -61,7 +63,7 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
       const image=await loadImage(url),placed=imagePlacement(layer.image,w,h,image.naturalWidth,image.naturalHeight);
       body.push(`<image href="${xml(url)}" x="${x+placed.x}" y="${y+placed.y}" width="${placed.width}" height="${placed.height}" preserveAspectRatio="none"${layer.image.rotation ? ` transform="rotate(${layer.image.rotation} ${x+placed.x+placed.width/2} ${y+placed.y+placed.height/2})"` : ""}/>`);
     }
-    let overlays=renderToStaticMarkup(<svg x={x} y={y} width={w} height={h} viewBox="0 0 100 100" preserveAspectRatio="none">{(layer.overlays??[]).map(o=><SvgOverlay key={o.id} overlay={o} textMetrics={pageLayerTextMetrics(project,page,layer)}/>)}</svg>);
+    let overlays=renderToStaticMarkup(<svg x={x} y={y} width={w} height={h} viewBox="0 0 100 100" preserveAspectRatio="none"><ConnectedBubbles overlays={layer.overlays??[]} textMetrics={pageLayerTextMetrics(project,page,layer)}/> {(layer.overlays??[]).map(o=><SvgOverlay key={o.id} overlay={o} textMetrics={pageLayerTextMetrics(project,page,layer)} hideShape={bubbleGroups(layer.overlays??[]).some(g=>g.some(b=>b.id===o.id))}/>)}</svg>);
     // Non-scaling strokes stay proportional to the canonical 700px page at every DPI.
     overlays=overlays.replace(/<[^>]+vector-effect="non-scaling-stroke"[^>]*>/g,tag=>tag.replace(/stroke-width="([^"]+)"/,(_,v)=>`stroke-width="${Number(v)*outputScale}"`));
     body.push(overlays,"</g>");
@@ -103,4 +105,5 @@ export async function exportAlbum(project:ComicProject,options:ExportOptions,onP
   if(options.format==="pdf") { const d=pageDimensions(options.pageFormat);return {blob:rasterPdf(images,d.widthMm,d.heightMm),name:`${base}.pdf`}; }
   return files.length===1?{blob:new Blob([files[0].bytes as BlobPart],{type:options.format==="png"?"image/png":"image/jpeg"}),name:files[0].name}:{blob:imageArchive(files),name:`${base}-${ext}.zip`};
 }
+
 

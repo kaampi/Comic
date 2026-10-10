@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
 try {
-  for(const name of ['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+  for(const name of ['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
     const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
     fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
@@ -39,6 +39,34 @@ try {
   assert.match(markup,/<svg[^>]+width="2100"/);assert.match(markup,/stroke-width="6"[^>]*vector-effect="non-scaling-stroke"/);
   assert.match(markup,/ÅÄÖ/);assert.match(markup,/Second line/);assert.match(markup,/clip-path/);
   assert.ok(!markup.includes('readingOrder')&&!markup.includes('panel-corner-handle')&&!markup.includes('grid-cell'));
+  const {linkBubbles,unlinkBubble,bubbleGroups,connectedBubbleGeometry}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
+  const a={...layer.overlays[0],id:'a',text:'First',x:10,y:10,width:30,height:20,tailEnabled:false,rotation:0};
+  const b={...a,id:'b',text:'Second',x:60,y:10};
+  const original=[a,b],linked=linkBubbles(original,'a','b');
+  assert.equal(original[0].bubbleLinks,undefined,'linking does not mutate source');
+  assert.deepEqual(linked[0].bubbleLinks,[{targetId:'b',width:20}]);
+  assert.equal(linkBubbles(linked,'b','a'),linked,'duplicate and cyclic connections are rejected');
+  assert.equal(bubbleGroups(linked).length,1);
+  const shape=connectedBubbleGeometry(linked);
+  assert.equal(shape.polygons.length,1,'separate bubbles become one closed contour');
+  assert.ok(shape.boundary.every(([a,b])=>Number.isFinite(a.x+b.y)));
+  const area=poly=>Math.abs(poly.reduce((sum,p,i)=>sum+p.x*poly[(i+1)%poly.length].y-p.y*poly[(i+1)%poly.length].x,0))/2;
+  assert.ok(area(shape.polygons[0])>area(connectedBubbleGeometry([a]).polygons[0])*2,'bridge adds filled area');
+  const moved=linked.map(o=>o.id==='b'?{...o,y:65,rotation:40}:o);
+  assert.notEqual(connectedBubbleGeometry(moved,{width:500,height:200}).fillPath,shape.fillPath,'moving and rotating updates the connector in physical coordinates');
+  for(const type of ['speech','thought'])for(const [x,y,rotation] of [[10,10,0],[10,10,30],[15,15,0],[40,10,0],[60,60,-30],[60,10,0]]){
+    const pair=linkBubbles([{...a,type,tailEnabled:true,tailX:5,tailY:65},{...b,type,x,y,rotation,tailEnabled:true,tailX:95,tailY:80}],'a','b');
+    const geometry=connectedBubbleGeometry(pair,{width:500,height:300});
+    assert.ok(geometry.polygons.length&&geometry.boundary.length,`${type} overlap and tail contours remain closed`);
+    assert.ok(!/NaN|Infinity/.test(geometry.fillPath));
+  }
+  assert.equal(bubbleGroups(unlinkBubble(linked,'b')).length,0);
+  assert.equal(unlinkBubble(linked,'b')[0].text,'First');
+  const connectedLayer={...layer,overlays:linked},connectedPage={...page,placements:[connectedLayer]};
+  const connectedMarkup=await pageSvg({...project,pages:[connectedPage]},connectedPage,'',3);
+  assert.match(connectedMarkup,/connected-bubble-outline/);assert.match(connectedMarkup,/First/);assert.match(connectedMarkup,/Second/);
+  assert.match(connectedMarkup,/stroke-width="6"[^>]*vector-effect="non-scaling-stroke"/);
+  console.log('PASS: linked speech/thought bubbles, exposed union contours, overlapping/rotated bodies and tails, live geometry, duplicate rejection, disconnect and SVG export.');
   const typography=await import(pathToFileURL(path.join(dir,'pageTypography.mjs')));
   const sized={...layer.overlays[0],text:'Same size',fontSize:12};
   const background={...layer,id:'background',overlays:[sized]};
@@ -252,4 +280,5 @@ try {
   console.log('SVG artwork, local text, stroke scaling and export cancellation passed.');
   console.log('Export formats, legacy geometry, pixel sizes, PDF cross references, ZIP CRC and JPEG density passed.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}
+
 

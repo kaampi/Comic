@@ -125,6 +125,16 @@ export function parseAlbumBackup(input: unknown): ComicProject {
           throw new Error("invalid-backup");
         for (const key of ["x", "y", "width", "height", "rotation"])
           number(overlay[key]);
+        if (overlay.bubbleLinks !== undefined) {
+          list(overlay.bubbleLinks);
+          const targets = new Set<string>();
+          for (const link of overlay.bubbleLinks) {
+            record(link); string(link.targetId); number(link.width);
+            const target = place.overlays.find((o: any) => o.id === link.targetId);
+            if (!["speech", "thought"].includes(overlay.type) || !target || target.type !== overlay.type || target.id === overlay.id || targets.has(link.targetId) || link.width < 2 || link.width > 80) throw new Error("invalid-backup");
+            targets.add(link.targetId);
+          }
+        }
       }
     }
   }
@@ -185,4 +195,5 @@ export function restoredAlbumCopy(project: ComicProject): ComicProject {
     updatedAt: now,
   };
 }
+
 

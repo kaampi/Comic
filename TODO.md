@@ -17,7 +17,7 @@ Uppdaterad 2026-10-09. IDML-export (beta), sidmarginaler och mellanrum mellan bi
 
 ## Nästa funktioner
 
-- [ ] Länka textbubblor med förbindelser som i användarens exempel; behåll separata redigerbara textområden och svansar. Stöd sammanhängande konturer utan invändiga ramlinjer.
+- [x] Länka prat- och tankebubblor med förbindelser; separata redigerbara textområden och svansar, justerbar förbindelsebredd, gemensam kontur utan invändiga ramlinjer samt export inklusive IDML.
 - [ ] Blandad typografi inom en textruta: markera text och ändra typsnitt, storlek och vikt/stil för just markeringen. Radbrytning ska ta hänsyn till varje textdel. Bevara vanliga textlager och stöd export inklusive IDML:s teckenformat.
 - [ ] Kontroller före export: text som inte får plats, saknade bilder och låg effektiv bildresolution.
 
@@ -28,3 +28,4 @@ Uppdaterad 2026-10-09. IDML-export (beta), sidmarginaler och mellanrum mellan bi
 - [ ] CBZ-export.
 
 Se PROJECT_SPEC.md för produktgränser och den övergripande planen. StoryBook får endast läsas genom användarvald export och får aldrig ändras av ComicBook.
+

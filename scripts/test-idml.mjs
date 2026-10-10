@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-idml-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform==='win32'?'junction':'dir');
-const names=['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts','idmlGeometry.ts','idmlExport.ts'];
+const names=['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts','idmlExport.ts'];
 function archive(bytes) {
   const entries=new Map();let offset=0;const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   while(view.getUint32(offset,true)===0x04034b50) {
@@ -33,6 +33,9 @@ try {
   const layer={id:'layer',x:0,y:0,width:2,height:2,readingOrder:1,shapePoints:[{x:0,y:0},{x:4,y:0},{x:3,y:4},{x:0,y:4}],overlays:[overlay,{...overlay,id:'thought',type:'thought',rotation:0},{...overlay,id:'sfx',type:'sfx',sfxShapeId:'question'}]};
   const spacing={topMm:12,rightMm:14,bottomMm:16,leftMm:18,columnGapMm:3,rowGapMm:4};
   const project={title:'Test <album>',pageFormat:{...DEFAULT_PAGE_FORMAT,spacing},pages:[{id:'second',number:2,gridColumns:3,gridRows:5,placements:[layer]},{id:'first',number:1,gridColumns:3,gridRows:5,background:{...layer,id:'bg',overlays:[]},placements:[layer]}]};
+  const {linkBubbles}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
+  const linked=linkBubbles([{...overlay,id:'linked-a',text:'Linked first',rotation:0,width:30,height:20,tailEnabled:false},{...overlay,id:'linked-b',text:'Linked second',x:55,y:40,width:30,height:20,tailEnabled:false}],'linked-a','linked-b');
+  project.pages[1].background.overlays=linked;
   const snapshot=JSON.stringify(project),progress=[];
   const options={format:'idml',pageIds:['second','first'],pageFormat:DEFAULT_PAGE_FORMAT,dpi:600,fit:'contain',jpegQuality:.95};
   const result=await exportAlbum(project,options,(...args)=>progress.push(args));
@@ -46,6 +49,12 @@ try {
   assert.equal(design.querySelectorAll('Layer').length,5);assert.equal(spreadRefs.length,2);
   assert.deepEqual(spreadRefs.map(e=>docs.get(e.getAttribute('src')).querySelector('Page').getAttribute('Name')),['1','2']);
   for(const e of [...design.querySelectorAll('[src]')])assert.ok(inner.has(e.getAttribute('src')),'all package parts exist');
+  const joined=[...docs.values()].flatMap(d=>[...d.querySelectorAll('Polygon')]).filter(e=>e.getAttribute('Name')==='Connected bubbles linked-a linked-b');
+  assert.equal(joined.length,1,'one shared vector fill for linked bubbles');
+  assert.equal(joined[0].getAttribute('StrokeColor'),'Swatch/None','no internal strokes on fill');
+  assert.equal(joined[0].querySelectorAll('GeometryPathType').length,1,'one joined contour');
+  assert.ok([...docs.values()].some(d=>d.documentElement.outerHTML.includes('Linked first')));
+  assert.ok([...docs.values()].some(d=>d.documentElement.outerHTML.includes('Linked second')));
   const allIds=new Set();for(const d of docs.values())for(const e of d.querySelectorAll('[Self]')){assert.ok(!allIds.has(e.getAttribute('Self')),'unique Self');allIds.add(e.getAttribute('Self'));}
   for(const d of docs.values()) {
     for(const e of d.querySelectorAll('[ItemLayer]'))assert.ok(allIds.has(e.getAttribute('ItemLayer')));
@@ -80,3 +89,4 @@ try {
   for(const link of pictureSpread.querySelectorAll('Link'))assert.ok(pictureOuter.has(link.getAttribute('LinkResourceURI').replace('file:','')));
   console.log('PASS: IDML XML, part references, unique IDs, layers, page ordering, editable Unicode text, curved paths, opacity, image packaging/deduplication, cancellation and immutable project.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}
+

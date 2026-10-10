@@ -15,6 +15,7 @@ export type ProjectSource = "blank" | "text" | "storybook";
 export type OverlayType = "speech" | "thought" | "caption" | "sfx";
 export type BubbleStyle = "organic" | "wide" | "tall" | "oval" | "rounded" | "shout" | "whisper";
 export type TextOverlay = {
+  bubbleLinks?: { targetId: string; width: number }[];
   id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number;
   sfxShapeId?: string; sfxTextHidden?: boolean; sfxTextColor?: string;
   sourcePanelId?: string; sourceTextId?: string;
@@ -112,5 +113,6 @@ export function readProjects(): ComicProject[] {
 export function saveProjects(projects: ComicProject[]): boolean {
   return saveProjectData(PROJECTS_KEY, projects);
 }
+
 
 

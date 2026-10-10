@@ -69,7 +69,7 @@ export function speechPath(o:TextOverlay,style:string){
 }
 export function shoutPath(o:TextOverlay){const w=o.width,h=o.height,cx=w/2,cy=h/2,pts=18;return Array.from({length:pts},(_,i)=>{const a=-Math.PI/2+i*Math.PI*2/pts,r=i%2?0.72:1,x=cx+Math.cos(a)*w*.48*r,y=cy+Math.sin(a)*h*.48*r;return(i?"L":"M")+" "+x+" "+y}).join(" ")+" Z";}
 
-export function SvgOverlay({overlay,textMetrics,hideText=false}:{overlay:TextOverlay;textMetrics?:LayerTextMetrics;hideText?:boolean}){
+export function SvgOverlay({overlay,textMetrics,hideText=false,hideShape=false}:{overlay:TextOverlay;textMetrics?:LayerTextMetrics;hideText?:boolean;hideShape?:boolean}){
  const [,refreshFontMetrics]=useReducer((n:number)=>n+1,0);
  useEffect(()=>{
   if(typeof document==="undefined"||!document.fonts)return;
@@ -89,7 +89,7 @@ export function SvgOverlay({overlay,textMetrics,hideText=false}:{overlay:TextOve
  const anchor=align==="left"?"start":align==="right"?"end":"middle";
  const common=commonStyle(overlay);
  const cloud=overlay.type==="thought"?thoughtCloudGeometry(w,h):undefined;
- return <><g transform={`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>
+ return <><g display={hideShape?"none":undefined} transform={`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>
   {overlay.type==="speech"?<path d={style==="shout"?shoutPath(overlay):speechPath(overlay,style)} {...common} strokeDasharray={style==="whisper"?"4 3":undefined}/>:null}
   {overlay.type==="thought"?<><g className="thought-trail">{thoughtTrailGeometry(overlay,cloud!.outline).map((circle,i)=><circle key={i} cx={circle.x} cy={circle.y} r={circle.r} {...common}/>)}</g><path className="thought-cloud" d={cloud!.path} {...common} strokeLinejoin="round" strokeLinecap="round"/></>:null}
   {overlay.type==="caption"?<path d={bodyPath({...overlay,roundness:overlay.roundness??18},"organic")} {...common}/>:null}

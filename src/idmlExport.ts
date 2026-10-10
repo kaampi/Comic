@@ -1,3 +1,4 @@
+import { bubbleGroups, connectedBubbleGeometry } from "./bubbleConnections";
 import type { ComicProject, TextOverlay } from "./project";
 import type { ExportOptions } from "./albumExport";
 import { exportFilename } from "./albumExport";
@@ -95,11 +96,19 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
         const border=panelBorderStyle(project,layer);
         if(border.visible&&border.thicknessPt>0)items.push(shape(transformPaths([polygonPath(panelOutline(page,layer,sourceFormat))],map),"cbFrames",`Panel border ${layer.id}`,"none",border.color,border.thicknessPt*scale/(pageDimensions(sourceFormat).widthMm*72/25.4/700)));
       }
+      const connected=bubbleGroups(layer.overlays);
+      for(const group of connected){
+        const o=group[0],geometry=connectedBubbleGeometry(group,{width:lw,height:lh,pageWidthMm:pageDimensions(sourceFormat).widthMm});
+        const local=(p:Point)=>map({x:x+p.x*lw/100,y:y+p.y*lh/100});
+        const name=`Connected bubbles ${group.map(o=>o.id).join(" ")}`,itemLayer=background?"cbBackground":"cbBubbles";
+        items.push(shape(transformPaths(svgGeometry(geometry.fillPath),local),itemLayer,name,o.fillColor??"#fffdf7","none",0,"",`<FillTransparencySetting><BlendingSetting Opacity="${num(Math.max(0,Math.min(1,o.fillOpacity??1))*100)}" BlendMode="Normal"/></FillTransparencySetting>`));
+        items.push(shape(transformPaths(svgGeometry(geometry.strokePath),local),itemLayer,`${name} outline`,"none",o.strokeColor??"#171411",(o.strokeWidth??2)*scale,o.bubbleStyle==="whisper"?'StrokeType="StrokeStyle/$ID/Dashed"':""));
+      }
       for(const o of layer.overlays) {
         const a=o.rotation*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
         const local=(p:Point)=>{const ux=p.x-o.width/2,uy=p.y-o.height/2;return map({x:x+(o.x+o.width/2+c*ux-s*uy)*lw/100,y:y+(o.y+o.height/2+s*ux+c*uy)*lh/100});};
         const fill=o.fillColor??"#fffdf7",stroke=o.strokeColor??"#171411",opacity=Math.max(0,Math.min(1,o.fillOpacity??1));
-        for(const primitive of artwork(o))items.push(shape(transformPaths(primitive.paths,local),background?"cbBackground":"cbBubbles",`${o.type} ${o.id}`,primitive.fill?fill:"none",stroke,(o.strokeWidth??2)*scale,o.bubbleStyle==="whisper"?'StrokeType="StrokeStyle/$ID/Dashed"':"",`<FillTransparencySetting><BlendingSetting Opacity="${num(opacity*100)}" BlendMode="Normal"/></FillTransparencySetting>`));
+        for(const primitive of connected.some(g=>g.some(b=>b.id===o.id))?[]:artwork(o))items.push(shape(transformPaths(primitive.paths,local),background?"cbBackground":"cbBubbles",`${o.type} ${o.id}`,primitive.fill?fill:"none",stroke,(o.strokeWidth??2)*scale,o.bubbleStyle==="whisper"?'StrokeType="StrokeStyle/$ID/Dashed"':"",`<FillTransparencySetting><BlendingSetting Opacity="${num(opacity*100)}" BlendMode="Normal"/></FillTransparencySetting>`));
         if(o.type==="sfx"&&o.sfxTextHidden)continue;
         const font=idmlFont(o);fonts.set(`${font.family}/${font.style}`,font);
         const story=id(),storyPath=`Stories/Story_${story}.xml`,padding=o.width*lw/100*Math.max(0,Math.min(25,o.textPadding??4))/100*scale;
@@ -132,3 +141,4 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
   const readme=`ComicBook AI — IDML export (experimental)\n\n1. Extract the entire ZIP before opening ${base}.idml in InDesign or Affinity Publisher.\n2. Keep Links next to the IDML. If asked for missing images, select the Links folder.\n3. Install the fonts listed below or replace them in the destination application.\n4. Check text wrapping, overflow, layer order and page edges before production.\n\nLayers: Text; Bubbles and SFX; Panel borders; Images; Background.\nImages remain raster images, with editable clipping frames and placement. Bubble contours and tails are vector paths. Text remains editable. No font files are embedded.\n\nCurrent limitations: destination font metrics can change wrapping; text weights use available Regular/Bold desktop styles; text and bubble artwork extending beyond a panel are not clipped to its outline; page-edge crop should be checked when using Cover.\nAffinity import is one-way: save subsequent work in Affinity's own format.\n\nFonts:\n${[...fonts.values()].map(f=>`${f.family} — ${f.style}`).join("\n")||"None"}\n`;
   return {blob:imageArchive([{name:`${base}.idml`,bytes:new Uint8Array(await idml.arrayBuffer())},...assets,{name:"README.txt",bytes:encode(readme)}]),name:`${base}-idml.zip`};
 }
+
