@@ -47,7 +47,7 @@ import { PageGridControls } from "./PageGridControls";
 import { PageCanvasHeader } from "./PageCanvasHeader";
 import { parseStoryBookExport, parseStoryBookCards, cardMatchesBook, type StoryBookImport, type StoryBookCardsImport } from "./storybookImport";
 import { ConnectedBubbles } from "./ConnectedBubbles";
-import { bubbleGroups, isBubble, linkBubbles, unlinkBubble } from "./bubbleConnections";
+import { bubbleGroups, bubbleTailIsConnection, isBubble, linkBubbles, unlinkBubble } from "./bubbleConnections";
 import { SvgOverlay, thoughtTailEndpoint, bubbleTailStart, bubbleTailStartAngle } from "./SvgOverlay";
 import type { OverlayType } from "./project";
 import { uiText, type UiKey } from "./i18n";
@@ -840,7 +840,7 @@ export function App() {
 {bubbleGroups(pl.overlays??[]).some(g=>g.some(b=>b.id===item.id))?<rect x={item.x} y={item.y} width={item.width} height={item.height} fill="transparent" transform={`rotate(${item.rotation} ${item.x+item.width/2} ${item.y+item.height/2})`}/>:null}
 </g>{selected&&inlineTextEdit?.overlayId!==item.id?<>
 <rect className="overlay-selection-frame" x={item.x} y={item.y} width={item.width} height={item.height} rx="1"/>
-<rect className="overlay-resize-grip" x={item.x+item.width-1.5} y={item.y+item.height-1.5} width="3" height="3" rx=".5" onPointerDown={(e)=>beginOverlayDrag(e,pg.id,pl.id,item,"resize")}/>{(item.type==="thought"||item.type==="speech"&&item.tailEnabled!==false&&item.tailX!==undefined&&item.tailY!==undefined)?<>
+<rect className="overlay-resize-grip" x={item.x+item.width-1.5} y={item.y+item.height-1.5} width="3" height="3" rx=".5" onPointerDown={(e)=>beginOverlayDrag(e,pg.id,pl.id,item,"resize")}/>{(!bubbleTailIsConnection(item,pl.overlays)&&(item.type==="thought"||item.type==="speech"&&item.tailEnabled!==false&&item.tailX!==undefined&&item.tailY!==undefined))?<>
 <circle className="overlay-tail-start-grip" aria-label={locale==="sv"?"Svansens start":"Tail start"} cx={bubbleTailStart(item).x} cy={bubbleTailStart(item).y} r="1.6" fill="#fffdf7" stroke="#b06f52" strokeWidth="0.5" style={{cursor:"grab",pointerEvents:"all"}} onPointerDown={e=>beginOverlayDrag(e,pg.id,pl.id,item,"tail-start")}/>
 <circle className="overlay-tail-grip" cx={item.type==="thought"?thoughtTailEndpoint(item).x:item.tailX} cy={item.type==="thought"?thoughtTailEndpoint(item).y:item.tailY} r="1.6" onPointerDown={(e)=>beginOverlayDrag(e,pg.id,pl.id,item,"tail")}/>
 </>:null}</>:null}</g>})}{inlineTextEdit&&inlineTextEdit.pageId===pg.id&&inlineTextEdit.placementId===pl.id&&o?.id===inlineTextEdit.overlayId&&imageEditPlacementId!==pl.id?<InlineOverlayEditor overlay={o} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} label={tr("inlineBubbleText")} onSelection={(start,end)=>setTextSelection({overlayId:o.id,start,end})} onChange={(text,textEdit)=>updateOverlay(pg.id,pl.id,o.id,{text,textEdit})} onFinish={()=>setInlineTextEdit(null)} onCancel={()=>{updateOverlay(pg.id,pl.id,o.id,{text:inlineTextEdit.initialText,textStyles:inlineTextEdit.initialTextStyles});setInlineTextEdit(null);}}/>:null}</svg>{pl.id!==pg.background?.id?<PanelFrameOutline project={activeProject} page={pg} layer={pl}/>:null}</div>
@@ -962,7 +962,7 @@ export function App() {
 </div>)}</details>
 </div>:null}</>
 </fieldset>{o.type==="speech"||o.type==="thought"?<fieldset className="overlay-property-group">
-<legend>{tr("tailSettings")}</legend>{o.type==="thought"?<div className="tail-settings-grid">
+<legend>{tr("tailSettings")}</legend>{bubbleTailIsConnection(o,pl.overlays)?<p className="quiet">{tr("tailIsConnection")}</p>:<>{o.type==="thought"?<div className="tail-settings-grid">
 <label>{locale==="sv"?"Startbredd":"Start width"}<input className="numeric-field" type="number" min="0" max="100" value={o.thoughtTailWidth??50} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{thoughtTailWidth:Math.max(0,Math.min(100,Number(e.target.value)||0))})}/>
 </label>
 <label>{locale==="sv"?"Böjning":"Bend"}<input className="numeric-field" type="number" min="-100" max="100" value={o.thoughtTailCurve??30} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{thoughtTailCurve:Math.max(-100,Math.min(100,Number(e.target.value)||0))})}/>
@@ -975,7 +975,7 @@ export function App() {
 </label>
 <label>{tr("rootWidth")}<input className="numeric-field" type="number" min="0" max="100" value={o.tailRootWidth??50} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{tailRootWidth:Math.max(0,Math.min(100,Number(e.target.value)||0))})}/>
 </label>
-</div>:null}</>:null}</fieldset>:null}</div>:<div className="panel-editor-empty-properties">
+</div>:null}</>:null}</>}</fieldset>:null}</div>:<div className="panel-editor-empty-properties">
 <p>{tr("chooseTextBox")}</p>
 <p className="quiet">{tr("createTextHint")}</p>
 </div>}{panelPlan&&(panelPlan.dialogue.length||panelPlan.captions.length)?<section className="planned-text-panel">

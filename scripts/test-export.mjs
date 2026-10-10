@@ -39,7 +39,7 @@ try {
   assert.match(markup,/<svg[^>]+width="2100"/);assert.match(markup,/stroke-width="6"[^>]*vector-effect="non-scaling-stroke"/);
   assert.match(markup,/ÅÄÖ/);assert.match(markup,/Second line/);assert.match(markup,/clip-path/);
   assert.ok(!markup.includes('readingOrder')&&!markup.includes('panel-corner-handle')&&!markup.includes('grid-cell'));
-  const {linkBubbles,unlinkBubble,bubbleGroups,connectedBubbleGeometry}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
+  const {linkBubbles,unlinkBubble,bubbleGroups,connectedBubbleGeometry,bubbleTailIsConnection}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
   const a={...layer.overlays[0],id:'a',text:'First',x:10,y:10,width:30,height:20,tailEnabled:false,rotation:0};
   const b={...a,id:'b',text:'Second',x:60,y:10};
   const original=[a,b],linked=linkBubbles(original,'a','b');
@@ -59,6 +59,17 @@ try {
     const geometry=connectedBubbleGeometry(pair,{width:500,height:300});
     assert.ok(geometry.polygons.length&&geometry.boundary.length,`${type} overlap and tail contours remain closed`);
     assert.ok(!/NaN|Infinity/.test(geometry.fillPath));
+  }
+  for(const type of ['speech','thought']){
+    const tails=linkBubbles([{...a,type,tailEnabled:true,tailX:-40,tailY:90},{...b,type,tailEnabled:true,tailX:95,tailY:95}],'a','b');
+    assert.equal(bubbleTailIsConnection(tails[0],tails),true);assert.equal(bubbleTailIsConnection(tails[1],tails),false);
+    const contour=connectedBubbleGeometry(tails).fillPath;
+    assert.equal(connectedBubbleGeometry(tails.map(o=>o.id==='a'?{...o,tailX:-90,tailY:150}:o)).fillPath,contour,'source tail is replaced, not drawn in addition to connector');
+    assert.notEqual(connectedBubbleGeometry(tails.map(o=>o.id==='b'?{...o,tailX:98,tailY:130}:o)).fillPath,contour,'destination retains its own tail');
+    const detached=unlinkBubble(tails,'a');
+    assert.equal(bubbleTailIsConnection(detached[0],detached),false);
+    assert.equal(detached[0].tailX,-40,'authored source tail returns unchanged on disconnect');
+    assert.ok(connectedBubbleGeometry([detached[0]]).polygons.some(poly=>poly.some(p=>p.x<0)),'detached tail is visible again');
   }
   assert.equal(bubbleGroups(unlinkBubble(linked,'b')).length,0);
   assert.equal(unlinkBubble(linked,'b')[0].text,'First');

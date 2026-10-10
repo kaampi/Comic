@@ -1193,6 +1193,8 @@ try {
   await user.selectOptions(screen.getByLabelText('Koppla till'),firstLinkBubble.id);
   assert.deepEqual(saved().pages[0].background.overlays.at(-1).bubbleLinks,[{targetId:firstLinkBubble.id,width:20}]);
   assert.ok(directEditor.querySelector('.connected-bubble-outline'));
+  assert.equal(directEditor.querySelector('.editable-overlay.is-selected .overlay-tail-grip'),null,'source tail handle is replaced by connection');
+  assert.ok(within(directEditor).getByText(/Svansen används som förbindelse/));
   const widthControl=screen.getByLabelText(/Förbindelsens bredd/);
   fireEvent.change(widthControl,{target:{value:'35'}});
   assert.equal(saved().pages[0].background.overlays.at(-1).bubbleLinks[0].width,35);
@@ -1203,6 +1205,7 @@ try {
   assert.throws(()=>parseAlbumBackup(brokenLinks),/invalid-backup/);
   await user.click(screen.getByRole('button',{name:'Koppla loss bubblan',exact:true}));
   assert.equal(directEditor.querySelector('.connected-bubble-outline'),null);
+  assert.ok(directEditor.querySelector('.editable-overlay.is-selected .overlay-tail-grip'),'disconnect restores original tail controls');
   await user.selectOptions(screen.getByLabelText('Koppla till'),firstLinkBubble.id);
   const linkedInput=directEditor.querySelectorAll('.overlay-drag-surface')[saved().pages[0].background.overlays.length-1];
   fireEvent.doubleClick(linkedInput);

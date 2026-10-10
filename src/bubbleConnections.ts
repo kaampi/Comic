@@ -5,6 +5,9 @@ import { thoughtCloudGeometry, thoughtTrailGeometry } from "./thoughtBubble";
 import type { LayerTextMetrics } from "./pageTypography";
 
 export const isBubble = (o: TextOverlay) => o.type === "speech" || o.type === "thought";
+export function bubbleTailIsConnection(o:TextOverlay,overlays:TextOverlay[]):boolean {
+  return isBubble(o)&&(o.bubbleLinks??[]).some(link=>Number.isFinite(link.width)&&overlays.some(target=>target.id===link.targetId&&target.id!==o.id&&target.type===o.type));
+}
 export function bubbleGroups(overlays: TextOverlay[]): TextOverlay[][] {
   const remaining = new Set(overlays.filter(isBubble).map(o => o.id)), groups: TextOverlay[][] = [];
   while (remaining.size) {
@@ -63,8 +66,9 @@ function inside(p: Point, polygon: Point[]) {
 export function connectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTextMetrics) {
   const polygons: Point[][] = [];
   for (const o of group) {
+    const connectedTail=bubbleTailIsConnection(o,group);
     const cloud=o.type==="thought"?thoughtCloudGeometry(o.width,o.height):undefined;
-    const paths=cloud?[cloud.path,...thoughtTrailGeometry(o,cloud.outline).map(c=>`M ${c.x+c.r} ${c.y} A ${c.r} ${c.r} 0 1 1 ${c.x-c.r} ${c.y} A ${c.r} ${c.r} 0 1 1 ${c.x+c.r} ${c.y} Z`)]:[o.bubbleStyle==="shout"?shoutPath(o):speechPath(o,o.bubbleStyle??"organic")];
+    const paths=cloud?[cloud.path,...(connectedTail?[]:thoughtTrailGeometry(o,cloud.outline)).map(c=>`M ${c.x+c.r} ${c.y} A ${c.r} ${c.r} 0 1 1 ${c.x-c.r} ${c.y} A ${c.r} ${c.r} 0 1 1 ${c.x+c.r} ${c.y} Z`)]:[o.bubbleStyle==="shout"?shoutPath(o):speechPath(connectedTail?{...o,tailEnabled:false}:o,o.bubbleStyle??"organic")];
     const a=o.rotation*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
     for (const d of paths) for (const poly of flatten(d)) polygons.push(poly.map(p=>({x:o.x+o.width/2+(p.x-o.width/2)*c-(p.y-o.height/2)*s,y:o.y+o.height/2+(p.x-o.width/2)*s+(p.y-o.height/2)*c})));
   }
