@@ -31,6 +31,9 @@
   height: 100%;
   pointer-events: none;
 }
+.page-background-text-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+.page-background-text-layer .background-text-target { pointer-events: all; cursor: pointer; }
+.background-text-target:focus-visible { outline: 2px solid var(--form-focus); }
 .has-page-background .grid-cell {
   background: transparent;
 }
@@ -101,3 +104,4 @@
 .page-background-action-button:hover { border-color: currentColor; }
 .page-background-icon-button:focus-visible,
 .page-background-action-button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+

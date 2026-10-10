@@ -1200,6 +1200,41 @@ try {
   assert.ok(document.querySelector(".page-background-layer img"));
   const backgroundSaved = saved().pages[0].background;
   assert.deepEqual(readProjects()[0].pages[0].background,backgroundSaved);
+  const backgroundTarget=[...document.querySelectorAll('.background-text-target')].find(e=>e.getAttribute('aria-label').includes('Direktredigerad bakgrundstext'));
+  assert.ok(backgroundTarget.querySelector('rect[fill="transparent"]'),'the full text box catches clicks between letters');
+  fireEvent.pointerDown(backgroundTarget,{button:0});
+  fireEvent.pointerUp(backgroundTarget);
+  assert.equal(document.querySelector('.layout-canvas').classList.contains('is-drawing'),false);
+  fireEvent.click(backgroundTarget);
+  assert.equal(document.querySelector('.selected-panel-tool textarea').value,'Direktredigerad bakgrundstext','clicking background text selects the correct text in the editor');
+  assert.deepEqual(saved().pages[0].placements,framesBeforeBackground,'background text clicks do not create frames');
+  await user.click(within(document.querySelector('.panel-editor-modal header')).getByRole('button',{name:'Stäng',exact:true}));
+  fireEvent.keyDown(backgroundTarget,{key:'Enter'});
+  assert.ok(document.querySelector('.panel-editor-modal'),'background text supports keyboard activation');
+  await user.click(within(document.querySelector('.panel-editor-modal header')).getByRole('button',{name:'Stäng',exact:true}));
+  const {overlapsBackgroundText}=await import(pathToFileURL(join(compiledRoot,'pageBackground.mjs')));
+  const {albumPageFormat,layerRect,pageAspect,pageGridMetrics}=await import(pathToFileURL(join(compiledRoot,'pageFormat.mjs')));
+  const {libraryDropTarget,dropLibraryPanel}=await import(pathToFileURL(join(compiledRoot,'libraryDrop.mjs')));
+  const clickPage=saved().pages[0];
+  const blockedCell=[...document.querySelectorAll('.grid-cell')].find((_,i)=>overlapsBackgroundText(saved(),clickPage,{id:'candidate',readingOrder:0,overlays:[],x:i%clickPage.gridColumns,y:Math.floor(i/clickPage.gridColumns),width:1,height:1}));
+  assert.ok(blockedCell);
+  fireEvent.pointerDown(blockedCell,{button:0});
+  fireEvent.pointerUp(document.querySelector('.construction-grid'));
+  assert.deepEqual(saved().pages[0].placements,framesBeforeBackground,'drawing over background text creates no panel');
+  assert.ok(screen.getByText('Bildrutan överlappar en textruta på bakgrunden. Rita den utanför textrutan eller flytta texten först.'));
+  const protectedProject=structuredClone(saved());
+  const protectedPage=protectedProject.pages[0];protectedPage.placements=[];
+  const protectedLayer={id:'candidate',x:0,y:0,width:1,height:1,readingOrder:1,overlays:[]};
+  const protectedFormat=albumPageFormat(protectedProject),protectedBox=layerRect(protectedPage,protectedLayer,protectedFormat),protectedHeight=700/pageAspect(protectedFormat);
+  protectedPage.background={...protectedPage.background,panelId:undefined,adaptationPanelPlanId:undefined,overlays:[{id:'protected-text',type:'caption',text:'Protected',rotation:25,x:(protectedBox.x+20)/700*100,y:(protectedBox.y+20)/protectedHeight*100,width:(protectedBox.width-40)/700*100,height:(protectedBox.height-40)/protectedHeight*100}]};
+  assert.equal(overlapsBackgroundText(protectedProject,protectedPage,protectedLayer),true,'new frames cannot cover rotated background text');
+  assert.equal(overlapsBackgroundText(protectedProject,protectedPage,{...protectedLayer,x:2,y:4}),false,'free areas still allow panels');
+  const protectedGrid=pageGridMetrics(protectedPage,protectedFormat);
+  assert.equal(libraryDropTarget(protectedProject,protectedPage.id,10,10,protectedGrid),null,'library drop preview rejects protected cells');
+  assert.deepEqual(libraryDropTarget(protectedProject,protectedPage.id,2*(protectedGrid.cellWidth+protectedGrid.gapX)+10,4*(protectedGrid.cellHeight+protectedGrid.gapY)+10,protectedGrid),{kind:'new',x:2,y:4});
+  protectedProject.panels.push({id:'guard-image',sceneId:'none',order:999,action:'',dialogue:'',narration:'',imagePrompt:'',characterIds:[],image:{name:'test.png',dataUrl:'data:image/png;base64,test'}});
+  assert.equal(dropLibraryPanel(protectedProject,protectedPage.id,{kind:'new',x:0,y:0},'guard-image'),null,'direct drops cannot bypass the protection');
+  assert.ok(dropLibraryPanel(protectedProject,protectedPage.id,{kind:'new',x:2,y:4},'guard-image'),'free-cell drops continue to work');
   await user.click(screen.getByRole("button",{name:"Ta bort bakgrundsbild",exact:true}));
   assert.equal(saved().pages[0].background.image,undefined);
   assert.equal(saved().pages[0].background.id,backgroundSaved.id);
@@ -1214,7 +1249,10 @@ try {
   // Shape presets and 4×4 handles edit geometry without replacing frame contents.
   await user.selectOptions(screen.getByLabelText("Bildruta på sidan"), "");
   if(!document.querySelector('.drawn-panel')){
-    fireEvent.pointerDown(document.querySelector('.grid-cell'),{button:0});
+    const shapePage=saved().pages[0];
+    const freeCell=[...document.querySelectorAll('.grid-cell')].find((_,i)=>i%shapePage.gridColumns<shapePage.gridColumns-1&&!overlapsBackgroundText(saved(),shapePage,{...protectedLayer,x:i%shapePage.gridColumns,y:Math.floor(i/shapePage.gridColumns)}));
+    assert.ok(freeCell,'shape fixture needs a cell outside background text');
+    fireEvent.pointerDown(freeCell,{button:0});
     fireEvent.pointerUp(document.querySelector('.construction-grid'));
   }
   fireEvent.doubleClick(document.querySelector('.drawn-panel'));

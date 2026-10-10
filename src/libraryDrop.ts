@@ -1,6 +1,7 @@
 import { libraryEntries, assignLibraryPanel } from "./comicPanelLibrary";
 import { albumPageFormat, PANEL_BORDER } from "./pageFormat";
 import { panelsOverlap } from "./panelGeometry";
+import { overlapsBackgroundText } from "./pageBackground";
 import { panelShapePoints, shapedPanel } from "./panelShape";
 import type { ComicProject, PageLayer } from "./project";
 
@@ -36,6 +37,7 @@ export function libraryDropTarget(project: ComicProject, pageId: string, x: numb
   const column = Math.floor(x / stepX), row = Math.floor(y / stepY);
   if (column >= page.gridColumns || row >= page.gridRows || x - column * stepX > cellW || y - row * stepY > cellH) return null;
   const candidate: PageLayer = { id: "candidate", x: column, y: row, width: 1, height: 1, readingOrder: 0, overlays: [] };
+  if (overlapsBackgroundText(project, page, candidate)) return null;
   if (page.placements.some(layer => panelsOverlap(page, layer, candidate, albumPageFormat(project), project.panelBorderDefaults))) return null;
   return { kind: "new", x: column, y: row };
 }
@@ -54,6 +56,7 @@ export function dropLibraryPanel(project: ComicProject, pageId: string, target: 
   } else {
     if (target.kind !== "new" || !Number.isInteger(target.x) || !Number.isInteger(target.y) || target.x < 0 || target.y < 0 || target.x >= page.gridColumns || target.y >= page.gridRows) return null;
     layer = { id: "placement-" + crypto.randomUUID(), x: target.x, y: target.y, width: 1, height: 1, readingOrder: Math.max(0, ...page.placements.map(layer => layer.readingOrder)) + 1, overlays: [] };
+    if (overlapsBackgroundText(project, page, layer)) return null;
     if (page.placements.some(other => panelsOverlap(page, other, layer, albumPageFormat(project), project.panelBorderDefaults))) return null;
   }
   const prepared = { ...project, pages: project.pages.map(p => p.id !== pageId ? p : { ...p, placements: previous ? p.placements.map(p => p.id === layer.id ? layer : p) : [...p.placements, layer] }) };
@@ -77,4 +80,5 @@ export function undoLibraryDrop(project: ComicProject, undo: LibraryDropUndo): C
     ...page, placements: undo.previous ? page.placements.map(layer => layer.id === undo.placementId ? undo.previous! : layer) : page.placements.filter(layer => layer.id !== undo.placementId),
   }) };
 }
+
 
