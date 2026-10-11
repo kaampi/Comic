@@ -1,3 +1,4 @@
+import { ColorInput } from "./ColorInput";
 import { editedTextStyles, deletionRange, formatTextRange, clearTextRange, textStyleAt } from "./richText";
 import type { TextOverlay } from "./project";
 import { InlineOverlayEditor } from "./InlineOverlayEditor";
@@ -922,7 +923,7 @@ export function App() {
 <input type="checkbox" checked={!o.sfxTextHidden} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{sfxTextHidden:!e.target.checked})}/>{locale==="sv"?"Visa text":"Show text"}</label>
 <label>{locale==="sv"?"Rotation (grader)":"Rotation (degrees)"}<input type="number" min="-180" max="180" value={o.rotation} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{rotation:Math.max(-180,Math.min(180,Number(e.target.value)||0))})}/>
 </label>
-<label>{locale==="sv"?"Textfärg":"Text color"}<input type="color" value={o.sfxTextColor??"#171411"} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{sfxTextColor:e.target.value})}/>
+<label>{locale==="sv"?"Textfärg":"Text color"}<ColorInput value={o.sfxTextColor??"#171411"} onChange={sfxTextColor=>updateOverlay(pg.id,pl.id,o.id,{sfxTextColor})}/>
 </label>
 </>:null}<label>{tr("roundness")}<input className="numeric-field" type="number" min="0" max="100" value={o.roundness??(o.type==="caption"?18:60)} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{roundness:Math.max(0,Math.min(100,Number(e.target.value)||0))})}/>
 </label>
@@ -932,9 +933,9 @@ export function App() {
 <button className="text-button" type="button" onClick={()=>saveBubbleSwatch(o)}>{tr("saveSwatch")}</button>
 </div>
 <div className="bubble-color-grid">
-<label>{tr("strokeColor")}<input type="color" value={o.strokeColor??"#171411"} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{strokeColor:e.target.value,swatchId:undefined})}/>
+<label>{tr("strokeColor")}<ColorInput value={o.strokeColor??"#171411"} onChange={strokeColor=>updateOverlay(pg.id,pl.id,o.id,{strokeColor,swatchId:undefined})}/>
 </label>
-<label>{tr("fillColor")}<input type="color" value={o.fillColor??"#fffdf7"} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{fillColor:e.target.value,swatchId:undefined})}/>
+<label>{tr("fillColor")}<ColorInput value={o.fillColor??"#fffdf7"} onChange={fillColor=>updateOverlay(pg.id,pl.id,o.id,{fillColor,swatchId:undefined})}/>
 </label>
 <label>{tr("strokeWidth")}<input className="numeric-field" type="number" min="0" max="8" step="0.25" value={o.strokeWidth??2} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{strokeWidth:Math.max(0,Math.min(8,Number(e.target.value)||0)),swatchId:undefined})}/>
 </label>

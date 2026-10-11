@@ -63,7 +63,19 @@ function inside(p: Point, polygon: Point[]) {
   }
   return yes;
 }
+const geometryCache = new Map<string, ReturnType<typeof computeConnectedBubbleGeometry>>();
 export function connectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTextMetrics) {
+  // Paint and text cannot change the contour. Bound the cache so old geometry
+  // from dragging/resizing does not accumulate indefinitely.
+  const key = JSON.stringify([metrics?.width ?? 100, metrics?.height ?? 100, group.map(o => [o.id,o.type,o.x,o.y,o.width,o.height,o.rotation,o.bubbleStyle,o.roundness,o.tailEnabled,o.tailX,o.tailY,o.tailStartAngle,o.tailCurve,o.tailRootWidth,o.thoughtTailWidth,o.thoughtTailCurve,o.bubbleLinks])]);
+  const cached = geometryCache.get(key);
+  if (cached) { geometryCache.delete(key); geometryCache.set(key,cached); return cached; }
+  const geometry = computeConnectedBubbleGeometry(group,metrics);
+  geometryCache.set(key,geometry);
+  if (geometryCache.size > 32) geometryCache.delete(geometryCache.keys().next().value!);
+  return geometry;
+}
+function computeConnectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTextMetrics) {
   const polygons: Point[][] = [];
   for (const o of group) {
     const connectedTail=bubbleTailIsConnection(o,group);

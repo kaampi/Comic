@@ -48,6 +48,11 @@ try {
   assert.equal(linkBubbles(linked,'b','a'),linked,'duplicate and cyclic connections are rejected');
   assert.equal(bubbleGroups(linked).length,1);
   const shape=connectedBubbleGeometry(linked);
+  assert.equal(connectedBubbleGeometry(linked.map(o=>({...o,fillColor:'#abcdef',strokeColor:'#123456',text:'Edited text',fontSize:14}))),shape,'color/text changes reuse contours');
+  assert.notEqual(connectedBubbleGeometry(linked,{width:500,height:200}),shape,'physical panel dimensions invalidate contours');
+  for(const patch of [{x:11},{width:31},{rotation:10},{roundness:10},{bubbleStyle:'shout'},{bubbleLinks:[{targetId:'b',width:40}]}]) {
+    assert.notEqual(connectedBubbleGeometry([{...linked[0],...patch},linked[1]]),shape,'shape changes invalidate cached contours');
+  }
   assert.equal(shape.polygons.length,1,'separate bubbles become one closed contour');
   assert.ok(shape.boundary.every(([a,b])=>Number.isFinite(a.x+b.y)));
   const area=poly=>Math.abs(poly.reduce((sum,p,i)=>sum+p.x*poly[(i+1)%poly.length].y-p.y*poly[(i+1)%poly.length].x,0))/2;
