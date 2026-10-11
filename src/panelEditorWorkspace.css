@@ -14,6 +14,8 @@
 .panel-image-controls-head.is-editing { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; }
 .image-position-row { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
 .image-reset-button { flex-shrink: 0; }
+.image-transform-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.image-transform-actions button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
 .panel-image-controls .image-position-grid { grid-template-columns: repeat(2, minmax(0, max-content)); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 8px 28px; width: fit-content; max-width: 100%; }
 .panel-image-controls label { display: grid; grid-template-columns: minmax(0, 1fr) 80px; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
 .panel-image-controls input[type="number"] { width: 100%; font-size: 14px; min-height: 30px; padding: 4px 6px; font-variant-numeric: tabular-nums; }

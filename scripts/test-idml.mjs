@@ -92,6 +92,20 @@ try {
     assert.ok([a,b,c,d,e,f].every(Number.isFinite));
   }
   for(const link of pictureSpread.querySelectorAll('Link'))assert.ok(pictureOuter.has(link.getAttribute('LinkResourceURI').replace('file:','')));
+  const flippedProject={...pictured,pages:[{...pictured.pages[0],placements:pictured.pages[0].placements.map((p,i)=>({...p,image:{...image,flipX:i===0,flipY:i===1}}))}]};
+  const flippedResult=await exportAlbum(flippedProject,options,()=>{}),flippedOuter=archive(new Uint8Array(await flippedResult.blob.arrayBuffer()));
+  const flippedInner=archive(flippedOuter.get('Test -album-.idml'));
+  const flippedSpread=parse([...flippedInner].find(([p])=>p.startsWith('Spreads/'))[1]);
+  const originals=[...pictureSpread.querySelectorAll('Image')],reflections=[...flippedSpread.querySelectorAll('Image')];
+  assert.equal(reflections.length,2);
+  reflections.forEach((element,i)=>{
+    const m=element.getAttribute('ItemTransform').split(' ').map(Number),old=originals[i].getAttribute('ItemTransform').split(' ').map(Number);
+    assert.ok(m[0]*m[3]-m[1]*m[2]<0,'each individual flip is a reflection in IDML');
+    const signX=i===0?-1:1,signY=i===1?-1:1;
+    for(let k=0;k<4;k++)assert.ok(Math.abs(m[k]-old[k]*(k<2?signX:signY))<1e-5);
+    assert.ok(Math.abs(m[4]+(m[0]+m[2])/2-old[4]-(old[0]+old[2])/2)<1e-5,'flip preserves the image center');
+    assert.ok(Math.abs(m[5]+(m[1]+m[3])/2-old[5]-(old[1]+old[3])/2)<1e-5);
+  });
   console.log('PASS: IDML XML, part references, unique IDs, layers, page ordering, editable Unicode text, curved paths, opacity, image packaging/deduplication, cancellation and immutable project.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}
 

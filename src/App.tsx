@@ -505,13 +505,13 @@ export function App() {
     };
     reader.readAsDataURL(file);
   };
-  const updatePlacementImageView=(pageId:string,placementId:string,patch:{zoom?:number;rotation?:number;offsetX?:number;offsetY?:number;fit?:"cover"|"contain";positionMode?:"frame"},restore=false)=>{
+  const updatePlacementImageView=(pageId:string,placementId:string,patch:{flipX?:boolean;flipY?:boolean;zoom?:number;rotation?:number;offsetX?:number;offsetY?:number;fit?:"cover"|"contain";positionMode?:"frame"},restore=false)=>{
     const stage=document.querySelector<HTMLElement>(".panel-editor-stage");
     const img=stage?.querySelector<HTMLImageElement>(".panel-editor-image-layer img");
     const box=stage?.getBoundingClientRect();
     updateActiveProject(project=>({...project,pages:project.pages.map(page=>page.id!==pageId?page:{...page,placements:page.placements.map(placement=>placement.id!==placementId||!placement.image?placement:{...placement,image:restore?{...placement.image,...patch}:{...placement.image,...framePosition(placement.image,box?.width??0,box?.height??0,img?.naturalWidth??0,img?.naturalHeight??0),positionMode:"frame",...patch}})})}));
   };
-  const resetPlacementImageView=(pageId:string,placementId:string)=>updatePlacementImageView(pageId,placementId,{zoom:1,rotation:0,offsetX:0,offsetY:0,fit:"cover"});
+  const resetPlacementImageView=(pageId:string,placementId:string)=>updatePlacementImageView(pageId,placementId,{zoom:1,rotation:0,offsetX:0,offsetY:0,flipX:false,flipY:false,fit:"cover"});
   const beginImagePan=(event:React.PointerEvent<HTMLDivElement>,pageId:string,placementId:string,image:NonNullable<ComicProject["pages"][number]["placements"][number]["image"]>)=>{
     if(imageEditPlacementId!==placementId||event.button!==0)return;
     event.preventDefault();event.stopPropagation();

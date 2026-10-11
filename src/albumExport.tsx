@@ -62,7 +62,9 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
       if(url.startsWith("blob:"))url=await blobData(await (await fetch(url)).blob());
       if(!url.startsWith("data:image/"))throw new Error("image-load-failed");
       const image=await loadImage(url),placed=imagePlacement(layer.image,w,h,image.naturalWidth,image.naturalHeight);
-      body.push(`<image href="${xml(url)}" x="${x+placed.x}" y="${y+placed.y}" width="${placed.width}" height="${placed.height}" preserveAspectRatio="none"${layer.image.rotation ? ` transform="rotate(${layer.image.rotation} ${x+placed.x+placed.width/2} ${y+placed.y+placed.height/2})"` : ""}/>`);
+      const cx=x+placed.x+placed.width/2,cy=y+placed.y+placed.height/2;
+      const transform=[layer.image.rotation ? `rotate(${layer.image.rotation} ${cx} ${cy})` : "", layer.image.flipX || layer.image.flipY ? `translate(${cx} ${cy}) scale(${layer.image.flipX?-1:1} ${layer.image.flipY?-1:1}) translate(${-cx} ${-cy})` : ""].filter(Boolean).join(" ");
+      body.push(`<image href="${xml(url)}" x="${x+placed.x}" y="${y+placed.y}" width="${placed.width}" height="${placed.height}" preserveAspectRatio="none"${transform ? ` transform="${transform}"` : ""}/>`);
     }
     let overlays=renderToStaticMarkup(<svg x={x} y={y} width={w} height={h} viewBox="0 0 100 100" preserveAspectRatio="none"><ConnectedBubbles overlays={layer.overlays??[]} textMetrics={pageLayerTextMetrics(project,page,layer)}/> {(layer.overlays??[]).map(o=><SvgOverlay key={o.id} overlay={o} textMetrics={pageLayerTextMetrics(project,page,layer)} hideShape={bubbleGroups(layer.overlays??[]).some(g=>g.some(b=>b.id===o.id))}/>)}</svg>);
     // Non-scaling strokes stay proportional to the canonical 700px page at every DPI.

@@ -1,9 +1,12 @@
 import type { PanelImage } from "./adaptation/types";
+export function imageOrientationTransform(image: PanelImage) {
+  return [image.rotation ? `rotate(${image.rotation}deg)` : "", image.flipX || image.flipY ? `scale(${image.flipX ? -1 : 1}, ${image.flipY ? -1 : 1})` : ""].filter(Boolean).join(" ");
+}
 export function imageViewStyle(image: PanelImage) {
   return {
     objectFit: image.fit ?? "cover",
     objectPosition: image.positionMode === "frame" ? "50% 50%" : `${50+(image.offsetX??0)/2}% ${50+(image.offsetY??0)/2}%`,
-    transform: image.positionMode === "frame" ? (`translate(${image.offsetX??0}%, ${image.offsetY??0}%) scale(${image.zoom??1})` + (image.rotation ? ` rotate(${image.rotation}deg)` : "")) : (`scale(${image.zoom??1})` + (image.rotation ? ` rotate(${image.rotation}deg)` : "")),
+    transform: (image.positionMode === "frame" ? `translate(${image.offsetX??0}%, ${image.offsetY??0}%) scale(${image.zoom??1})` : `scale(${image.zoom??1})`) + (imageOrientationTransform(image) ? ` ${imageOrientationTransform(image)}` : ""),
   };
 }
 export function imagePlacement(image: PanelImage, width: number, height: number, naturalWidth: number, naturalHeight: number) {
@@ -32,6 +35,8 @@ export function normalizedImageRotation(degrees: number) {
 // Source pixels to frame coordinates, rotating around the positioned image centre.
 export function imageAffineTransform(image: PanelImage, placed: {x:number;y:number;width:number;height:number}, naturalWidth: number, naturalHeight: number) {
   const angle=(image.rotation??0)*Math.PI/180,c=Math.cos(angle),s=Math.sin(angle);
-  const sx=placed.width/naturalWidth,sy=placed.height/naturalHeight;
-  return {a:c*sx,b:s*sx,c:-s*sy,d:c*sy,e:placed.x+placed.width/2-c*placed.width/2+s*placed.height/2,f:placed.y+placed.height/2-s*placed.width/2-c*placed.height/2};
+  const sx=placed.width/naturalWidth*(image.flipX?-1:1),sy=placed.height/naturalHeight*(image.flipY?-1:1);
+  const a=c*sx,b=s*sx,mc=-s*sy,d=c*sy;
+  return {a,b,c:mc,d,e:placed.x+placed.width/2-a*naturalWidth/2-mc*naturalHeight/2,f:placed.y+placed.height/2-b*naturalWidth/2-d*naturalHeight/2};
 }
+

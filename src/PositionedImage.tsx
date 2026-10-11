@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import type { PanelImage } from "./adaptation/types";
-import { imagePlacement, imageViewStyle } from "./imageView";
+import { imagePlacement, imageViewStyle, imageOrientationTransform } from "./imageView";
 
 // Size the image element to the entire fitted original. Only its parent clips it.
 // Moving a frame-sized object-fit element would move an already cropped bitmap.
@@ -25,7 +25,8 @@ export function PositionedImage({ image, className }: { image: PanelImage; class
   let style: CSSProperties = imageViewStyle(image);
   if (size.source === image.dataUrl && size.width > 0 && size.height > 0 && size.naturalWidth > 0 && size.naturalHeight > 0) {
     const placed = imagePlacement(image, size.width, size.height, size.naturalWidth, size.naturalHeight);
-    style = { position: "absolute", inset: "auto", left: placed.x, top: placed.y, width: placed.width, height: placed.height, maxWidth: "none", maxHeight: "none", objectFit: "fill", transform: image.rotation ? `rotate(${image.rotation}deg)` : "none", transformOrigin: "center center" };
+    style = { position: "absolute", inset: "auto", left: placed.x, top: placed.y, width: placed.width, height: placed.height, maxWidth: "none", maxHeight: "none", objectFit: "fill", transform: imageOrientationTransform(image) || "none", transformOrigin: "center center" };
   }
   return <img ref={ref} className={className} src={image.dataUrl} alt="" draggable={false} onLoad={measure} style={style} />;
 }
+

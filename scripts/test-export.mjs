@@ -247,6 +247,21 @@ try {
     const centre={x:matrix.a*100+matrix.c*50+matrix.e,y:matrix.b*100+matrix.d*50+matrix.f};
     assert.ok(Math.abs(centre.x-(expected.x+expected.width/2))<1e-9);
     assert.ok(Math.abs(centre.y-(expected.y+expected.height/2))<1e-9);
+    for(const rotation of [0,30,-90])for(const flipX of [false,true])for(const flipY of [false,true]) {
+      const reflected={...exportImage,rotation,flipX,flipY};
+      const reflectedMatrix=view.imageAffineTransform(reflected,expected,200,100);
+      const map=(px,py)=>({x:reflectedMatrix.a*px+reflectedMatrix.c*py+reflectedMatrix.e,y:reflectedMatrix.b*px+reflectedMatrix.d*py+reflectedMatrix.f});
+      const center=map(100,50),corner=map(0,0),angle=rotation*Math.PI/180;
+      const dx=-expected.width/2*(flipX?-1:1),dy=-expected.height/2*(flipY?-1:1);
+      assert.ok(Math.abs(center.x-(expected.x+expected.width/2))<1e-9);
+      assert.ok(Math.abs(center.y-(expected.y+expected.height/2))<1e-9);
+      assert.ok(Math.abs(corner.x-(center.x+Math.cos(angle)*dx-Math.sin(angle)*dy))<1e-9);
+      assert.ok(Math.abs(corner.y-(center.y+Math.sin(angle)*dx+Math.cos(angle)*dy))<1e-9);
+      const flippedSvg=await pageSvg(project,{...positionedPage,placements:[{...layer,image:reflected}]},'',1);
+      if(flipX||flipY)assert.ok(flippedSvg.includes(`scale(${flipX?-1:1} ${flipY?-1:1})`),'SVG reflects the original about its positioned center');
+      else assert.ok(!flippedSvg.match(/<image[^>]+scale\(/));
+      assert.deepEqual(view.imagePlacement(reflected,layerBox.width-6,layerBox.height-6,200,100),expected,'flip leaves positioning/zoom unchanged');
+    }
     assert.equal(view.normalizedImageRotation(181),-179);
     assert.equal(view.normalizedImageRotation(-181),179);
     console.log('PASS: rotated SVG keeps the same image centre and clipping; affine IDML coordinates agree.');

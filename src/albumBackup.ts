@@ -59,6 +59,7 @@ function image(value: unknown) {
   string(value.name);
   string(value.dataUrl);
   if (value.rotation !== undefined) number(value.rotation);
+  for (const key of ["flipX", "flipY"]) if (value[key] !== undefined && typeof value[key] !== "boolean") throw new Error("invalid-backup");
 }
 export function parseAlbumBackup(input: unknown): ComicProject {
   record(input);

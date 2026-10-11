@@ -9,7 +9,7 @@ export function PanelImageControls({ image, locale, editing, onToggle, onRemove,
   editing: boolean;
   onToggle: () => void;
   onRemove: () => void;
-  onChange: (patch: { zoom?: number; rotation?: number; offsetX?: number; offsetY?: number }) => void;
+  onChange: (patch: { flipX?: boolean; flipY?: boolean; zoom?: number; rotation?: number; offsetX?: number; offsetY?: number }) => void;
   onReset: () => void;
 }) {
   const tr = (key: Parameters<typeof uiText>[1]) => uiText(locale, key);
@@ -28,7 +28,11 @@ export function PanelImageControls({ image, locale, editing, onToggle, onRemove,
       <label>{tr("zoom")} (%)<input type="number" min="10" max="400" step="5" value={Math.round((image.zoom ?? 1) * 100)} onChange={e => onChange({ zoom: Math.max(10, Math.min(400, Number(e.target.value) || 10)) / 100 })}/></label>
       <label>{tr("imageRotation")} (°)<input type="number" min="-180" max="180" step="1" value={image.rotation ?? 0} onChange={e => onChange({ rotation: normalizedImageRotation(Number(e.target.value) || 0) })}/></label>
     </div>
-    {editing ? <button className="secondary-button compact-button image-reset-button" type="button" onClick={onReset}>{tr("resetImageView")}</button> : null}
+    {editing ? <div className="image-transform-actions">
+      <button className="secondary-button compact-button" type="button" aria-pressed={!!image.flipX} onClick={() => onChange({ flipX: !image.flipX })}>{tr("flipImageHorizontal")}</button>
+      <button className="secondary-button compact-button" type="button" aria-pressed={!!image.flipY} onClick={() => onChange({ flipY: !image.flipY })}>{tr("flipImageVertical")}</button>
+      <button className="secondary-button compact-button image-reset-button" type="button" onClick={onReset}>{tr("resetImageView")}</button>
+    </div> : null}
     </div>
   </section>;
 }
