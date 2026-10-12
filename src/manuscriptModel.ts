@@ -7,6 +7,7 @@ import type {
 import { extractBeats } from "./adaptation/extract";
 import { panelForBeat } from "./adaptation/panelize";
 import { buildImagePrompt } from "./adaptation/prompts";
+import { newPanelStyleDirection } from "./stylesLibrary";
 
 export type TextRange = { start: number; end: number };
 const id = (prefix: string) => prefix + "-" + crypto.randomUUID();
@@ -70,6 +71,10 @@ export function withAdaptation(
   adaptation: StoryAdaptation,
 ): ComicProject {
   const sceneId = "scene-adaptation-" + adaptation.id;
+  const existing = new Set(project.adaptations.flatMap(a => a.panelPlans.map(p => p.id)));
+  adaptation = { ...adaptation, panelPlans: adaptation.panelPlans.map(panel =>
+    existing.has(panel.id) || panel.promptDirection ? panel : { ...panel, promptDirection: newPanelStyleDirection(project.style) }
+  ) };
   const sourcePanels = adaptation.panelPlans.map((plan) => {
     const previous = project.panels.find(
       (panel) => panel.adaptationPanelPlanId === plan.id,

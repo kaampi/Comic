@@ -5,6 +5,8 @@ export type ShotType = "wide" | "establishing-wide" | "medium" | "medium-close" 
 
 export type AlbumPromptStyle = { medium: string; lines: string; color: string; texture: string };
 export type PromptDirection = {
+  styleDefaultKeys?: string[];
+  styleDefaultName?: string;
   cameraAngle?: string;
   lens?: string;
   depthOfField?: string;

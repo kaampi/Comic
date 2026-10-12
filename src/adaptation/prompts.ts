@@ -20,6 +20,7 @@ export const LENSES = {
   "50mm": "Balanced natural perspective (50mm reference)",
   "85mm": "Compressed perspective (85mm reference), background appears closer",
   "200mm": "Strongly compressed perspective (200mm reference), flattened depth",
+  "35mm": "Moderately wide natural perspective (35mm reference)",
 };
 export const DEPTHS = {
   deep: "Deep depth of field, foreground and background remain sharp",
@@ -58,15 +59,16 @@ export function buildImagePrompt(project: ComicProject, panel: PanelPlan, mode: 
   const colorMode = resolveColorMode(project.style, project.renderOptions);
   const renderingMode = colorMode === "line-art" ? lineOnlyModifier : colorMode === "grayscale" ? grayscaleModifier : "";
   const direction = panel.promptDirection;
+  const panelMedium = project.style.genre === "Photographic" ? "Single photographic comic panel; preserve any imaginary subjects and exaggerated anatomy." : "Comic panel illustration.";
   const scene = [
-    "Comic panel illustration.",
+    panelMedium,
     panel.visualDescription.trim(),
     panel.shotType ? `Shot: ${panel.shotType}.` : "",
     panel.sizeHint ? `Composition should read clearly in a ${panel.sizeHint} comic panel.` : "",
     characterText(project, panel.characterIds) ? `Characters: ${characterText(project, panel.characterIds)}.` : "",
     locationText(project, panel.locationId) ? `Location: ${locationText(project, panel.locationId)}.` : ""
   ];
-  const global = project.promptStyle;
+  const global = project.promptStyle ?? project.style.promptModules;
   const style = [
     `Illustration style: ${text(global?.medium) || stylePromptForMode(project.style, colorMode)}`,
     text(global?.lines) ? `Lines, brushwork and form: ${text(global?.lines)}` : "",
@@ -91,7 +93,7 @@ export function buildImagePrompt(project: ComicProject, panel: PanelPlan, mode: 
       "-- MODULE 1: GLOBAL STYLE --", style, renderingMode,
       ...(camera.length ? ["-- MODULE 2: CAMERA & COMPOSITION --", ...camera, "Interpret perspective and focus within the chosen illustration style."] : []),
       ...(effects.length ? ["-- MODULE 3: SPECIAL EFFECTS --", `${effects.join(", ")}. Strength: ${direction?.effectStrength ?? "normal"}. Apply to: ${direction?.effectScope ?? "background"}. Preserve readability of faces and important objects; avoid duplicating textures already present in the album style.`] : []),
-      "-- MODULE 4: SUBJECT & ACTION --", "Comic panel illustration.", ...characters,
+      "-- MODULE 4: SUBJECT & ACTION --", panelMedium, ...characters,
       `Action and staging: ${text(panel.visualDescription)}`,
       location ? `Environment: ${location}` : "",
       text(direction?.lighting) ? `Scene lighting: ${text(direction?.lighting)}` : "",

@@ -9,7 +9,7 @@ import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
 import { ColorModeSelect } from "./ColorModeSelect";
 import { renderOptionsForStyle } from "./styleColorMode";
-import type { IllustrationStyle } from "./stylesLibrary";
+import { albumStyleModules, styleGroupLabel, type IllustrationStyle } from "./stylesLibrary";
 import { OverlayDefaultsEditor } from "./OverlayDefaultsEditor";
 import {
   albumBackupFilename,
@@ -255,7 +255,7 @@ export function AlbumMenu({
                   <p className="quiet">{sv ? "Gäller nya och omskapade bildprompter i albumet. Sparade prompter ändras inte automatiskt. Färg och skuggning används i färgläget." : "Applies to new and regenerated image prompts in this album. Saved prompts are not automatically changed. Color and shading apply in color mode."}</p>
                   {(["medium", "lines", "color", "texture"] as const).map((key, i) => <label key={key}>
                     {(sv ? ["Konstform & medium", "Linjer & former", "Färg & skuggning", "Ytstruktur & finish"] : ["Art form & medium", "Lines & form", "Color & shading", "Texture & finish"])[i]}
-                    <textarea rows={key === "medium" ? 4 : 2} value={project.promptStyle?.[key] ?? (key === "medium" ? project.style.promptText : "")} onChange={e => onUpdate(p => ({ ...p, promptStyle: { medium: p.style.promptText, lines: "", color: "", texture: "", ...p.promptStyle, [key]: e.target.value } }))} />
+                    <textarea rows={key === "medium" ? 4 : 2} value={(project.promptStyle ?? albumStyleModules(project.style))[key]} onChange={e => onUpdate(p => ({ ...p, promptStyle: { ...albumStyleModules(p.style), ...p.promptStyle, [key]: e.target.value } }))} />
                   </label>)}
                   <button type="button" className="text-button" onClick={() => onUpdate(p => ({ ...p, promptStyle: undefined }))}>{sv ? "Använd stilens standard" : "Use style defaults"}</button>
                 </details>

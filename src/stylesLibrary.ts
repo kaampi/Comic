@@ -1,98 +1,142 @@
 import { PAINTERLY_STYLES } from "./painterlyStyles";
 import type { ColorMode } from "./styleColorMode";
+import type { AlbumPromptStyle, PromptDirection } from "./adaptation/types";
 
 export type IllustrationStyle = {
-  id: string;
-  name: string;
-  promptText: string;
-  genre: string;
-  previewImage?: string;
-  linePreviewImage?: string;
+  id: string; name: string; promptText: string; genre: string;
+  previewImage?: string; linePreviewImage?: string;
   supportedColorModes?: ColorMode[];
   modePromptText?: Partial<Record<ColorMode, string>>;
   decorativeSeals?: boolean;
+  visualReferences?: string[];
+  promptModules?: AlbumPromptStyle;
+  panelDefaults?: Pick<PromptDirection, "lens" | "depthOfField" | "effects" | "effectStrength" | "effectScope">;
 };
 
+export const STYLE_GROUPS = ["European Comics", "Manga & Japanese Drawing", "Modern Comics", "Painting", "Drawing & Print", "Collage & Graphic Illustration", "Photographic"] as const;
+export function styleGroupLabel(group: string, locale: string): string {
+  const labels = ["Europeiska serier", "Manga & japansk teckning", "Modern serieteckning", "Måleri", "Teckning & tryck", "Collage & grafisk illustration", "Fotografisk återgivning"];
+  const index = STYLE_GROUPS.indexOf(group as typeof STYLE_GROUPS[number]);
+  return locale === "sv" && index >= 0 ? labels[index] : group;
+}
+const sceneRule = "Preserve the requested characters, species, distinctive anatomy, proportions, actions, emotions, objects, setting and story period. Apply this visual language without adding unrelated subjects or locations. No speech bubbles, captions or lettering.";
+function profile(id: string, name: string, genre: string, medium: string, lines: string, color: string, texture: string, panelDefaults?: IllustrationStyle["panelDefaults"]): IllustrationStyle {
+  const promptModules = { medium: medium + "\n" + sceneRule, lines, color, texture };
+  const base = [medium, lines, texture, sceneRule].filter(Boolean).join("\n");
+  return { id, name, genre, promptModules, panelDefaults, supportedColorModes: ["color", "grayscale", "line-art"],
+    promptText: [base, color].join("\n"), modePromptText: {
+      color: [base, color].join("\n"),
+      grayscale: base + "\nRender in black, white and neutral grayscale. Translate the shading technique into tonal values; no color or tinted paper.",
+      "line-art": [medium, lines, sceneRule, "Render as uncolored black ink contours and appropriate hatching on white paper. No painted fills, color or gray washes."].join("\n"),
+    } };
+}
+
+const classicReferences: Record<string, string[]> = {
+  "fb-1": ["Hergé / ligne claire"], "eu-rounded-caricature": ["Uderzo / Asterix"],
+  "eu-economical-figures": ["Morris / Lucky Luke"], "anchor-2": ["Franquin / Spirou"], "er-1": ["Manara"],
+};
+const retainedPreviewAssets: Record<string, { previewImage?: string; linePreviewImage?: string }> = {
+  "fb-1": {
+    "previewImage": "/Styles/Franco_Belgian/thumb_ligne_claire.jpg",
+    "linePreviewImage": "/Styles/Franco_Belgian/thumb_ligne_claire_lines.jpg"
+  },
+  "er-1": {
+    "previewImage": "/Styles/European_realist/thumb_elegant_european_realism.jpg",
+    "linePreviewImage": "/Styles/European_realist/thumb_elegant_european_realism_lines.jpg"
+  },
+  "noir-1": {
+    "previewImage": "/Styles/Crime_Noir/thumb_european_noir.jpg",
+    "linePreviewImage": "/Styles/Crime_Noir/thumb_european_noir_lines.jpg"
+  },
+  "hum-3": {
+    "previewImage": "/Styles/Humour_all_ages/childrens_comic_style.jpg",
+    "linePreviewImage": "/Styles/Humour_all_ages/thumb_childrens_comic_style_lines.jpg"
+  },
+  "am-1": {
+    "previewImage": "/Styles/American_modern/thumb_american_modern_comic.jpg",
+    "linePreviewImage": "/Styles/American_modern/thumb_american_modern_comic_lines.jpg"
+  },
+  "am-2": {
+    "previewImage": "/Styles/American_modern/thumb_indie_graphic_novel.jpg",
+    "linePreviewImage": "/Styles/American_modern/thumb_indie_graphic_novel_lines.jpg"
+  },
+  "am-3": {
+    "previewImage": "/Styles/American_modern/thumb_modern_action_comic.jpg",
+    "linePreviewImage": "/Styles/American_modern/thumbs_modern_action_comic_lines.jpg"
+  },
+  "manga-1": {
+    "previewImage": "/Styles/Manga/thumb_classic_shonen_manga.jpg"
+  },
+  "manga-5": {
+    "previewImage": "/Styles/Manga/thumb_historical_samurai_manga.jpg",
+    "linePreviewImage": "/Styles/Manga/thumb_historical_samurai_manga_lines.jpg"
+  },
+  "manga-6": {
+    "previewImage": "/Styles/Manga/thumb_japanese_seinen_manga.jpg"
+  },
+  "manga-10": {
+    "previewImage": "/Styles/Manga/thumb_shojo_romance_manga.jpg"
+  },
+  "jp-1": {
+    "previewImage": "/Styles/Japanese/thumb_chibi_super_deformed.jpg",
+    "linePreviewImage": "/Styles/Japanese/thumb_chibi_super_deformed_lines.jpg"
+  },
+  "jp-2": {
+    "previewImage": "/Styles/Japanese/thumb_gekiga.jpg",
+    "linePreviewImage": "/Styles/Japanese/thumb_gekiga_lines.jpg"
+  },
+  "anchor-2": {
+    "previewImage": "/Styles/Franco_Belgian/thumb_dynamic_marcinelle_classic.jpg",
+    "linePreviewImage": "/Styles/Franco_Belgian/thumb_dynamic_marcinelle_classic_lines.jpg"
+  }
+};
+
+// Groups describe the medium and drawing language, never the story genre.
+// Existing album snapshots and custom styles are deliberately not migrated.
 export const BUILTIN_STYLES: IllustrationStyle[] = [
-["fb-1","Ligne claire adventure","Franco-Belgian","classic ligne claire comic style, clean even linework, highly readable drawing, flat and controlled colors, crisp contours, minimal hatching, elegant simplified forms, clear perspective, charming European adventure atmosphere, detailed but uncluttered backgrounds, timeless all-ages comic album feel, single comic panel illustration, strong visual storytelling, readable character silhouettes, expressive faces, clear staging, no speech bubbles, no captions, no text","/Styles/Franco_Belgian/thumb_ligne_claire.jpg","/Styles/Franco_Belgian/thumb_ligne_claire_lines.jpg"],
-["fb-2","Marcinelle dynamic cartoon","Franco-Belgian","dynamic Marcinelle-school comic style, energetic brush-like linework, lively exaggerated poses, elastic character acting, playful facial expressions, warm vibrant colors, fluid movement, rich but readable background drawing, humorous European adventure comic feeling, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Franco_Belgian/thumb_marcinelle_dynamic_cartoon.jpg","/Styles/Franco_Belgian/thumb_marcinelle_dynamic_cartoon_lines.jpg"],
-["fb-3","Classic European album","Franco-Belgian","classic Franco-Belgian comic album style, balanced composition, clean storytelling, expressive characters, strong environmental drawing, soft flat colors with light shading, readable adventure-comedy tone, polished line art, elegant European comic presentation, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Franco_Belgian/thumb_classic_european.jpg","/Styles/Franco_Belgian/thumb_classic_european_lines.jpg"],
-["fb-4","Humorous Belgian adventure","Franco-Belgian","humorous Belgian adventure comic style, expressive cartoon realism, dynamic linework, friendly exaggeration, colorful and inviting palette, strong comedic timing, lively body language, well-drawn interiors and city backgrounds, classic serialized comic energy, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Franco_Belgian/thumb_humorous_belgian_adventure.jpg","/Styles/Franco_Belgian/thumb_humorous_belgian_adventure_lines.jpg"],
+  profile("fb-1", "Ligne claire", "European Comics", "Clear-line 2D comic illustration.", "Precise, uniform ink contours, minimal hatching, simplified expressive faces and carefully constructed environments. Consistent readable forms and clear silhouettes.", "Flat clean local colors, restrained tonal modeling and clear separation of adjacent shapes.", "Smooth ink and clean printed finish."),
+  profile("eu-rounded-caricature", "Rounded expressive caricature", "European Comics", "Hand-inked 2D caricature comic illustration.", "Rounded sculptural shapes, compact character proportions, large expressive features and supple variable-weight brush contours. Lively gestures and detailed but readable scenery. Interpret the specified emotions through expressive exaggeration.", "Rich flat colors with selective simple shadows.", "Crisp hand-inked contours and a restrained printed texture."),
+  profile("eu-economical-figures", "Economical elongated cartoon", "European Comics", "Minimal, graphic hand-drawn comic illustration.", "Economical fluid contours, elongated stylized figures, spare facial marks and strongly readable silhouettes. Angular and curved shapes alternate; simplified objects and environments keep the scene readable.", "Broad flat color areas with selective bold color separation and minimal modeling.", "Clean matte printed finish."),
+  profile("anchor-2", "Elastic brush-ink cartoon", "European Comics", "Expressive European brush-ink comic illustration.", "Springy gestural drawing, elastic poses, asymmetrical shapes and energetic thick-to-thin brush contours. Expressive hands and faces; intricate but legible object drawing and environmental detail.", "Vibrant controlled local colors with sparse simple shadows.", "Visible hand-inked variation, clean printed color fills."),
+  profile("er-1", "Elegant fine-line realism", "European Comics", "Elegant naturalistic fine-line comic illustration.", "Fine flowing contours, delicate contour variation, carefully observed anatomy, supple gestures, subtle facial acting and selective interior detail. Preserve the specified character age, anatomy and expression.", "Soft transparent local colors, nuanced skin or surface tones and restrained modeling.", "Delicate ink with a lightly washed paper finish."),
+  profile("manga-1", "Dynamic manga ink", "Manga & Japanese Drawing", "Expressive manga ink illustration.", "Decisive variable-weight contours, angular accents, expressive faces, readable silhouettes and bold shape simplification. Exaggeration follows the requested action and emotion.", "Controlled flat colors and crisp cel-shading.", "Clean ink with selective fine hatching.", { effects: ["speed_lines"], effectStrength: "subtle", effectScope: "background" }),
+  profile("manga-6", "Naturalistic manga", "Manga & Japanese Drawing", "Naturalistic manga drawing.", "Carefully observed proportions, controlled fine contours, subtle facial acting, selective dense cross-hatching and detailed environment drawing. Strong separation of light and dark masses.", "Restrained local colors with tonal shading translated from ink structure.", "Fine printed ink, hatching and subtle paper grain."),
+  profile("manga-10", "Airy fine-line manga", "Manga & Japanese Drawing", "Delicate fine-line manga illustration.", "Fine tapered contours, large expressive eyes, graceful stylization and airy spacing. Detail is concentrated on the focal characters while supporting forms remain light. Expressions follow the specified emotion.", "Light transparent colors with soft value transitions.", "Fine clean ink and a delicate paper finish."),
+  profile("manga-5", "Gestural brush manga", "Manga & Japanese Drawing", "Manga illustration with expressive brush calligraphy.", "Broad-to-fine sweeping ink contours, selectively broken dry-brush edges, strong black shape accents and textured hatching. Gestural anatomy and deliberate expressive silhouettes.", "Restrained color areas supporting the ink structure.", "Tactile brush ink and visible paper tooth."),
+  profile("jp-2", "Raw realist ink", "Manga & Japanese Drawing", "Raw expressive realist ink illustration.", "Rough hand-drawn contours, heavy black masses, dense irregular hatching and selectively detailed faces and surfaces. Preserve the requested expressions rather than imposing a dramatic mood.", "A limited palette with strong value separation.", "Rough ink edges and lightly textured paper."),
+  profile("jp-1", "Chibi proportions", "Manga & Japanese Drawing", "Super-deformed cartoon illustration.", "Very large heads, compact small bodies, simple readable limbs and oversized expressive facial features. Bold clean contours and sparse supporting detail. Preserve character identity, age cues, species and specified emotions through stylization.", "Clear flat colors with simple cel-shading.", "Clean digital ink and matte color."),
+  profile("am-1", "Polished digital comic", "Modern Comics", "Polished digital comic illustration.", "Confident controlled contours, selectively varied line weights, readable anatomy and clear environmental drawing. Fine detail balanced with strong silhouettes.", "Polished digital local colors with layered tonal modeling and crisp shadow boundaries where appropriate.", "Smooth professional digital finish without plastic-looking surfaces."),
+  profile("am-3", "Bold sculptural comic", "Modern Comics", "Bold sculptural comic illustration.", "Strong tapered ink, emphatic planes, sculptural anatomy and exaggerated readable forms. Selective detail and decisive contour accents make hands, faces and objects legible.", "Strong color separation, broad shadow masses and crisp tonal planes.", "Crisp heavy ink and smooth matte coloring."),
+  profile("am-2", "Loose indie drawing", "Modern Comics", "Loose expressive hand-drawn comic illustration.", "Uneven personal-looking contours, simplified idiosyncratic shapes, economical facial marks and selective sketch detail. Acting and gesture follow the scene rather than a prescribed genre.", "A limited intentional palette with flat or lightly washed fills.", "Visible hand-drawn irregularity and modest paper grain."),
+  profile("noir-1", "High-contrast graphic ink", "Modern Comics", "High-contrast graphic comic illustration.", "Controlled outlines, large solid black shapes, selective fine hatching and readable silhouettes. Represent the requested lighting through decisive light and dark design without imposing night or a particular environment.", "Restrained local colors with strong value contrasts.", "Matte ink with crisp graphic shadow shapes."),
+  profile("hum-3", "Soft rounded cartoon", "Modern Comics", "Accessible rounded cartoon illustration.", "Soft rounded forms, clear facial features, gently exaggerated proportions and uncluttered readable shapes. Friendly visual language accommodates happiness, fear, anger, grief and other requested emotions.", "Bright soft colors, simple shading and clear separation of forms.", "Clean matte illustration finish."),
+  profile("ink-nervous-caricature", "Nervous caricature ink", "Modern Comics", "Expressive caricature ink illustration.", "Nervous uneven contours, angular elongated shapes, exaggerated facial features, elastic poses and deliberately skewed but readable objects. Fine short hatching and stippling contrast with large solid black areas. Expressions follow the requested emotion.", "Limited flat colors organized around the black ink structure.", "Handmade ink irregularities, selective scratch marks and fine stippling."),
+  ...PAINTERLY_STYLES.map(style => ({ ...style, genre: style.genre === "Drawing / Print" ? "Drawing & Print" : "Painting" })),
+  profile("draw-colored-pencil", "Colored pencil & wax crayon", "Drawing & Print", "Layered colored-pencil and wax-crayon illustration on paper.", "Grainy overlapping strokes, selectively reinforced outlines and simplified readable forms. Directional marks describe surfaces and volumes.", "Layered translucent pencil colors with denser wax accents and visible unfilled paper grain.", "Visible paper tooth, broken pigment marks and waxy stroke texture."),
+  profile("print-woodcut", "Woodcut & linocut", "Drawing & Print", "Hand-carved woodcut or linocut print illustration.", "Strong cut contours, bold positive and negative shapes, irregular gouged lines and selective parallel carved hatching.", "A small number of broad spot-color areas with solid ink masses.", "Uneven ink coverage, subtle carved edge variation and absorbent paper."),
+  profile("print-risograph", "Risograph overprint", "Drawing & Print", "Risograph-style stencil print illustration.", "Simplified drawn forms and readable layers with restrained edge misregistration.", "Two or three translucent spot inks with visible overprints, granular tonal areas and small registration offsets. Keep faces and essential objects legible.", "Soy-ink-like grain, uneven ink density and matte paper."),
+  profile("draw-scratchboard", "Scratchboard", "Drawing & Print", "Scratchboard illustration worked into a dark coated surface.", "Fine light scratches define forms against large dark masses. Directional carved hatching, sharp highlights and selective intricate detail.", "Restrained tinted accents over the dark-and-light structure.", "Incised scratch marks and a matte dark ground."),
+  profile("print-engraving", "Fine-line engraving", "Drawing & Print", "Fine-line engraving illustration.", "Precise closely spaced lines and curved cross-hatching follow forms. Controlled line density builds tone; sharply defined details contrast with open paper highlights.", "Restrained translucent color washes over the engraved line structure.", "Fine printed marks and subtle paper fibers."),
+  profile("paint-gouache", "Stylized matte gouache", "Painting", "Opaque matte gouache illustration.", "Simplified modeled volumes, soft painted contour edges and selective dry-brush accents. Forms remain readable without ink outlines.", "Opaque color shapes, restrained layered tonal planes and soft painterly color transitions.", "Matte pigment, visible brush edges and lightly textured paper."),
+  profile("collage-cut-paper", "Cut-paper collage", "Collage & Graphic Illustration", "Layered cut-paper collage illustration.", "Characters and objects built from cut and torn shapes, deliberate overlaps and simplified readable silhouettes.", "Colored paper areas with visible translucent or opaque layering.", "Paper fibers, torn edges and small contact shadows between physical paper layers."),
+  profile("graphic-geometric", "Flat geometric illustration", "Collage & Graphic Illustration", "Flat geometric graphic illustration.", "Simple circles, curves and angular shapes construct figures and objects. Economical features, clear silhouettes and sparse detail.", "A controlled palette of flat color areas with minimal tonal modeling.", "Clean matte graphic surfaces."),
+  profile("photo-natural", "Natural photographic rendering", "Photographic", "Photographic rendering of the requested scene, including imaginary or exaggerated subjects.", "Convincing fine surface detail, material response and continuous tonal modeling. Preserve the specified anatomy, species and exaggerated proportions exactly; do not normalize fantastical designs into ordinary humans or animals.", "Natural local colors and believable tonal relationships under the specified lighting.", "Convincing photographic surface detail without a prescribed camera or optical effect."),
+  profile("photo-analog", "Analog film rendering", "Photographic", "Analog-film photographic rendering of the requested scene, including imaginary subjects.", "Convincing photographic materials and continuous tonal modeling. Retain the specified anatomy, species, exaggerated proportions and design.", "Gentle film-like tonal roll-off, subtle hue shifts and restrained saturation, respecting the specified lighting.", "Fine analog film grain and a tactile photographic finish."),
+  profile("photo-cinematic", "Cinematic photographic rendering", "Photographic", "Cinematic photographic rendering of the requested scene, including unreal or exaggerated subjects.", "Convincing material detail, controlled tonal hierarchy and readable surface modeling. Preserve requested anatomy, species and proportions without normalization.", "Coherent film-like color grading and controlled highlight roll-off while preserving scene colors, time of day and lighting.", "Polished photographic detail with restrained fine grain."),
+].map(style => ({ ...style, ...retainedPreviewAssets[style.id], ...(classicReferences[style.id] ? { visualReferences: classicReferences[style.id] } : {}) })).map(style => style.genre === "Photographic" ? { ...style, supportedColorModes: ["color", "grayscale"] as ColorMode[] } : style);
 
-["er-1","Elegant European realism","European Realist","elegant European realistic comic style, refined naturalistic anatomy, graceful body language, soft sensual linework, expressive eyes and subtle facial emotion, sophisticated lighting, warm painterly color palette, stylish interiors and urban backgrounds, mature European comic album atmosphere, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/European_realist/thumb_elegant_european_realism.jpg","/Styles/European_realist/thumb_elegant_european_realism_lines.jpg"],
-["er-2","Painterly European realism","European Realist","painterly European comic realism, controlled naturalistic drawing, soft brush rendering, nuanced skin tones, atmospheric lighting, rich textures, realistic environments, cinematic mood, mature graphic novel presentation, balanced realism and illustration, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/European_realist/thumb_painterly_european_realism.jpg","/Styles/European_realist/thumb_painterly_european_realism_lines.jpg"],
-["er-3","Historical realistic album","European Realist","realistic European historical comic style, careful period detail, believable anatomy, richly researched costume and architecture, subtle ink linework, natural color palette, restrained shading, elegant album-style storytelling, immersive historical atmosphere, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/European_realist/thumb_historical_realistic_album.jpg","/Styles/European_realist/thumb_historical_realistic_album_lines.jpg"],
-["er-4","Naturalistic drama comics","European Realist","naturalistic European drama comic style, believable human proportions, subtle expressions, emotional realism, soft contour line, muted yet rich colors, realistic domestic and city settings, intimate mature storytelling, refined graphic novel aesthetic, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/European_realist/thumb_naturalistic_drama_comics.jpg"],
-
-["adv-1","Cinematic pulp adventure","Adventure","cinematic adventure comic style, bold compositions, dramatic lighting, energetic staging, expressive action poses, strong environmental storytelling, pulpy excitement, crisp linework, vivid colors, high readability, fast-paced serialized adventure atmosphere, single comic panel illustration, no speech bubbles, no captions, no text"],
-["adv-2","Expedition adventure","Adventure","expedition adventure comic style, rugged explorers, strong sense of place, richly drawn landscapes, practical costume detail, adventurous mood, dynamic framing, clean ink linework, natural but vibrant palette, classic treasure-hunt storytelling, single comic panel illustration, no speech bubbles, no captions, no text"],
-["adv-3","Swashbuckling action comic","Adventure","swashbuckling comic adventure style, energetic sword-and-chase action, dramatic gestures, dynamic perspective, crisp lines, colorful storytelling, lively movement, theatrical staging, classic serial adventure feeling, single comic panel illustration, no speech bubbles, no captions, no text"],
-["adv-4","Young-adult adventure comic","Adventure","accessible young-adult comic adventure style, expressive but readable faces, clean line art, bright colors, inviting world-building, clear action storytelling, adventurous spirit, polished panel-friendly composition, all-ages appeal, single comic panel illustration, no speech bubbles, no captions, no text"],
-
-["noir-1","European noir","Noir / Crime","European noir comic style, moody shadows, restrained color palette, dramatic contrast, realistic urban environments, trench-coat detective atmosphere, subtle facial tension, cinematic framing, sophisticated crime-story mood, graphic storytelling with controlled linework, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Crime_Noir/thumb_european_noir.jpg","/Styles/Crime_Noir/thumb_european_noir_lines.jpg"],
-["noir-2","Hardboiled crime comic","Noir / Crime","hardboiled crime comic style, sharp ink shadows, gritty city texture, tense staging, cold urban lighting, muted colors with occasional strong accents, realistic faces, tough atmosphere, classic detective and underworld storytelling, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Crime_Noir/thumb_hardboiled_crime_comic.jpg","/Styles/Crime_Noir/thumb_hardboiled_crime_comic_lines.jpg"],
-["noir-3","Retro detective serial","Noir / Crime","retro detective comic serial style, clean but shadow-heavy drawing, smoky interiors, night streets, moody lamps and reflections, period crime atmosphere, elegant composition, readable pulp-noir storytelling, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Crime_Noir/thumb_retro_detective_serial.jpg","/Styles/Crime_Noir/thumb_retro_detective_serial_lines.jpg"],
-["noir-4","Neo-noir thriller","Noir / Crime","neo-noir comic style, modern crime-thriller mood, deep blacks, selective neon accents, cinematic tension, angular framing, realistic urban detail, expressive restrained acting, dark contemporary graphic novel look, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Crime_Noir/thumb_neo_noir_thriller.jpg","/Styles/Crime_Noir/thumb_neo_noir_thriller_lines.jpg"],
-
-["fan-1","European fantasy album","Fantasy","European fantasy comic album style, elegant linework, imaginative world-building, magical atmosphere, richly detailed costumes and architecture, balanced colors, readable fantasy storytelling, polished illustrated-comic look, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Fantasy/thumb_european_fantasy_album.jpg","/Styles/Fantasy/thumb_european_fantasy_album_lines.jpg"],
-["fan-2","Sword and sorcery comic","Fantasy","sword and sorcery comic style, bold fantasy action, muscular heroic staging, dramatic poses, vivid color contrasts, rugged environments, ancient ruins and taverns, energetic adventure-comic feel, pulpy fantasy atmosphere, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Fantasy/thumb_sword_and_sorcery_comic.jpg","/Styles/Fantasy/thumb_sword_and_sorcery_comic_lines.jpg"],
-["fan-3","Dark fantasy comic","Fantasy","dark fantasy comic style, ominous atmosphere, textured linework, dramatic shadows, cold and moody palette, eerie environments, mystical tension, mature fantasy storytelling, detailed gothic world-building, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Fantasy/thumb_dark_fantasy_comic.jpg","/Styles/Fantasy/thumb_dark_fantasy_comic_lines.jpg"],
-["fan-4","Mythic watercolor fantasy","Fantasy","mythic fantasy comic style, soft painterly rendering, luminous magical light, delicate textures, graceful character design, dreamlike atmosphere, ornate natural scenery, poetic European fantasy graphic novel aesthetic, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Fantasy/thumb_mythic_watercolor_fantasy.jpg","/Styles/Fantasy/thumb_mythic_watercolor_fantasy_lines.jpg"],
-
-["sf-1","Clean sci-fi adventure","Sci-fi","clean science-fiction comic style, readable futuristic design, sleek technology, crisp linework, controlled flat colors with subtle shading, adventurous space-age atmosphere, clear storytelling, polished classic sci-fi album feel, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Sci-Fi/thumb_clean_sci_fi_adventure.jpg","/Styles/Sci-Fi/thumb_clean_sci_fi_adventure_lines.jpg"],
-["sf-2","Space opera comic","Sci-fi","space opera comic style, dramatic interstellar atmosphere, heroic staging, colorful cosmic environments, elegant spacecraft design, cinematic scale, vibrant lighting, high-adventure science-fiction storytelling, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Sci-Fi/thumb_space_opera_comic.jpg","/Styles/Sci-Fi/thumb_space_opera_comic_lines.jpg"],
-["sf-3","Cyberpunk comic","Sci-fi","cyberpunk comic style, dense urban future, neon reflections, gritty technology, moody atmosphere, layered city detail, strong silhouettes, dramatic contrast, contemporary science-fiction graphic novel tone, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Sci-Fi/thumb_cyberpunk_comic.jpg","/Styles/Sci-Fi/thumb_cyberpunk_comic_lines.jpg"],
-["sf-4","Retro-futurist comic","Sci-fi","retro-futurist comic style, vintage future design, streamlined machines, bold graphic clarity, optimistic old-school science-fiction mood, clean illustration, bright controlled colors, classic magazine-and-comic hybrid feeling, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Sci-Fi/thumb_retro_futurist_comic.jpg","/Styles/Sci-Fi/thumb_retro_futurist_comic_lines.jpg"],
-
-["hum-1","Expressive cartoon humor","Humor / All Ages","expressive cartoon comic style, playful linework, exaggerated acting, strong clarity, cheerful colors, humorous timing, bouncy poses, friendly character design, all-ages comic readability, lively fun atmosphere, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Humour_all_ages/thumb_expressive_cartoon_humor.jpg","/Styles/Humour_all_ages/thumb_expressive_cartoon_humor_lines.jpg"],
-["hum-2","Family adventure comics","Humor / All Ages","family-friendly adventure comic style, warm inviting palette, clear storytelling, appealing character design, lively but gentle humor, expressive faces, charming backgrounds, all-ages album presentation, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Humour_all_ages/thumb_family_adventure_comic.jpg","/Styles/Humour_all_ages/thumb_family_adventure_comic_lines.jpg"],
-["hum-3","Children's comic style","Humor / All Ages","children's comic illustration style, rounded friendly forms, simple readable composition, bright soft colors, happy atmosphere, clear expressions, playful energy, easy-to-read visual storytelling, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Humour_all_ages/childrens_comic_style.jpg","/Styles/Humour_all_ages/thumb_childrens_comic_style_lines.jpg"],
-["hum-4","Funny slice-of-life comic","Humor / All Ages","light comedic slice-of-life comic style, relatable acting, expressive body language, soft clean linework, warm everyday colors, charming domestic or street environments, friendly humorous tone, approachable visual storytelling, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Humour_all_ages/thumb_funny_slice_of_life_comic.jpg","/Styles/Humour_all_ages/thumb_funny_slice_of_life_comic_lines.jpg"],
-
-["am-1","Modern mainstream comics","American / Modern Comics","modern mainstream comic style, dynamic composition, confident linework, polished digital coloring, bold contrast, expressive characters, cinematic action framing, contemporary commercial comic-book finish, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/American_modern/thumb_american_modern_comic.jpg","/Styles/American_modern/thumb_american_modern_comic_lines.jpg"],
-["am-2","Indie graphic novel","American / Modern Comics","modern indie graphic novel style, slightly loose linework, personal expressive drawing, grounded acting, limited but intentional color palette, intimate storytelling, contemporary literary comic feel, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/American_modern/thumb_indie_graphic_novel.jpg","/Styles/American_modern/thumb_indie_graphic_novel_lines.jpg"],
-["am-3","Modern action comic","American / Modern Comics","modern action-comic style, dramatic anatomy, dynamic foreshortening, punchy composition, bold lighting, energetic linework, strong color separation, heightened but readable visual storytelling, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/American_modern/thumb_modern_action_comic.jpg","/Styles/American_modern/thumbs_modern_action_comic_lines.jpg"],
-["am-4","Contemporary webcomic polish","American / Modern Comics","contemporary polished webcomic style, clean digital line art, appealing character design, crisp coloring, strong readability, expressive faces, modern visual rhythm, accessible and commercial comic presentation, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/American_modern/thumb_contemporary_webcomic.jpg","/Styles/American_modern/thumb_contemporary_webcomic_lines.jpg"],
-
-["manga-1","Classic shōnen manga","Manga","dynamic Japanese shōnen manga style, energetic black ink linework, expressive faces, strong action poses, clear silhouettes, dramatic perspective, speed-line energy, bold shapes, vivid controlled colors, fast-paced visual storytelling, detailed but readable backgrounds, polished manga illustration, no speech bubbles, no captions, no text","/Styles/Manga/thumb_classic_shonen_manga.jpg"],
-["manga-2","Comedy manga","Manga","Japanese comedy manga style, energetic cartoon linework, exaggerated reactions, elastic facial expressions, playful poses, fast visual timing, expressive motion effects, bold readable shapes, lively color, strong comedic staging, no speech bubbles, no captions, no text","/Styles/Manga/thumb_comedy_manga.jpg"],
-["manga-3","Cyberpunk manga","Manga","Japanese cyberpunk comic style, dense futuristic city environments, gritty technology, cables and layered architecture, sharp technical linework, noir atmosphere, dramatic shadows, strong silhouettes, neon color accents, high-detail dystopian manga feeling, no speech bubbles, no captions, no text","/Styles/Manga/thumb_cyberpunk_manga.jpg","/Styles/Manga/thumb_cyberpunk_manga_lines.jpg"],
-["manga-4","Dark supernatural manga","Manga","dark Japanese supernatural manga style, heavy black ink, eerie shadows, dense cross-hatching, unsettling environments, dramatic silhouettes, occult atmosphere, distorted perspective, intense expressions, high-contrast rendering, detailed gothic and urban backgrounds, no speech bubbles, no captions, no text","/Styles/Manga/thumb_dark_supernatural_manga.jpg","/Styles/Manga/thumb_dark_supernatural_manga_lines.jpg"],
-["manga-5","Historical samurai manga","Manga","Japanese historical samurai comic style, expressive brush-like ink lines, accurate traditional clothing and architecture, dramatic sword poses, restrained but powerful character acting, strong black shapes, textured hatching, cinematic period composition, grounded historical atmosphere, no speech bubbles, no captions, no text","/Styles/Manga/thumb_historical_samurai_manga.jpg","/Styles/Manga/thumb_historical_samurai_manga_lines.jpg"],
-["manga-6","Seinen realistic manga","Manga","realistic Japanese seinen manga style, mature naturalistic anatomy, restrained facial expressions, detailed environments, grounded acting, strong value structure, controlled cross-hatching, realistic clothing and architecture, cinematic framing, serious adult graphic storytelling, no speech bubbles, no captions, no text","/Styles/Manga/thumb_japanese_seinen_manga.jpg"],
-["manga-7","Josei drama manga","Manga","mature Japanese josei manga style, elegant naturalistic linework, subtle emotional expressions, believable adult proportions, intimate urban and domestic settings, refined composition, nuanced body language, sophisticated contemporary drama tone, no speech bubbles, no captions, no text","/Styles/Manga/thumb_josei_drama_manga.jpg"],
-["manga-8","Mecha manga","Manga","Japanese mecha manga style, highly detailed mechanical design, precise technical linework, complex robot joints and armor panels, dynamic battle staging, dramatic perspective, industrial environments, speed effects, crisp contrast, polished science-fiction manga finish, no speech bubbles, no captions, no text","/Styles/Manga/thumb_mecha_manga.jpg","/Styles/Manga/thumb_mecha_manga_lines.jpg"],
-["manga-9","Retro 80s/90s manga","Manga","retro Japanese manga style inspired by 1980s and 1990s print comics, analog-looking ink lines, classic screentones, detailed machinery and city backgrounds, period character design, strong contrast, hand-drawn production feel, cinematic action composition, nostalgic serialized manga atmosphere, no speech bubbles, no captions, no text","/Styles/Manga/thumb_retro_manga.jpg","/Styles/Manga/thumb_retro_manga_lines.jpg"],
-["manga-10","Shōjo romance manga","Manga","elegant Japanese shōjo manga style, delicate fine linework, expressive eyes, graceful faces, soft body language, romantic visual rhythm, decorative floral and light effects, airy backgrounds, emotional character focus, refined rendering, no speech bubbles, no captions, no text","/Styles/Manga/thumb_shojo_romance_manga.jpg"],
-["manga-11","Slice-of-life manga","Manga","Japanese slice-of-life manga style, clean friendly linework, natural everyday poses, subtle facial expressions, detailed domestic and neighborhood settings, quiet visual rhythm, warm human atmosphere, light controlled shading, readable contemporary manga storytelling, no speech bubbles, no captions, no text","/Styles/Manga/thumb_slice_of_life_manga.jpg"],
-["jp-1","Chibi / super-deformed","Japanese Comics","Japanese chibi comic style, extremely simplified proportions, large heads, tiny bodies, oversized expressive faces, playful gestures, clean bold linework, minimal background detail, strong comedic readability, cute energetic composition, no speech bubbles, no captions, no text","/Styles/Japanese/thumb_chibi_super_deformed.jpg","/Styles/Japanese/thumb_chibi_super_deformed_lines.jpg"],
-["jp-2","Gekiga","Japanese Comics","Japanese gekiga style, raw realistic drawing, heavy black ink, rough expressive linework, deep shadows, grounded human faces, urban realism, mature dramatic tone, restrained composition, dense hatching, serious literary comic atmosphere, no speech bubbles, no captions, no text","/Styles/Japanese/thumb_gekiga.jpg","/Styles/Japanese/thumb_gekiga_lines.jpg"],
-["jp-3","Kawaii all-ages","Japanese Comics","cute Japanese all-ages comic style, rounded friendly character shapes, soft clean linework, gentle facial expressions, charming everyday settings, playful decorative details, bright visual clarity, approachable polished storytelling, no speech bubbles, no captions, no text","/Styles/Japanese/thumb_kawaii_all_ages.jpg","/Styles/Japanese/thumb_kawaii_all_ages_lines.jpg"],
-["jp-4","Sensual romance","Japanese Comics","elegant romantic comic illustration style with refined adult character design, soft clean linework, expressive eyes, detailed hair, graceful proportions, subtle facial expressions, smooth skin rendering, soft cinematic lighting, intimate atmosphere, polished digital finish, gentle glamour aesthetic, sophisticated visual storytelling, no speech bubbles, no captions, no text","/Styles/Japanese/thumb_sensual_romance.jpg","/Styles/Japanese/thumb_sensual_romance_lines.jpg"],
-
-["anchor-1","Classic clear-line Belgian","Franco-Belgian","clear-line European comic style inspired by classic Belgian adventure albums, precise uniform linework, flat clean colors, strong readability, simplified but accurate forms, uncluttered detailed backgrounds, calm polished storytelling, timeless adventure-comic clarity, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Franco_Belgian/thumb_classic_clear_line_belgian.jpg","/Styles/Franco_Belgian/thumb_classic_clear_line_belgian_lines.jpg"],
-["anchor-2","Dynamic Marcinelle classic","Franco-Belgian","dynamic European comic cartooning inspired by classic Marcinelle-school adventure comics, elastic movement, energetic expressive line, playful exaggeration, lively acting, rich visual humor, vibrant colors, fluid and charming adventure storytelling, single comic panel illustration, no speech bubbles, no captions, no text","/Styles/Franco_Belgian/thumb_dynamic_marcinelle_classic.jpg","/Styles/Franco_Belgian/thumb_dynamic_marcinelle_classic_lines.jpg"],
-["anchor-3","Elegant adult European realism","European Realist","elegant mature European realistic comic style, graceful anatomy, sophisticated body language, refined linework, warm naturalistic color, subtle facial expression, stylish atmospheric environments, polished adult graphic storytelling, single comic panel illustration, no speech bubbles, no captions, no text"]
-].map<IllustrationStyle>(([id,name,genre,promptText,previewImage,linePreviewImage]) => ({ id, name, genre, promptText, previewImage, linePreviewImage })).concat(PAINTERLY_STYLES);
-
-export const STYLE_GENRES = [...new Set(BUILTIN_STYLES.map((style) => style.genre))];
+export const STYLE_GENRES = [...new Set(BUILTIN_STYLES.map(style => style.genre))];
+export function albumStyleModules(style: IllustrationStyle): AlbumPromptStyle {
+  return { medium: style.promptText, lines: "", color: "", texture: "", ...style.promptModules };
+}
+export function newPanelStyleDirection(style: IllustrationStyle): PromptDirection | undefined {
+  if (!style.panelDefaults || !Object.keys(style.panelDefaults).length) return undefined;
+  return { ...style.panelDefaults, ...(style.panelDefaults.effects ? { effects: [...style.panelDefaults.effects] } : {}),
+    styleDefaultKeys: Object.keys(style.panelDefaults), styleDefaultName: style.name };
+}
 const CUSTOM_STYLES_KEY = "comicbook-ai.custom-styles";
-
 export function readCustomStyles(): IllustrationStyle[] {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(CUSTOM_STYLES_KEY) ?? "[]");
-    return Array.isArray(parsed) ? parsed.filter((item) =>
-      item && typeof item.id === "string" && typeof item.name === "string" &&
-      typeof item.promptText === "string" && typeof item.genre === "string"
-    ) : [];
-  } catch { return []; }
+  try { const parsed = JSON.parse(localStorage.getItem(CUSTOM_STYLES_KEY) ?? "[]"); return Array.isArray(parsed) ? parsed.filter(item => item && typeof item.id === "string" && typeof item.name === "string" && typeof item.promptText === "string" && typeof item.genre === "string") : []; } catch { return []; }
 }
-
-export function saveCustomStyles(styles: IllustrationStyle[]): void {
-  try { localStorage.setItem(CUSTOM_STYLES_KEY, JSON.stringify(styles)); } catch {}
-}
-
-export function createCustomStyleId(): string {
-  return "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
-}
-
+export function saveCustomStyles(styles: IllustrationStyle[]): void { try { localStorage.setItem(CUSTOM_STYLES_KEY, JSON.stringify(styles)); } catch {} }
+export function createCustomStyleId(): string { return "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); }

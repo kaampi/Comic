@@ -40,7 +40,7 @@ import { hasProjectDatabase, loadProjectCollection, saveProjectCollection, Proje
 import { classifyProjectSaveError, projectSaveErrorText, type ProjectSaveFailure } from "./projectSaveStatus";
 import { ColorModeSelect } from "./ColorModeSelect";
 import { renderOptionsForStyle, resolveColorMode, supportedColorModes, stylePromptForMode } from "./styleColorMode";
-import { BUILTIN_STYLES, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
+import { BUILTIN_STYLES, styleGroupLabel, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
 import { optimizeStylePreview } from "./stylePreview";
 import { createProject, readProjects, type BubbleSwatch, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
@@ -170,8 +170,10 @@ export function App() {
   const styleCategories = Array.from(new Set(allStyles.map((style) => style.genre))).sort((a,b) => a.localeCompare(b));
   const visibleStyles = allStyles.filter((style) => {
     const genreMatch = styleGenre === "__all__" || style.genre === styleGenre;
-    const q = styleQuery.trim().toLowerCase();
-    return genreMatch && (!q || style.name.toLowerCase().includes(q) || style.promptText.toLowerCase().includes(q) || style.genre.toLowerCase().includes(q));
+    const normalize = (value: string) => value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const q = normalize(styleQuery.trim());
+    const searchable = normalize([style.name, style.promptText, style.genre, styleGroupLabel(style.genre, locale), ...(style.visualReferences ?? [])].join(" "));
+    return genreMatch && (!q || searchable.includes(q));
   });
   const persistCustomStyles = (next: IllustrationStyle[]) => { setCustomStyles(next); saveCustomStyles(next); };
   const saveDraft = () => {
@@ -185,6 +187,7 @@ export function App() {
       supportedColorModes: styleDraft.supportedColorModes,
       modePromptText: styleDraft.modePromptText,
       decorativeSeals: styleDraft.decorativeSeals,
+      panelDefaults: styleDraft.panelDefaults,
       linePreviewImage: styleDraft.linePreviewImage
     };
     persistCustomStyles(styleDraft.id ? customStyles.map((item) => item.id === styleDraft.id ? style : item) : [...customStyles, style]);
@@ -198,6 +201,7 @@ export function App() {
     supportedColorModes: style.supportedColorModes,
     modePromptText: style.modePromptText,
     decorativeSeals: style.decorativeSeals,
+    panelDefaults: style.panelDefaults,
     linePreviewImage: style.linePreviewImage
   });
   const [saveFailure, setSaveFailure] = useState<ProjectSaveFailure | null>(null);
@@ -1019,7 +1023,7 @@ export function App() {
                 <label><input type="radio" checked={newSource === "storybook"} onChange={() => { setNewSource("storybook"); setStoryBookImport(null); setImportError(""); }} /> {tr("importStoryBook")}</label>
               </fieldset>
               {newSource === "storybook" ? <div className="storybook-import"><div className="storybook-export-picker"><p className="quiet">{tr("storybookExportHelp")}</p><label className="file-picker">{tr("storybookExportFile")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookFile(file);}} /></label></div>{storyBookImport ? <label className="file-picker">{tr("storybookCardsOptional")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookCardsFile(file);}} /></label> : null}{importError ? <p className="import-error">{importError}</p> : null}{storyBookImport ? <div className="import-review"><p className="eyebrow">{tr("reviewImport")}</p><strong>{storyBookImport.title}</strong><span>{storyBookImport.text.length} tecken · {storyBookImport.chapters.length} kapitel · {storyBookImport.characters.length} karaktärer · {storyBookImport.locations.length} platser</span>{storyBookCards ? <span>{storyBookCards.characters.filter((card)=>!storyBookImport.sourceBookId||cardMatchesBook(card,storyBookImport.sourceBookId)).length} Cards-karaktärer hittade · porträtt kopieras lokalt</span> : <span className="quiet">{tr("storybookCardsHelp")}</span>}<label><input type="checkbox" checked={importCharacters} onChange={(e)=>setImportCharacters(e.target.checked)} /> {tr("copyCharacters")}</label><label><input type="checkbox" checked={importLocations} onChange={(e)=>setImportLocations(e.target.checked)} /> {tr("copyLocations")}</label><p className="quiet">{tr("importIndependent")}</p></div> : null}</div> : null}
-              <label>{tr("styleTemplate")}<select value={newStyleId} onChange={(e) => setNewStyleId(e.target.value)}>{allStyles.map((style) => <option key={style.id} value={style.id}>{style.genre} — {style.name}</option>)}</select></label>
+              <label>{tr("styleTemplate")}<select value={newStyleId} onChange={(e) => setNewStyleId(e.target.value)}>{allStyles.map((style) => <option key={style.id} value={style.id}>{styleGroupLabel(style.genre, locale)} — {style.name}</option>)}</select></label>
               <div className="style-preview"><span className="style-genre">{tr("projectSnapshot")}</span><p>{allStyles.find((style) => style.id === newStyleId)?.promptText}</p></div>
               <div className="style-editor-actions"><button className="text-button" type="button" onClick={closePanel}>{tr("cancel")}</button><button className="primary-button" type="button" disabled={!newTitle.trim() || (newSource==="storybook" && !storyBookImport)} onClick={newSource==="storybook" ? createFromStoryBook : createNewProject}>{newSource==="storybook" ? tr("importCreate") : tr("createProject")}</button></div>
             </div></> : null}
@@ -1041,7 +1045,7 @@ export function App() {
               <div className="style-library-body">
                 <aside className="style-category-list" aria-label={tr("genre")}>
                   <button type="button" className={styleGenre==="__all__"?"is-active":""} onClick={()=>setStyleGenre("__all__")}><span>{tr("all")}</span><span>{allStyles.length}</span></button>
-                  {styleCategories.map((genre)=><button key={genre} type="button" className={styleGenre===genre?"is-active":""} onClick={()=>setStyleGenre(genre)}><span>{genre}</span><span>{allStyles.filter((style)=>style.genre===genre).length}</span></button>)}
+                  {styleCategories.map((genre)=><button key={genre} type="button" className={styleGenre===genre?"is-active":""} onClick={()=>setStyleGenre(genre)}><span>{styleGroupLabel(genre, locale)}</span><span>{allStyles.filter((style)=>style.genre===genre).length}</span></button>)}
                 </aside>
                 <div className="style-library-results">
                   {styleDraft ? <div className="style-editor">
@@ -1067,7 +1071,7 @@ export function App() {
                     return <article className={active?"style-card is-active":"style-card"} key={style.id} onClick={()=>activeProject&&applyStyleToActiveProject(style)}>
                       <div className={lineFallback?"style-card-preview is-line-fallback":"style-card-preview"}>{resolvedPreviewImage?<img key={resolvedPreviewImage} src={resolvedPreviewImage} alt="" loading="lazy" decoding="async" />:<span>{tr("noImage")}</span>}<span className="style-preview-mode-badge">{supportedColorModes(style).map(mode => mode === "color" ? (locale === "sv" ? "FÄRG" : "COLOR") : mode === "grayscale" ? (locale === "sv" ? "GRÅSKALA" : "GRAYSCALE") : (locale === "sv" ? "LINJER" : "LINES")).join(" / ")}</span></div>
                       <button className="style-card-edit" type="button" title={custom?tr("edit"):tr("duplicate")} onClick={(e)=>{e.stopPropagation(); custom?setStyleDraft({...style}):duplicateStyle(style);}}>✎</button>
-                      <div className="style-card-copy"><h2>{style.name}</h2><p>{stylePromptForMode(style, colorMode)}</p><span className="style-genre">{style.genre}{active?` · ${tr("activeStyle")}`:""}</span></div>
+                      <div className="style-card-copy"><h2>{style.name}</h2>{style.visualReferences?.length ? <small className="quiet">{locale === "sv" ? "Bildspråksreferenser" : "Visual references"}: {style.visualReferences.join(" · ")}</small> : null}<p>{stylePromptForMode(style, colorMode)}</p><span className="style-genre">{styleGroupLabel(style.genre, locale)}{active?` · ${tr("activeStyle")}`:""}</span></div>
                     </article>;
                   })}</div>
                   {!visibleStyles.length?<p className="style-empty">{tr("noStylesFound")}</p>:null}

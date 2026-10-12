@@ -30,6 +30,7 @@ const { buildImagePrompt } = await local("adaptation/prompts");
 const { parseAlbumBackup, packAlbumBackup } = await local("albumBackup");
 const { ManuscriptWorkspace } = await local("ManuscriptWorkspace");
 const { ImagePromptEditor } = await local("ImagePromptEditor");
+const { BUILTIN_STYLES, STYLE_GENRES, STYLE_GROUPS, newPanelStyleDirection } = await local("stylesLibrary");
 try {
   let project = createProject("Prompt tests", "text");
   project.source.textSnapshot = "Knut steps back as the robot opens its eye.";
@@ -91,4 +92,45 @@ try {
   console.log("PASS: album style, optional effects/optics, deep-focus compatibility, rendering modes, local reload and backup round trip/validation");
   cleanup(); render(React.createElement(ImagePromptEditor, { project, panel: plan, locale: "en", onClose() {}, onSave() {} })); assert.ok(screen.getByRole("dialog", { name: "Adjust image prompt" })); assert.ok(screen.getByRole("button", { name: "Save image prompt" }));
   console.log("PASS: English editor labels");
+  assert.equal(BUILTIN_STYLES.length, 38);
+  assert.equal(new Set(BUILTIN_STYLES.map(s => s.id)).size, BUILTIN_STYLES.length);
+  assert.deepEqual(new Set(STYLE_GENRES), new Set(STYLE_GROUPS));
+  for (const style of BUILTIN_STYLES) {
+    for (const prompt of [style.promptText, ...Object.values(style.modePromptText ?? {})]) {
+      assert.doesNotMatch(prompt, /ancient ruins and taverns|elegant spacecraft design|accurate traditional clothing|trench-coat detective|period-appropriate materials|dense futuristic city|happy atmosphere|serious adult graphic storytelling/i, style.name);
+      assert.doesNotMatch(prompt, /35mm film|cinematic soft background defocus|selective motion blur on moving elements|speed-line energy|restrained lens flare/i, style.name);
+    }
+  }
+  const oil = BUILTIN_STYLES.find(s => s.id === "paint-gritty-dark-fantasy");
+  let inherited = createProject("Defaults", "text", oil); inherited.source.textSnapshot = "A robot waves hello.";
+  inherited = addManualBeat(inherited, { start: 0, end: inherited.source.textSnapshot.length }).project;
+  const inheritedPlan = inherited.adaptations[0].panelPlans[0];
+  assert.equal(inheritedPlan.promptDirection.lens, "35mm");
+  assert.match(buildImagePrompt(inherited, inheritedPlan), /35mm reference/);
+  const noFx = { ...inheritedPlan, promptDirection: { ...inheritedPlan.promptDirection, effects: [], lens: undefined, depthOfField: undefined } };
+  assert.doesNotMatch(buildImagePrompt(inherited, noFx), /motion blur|Lens flare|35mm reference|Shallow depth/i);
+  const previousDirection = structuredClone(inheritedPlan.promptDirection);
+  const changedStyle = { ...inherited, style: BUILTIN_STYLES[0] };
+  const changedPanel = patchBeatPanel(changedStyle, inheritedPlan.id, { title: "Edited title" });
+  assert.deepEqual(changedPanel.adaptations[0].panelPlans[0].promptDirection, previousDirection);
+  const legacyStyle = { id: "removed-old-style", name: "Legacy fantasy", genre: "Fantasy", promptText: "Keep this exact old prompt" };
+  const legacy = createProject("Old album", "blank", legacyStyle);
+  const legacyRoundTrip = normalizeStoredProjects(JSON.parse(JSON.stringify([legacy])))[0];
+  assert.deepEqual(legacyRoundTrip.style, legacyStyle);
+  assert.deepEqual(parseAlbumBackup(JSON.parse(JSON.stringify(packAlbumBackup(inherited)))).adaptations[0].panelPlans[0].promptDirection, previousDirection);
+  const copy = newPanelStyleDirection(oil); copy.effects.push("glitch_scanlines"); assert.equal(oil.panelDefaults.effects.includes("glitch_scanlines"), false);
+  const photo = createProject("Imaginary photo", "blank", BUILTIN_STYLES.find(s => s.id === "photo-natural"));
+  assert.match(buildImagePrompt(photo, inheritedPlan), /Single photographic comic panel/);
+  assert.match(buildImagePrompt(photo, inheritedPlan), /do not normalize/i);
+  cleanup();
+  render(React.createElement(ImagePromptEditor, { project: inherited, panel: inheritedPlan, locale: "sv", onClose() {}, onSave() {} }));
+  const sections = screen.getByRole("dialog").querySelectorAll("details");
+  const optics = Array.from(sections).find(el => el.querySelector("summary")?.textContent.includes("Optik & fokus"));
+  const effects = Array.from(sections).find(el => el.querySelector("summary")?.textContent.includes("Specialeffekter"));
+  assert.match(optics.querySelector("summary").textContent, /35mm|35 mm/); assert.match(optics.querySelector("summary").textContent, /Från stil/);
+  assert.match(effects.querySelector("summary").textContent, /2 aktiva/);
+  fireEvent.change(screen.getByLabelText(/Perspektiv/), { target: { value: "50mm" } });
+  fireEvent.change(screen.getByLabelText(/Skärpedjup/), { target: { value: "" } });
+  assert.match(optics.querySelector("summary").textContent, /Anpassat/);
+  console.log("PASS: 38 distinct profiles in seven groups, removed motif/era instructions, removable visible optical/FX defaults, origin badges, snapshot/backup preservation and imaginary photographic subjects");
 } finally { cleanup(); rmSync(compiled, { recursive: true, force: true }); dom.window.close(); }

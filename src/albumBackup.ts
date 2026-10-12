@@ -75,6 +75,19 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   if (p.source.textSnapshot !== undefined) string(p.source.textSnapshot);
   record(p.style);
   for (const key of ["id", "name", "promptText"]) string(p.style[key]);
+  if (p.style.promptModules !== undefined) {
+    record(p.style.promptModules);
+    for (const key of ["medium", "lines", "color", "texture"]) string(p.style.promptModules[key]);
+  }
+  if (p.style.visualReferences !== undefined) strings(p.style.visualReferences);
+  if (p.style.panelDefaults !== undefined) {
+    const d = p.style.panelDefaults;
+    record(d);
+    for (const key of ["lens", "depthOfField"]) if (d[key] !== undefined) string(d[key]);
+    if (d.effects !== undefined) strings(d.effects);
+    if (d.effectStrength !== undefined && !["subtle", "normal", "strong"].includes(d.effectStrength)) throw new Error("invalid-backup");
+    if (d.effectScope !== undefined && !["background", "subjects", "whole-image"].includes(d.effectScope)) throw new Error("invalid-backup");
+  }
   if (p.promptStyle !== undefined) {
     record(p.promptStyle);
     for (const key of ["medium", "lines", "color", "texture"]) string(p.promptStyle[key]);
@@ -178,6 +191,8 @@ export function parseAlbumBackup(input: unknown): ComicProject {
         record(d);
         for (const key of ["cameraAngle", "lens", "depthOfField", "focalPoint", "setting", "lighting", "continuity"]) if (d[key] !== undefined) string(d[key]);
         if (d.effects !== undefined) strings(d.effects);
+        if (d.styleDefaultKeys !== undefined) strings(d.styleDefaultKeys);
+        if (d.styleDefaultName !== undefined) string(d.styleDefaultName);
         if (d.characterActions !== undefined) { record(d.characterActions); Object.values(d.characterActions).forEach(string); }
         for (const key of ["lockShot", "lockAngle"]) if (d[key] !== undefined && typeof d[key] !== "boolean") throw new Error("invalid-backup");
         if (d.effectStrength !== undefined && !["subtle", "normal", "strong"].includes(d.effectStrength)) throw new Error("invalid-backup");

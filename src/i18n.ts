@@ -33,7 +33,7 @@ export const UI = {
     styleTemplate:"Stillmall", projectSnapshot:"SNAPSHOT I PROJEKTET", cancel:"Avbryt", importCreate:"Importera och skapa projekt", createProject:"Skapa projekt",
     guidePlaceholder:"Guiden skriver vi senare. Den här platsen är förberedd för den.", system:"SYSTEM",
     styleTemplatesLead:"Globala visuella stilar som kan användas när ComicBook AI bygger bildprompter.", searchStyle:"Sök stillmall…",
-    all:"Alla", newStyle:"Ny stillmall", name:"Namn", genre:"Genre", prompt:"Prompt", save:"Spara", custom:"Egen", builtin:"Inbyggd", useForProject:"Använd i projektet", activeStyle:"Aktiv stil", saveCurrentStyleAsNew:"Spara aktiv stil som ny", noStylesFound:"Inga stilar matchar sökningen.",
+    all:"Alla", newStyle:"Ny stillmall", name:"Namn", genre:"Stilgrupp", prompt:"Prompt", save:"Spara", custom:"Egen", builtin:"Inbyggd", useForProject:"Använd i projektet", activeStyle:"Aktiv stil", saveCurrentStyleAsNew:"Spara aktiv stil som ny", noStylesFound:"Inga stilar matchar sökningen.",
     duplicate:"Duplicera", edit:"Redigera", delete:"Radera", settingsLead:"Välj hur ComicBook AI ska arbeta med bildgenerering.",
     defaultGrid:"Standardrutnät för nya projekt", aiMode:"AI-läge", comingLater:"Kommer senare",
     promptMode:"Skapa prompter", promptModeDesc:"ComicBook AI skapar färdiga bildprompter som du kan kopiera till valfri bild-AI.",
@@ -97,7 +97,7 @@ export const UI = {
     styleTemplate:"Style template", projectSnapshot:"PROJECT SNAPSHOT", cancel:"Cancel", importCreate:"Import and create project", createProject:"Create project",
     guidePlaceholder:"The guide will be written later. This space is prepared for it.", system:"SYSTEM",
     styleTemplatesLead:"Global visual styles used when ComicBook AI builds image prompts.", searchStyle:"Search style template…",
-    all:"All", newStyle:"New style template", name:"Name", genre:"Genre", prompt:"Prompt", save:"Save", custom:"Custom", builtin:"Built-in", useForProject:"Use for project", activeStyle:"Active style", saveCurrentStyleAsNew:"Save active style as new", noStylesFound:"No styles match your search.",
+    all:"All", newStyle:"New style template", name:"Name", genre:"Style group", prompt:"Prompt", save:"Save", custom:"Custom", builtin:"Built-in", useForProject:"Use for project", activeStyle:"Active style", saveCurrentStyleAsNew:"Save active style as new", noStylesFound:"No styles match your search.",
     duplicate:"Duplicate", edit:"Edit", delete:"Delete", settingsLead:"Choose how ComicBook AI should work with image generation.",
     defaultGrid:"Default grid for new projects", aiMode:"AI mode", comingLater:"Coming later",
     promptMode:"Create prompts", promptModeDesc:"ComicBook AI creates ready-to-use image prompts that you can copy to any image AI.",
@@ -161,7 +161,7 @@ export const UI = {
     styleTemplate:"Stilmal", projectSnapshot:"PROSJEKTØYEBLIKK", cancel:"Avbryt", importCreate:"Importer og opprett prosjekt", createProject:"Opprett prosjekt",
     guidePlaceholder:"Veiledningen skrives senere. Dette området er klargjort for den.", system:"SYSTEM",
     styleTemplatesLead:"Globale visuelle stiler som brukes når ComicBook AI bygger bildeprompter.", searchStyle:"Søk stilmal…",
-    all:"Alle", newStyle:"Ny stilmal", name:"Navn", genre:"Sjanger", prompt:"Prompt", save:"Lagre", custom:"Egen", builtin:"Innebygd", useForProject:"Bruk i prosjektet", activeStyle:"Aktiv stil", saveCurrentStyleAsNew:"Lagre aktiv stil som ny", noStylesFound:"Ingen stiler matcher søket.",
+    all:"Alle", newStyle:"Ny stilmal", name:"Navn", genre:"Stilgruppe", prompt:"Prompt", save:"Lagre", custom:"Egen", builtin:"Innebygd", useForProject:"Bruk i prosjektet", activeStyle:"Aktiv stil", saveCurrentStyleAsNew:"Lagre aktiv stil som ny", noStylesFound:"Ingen stiler matcher søket.",
     duplicate:"Dupliser", edit:"Rediger", delete:"Slett", settingsLead:"Velg hvordan ComicBook AI skal arbeide med bildegenerering.",
     defaultGrid:"Standardrutenett for nye prosjekter", aiMode:"AI-modus", comingLater:"Kommer senere",
     promptMode:"Lag prompter", promptModeDesc:"ComicBook AI lager ferdige bildeprompter som du kan kopiere til valgfri bilde-AI.",
@@ -199,6 +199,7 @@ export type UiKey = keyof typeof UI.sv;
 export function uiText(locale: Locale, key: UiKey): string {
   return UI[locale]?.[key] ?? UI.sv[key];
 }
+
 
 
 

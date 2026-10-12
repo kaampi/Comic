@@ -12,6 +12,7 @@ export function buildPanelPrompt(project: ComicProject, panelId: string): string
 
   const sections: string[] = [];
   const colorMode = resolveColorMode(project.style, project.renderOptions);
+  if (project.style.genre === "Photographic") sections.push("MEDIUM\nPhotographic comic panel. Preserve imaginary subjects, species and exaggerated anatomy without normalizing their designs.");
   sections.push("STYLE\n" + stylePromptForMode(project.style, colorMode));
   if (colorMode === "line-art") sections.push("RENDERING MODE\n" + lineOnlyModifier);
   if (colorMode === "grayscale") sections.push("RENDERING MODE\n" + grayscaleModifier);
@@ -34,4 +35,5 @@ export function buildPanelPrompt(project: ComicProject, panelId: string): string
   if (project.style.decorativeSeals) sections.push("DECORATIVE EXCEPTION\nPeripheral decorative calligraphic marks and red seal impressions are allowed as specified by the style; no narrative text or dialogue.");
   return sections.join("\n\n");
 }
+
 

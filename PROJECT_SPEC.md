@@ -195,6 +195,16 @@ Promptbyggaren sammanför utsnitt, handling, visuella ankare, scentillstånd, st
 
 Bilder ska genereras utan inbränd dialog eller berättartext. Planerad plats för bubblor ska ingå i kompositionsinstruktionen.
 
+### 9.0 Renodlat stilbibliotek
+
+Det inbyggda biblioteket har 38 profiler i sju grupper: europeiska serier, manga/japansk teckning, modern serieteckning, måleri, teckning/tryck, collage/grafisk illustration och fotografisk återgivning. Grupperna beskriver bildspråk och material; berättelsegenre, miljö och tidsålder kommer från panelen. Bildspråksreferenser till Hergé, Uderzo, Morris, Franquin och Manara visas och kan sökas, men prompten beskriver tekniken och maneret utan att ange förebildens figurer eller motiv.
+
+Snarlika mallar har förenats utan att radera särpräglade maner. Nya profiler täcker nervig karikatyrtusch, färgpennor/vaxkrita, träsnitt/linoleumtryck, risografi, skrapkartong, gravyr, gouache, papperscollage, geometrisk illustration och tre fotografiska uttryck. Fotografiska profiler bevarar overkliga motiv, art och överdriven anatomi. Familjevänliga former kan gestalta alla efterfrågade känslor. Konsthistoriska materialegenskaper kan finnas kvar utan att föreskriva en historisk berättelsemiljö.
+
+Kamera- och effektförval lagras i stilens `panelDefaults` och kopieras endast till nya paneler. Befintliga paneler och sparade prompter ändras inte av ett stilbyte. Optik, fokus, effekter och kontinuitet visar aktiva val när avsnitten är stängda. Förval märks **Från stil**, ändrade fält **Anpassat**; blandade avsnitt visar båda. Avstängda effekter saknas i prompten. Raster, penseldrag och materialstruktur är stilteknik och ligger kvar i stilen.
+
+Befintliga album behåller sin stilsnapshot, även om stilens ID inte längre ingår i biblioteket. Ingen automatisk ersättning sker vid öppning, normalisering eller backupåterställning. Egna lokala mallar bevaras. Uppdaterade profiler väljs uttryckligen i stilbiblioteket. Befintliga förhandsbilder behålls där de fortfarande passar; nya profiler har tills vidare ingen genererad exempelbild.
+
 ### 9.1 Bildpromptredigering i manusläget
 
 Beats behåller snabbspåret för lokal bildpromptgenerering. Varje serieruta erbjuder också **Justera bildprompt** i ett modalt redigeringsfönster, cirka 80 procent av skärmens bredd och höjd. Handling, karaktärsankare och separat regi per karaktär, miljö, ljus, utsnitt och kameravinkel visas direkt. Optik, skärpedjup, visuell fokuspunkt, specialeffekter och kontinuitet är valfria utfällbara avsnitt. Optik och effekter är ospecificerade som standard. Utsnitt och vinkel kan låsas oberoende när ett nytt lokalt förslag hämtas från beatet.
