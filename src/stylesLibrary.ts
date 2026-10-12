@@ -8,6 +8,7 @@ export type IllustrationStyle = {
   supportedColorModes?: ColorMode[];
   modePromptText?: Partial<Record<ColorMode, string>>;
   decorativeSeals?: boolean;
+  reinforceAfterScene?: boolean;
   visualReferences?: string[];
   promptModules?: AlbumPromptStyle;
   panelDefaults?: Pick<PromptDirection, "lens" | "depthOfField" | "effects" | "effectStrength" | "effectScope">;
@@ -36,6 +37,7 @@ const classicReferences: Record<string, string[]> = {
   "eu-economical-figures": ["Morris / Lucky Luke"], "anchor-2": ["Franquin / Spirou"], "er-1": ["Manara"],
 };
 const retainedPreviewAssets: Record<string, { previewImage?: string; linePreviewImage?: string }> = {
+  "draw-expressive-charcoal": { previewImage: "/Styles/Verified/draw-expressive-charcoal-grayscale.png", linePreviewImage: "/Styles/Verified/draw-expressive-charcoal-grayscale.png" },
   "paint-gritty-dark-fantasy": { previewImage: "/Styles/Verified/paint-gritty-dark-fantasy-color.png" },
   "paint-zorn-alla-prima": { previewImage: "/Styles/Verified/paint-zorn-alla-prima-color.png" },
   "draw-colored-pencil": { previewImage: "/Styles/Verified/draw-colored-pencil-color.png" },

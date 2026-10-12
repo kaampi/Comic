@@ -112,5 +112,15 @@
     "promptSha256": "b540bdd776166bdb4851be797f5fc7725022dcee72a072948522a1cae7996466",
     "promptCommit": "7987acd5d75666334de76f1ec00867623ce89b5c",
     "generationMethod": "built-in imagegen; exact application prompt; no reference images"
+  },
+  {
+    "styleId": "draw-expressive-charcoal",
+    "name": "Expressive charcoal drawing",
+    "colorMode": "grayscale",
+    "image": "draw-expressive-charcoal-grayscale.png",
+    "prompt": "draw-expressive-charcoal-prompt.txt",
+    "imageSha256": "0f13224930ce6b330508ae3a21231f0de42c4633121ff74cf79a16529f4c5f4c",
+    "promptSha256": "146345a5e9ee3a87cc068c15b95c3a7cbf419526bb001bf809bcd7db40f2bdf4",
+    "generationMethod": "built-in imagegen; exact application prompt with opt-in closing style emphasis; no reference image"
   }
 ]

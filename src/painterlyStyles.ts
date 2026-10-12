@@ -72,21 +72,12 @@ Color Mode:
 Contrasting hues, broken color, and visible unblended pigments are essential. ${colorOnly} ${noText}`
   },
   {
-    id: 'draw-expressive-charcoal', linePreviewImage: '/Styles/Painterly/draw-expressive-charcoal-gray.jpg', name: 'Expressive charcoal drawing', genre: 'Drawing / Print', supportedColorModes: ['grayscale'],
-    promptText: `Visual Style & Medium:
-A traditional raw highly expressive charcoal drawing on heavyweight textured paper. Deep velvety charcoal blacks, a broad range of smoky grainy neutral grays, and white or pale neutral-gray exposed paper. Highlights through eraser lifts and selective white chalk. No warm tint, beige paper, or sepia.
+    id: 'draw-expressive-charcoal', linePreviewImage: '/Styles/Painterly/draw-expressive-charcoal-gray.jpg', name: 'Expressive charcoal drawing', genre: 'Drawing / Print', supportedColorModes: ['grayscale'], reinforceAfterScene: true,
+    promptText: `An intentionally rough, unfinished charcoal value study on toothy white paper. Block in the requested scene with the broad side of thick charcoal sticks. Large blunt black and gray masses, vigorous broken strokes, rubbed smudges and broad erased white gaps dominate every subject. Radically simplify the scene rather than rendering all described surface detail.
 
-Artistic Techniques:
-Rough gestural lines, fragmented sketch contours, selective dense hatching and cross-hatching. Heavily smudged, blended, and rubbed charcoal creates smoky tonal transitions as if worked by fingers or a tortillon. Broad shadow masses, sharp decisive marks, and visibly lifted highlights. Dramatic chiaroscuro appropriate to specified lighting. Preserve recognizable faces, convincing anatomy, and essential details.
+Build each person from a few chunky connected tonal shapes. Heads are roughly rubbed ovals with only two or three blunt marks suggesting the face. Hands are dark blunt masses; hair and clothing are broad smudged shapes with at most a few emphatic folds. Preserve identities and age cues through silhouette, hair shape, clothing and posture. Animals and machines use equally coarse body blocks and only a few identifying structural accents. Keep the requested cast, species, anatomy, scale, staging, actions and emotions recognizable without finishing faces or small features.
 
-Texture & Surface:
-Visible paper tooth interrupts charcoal marks and remains perceptible through blended passages. Restrained charcoal dust, scattered particles, finger smudges, and eraser crumbs near worked areas and outer edges. Vary density and pressure, contrasting exposed paper with heavily worked shadows. Keep focal subjects readable without covering every surface in debris.
-
-Finish & Composition:
-Tactile imperfect handmade drawing with selectively unfinished areas, loose peripheral marks, and irregular transitions into untouched paper. Preserve characters, actions, objects, and setting. Selective detail and edge control guide attention. Tonal transitions retain charcoal grain and rubbing texture. No smooth digital gradients, photographic filters, or glossy surfaces.
-
-Color Mode:
-${neutralGray} ${noText}`
+Group all scenery into large loose value patches with substantial open paper. Nothing is drawn more finely than the figures: no portrait rendering, precise fingers, clean outlines, garment patterns, individual leaves, fur, mechanical micro-detail or tiny surface marks. Suggest every complex material with a few blunt charcoal gestures. Maintain deliberately unresolved, ragged and smudged edges, coarse mark scale and paper gaps across the whole image. Preserve the specified lighting as broad light and dark masses. ${neutralGray} ${noText}`
   },
   {
     id: 'paint-neo-expressionist', previewImage: '/Styles/Painterly/paint-neo-expressionist-color.jpg', name: 'Cinematic palette-knife expressionism', genre: 'Painterly / Traditional', supportedColorModes: ['color'],

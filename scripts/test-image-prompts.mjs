@@ -93,6 +93,22 @@ try {
   cleanup(); render(React.createElement(ImagePromptEditor, { project, panel: plan, locale: "en", onClose() {}, onSave() {} })); assert.ok(screen.getByRole("dialog", { name: "Adjust image prompt" })); assert.ok(screen.getByRole("button", { name: "Save image prompt" }));
   console.log("PASS: English editor labels");
   assert.equal(BUILTIN_STYLES.length, 35);
+  const charcoalStyle = BUILTIN_STYLES.find(s => s.id === "draw-expressive-charcoal");
+  let charcoalProject = createProject("Charcoal emphasis", "blank", charcoalStyle);
+  charcoalProject.renderOptions = { linesOnly: false, colorMode: "grayscale" };
+  charcoalProject.promptStyle = { medium: "Broad charcoal figure masses", lines: "Rough broken contours", color: "CUSTOM COLOR MUST NOT LEAK", texture: "Coarse rubbed charcoal" };
+  const charcoalPrompt = buildImagePrompt(charcoalProject, plan);
+  const reminder = charcoalPrompt.split("-- STYLE APPLICATION REMINDER --")[1];
+  assert.ok(reminder);
+  assert.match(reminder, /Broad charcoal figure masses/);
+  assert.match(reminder, /Coarse rubbed charcoal/);
+  assert.doesNotMatch(charcoalPrompt, /CUSTOM COLOR MUST NOT LEAK/);
+  assert.equal(normalizeStoredProjects(JSON.parse(JSON.stringify([charcoalProject])))[0].style.reinforceAfterScene, true);
+  assert.equal(parseAlbumBackup(JSON.parse(JSON.stringify(packAlbumBackup(charcoalProject)))).style.reinforceAfterScene, true);
+  assert.doesNotMatch(buildImagePrompt({ ...charcoalProject, style: { ...charcoalStyle, reinforceAfterScene: undefined } }, plan), /STYLE APPLICATION REMINDER/);
+  assert.doesNotMatch(buildImagePrompt({ ...charcoalProject, style: BUILTIN_STYLES.find(s => s.id === "photo-natural") }, plan), /STYLE APPLICATION REMINDER/);
+  console.log("PASS: optional style emphasis respects edited album modules, grayscale, snapshots and legacy opt-out");
+
   for (const retired of ["paint-cinematic-graphic-novel", "paint-americana-rockwell", "paint-regionalist-wood"]) assert.equal(BUILTIN_STYLES.some(s => s.id === retired), false);
   for (const retained of ["paint-gritty-dark-fantasy", "paint-zorn-alla-prima"]) assert.ok(BUILTIN_STYLES.some(s => s.id === retained));
   assert.equal(new Set(BUILTIN_STYLES.map(s => s.id)).size, BUILTIN_STYLES.length);

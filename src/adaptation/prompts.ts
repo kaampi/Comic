@@ -75,6 +75,11 @@ export function buildImagePrompt(project: ComicProject, panel: PanelPlan, mode: 
     colorMode === "color" && text(global?.color) ? `Color and shading: ${text(global?.color)}` : "",
     text(global?.texture) ? `Texture and finish: ${text(global?.texture)}` : "",
   ].filter(Boolean).join("\n");
+  const reinforcement = project.style.reinforceAfterScene ? [
+    "-- STYLE APPLICATION REMINDER --",
+    "The subject description specifies what is depicted. Apply the selected medium and degree of simplification to every figure, face, hand, animal, machine and background; do not interpret detailed subject descriptions as a request for fine or photographic rendering. Preserve explicitly specified identities, anatomy, actions and emotions.",
+    style, renderingMode,
+  ].filter(Boolean) : [];
   const requirements = [
     "Preserve character identity and clothing continuity with adjacent panels.",
     "Leave natural negative space for later speech balloons or captions.",
@@ -99,12 +104,14 @@ export function buildImagePrompt(project: ComicProject, panel: PanelPlan, mode: 
       text(direction?.lighting) ? `Scene lighting: ${text(direction?.lighting)}` : "",
       text(direction?.continuity) ? `Current scene continuity: ${text(direction?.continuity)}` : "",
       ...requirements,
+      ...reinforcement,
     ].filter(Boolean).join("\n");
   }
   return [
     ...(mode === "short" ? scene.slice(0, 4) : scene),
     style, renderingMode,
-    ...(mode === "short" ? requirements.slice(-1) : requirements)
+    ...(mode === "short" ? requirements.slice(-1) : requirements),
+    ...reinforcement,
   ].filter(Boolean).join(" ");
 }
 
