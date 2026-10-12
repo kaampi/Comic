@@ -1,0 +1,18 @@
+-- MODULE 1: GLOBAL STYLE --
+Illustration style: A predominantly black-and-white photographic print with visibly selective hand-applied color tints. Most of the image remains neutral monochrome. The defining effect is hand-coloring of a few selected areas, not a subdued fully colored photograph. Preserve imaginary subjects.
+Preserve the requested characters, species, identities, actions, emotions, objects, setting and story period. Honor explicitly specified anatomy and proportions; interpret otherwise unspecified forms through the chosen drawing language. Do not add unrelated subjects or locations. No speech bubbles, captions or lettering.
+Lines, brushwork and form: Preserve convincing photographed anatomy, identities, ages, species, proportions, scale and material detail. Begin with a recognizable neutral monochrome photographic tonal structure. Apply color as translucent brushed tint on top of that photographic image, without replacing fine photo detail with illustration, painted outlines or cartoon forms.
+Color and shading: Keep at least two thirds of the image strictly neutral black, white and gray, especially the sky, landscape, vegetation and most object surfaces. Apply a few unmistakable transparent hand-brushed tints only to selected skin areas, one or two garments and a few focal object patches. Use muted local colors from the specified scene. Color appears in broad uneven translucent patches, with visible missed edges and subtle occasional overspill. Monochrome photographic shading shows through every tinted area. Do not tint the whole environment or recreate a full-color digital photograph. Preserve the specified lighting.
+Texture and finish: A matte photographic print with gentle transparent hand-coloring traces and lightly irregular tint boundaries. It should read as a photograph colored by hand, not a watercolor illustration or a fully colored modern photograph. No mandatory sepia, historical costumes, period setting, scratches, dust, text, frames or added optical effects.
+-- MODULE 2: CAMERA & COMPOSITION --
+Shot: establishing-wide.
+Eye-level camera angle
+Composition should read clearly in a full-width comic panel.
+Interpret perspective and focus within the chosen illustration style.
+-- MODULE 4: SUBJECT & ACTION --
+Single photographic comic panel; preserve any imaginary subjects and exaggerated anatomy.
+Action and staging: A complete wide landscape scene, 16:9: a colossal abandoned humanoid robot sits on the right at the edge of a forest, leaning back against trees, rusty moss-covered blue-gray blocky armor, slit eyes and ribbed chest, huge bent legs stretched toward the foreground. On the left exactly five rural villagers watch with quiet curiosity: three standing people (a young adult man in a cream shirt and overalls holding a farm fork, a younger adult woman in a checked dress, and an elderly gray-haired woman in a dark blouse and patterned skirt), and two men seated on a wooden horse cart (an elderly bearded man in a brimmed hat and a man in a flat cap). A brown horse with a pale facial blaze stands near center in front of the cart. Two wooden farmhouses, fenced ploughed fields, a winding dirt road and distant deciduous trees occupy the left background; dense woodland is behind the robot; a shallow stream crosses the lower-right foreground. All five people, horse, cart and entire seated robot should be visible.
+Scene lighting: Soft natural daylight.
+Preserve character identity and clothing continuity with adjacent panels.
+Leave natural negative space for later speech balloons or captions.
+Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI.

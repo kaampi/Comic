@@ -55,5 +55,18 @@
     "promptCommit": "aae0e06014775fd10d019dab3fb0d7f8aaac5fa8",
     "generationMethod": "built-in imagegen; exact application prompt; no reference images",
     "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90"
+  },
+  {
+    "styleId": "photo-cinematic",
+    "name": "Hand-colored photograph",
+    "colorMode": "color",
+    "image": "photo-cinematic-color.webp",
+    "prompt": "photo-cinematic-prompt.txt",
+    "imageSha256": "aef9e195d4ed94abe11abc139a3c291866e237101c12556f1fb6ad3a3f915931",
+    "originalImageSha256": "51cee6387225ebb17321f9f6736b03608a7f07edd9d1a3fe85329f7c53c6ff41",
+    "promptSha256": "b2d24a689d0859cd2f48d62b4b3cbd5a3cd759a9e5a22982e3fe273b428e5dad",
+    "promptCommit": "9a497cacf4d96c79c7911c558c376ae76543e324",
+    "generationMethod": "built-in imagegen; exact application prompt; approved image reattached by user",
+    "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90"
   }
 ]

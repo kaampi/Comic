@@ -36,6 +36,7 @@ const classicReferences: Record<string, string[]> = {
   "eu-economical-figures": ["Morris / Lucky Luke"], "anchor-2": ["Franquin / Spirou"], "er-1": ["Manara"],
 };
 const retainedPreviewAssets: Record<string, { previewImage?: string; linePreviewImage?: string }> = {
+  "photo-cinematic": { previewImage: "/Styles/Verified/photo-cinematic-color.webp" },
   "photo-natural": { previewImage: "/Styles/Verified/photo-natural-color.webp" },
   "photo-analog": { previewImage: "/Styles/Verified/photo-analog-color.webp" },
   "fb-1": {
