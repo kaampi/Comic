@@ -1,0 +1,18 @@
+-- MODULE 1: GLOBAL STYLE --
+Illustration style: A visibly aged 1970s-style color film photograph, scanned from a decades-old chromogenic print. The photographic medium shows clear fading, dye shifts and handling wear. Preserve the requested scene, including imaginary subjects; do not introduce 1970s clothing, props or locations.
+Preserve the requested characters, species, identities, actions, emotions, objects, setting and story period. Honor explicitly specified anatomy and proportions; interpret otherwise unspecified forms through the chosen drawing language. Do not add unrelated subjects or locations. No speech bubbles, captions or lettering.
+Lines, brushwork and form: Convincing photographed people, animals, objects and material surfaces retain specified identities, ages, anatomy, species, scale and exaggerated proportions. Wear is on the film or photographic print, not extra dirt or damage on the depicted subjects. Preserve the specified lighting and action.
+Color and shading: Noticeably faded low-saturation color with uneven dye aging: warm amber-pink midtones, weakened cool blue and cyan dyes, muted olive greens, softened contrast and slightly lifted dark tones. Highlights tend toward pale creamy yellow while some shadow areas retain a faint magenta cast. Keep skin and important object colors recognizable beneath the age-related shift; avoid uniform sepia or a clean modern digital grade.
+Texture and finish: Clearly visible fine-to-medium analog grain, several irregular thin emulsion scratches of different lengths, a few pale longer scratches, scattered dust dots and occasional tiny fibers. Make the scratches readable at preview size, with most marks in sky, background and other nonessential areas; keep faces and key features legible. Include slight irregular fading across the image, but no distressed frame, torn paper, text, fog, light leaks or lens flare. The result should feel like a worn archived color print, not a pristine photograph with a barely perceptible grain overlay.
+-- MODULE 2: CAMERA & COMPOSITION --
+Shot: establishing-wide.
+Eye-level camera angle
+Composition should read clearly in a full-width comic panel.
+Interpret perspective and focus within the chosen illustration style.
+-- MODULE 4: SUBJECT & ACTION --
+Single photographic comic panel; preserve any imaginary subjects and exaggerated anatomy.
+Action and staging: A complete wide landscape scene, 16:9: a colossal abandoned humanoid robot sits on the right at the edge of a forest, leaning back against trees, rusty moss-covered blue-gray blocky armor, slit eyes and ribbed chest, huge bent legs stretched toward the foreground. On the left exactly five rural villagers watch with quiet curiosity: three standing people (a young adult man in a cream shirt and overalls holding a farm fork, a younger adult woman in a checked dress, and an elderly gray-haired woman in a dark blouse and patterned skirt), and two men seated on a wooden horse cart (an elderly bearded man in a brimmed hat and a man in a flat cap). A brown horse with a pale facial blaze stands near center in front of the cart. Two wooden farmhouses, fenced ploughed fields, a winding dirt road and distant deciduous trees occupy the left background; dense woodland is behind the robot; a shallow stream crosses the lower-right foreground. All five people, horse, cart and entire seated robot should be visible.
+Scene lighting: Soft natural daylight.
+Preserve character identity and clothing continuity with adjacent panels.
+Leave natural negative space for later speech balloons or captions.
+Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI.

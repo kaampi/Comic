@@ -31,5 +31,29 @@
     "promptSha256": "9b431a0e2fd40190b0757e1c319f3c43898fcda3dad1b153c4ed90e6b182f2ca",
     "promptCommit": "91e8621ed7c1c7f6c0bb9213de489169efdb9740",
     "generationMethod": "built-in imagegen; exact application prompt; no reference images"
+  },
+  {
+    "styleId": "photo-natural",
+    "name": "Natural photographic rendering",
+    "colorMode": "color",
+    "image": "photo-natural-color.webp",
+    "prompt": "photo-natural-prompt.txt",
+    "imageSha256": "eaa6aa16a0d32b82577edf3c58c982d4695340ac6e08508baaed8d79cf460a46",
+    "promptSha256": "8a5a984f9b5065f213ede081ff1af423491acad36fa30383e69dc3f27e39e1a2",
+    "promptCommit": "aae0e06014775fd10d019dab3fb0d7f8aaac5fa8",
+    "generationMethod": "built-in imagegen; exact application prompt; no reference images",
+    "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90"
+  },
+  {
+    "styleId": "photo-analog",
+    "name": "Analog film rendering",
+    "colorMode": "color",
+    "image": "photo-analog-color.webp",
+    "prompt": "photo-analog-prompt.txt",
+    "imageSha256": "c3017ccc0c75826b05f72a08ba626f5e5660a9cb17d7f1725c05b8d44c62f337",
+    "promptSha256": "501e2ab7378a9e40c961aea84cf72c59bcc92257a379833d4c4d56b08576bb16",
+    "promptCommit": "aae0e06014775fd10d019dab3fb0d7f8aaac5fa8",
+    "generationMethod": "built-in imagegen; exact application prompt; no reference images",
+    "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90"
   }
 ]
