@@ -90,5 +90,27 @@
     "promptSha256": "33f098633bcaf872270a696aa201f7f705fd461dbad4b8f4bf051fb7aa5dcec5",
     "promptCommit": "9b39c78a2d89120fe2720474742166b899ac2211",
     "generationMethod": "built-in imagegen; exact application prompt; no reference images"
+  },
+  {
+    "styleId": "paint-gritty-dark-fantasy",
+    "name": "Textured cinematic oil painting",
+    "colorMode": "color",
+    "image": "paint-gritty-dark-fantasy-color.png",
+    "prompt": "paint-gritty-dark-fantasy-prompt.txt",
+    "imageSha256": "4d1c5135ec578fe41b5f8e7e07bfe8e92ac47e77f240018212596b64051c8e95",
+    "promptSha256": "eb7312cbf5e63a2e11514381240561a94adc492e4d4c454e5047073cadc23008",
+    "promptCommit": "7987acd5d75666334de76f1ec00867623ce89b5c",
+    "generationMethod": "built-in imagegen; exact application prompt; no reference images"
+  },
+  {
+    "styleId": "paint-zorn-alla-prima",
+    "name": "Zorn-inspired alla prima",
+    "colorMode": "color",
+    "image": "paint-zorn-alla-prima-color.png",
+    "prompt": "paint-zorn-alla-prima-prompt.txt",
+    "imageSha256": "5ff63d886ec3f29660c23cb869367e1ff34238fd504ae5ee709016f0df322552",
+    "promptSha256": "b540bdd776166bdb4851be797f5fc7725022dcee72a072948522a1cae7996466",
+    "promptCommit": "7987acd5d75666334de76f1ec00867623ce89b5c",
+    "generationMethod": "built-in imagegen; exact application prompt; no reference images"
   }
 ]

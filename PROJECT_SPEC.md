@@ -197,7 +197,7 @@ Bilder ska genereras utan inbränd dialog eller berättartext. Planerad plats f�
 
 ### 9.0 Renodlat stilbibliotek
 
-Det inbyggda biblioteket har 38 profiler i sju grupper: europeiska serier, manga/japansk teckning, modern serieteckning, måleri, teckning/tryck, collage/grafisk illustration och fotografisk återgivning. Grupperna beskriver bildspråk och material; berättelsegenre, miljö och tidsålder kommer från panelen. Bildspråksreferenser till Hergé, Uderzo, Morris, Franquin och Manara visas och kan sökas, men prompten beskriver tekniken och maneret utan att ange förebildens figurer eller motiv.
+Det inbyggda biblioteket har 35 profiler i åtta grupper: stiliserad serieteckning, realistisk serieteckning, manga/japansk teckning, modern serieteckning, måleri, teckning/tryck, collage/grafisk illustration och fotografisk återgivning. Grupperna beskriver bildspråk och material; berättelsegenre, miljö och tidsålder kommer från panelen. Bildspråksreferenser till Hergé, Uderzo, Morris, Franquin och Manara visas och kan sökas, men prompten beskriver tekniken och maneret utan att ange förebildens figurer eller motiv.
 
 Snarlika mallar har förenats utan att radera särpräglade maner. Nya profiler täcker nervig karikatyrtusch, färgpennor/vaxkrita, träsnitt/linoleumtryck, risografi, skrapkartong, gravyr, gouache, papperscollage, geometrisk illustration och tre fotografiska uttryck. Fotografiska profiler bevarar overkliga motiv, art och överdriven anatomi. Familjevänliga former kan gestalta alla efterfrågade känslor. Konsthistoriska materialegenskaper kan finnas kvar utan att föreskriva en historisk berättelsemiljö.
 

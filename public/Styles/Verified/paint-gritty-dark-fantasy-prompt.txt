@@ -1,0 +1,27 @@
+-- MODULE 1: GLOBAL STYLE --
+Illustration style: Style & Medium:
+A richly textured oil-painted illustration with highly visible, distinct brushwork and fine organic sketch-like linework. The requested scene is rendered with a thick, expressive painterly hand while preserving the specified character designs, anatomy and expressions. Prominent brushstrokes, impasto textures, loose gestural scrapes, and dry-brush marks remain evident throughout environment, clothing, and background. Visible paint layering gives the surface a thick, tactile quality. Convincing form and expressive faces, preserving the specified proportions, anatomy, species and emotions. No harsh thick ink outlines or cartoonish effects; contours are integrated and defined by layered paint.
+
+Material Rendering:
+Thick painterly texture remains highly visible across focal details and supporting surfaces. Form is built through layered pigment, gestural marks and controlled edge definition. Camera, optical focus and effects are supplied by the panel settings.
+
+Lighting & Contrast:
+Naturalistic dramatic chiaroscuro. Dense soft-edged shadows filled with believable environmental bounce light from scene-appropriate sources such as twilight, dim indoor lamps, or firelight. Light interacts with clothing, damp skin, and thick brush strokes. Render specified light sources through layered pigment and controlled value contrast without adding luminous objects or wet surfaces.
+
+Details & Texture:
+Surface detail follows the requested subjects and environment. Do not add weather, injuries, dampness, fatigue, smoke or dirt unless specified. Rich tactile surfaces with prominent impasto, visible paint layering, and artistic grit.
+
+Palette:
+Desaturated, organic, muddy cinematic colors: deep charcoal, slate, dark rust, and mossy greens, broken by rich incandescent orange or fiery gold lighting from realistic sources. Visible strokes of warm highlights catch heavy surface textures. Color rendering is essential: retain subtle chromatic variation even in the darkest areas. Render exclusively in color. Preserve subtle chromatic variation even in shadows and low-saturation passages. No monochrome, grayscale, black-and-white, or uniform sepia treatment. No speech bubbles, comic panel borders, text boxes, or lettering.
+-- MODULE 2: CAMERA & COMPOSITION --
+Shot: establishing-wide.
+Eye-level camera angle
+Composition should read clearly in a full-width comic panel.
+Interpret perspective and focus within the chosen illustration style.
+-- MODULE 4: SUBJECT & ACTION --
+Comic panel illustration.
+Action and staging: A complete wide landscape scene, 16:9: a colossal abandoned humanoid robot sits on the right at the edge of a forest, leaning back against trees, rusty moss-covered blue-gray blocky armor, slit eyes and ribbed chest, huge bent legs stretched toward the foreground. On the left exactly five rural villagers watch with quiet curiosity: three standing people (a young adult man in a cream shirt and overalls holding a farm fork, a younger adult woman in a checked dress, and an elderly gray-haired woman in a dark blouse and patterned skirt), and two men seated on a wooden horse cart (an elderly bearded man in a brimmed hat and a man in a flat cap). A brown horse with a pale facial blaze stands near center in front of the cart. Two wooden farmhouses, fenced ploughed fields, a winding dirt road and distant deciduous trees occupy the left background; dense woodland is behind the robot; a shallow stream crosses the lower-right foreground. All five people, horse, cart and entire seated robot should be visible.
+Scene lighting: Soft natural daylight.
+Preserve character identity and clothing continuity with adjacent panels.
+Leave natural negative space for later speech balloons or captions.
+Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI.

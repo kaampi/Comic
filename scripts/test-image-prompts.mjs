@@ -92,7 +92,9 @@ try {
   console.log("PASS: album style, optional effects/optics, deep-focus compatibility, rendering modes, local reload and backup round trip/validation");
   cleanup(); render(React.createElement(ImagePromptEditor, { project, panel: plan, locale: "en", onClose() {}, onSave() {} })); assert.ok(screen.getByRole("dialog", { name: "Adjust image prompt" })); assert.ok(screen.getByRole("button", { name: "Save image prompt" }));
   console.log("PASS: English editor labels");
-  assert.equal(BUILTIN_STYLES.length, 38);
+  assert.equal(BUILTIN_STYLES.length, 35);
+  for (const retired of ["paint-cinematic-graphic-novel", "paint-americana-rockwell", "paint-regionalist-wood"]) assert.equal(BUILTIN_STYLES.some(s => s.id === retired), false);
+  for (const retained of ["paint-gritty-dark-fantasy", "paint-zorn-alla-prima"]) assert.ok(BUILTIN_STYLES.some(s => s.id === retained));
   assert.equal(new Set(BUILTIN_STYLES.map(s => s.id)).size, BUILTIN_STYLES.length);
   assert.deepEqual(new Set(STYLE_GENRES), new Set(STYLE_GROUPS));
   for (const style of BUILTIN_STYLES) {
@@ -113,7 +115,7 @@ try {
   const changedStyle = { ...inherited, style: BUILTIN_STYLES[0] };
   const changedPanel = patchBeatPanel(changedStyle, inheritedPlan.id, { title: "Edited title" });
   assert.deepEqual(changedPanel.adaptations[0].panelPlans[0].promptDirection, previousDirection);
-  const legacyStyle = { id: "removed-old-style", name: "Legacy fantasy", genre: "Fantasy", promptText: "Keep this exact old prompt" };
+  const legacyStyle = { id: "paint-cinematic-graphic-novel", name: "Legacy fantasy", genre: "Fantasy", promptText: "Keep this exact old prompt" };
   const legacy = createProject("Old album", "blank", legacyStyle);
   const legacyRoundTrip = normalizeStoredProjects(JSON.parse(JSON.stringify([legacy])))[0];
   assert.deepEqual(legacyRoundTrip.style, legacyStyle);
@@ -132,5 +134,5 @@ try {
   fireEvent.change(screen.getByLabelText(/Perspektiv/), { target: { value: "50mm" } });
   fireEvent.change(screen.getByLabelText(/Skärpedjup/), { target: { value: "" } });
   assert.match(optics.querySelector("summary").textContent, /Anpassat/);
-  console.log("PASS: 38 distinct profiles in seven groups, removed motif/era instructions, removable visible optical/FX defaults, origin badges, snapshot/backup preservation and imaginary photographic subjects");
+  console.log("PASS: 35 distinct profiles in eight groups, removed motif/era instructions, removable visible optical/FX defaults, origin badges, snapshot/backup preservation and imaginary photographic subjects");
 } finally { cleanup(); rmSync(compiled, { recursive: true, force: true }); dom.window.close(); }

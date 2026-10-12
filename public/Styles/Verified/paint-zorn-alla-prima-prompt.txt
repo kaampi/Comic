@@ -1,0 +1,27 @@
+-- MODULE 1: GLOBAL STYLE --
+Illustration style: Visual Style & Medium:
+An expressive alla prima oil painting on canvas with economical bravura brushwork. A restricted earthy palette based on yellow ochre, warm vermilion red, ivory black, and warm white. Natural skin tones, subdued earth colors, muted olive greens, and cool-looking neutral grays through careful mixing and relative color contrast. No bright artificial colors, saturated blues, or neon hues.
+
+Artistic Techniques & Brushwork:
+An alla prima (wet-on-wet) appearance with bold, loose, confident brushwork. Large, sweeping, gestural flat-brush strokes describe forms economically while preserving the requested anatomy, proportions, expressions and essential scene details. Strong lost-and-found edges: selected contours dissolve into adjacent shadows or surroundings while focal details remain defined. Reserve rich impasto for concentrated highlights, catchlights, and glinting reflections where appropriate. Traditional textured oil paint with visible canvas tooth and distinct brush marks. No hard ink outlines, airbrushed surfaces, or glossy digital rendering.
+
+Light & Atmosphere:
+Sensitive dramatic light appropriate to the scene: filtered daylight, shimmering backlight, subdued interior illumination, or warm lamplight. Luminous highlights, rich softly connected shadows, and subtle reflected color. Quick economical marks convey changing light on skin, fabrics, and surrounding surfaces. When water is present, suggest movement and reflections with loose shimmering strokes. Preserve the specified time of day and lighting.
+
+Composition & Characters:
+Candid, unposed composition with believable weight, fluid movement, and figures integrated into surroundings. Preserve requested characters, actions, clothing, and setting. Guide attention through selective detail, edge control, and tonal contrast. Background depth through simplified brushwork and softened edges rather than photographic lens blur. Tactile atmospheric unity across outdoor and interior scenes.
+
+Color Mode:
+Preserve subtle warm and cool relationships using the restricted earthy palette. Render exclusively in color. Preserve subtle chromatic variation even in shadows and low-saturation passages. No monochrome, grayscale, black-and-white, or uniform sepia treatment. No speech bubbles, comic panel borders, text boxes, or lettering.
+-- MODULE 2: CAMERA & COMPOSITION --
+Shot: establishing-wide.
+Eye-level camera angle
+Composition should read clearly in a full-width comic panel.
+Interpret perspective and focus within the chosen illustration style.
+-- MODULE 4: SUBJECT & ACTION --
+Comic panel illustration.
+Action and staging: A complete wide landscape scene, 16:9: a colossal abandoned humanoid robot sits on the right at the edge of a forest, leaning back against trees, rusty moss-covered blue-gray blocky armor, slit eyes and ribbed chest, huge bent legs stretched toward the foreground. On the left exactly five rural villagers watch with quiet curiosity: three standing people (a young adult man in a cream shirt and overalls holding a farm fork, a younger adult woman in a checked dress, and an elderly gray-haired woman in a dark blouse and patterned skirt), and two men seated on a wooden horse cart (an elderly bearded man in a brimmed hat and a man in a flat cap). A brown horse with a pale facial blaze stands near center in front of the cart. Two wooden farmhouses, fenced ploughed fields, a winding dirt road and distant deciduous trees occupy the left background; dense woodland is behind the robot; a shallow stream crosses the lower-right foreground. All five people, horse, cart and entire seated robot should be visible.
+Scene lighting: Soft natural daylight.
+Preserve character identity and clothing continuity with adjacent panels.
+Leave natural negative space for later speech balloons or captions.
+Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI.

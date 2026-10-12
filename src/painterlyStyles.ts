@@ -3,20 +3,6 @@ import type { IllustrationStyle } from "./stylesLibrary";
 const noText = 'No speech bubbles, comic panel borders, text boxes, or lettering.';
 const colorOnly = 'Render exclusively in color. Preserve subtle chromatic variation even in shadows and low-saturation passages. No monochrome, grayscale, black-and-white, or uniform sepia treatment.';
 const neutralGray = 'Render exclusively in black, white, and neutral grayscale. No color, beige paper, sepia, tinted highlights, or selective color.';
-const cinematicBase = `Visual Style & Medium:
-A highly detailed, cinematic digital painting in a rich contemporary graphic novel style, filled with natural atmospheric depth, textured brushwork, and fine, textured, sketch-like linework with variable weights. Blend the lines seamlessly into heavily layered digital paint. No flat comic fills or thick, uniform outlines.
-
-Light & Texture:
-Use dramatic light appropriate to the scene, with volumetric sunbeams and luminous rim light where motivated by the light sources. Atmospheric haze, restrained bloom, and glinting dust or leaves catch the light where appropriate. Soft reflected light reveals faces, clothing, and surfaces within the shadows. Preserve detail in both bright and dark areas. Dense environmental details, visible painterly textures, natural grit, subtle film grain or paper overlay, and soft ambient occlusion in crevices.
-
-Composition & Cinematic Quality:
-Preserve the requested characters, actions, objects, and setting. Use dynamic framing when appropriate to the action. A high-production-value painted illustration finish. Optical focus and motion effects are controlled separately by the panel settings. Keep important characters readable through tonal separation. Distant detail softens through atmospheric perspective; focal subjects retain sharper detail.
-${noText}`;
-const cinematicColor = `Color & Light:
-A rich, saturated, warm palette with fiery orange, deep amber, rust, and warm shadows where appropriate to the scene. For sunset scenes, use glowing golden-hour backlight and natural warm bounce light. Preserve the specified time of day and lighting conditions.`;
-const cinematicGray = `Monochrome Light & Tone:
-Render entirely in black, white, and neutral shades of gray, with rich tonal gradations, deep charcoal shadows, and luminous highlights. Translate golden-hour light, when appropriate to the scene, into glowing backlight, layered midtones, and soft reflected light. Distinguish clothing and objects through carefully controlled grayscale values and textures. Maintain continuous painterly tonal transitions rather than a binary ink treatment. ${neutralGray}`;
-
 const halftoneBase = `Visual Style & Medium:
 A 2D vintage graphic novel and indie comic illustration with a tactile, analog print aesthetic. Clear, dark, slightly textured ink contours with natural hand-drawn variation in line weight. Combine confident outlines with selective finer sketch marks. Flat matte fills, with all intermediate shading and tonal transitions created through clearly visible Ben-Day-style dots, halftone screens, and patterned stippling. No smooth digital gradients.
 
@@ -35,12 +21,6 @@ Render entirely in black, white, and neutral grayscale on white or pale neutral-
 
 export const PAINTERLY_STYLES: IllustrationStyle[] = [
   {
-    id: 'paint-cinematic-graphic-novel', previewImage: '/Styles/Painterly/paint-cinematic-graphic-novel-color.jpg', linePreviewImage: '/Styles/Painterly/paint-cinematic-graphic-novel-gray.jpg', name: 'Cinematic painterly graphic novel', genre: 'Painterly / Traditional',
-    supportedColorModes: ['color', 'grayscale'], panelDefaults: { depthOfField: 'shallow', effects: ['motion_blur'], effectStrength: 'subtle', effectScope: 'subjects' },
-    promptText: cinematicBase + '\n\n' + cinematicColor,
-    modePromptText: { color: cinematicBase + '\n\n' + cinematicColor, grayscale: cinematicBase + '\n\n' + cinematicGray }
-  },
-  {
     id: 'paint-gritty-dark-fantasy', previewImage: '/Styles/Painterly/paint-gritty-dark-fantasy-color.jpg', name: 'Textured cinematic oil painting', panelDefaults: { lens: '35mm', depthOfField: 'shallow', effects: ['motion_blur', 'lens_flare'], effectStrength: 'subtle', effectScope: 'background' }, genre: 'Painterly / Traditional', supportedColorModes: ['color'],
     promptText: `Style & Medium:
 A richly textured oil-painted illustration with highly visible, distinct brushwork and fine organic sketch-like linework. The requested scene is rendered with a thick, expressive painterly hand while preserving the specified character designs, anatomy and expressions. Prominent brushstrokes, impasto textures, loose gestural scrapes, and dry-brush marks remain evident throughout environment, clothing, and background. Visible paint layering gives the surface a thick, tactile quality. Convincing form and expressive faces, preserving the specified proportions, anatomy, species and emotions. No harsh thick ink outlines or cartoonish effects; contours are integrated and defined by layered paint.
@@ -56,31 +36,6 @@ Surface detail follows the requested subjects and environment. Do not add weathe
 
 Palette:
 Desaturated, organic, muddy cinematic colors: deep charcoal, slate, dark rust, and mossy greens, broken by rich incandescent orange or fiery gold lighting from realistic sources. Visible strokes of warm highlights catch heavy surface textures. Color rendering is essential: retain subtle chromatic variation even in the darkest areas. ${colorOnly} ${noText}`
-  },
-  {
-    id: 'paint-americana-rockwell', previewImage: '/Styles/Painterly/paint-americana-rockwell-color.jpg', name: 'Classic narrative oil painting', genre: 'Painterly / Traditional', supportedColorModes: ['color'],
-    promptText: `A meticulously observed narrative oil illustration on finely textured canvas, with polished descriptive brushwork and expressive character drawing. Strong visual storytelling, carefully observed gesture and expressive, believable faces that preserve the requested anatomy, character age, species and emotions. Carefully observed scene-appropriate materials and details, and a polished, hand-painted finish with subtle visible brushwork and fine canvas texture.
-
-Warm, nostalgic color palette with crimson reds, warm ochres, creamy whites, and softly balanced earth tones. Smooth, luminous lighting with gentle shadows, natural reflected color, and carefully controlled highlights. Preserve rich local colors and subtle color variation throughout the image, including shadow areas.
-
-Color is essential to this style. No monochrome, grayscale, black-and-white, or uniform sepia treatment. ${noText}`
-  },
-  {
-    id: 'paint-regionalist-wood', previewImage: '/Styles/Painterly/paint-regionalist-wood-color.jpg', name: 'Meticulous sculptural oil painting', genre: 'Painterly / Traditional', supportedColorModes: ['color'],
-    promptText: `Visual Style & Medium:
-A stylized meticulously painted oil illustration on wood panel with formal shapes and precisely controlled contour definition. Uncanny, austere realism with a formal, highly structured interplay between flattened shapes and carefully modeled three-dimensional forms. Traditional tightly painted surfaces with fine, tiny brush marks and a matte, eggshell-like finish. No loose expressive brushwork, photorealistic camera effects, or modern digital effects.
-
-Composition & Characters:
-Use carefully balanced shape relationships and deliberate contour rhythms while preserving the requested camera, movement and emotion. Preserve the actions, identities, and emotions specified in the scene while interpreting them through this formal visual language. Precisely controlled contours, selectively softened edges, and strong tonal separation between figures and surroundings.
-
-Color, Patterns & Details:
-Muted earthy colors: deep navy blues, near-blacks, forest greens, ochres, off-whites, and clay tones. Maintain subtle but perceptible hue differences, including dark areas. Meticulous attention to material surfaces, small decorative patterns, and geometric repetition in clothing, objects, and architecture. Patterns follow forms and remain appropriate to the scene.
-
-Environment & Architecture:
-Interpret the specified setting through tightly ordered shapes, simplified volumes, rhythmic repetition, and carefully arranged perspective. Give specified environmental forms a sculptural quality without introducing fields, fences, vegetation or architecture absent from the scene. Quiet, restrained, grounded atmosphere without replacing the requested location or introducing unrelated rural elements.
-
-Color Mode:
-The restrained earthy palette is essential even when saturation is low. ${colorOnly} ${noText}`
   },
   {
     id: 'paint-zorn-alla-prima', previewImage: '/Styles/Painterly/paint-zorn-alla-prima-color.jpg', name: 'Zorn-inspired alla prima', genre: 'Painterly / Traditional', supportedColorModes: ['color'],

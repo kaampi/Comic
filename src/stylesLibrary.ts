@@ -36,6 +36,8 @@ const classicReferences: Record<string, string[]> = {
   "eu-economical-figures": ["Morris / Lucky Luke"], "anchor-2": ["Franquin / Spirou"], "er-1": ["Manara"],
 };
 const retainedPreviewAssets: Record<string, { previewImage?: string; linePreviewImage?: string }> = {
+  "paint-gritty-dark-fantasy": { previewImage: "/Styles/Verified/paint-gritty-dark-fantasy-color.png" },
+  "paint-zorn-alla-prima": { previewImage: "/Styles/Verified/paint-zorn-alla-prima-color.png" },
   "draw-colored-pencil": { previewImage: "/Styles/Verified/draw-colored-pencil-color.png" },
   "ink-nervous-caricature": { linePreviewImage: "/Styles/Verified/ink-nervous-caricature-grayscale.png", previewImage: "/Styles/Verified/ink-nervous-caricature-grayscale.png" },
   "photo-cinematic": { previewImage: "/Styles/Verified/photo-cinematic-color.webp" },
