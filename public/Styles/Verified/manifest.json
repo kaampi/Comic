@@ -68,5 +68,27 @@
     "promptCommit": "9a497cacf4d96c79c7911c558c376ae76543e324",
     "generationMethod": "built-in imagegen; exact application prompt; approved image reattached by user",
     "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90"
+  },
+  {
+    "styleId": "draw-colored-pencil",
+    "name": "Colored pencil & wax crayon",
+    "colorMode": "color",
+    "image": "draw-colored-pencil-color.png",
+    "prompt": "draw-colored-pencil-prompt.txt",
+    "imageSha256": "05c72956fe1ce5dd80101a2915694ae42dac550518d23698825409fb955054ae",
+    "promptSha256": "f4ad2266805ab5994df1c35f766af556a1125414aa3cb6d2706d19ee3b0287e6",
+    "promptCommit": "9b39c78a2d89120fe2720474742166b899ac2211",
+    "generationMethod": "built-in imagegen; exact application prompt; no reference images"
+  },
+  {
+    "styleId": "ink-nervous-caricature",
+    "name": "Nervous caricature ink",
+    "colorMode": "grayscale",
+    "image": "ink-nervous-caricature-grayscale.png",
+    "prompt": "ink-nervous-caricature-prompt.txt",
+    "imageSha256": "fb13decaccad4695143eeb954420244cb053f72f0545c258cf0624f06ee05945",
+    "promptSha256": "33f098633bcaf872270a696aa201f7f705fd461dbad4b8f4bf051fb7aa5dcec5",
+    "promptCommit": "9b39c78a2d89120fe2720474742166b899ac2211",
+    "generationMethod": "built-in imagegen; exact application prompt; no reference images"
   }
 ]
