@@ -195,6 +195,14 @@ Promptbyggaren sammanför utsnitt, handling, visuella ankare, scentillstånd, st
 
 Bilder ska genereras utan inbränd dialog eller berättartext. Planerad plats för bubblor ska ingå i kompositionsinstruktionen.
 
+### 9.1 Bildpromptredigering i manusläget
+
+Beats behåller snabbspåret för lokal bildpromptgenerering. Varje serieruta erbjuder också **Justera bildprompt** i ett modalt redigeringsfönster, cirka 80 procent av skärmens bredd och höjd. Handling, karaktärsankare och separat regi per karaktär, miljö, ljus, utsnitt och kameravinkel visas direkt. Optik, skärpedjup, visuell fokuspunkt, specialeffekter och kontinuitet är valfria utfällbara avsnitt. Optik och effekter är ospecificerade som standard. Utsnitt och vinkel kan låsas oberoende när ett nytt lokalt förslag hämtas från beatet.
+
+Förhandsvisningen uppdateras utan nätverksanrop eller projektsparning. **Spara bildprompt** sparar både rutans strukturerade regi och den sammansatta prompten. Avbryt, Stäng och Escape lämnar projektet oförändrat. Manuellt redigerade sparade prompter kan granskas i fönstret och ersätts först vid uttrycklig sparning eller omskapande. Rut-ID:n, prompt-ID:n och bildhistorik bevaras.
+
+Albuminställningarna innehåller fyra valfria stilfält: medium, linjer/former, färg/skuggning och ytstruktur/finish. Äldre album använder sin befintliga stilsnapshot. Stiländringar påverkar nya eller omskapade prompter; sparade prompttexter skrivs inte om automatiskt. Ett byte av stilpreset återgår till den nya stilens standard. Färg- och skuggningsfältet tillämpas endast i färgläget; gråskala och linjeteckning behåller sina återgivningskrav. Strukturerad stil och rutregi följer lokal sparning och albumbackup.
+
 ## 10. Bildgenerering
 
 En leverantörsadapter beskriver vilka bildstorlekar, referenser och redigeringsfunktioner tjänsten faktiskt stöder. Ingen specifik tjänst är beslutad ännu.
@@ -275,5 +283,6 @@ Första milstolpen är en fungerande kort serie på 1–3 sidor med ett fåtal k
 - Exakta lagrings-, backup- och migrationsdetaljer.
 - Sidformat, upplösning och typsnitt för första exporten.
 - Licens för projektet.
+
 
 

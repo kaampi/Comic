@@ -427,6 +427,7 @@ export function generateBeatPanelPrompt(
   );
   const now = new Date().toISOString();
   const prompt = {
+    ...previous,
     id: previous?.id ?? id("image-prompt"),
     panelId,
     mode: "full" as const,
@@ -512,3 +513,4 @@ export function ensureBeatPanels(project: ComicProject): ComicProject {
     ],
   });
 }
+

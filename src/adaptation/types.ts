@@ -1,7 +1,24 @@
 export type PanelDensity = "compact" | "normal" | "cinematic";
 export type BeatType = "establishing" | "introduction" | "action" | "dialogue" | "reaction" | "transition" | "atmosphere" | "climax" | "resolution";
 export type TextOrigin = "original" | "adapted" | "ai-generated";
-export type ShotType = "wide" | "establishing-wide" | "medium" | "medium-close" | "close-up" | "extreme-close-up" | "over-shoulder" | "reaction" | "insert";
+export type ShotType = "wide" | "establishing-wide" | "medium" | "medium-close" | "close-up" | "extreme-close-up" | "over-shoulder" | "reaction" | "insert" | "full-shot";
+
+export type AlbumPromptStyle = { medium: string; lines: string; color: string; texture: string };
+export type PromptDirection = {
+  cameraAngle?: string;
+  lens?: string;
+  depthOfField?: string;
+  focalPoint?: string;
+  setting?: string;
+  lighting?: string;
+  continuity?: string;
+  characterActions?: Record<string, string>;
+  effects?: string[];
+  effectStrength?: "subtle" | "normal" | "strong";
+  effectScope?: "background" | "subjects" | "whole-image";
+  lockShot?: boolean;
+  lockAngle?: boolean;
+};
 export type PanelSizeHint = "small" | "medium" | "large" | "full-width" | "splash";
 
 export type DialogueCandidate = {
@@ -88,6 +105,7 @@ export type PanelPlan = {
   sizeHint?: PanelSizeHint;
   pacingRole?: "setup" | "progression" | "accent" | "climax" | "release";
   visualDescription: string;
+  promptDirection?: PromptDirection;
   characterIds: string[];
   locationId?: string;
   dialogue: PanelDialogue[];
@@ -123,5 +141,6 @@ export type StoryAdaptation = {
   panelPlans: PanelPlan[];
   imagePrompts: ImagePrompt[];
 };
+
 
 

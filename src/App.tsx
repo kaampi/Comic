@@ -260,7 +260,7 @@ export function App() {
     } catch {}
   };
   const applyStyleToActiveProject = (style: IllustrationStyle) => {
-    updateActiveProject((project) => ({ ...project, style: { ...style }, renderOptions: renderOptionsForStyle(style, project.renderOptions) }));
+    updateActiveProject((project) => ({ ...project, style: { ...style }, promptStyle: undefined, renderOptions: renderOptionsForStyle(style, project.renderOptions) }));
   };
   const replaceActiveAdaptation = (adaptation: StoryAdaptation) => {
     updateActiveProject(project => withAdaptation(project, adaptation));
@@ -1088,5 +1088,6 @@ export function App() {
     </div>
   );
 }
+
 
 

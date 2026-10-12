@@ -5,7 +5,7 @@ import type { ShapePoint } from "./panelShape";
 import { normalizeProjectTypography } from "./pageTypography";
 import { DEFAULT_PAGE_FORMAT, albumPageFormat, type PageFormat } from "./pageFormat";
 import { BUILTIN_STYLES, type IllustrationStyle } from "./stylesLibrary";
-import type { PanelImage, StoryAdaptation } from "./adaptation/types";
+import type { AlbumPromptStyle, PanelImage, StoryAdaptation } from "./adaptation/types";
 import { repairLegacyAdaptation } from "./adaptation/repair";
 
 export const PROJECT_FORMAT = 1;
@@ -50,6 +50,7 @@ export type ComicProject = {
   source: { type: ProjectSource; textSnapshot?: string; storyBookId?: string };
   references?: { characterPortraits?: Record<string, string> };
   style: IllustrationStyle;
+  promptStyle?: AlbumPromptStyle;
   renderOptions: RenderOptions;
   pageFormat?: PageFormat;
   typographyVersion?: 2;
@@ -116,6 +117,7 @@ export function readProjects(): ComicProject[] {
 export function saveProjects(projects: ComicProject[]): boolean {
   return saveProjectData(PROJECTS_KEY, projects);
 }
+
 
 
 

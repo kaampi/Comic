@@ -20,6 +20,7 @@ import {
 } from "./manuscriptModel";
 import { manuscriptText } from "./manuscriptText";
 import "./manuscript.css";
+import { ImagePromptEditor } from "./ImagePromptEditor";
 const beatTypes: BeatType[] = [
   "establishing",
   "introduction",
@@ -100,6 +101,8 @@ export function ManuscriptWorkspace({
     ),
     [range, setRange] = useState<TextRange | null>(null),
     [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [promptPanelId, setPromptPanelId] = useState<string | null>(null);
+  const promptPanel = adaptation.panelPlans.find(p => p.id === promptPanelId);
   const [deletedBeat, setDeletedBeat] = useState<{
     project: ComicProject;
     beatId: string;
@@ -910,13 +913,14 @@ export function ManuscriptWorkspace({
                       <label>
                         {t.shot}
                         <select
-                          value={plan.shotType ?? "medium"}
+                          value={plan.shotType ?? ""}
                           onChange={(e) =>
                             update({
-                              shotType: e.target.value as PanelPlan["shotType"],
+                              shotType: e.target.value as PanelPlan["shotType"] || undefined,
                             })
                           }
                         >
+                          <option value="">{locale === "sv" ? "Automatiskt / ospecificerat" : "Automatic / unspecified"}</option>
                           {[
                             "wide",
                             "establishing-wide",
@@ -927,6 +931,7 @@ export function ManuscriptWorkspace({
                             "over-shoulder",
                             "reaction",
                             "insert",
+                            "full-shot",
                           ].map((x) => (
                             <option key={x}>{x}</option>
                           ))}
@@ -1035,7 +1040,7 @@ export function ManuscriptWorkspace({
                           {t.addNarration}
                         </button>
                       </div>
-                      <button
+                      <div className="image-prompt-quick-actions"><button
                         type="button"
                         className="text-button"
                         onClick={() =>
@@ -1044,6 +1049,8 @@ export function ManuscriptWorkspace({
                       >
                         {t.generate}
                       </button>
+                      <button type="button" className="text-button" onClick={() => setPromptPanelId(plan.id)}>{locale === "sv" ? "Justera bildprompt" : "Adjust image prompt"}</button></div>
+                      <p className="image-prompt-quick-summary">{project.style.name} · {plan.shotType || (locale === "sv" ? "Automatiskt utsnitt" : "Automatic shot")} · {plan.promptDirection?.effects?.length ? `${plan.promptDirection.effects.length} ${locale === "sv" ? "effekter" : "effects"}` : locale === "sv" ? "Inga specialeffekter" : "No special effects"}</p>
                       {prompt ? (
                         <>
                           <label>
@@ -1174,6 +1181,11 @@ export function ManuscriptWorkspace({
           </div>
         </>
       ) : null}
+      {promptPanel ? <ImagePromptEditor key={project.id + promptPanel.id} project={project} panel={promptPanel} locale={locale} onClose={() => setPromptPanelId(null)} onSave={patch => {
+        onUpdate(p => generateBeatPanelPrompt(patchBeatPanel(p, promptPanel.id, patch), promptPanel.id));
+        setPromptPanelId(null);
+      }} /> : null}
     </section>
   );
 }
+

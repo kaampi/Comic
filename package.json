@@ -13,6 +13,7 @@
     "test:about": "node scripts/test-about.mjs",
     "test:library-drop": "node scripts/test-library-drop.mjs",
     "test:adaptation": "node scripts/test-adaptation.mjs",
+    "test:image-prompts": "node scripts/test-image-prompts.mjs",
     "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs",
     "test:export": "node scripts/test-export.mjs",
     "test:style-modes": "node scripts/test-style-modes.mjs",
@@ -38,3 +39,4 @@
     "fake-indexeddb": "^6.2.4"
   }
 }
+

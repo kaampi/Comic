@@ -75,6 +75,10 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   if (p.source.textSnapshot !== undefined) string(p.source.textSnapshot);
   record(p.style);
   for (const key of ["id", "name", "promptText"]) string(p.style[key]);
+  if (p.promptStyle !== undefined) {
+    record(p.promptStyle);
+    for (const key of ["medium", "lines", "color", "texture"]) string(p.promptStyle[key]);
+  }
   record(p.renderOptions);
   if (typeof p.renderOptions.linesOnly !== "boolean")
     throw new Error("invalid-backup");
@@ -169,6 +173,16 @@ export function parseAlbumBackup(input: unknown): ComicProject {
     for (const plan of objects(a.panelPlans)) {
       string(plan.title);
       string(plan.visualDescription);
+      if (plan.promptDirection !== undefined) {
+        const d = plan.promptDirection;
+        record(d);
+        for (const key of ["cameraAngle", "lens", "depthOfField", "focalPoint", "setting", "lighting", "continuity"]) if (d[key] !== undefined) string(d[key]);
+        if (d.effects !== undefined) strings(d.effects);
+        if (d.characterActions !== undefined) { record(d.characterActions); Object.values(d.characterActions).forEach(string); }
+        for (const key of ["lockShot", "lockAngle"]) if (d[key] !== undefined && typeof d[key] !== "boolean") throw new Error("invalid-backup");
+        if (d.effectStrength !== undefined && !["subtle", "normal", "strong"].includes(d.effectStrength)) throw new Error("invalid-backup");
+        if (d.effectScope !== undefined && !["background", "subjects", "whole-image"].includes(d.effectScope)) throw new Error("invalid-backup");
+      }
       strings(plan.sourceBeatIds);
       strings(plan.characterIds);
       for (const text of [...objects(plan.dialogue), ...objects(plan.captions)])
@@ -207,5 +221,6 @@ export function restoredAlbumCopy(project: ComicProject): ComicProject {
     updatedAt: now,
   };
 }
+
 
 

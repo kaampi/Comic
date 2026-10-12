@@ -236,7 +236,7 @@ export function AlbumMenu({
                     onChange={(e) => {
                       const style = styles.find((s) => s.id === e.target.value);
                       if (style)
-                        onUpdate((p) => ({ ...p, style: { ...style }, renderOptions: renderOptionsForStyle(style, p.renderOptions) }));
+                        onUpdate((p) => ({ ...p, style: { ...style }, promptStyle: undefined, renderOptions: renderOptionsForStyle(style, p.renderOptions) }));
                     }}
                   >
                     {[
@@ -250,6 +250,15 @@ export function AlbumMenu({
                   </select>
                 </label>
                 <ColorModeSelect style={project.style} options={project.renderOptions} locale={locale} onChange={renderOptions => onUpdate(p => ({ ...p, renderOptions }))} />
+                <details className="album-prompt-style">
+                  <summary>{sv ? "Avancerad albumstil för bildprompter" : "Advanced album style for image prompts"}</summary>
+                  <p className="quiet">{sv ? "Gäller nya och omskapade bildprompter i albumet. Sparade prompter ändras inte automatiskt. Färg och skuggning används i färgläget." : "Applies to new and regenerated image prompts in this album. Saved prompts are not automatically changed. Color and shading apply in color mode."}</p>
+                  {(["medium", "lines", "color", "texture"] as const).map((key, i) => <label key={key}>
+                    {(sv ? ["Konstform & medium", "Linjer & former", "Färg & skuggning", "Ytstruktur & finish"] : ["Art form & medium", "Lines & form", "Color & shading", "Texture & finish"])[i]}
+                    <textarea rows={key === "medium" ? 4 : 2} value={project.promptStyle?.[key] ?? (key === "medium" ? project.style.promptText : "")} onChange={e => onUpdate(p => ({ ...p, promptStyle: { medium: p.style.promptText, lines: "", color: "", texture: "", ...p.promptStyle, [key]: e.target.value } }))} />
+                  </label>)}
+                  <button type="button" className="text-button" onClick={() => onUpdate(p => ({ ...p, promptStyle: undefined }))}>{sv ? "Använd stilens standard" : "Use style defaults"}</button>
+                </details>
                 <fieldset>
                   <legend>
                     {sv ? "Rutnät för nya sidor" : "Grid for new pages"}
@@ -383,4 +392,5 @@ export function AlbumMenu({
     </>
   );
 }
+
 

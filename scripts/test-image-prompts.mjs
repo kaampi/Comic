@@ -1,0 +1,94 @@
+import assert from "node:assert/strict";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import ts from "typescript";
+import { JSDOM } from "jsdom";
+const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/" });
+for (const key of ["window", "document", "navigator", "localStorage", "HTMLElement", "HTMLInputElement", "HTMLTextAreaElement", "Event", "MouseEvent", "Node", "NodeFilter", "FileReader"]) Object.defineProperty(globalThis, key, { value: dom.window[key], configurable: true });
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+const root = fileURLToPath(new URL("../", import.meta.url)), compiled = mkdtempSync(join(tmpdir(), "comic-prompts-"));
+symlinkSync(join(root, "node_modules"), join(compiled, "node_modules"), process.platform === "win32" ? "junction" : "dir");
+function compile(dir = "") {
+  for (const entry of readdirSync(join(root, "src", dir), { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) { compile(path); continue; }
+    if (!/\.tsx?$/.test(path) || path === "main.tsx") continue;
+    const output = ts.transpileModule(readFileSync(join(root, "src", path), "utf8"), { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText.replace(/import "[^"\n]+\.css";?/g, "").replace(/from "(\.[^"]+)"/g, 'from "$1.mjs"');
+    mkdirSync(join(compiled, dir), { recursive: true }); writeFileSync(join(compiled, path.replace(/\.tsx?$/, ".mjs")), output);
+  }
+}
+compile();
+const local = path => import(pathToFileURL(join(compiled, path + ".mjs")));
+const React = await import("react");
+const { render, screen, fireEvent, cleanup, within } = await import("@testing-library/react");
+const { default: userEvent } = await import("@testing-library/user-event");
+const { createProject, normalizeStoredProjects } = await local("project");
+const { addManualBeat, activeManuscriptAdaptation, patchBeatPanel, generateBeatPanelPrompt } = await local("manuscriptModel");
+const { buildImagePrompt } = await local("adaptation/prompts");
+const { parseAlbumBackup, packAlbumBackup } = await local("albumBackup");
+const { ManuscriptWorkspace } = await local("ManuscriptWorkspace");
+const { ImagePromptEditor } = await local("ImagePromptEditor");
+try {
+  let project = createProject("Prompt tests", "text");
+  project.source.textSnapshot = "Knut steps back as the robot opens its eye.";
+  project.characters = [{ id: "knut", name: "Knut", description: "Farmer", visualIdentity: "65-year-old man with round glasses" }, { id: "robot", name: "Robot", description: "Metal robot", visualIdentity: "Giant metal robot with a blue eye" }];
+  project = addManualBeat(project, { start: 0, end: project.source.textSnapshot.length }).project;
+  let plan = activeManuscriptAdaptation(project).panelPlans[0];
+  project = patchBeatPanel(project, plan.id, { characterIds: ["knut", "robot"], image: { name: "current.png", dataUrl: "data:image/png;base64,current" }, imageVersions: [{ name: "old.png", dataUrl: "data:image/png;base64,old" }] });
+  project = generateBeatPanelPrompt(project, plan.id);
+  const original = structuredClone(project);
+  const settings = { baseUrl: "http://localhost:11434", provider: "ollama", model: "", enabled: false };
+  function Harness() { const [p, set] = React.useState(project); return React.createElement(ManuscriptWorkspace, { project: p, locale: "sv", settings, onSettings() {}, onUpdate(fn) { set(old => { const next = fn(old); project = next; return next; }); } }); }
+  const user = userEvent.setup();
+  const editor = () => within(screen.getByRole("dialog"));
+  render(React.createElement(Harness));
+  await user.click(screen.getByRole("button", { name: "Justera bildprompt" }));
+  assert.ok(screen.getByRole("dialog"));
+  assert.equal(editor().getByText("Optik & fokus", { exact: false }).closest("details").open, false);
+  assert.equal(editor().getByText("Specialeffekter", { exact: false }).closest("details").open, false);
+  fireEvent.change(editor().getByLabelText("Handling & placering"), { target: { value: "Unsaved edit" } });
+  assert.match(editor().getByLabelText("Promptförhandsvisning").textContent, /Unsaved edit/);
+  assert.deepEqual(project, original);
+  await user.click(screen.getByRole("button", { name: "Avbryt" }));
+  assert.equal(screen.queryByRole("dialog"), null);
+  assert.deepEqual(project, original);
+  assert.equal(document.activeElement.textContent, "Justera bildprompt");
+  await user.click(screen.getByRole("button", { name: "Justera bildprompt" }));
+  await user.keyboard("{Escape}"); assert.equal(screen.queryByRole("dialog"), null);
+  await user.click(screen.getByRole("button", { name: "Justera bildprompt" }));
+  fireEvent.change(editor().getByLabelText("Kameravinkel"), { target: { value: "low-angle" } });
+  await user.click(editor().getByLabelText("Lås vinkel vid nytt förslag"));
+  fireEvent.change(editor().getByLabelText("Utsnitt"), { target: { value: "full-shot" } });
+  await user.click(editor().getByLabelText("Lås utsnitt vid nytt förslag"));
+  await user.click(screen.getByRole("button", { name: "Nytt förslag från beat" }));
+  assert.equal(editor().getByLabelText("Kameravinkel").value, "low-angle"); assert.equal(editor().getByLabelText("Utsnitt").value, "full-shot");
+  const actions = editor().getAllByLabelText("Handling, pose & uttryck");
+  fireEvent.change(actions[0], { target: { value: "Drops his lantern" } }); fireEvent.change(actions[1], { target: { value: "Opens its eye" } });
+  await user.click(editor().getByText("Specialeffekter", { exact: false })); await user.click(editor().getByLabelText("Fartstreck"));
+  await user.click(screen.getByRole("button", { name: "Spara bildprompt" }));
+  plan = project.adaptations[0].panelPlans[0];
+  assert.equal(plan.id, original.adaptations[0].panelPlans[0].id);
+  assert.deepEqual(plan.image, original.adaptations[0].panelPlans[0].image); assert.deepEqual(plan.imageVersions, original.adaptations[0].panelPlans[0].imageVersions);
+  assert.equal(project.adaptations[0].imagePrompts[0].id, original.adaptations[0].imagePrompts[0].id);
+  assert.equal(project.adaptations[0].imagePrompts[0].createdAt, original.adaptations[0].imagePrompts[0].createdAt);
+  const prompt = project.adaptations[0].imagePrompts[0].prompt;
+  assert.match(prompt, /Low camera angle/); assert.match(prompt, /Dynamic speed lines/); assert.match(prompt, /Drops his lantern/); assert.match(prompt, /Opens its eye/); assert.match(prompt, /round glasses/); assert.doesNotMatch(prompt, /14mm|50mm|Shallow depth/);
+  await user.click(screen.getByRole("button", { name: "Justera bildprompt" })); assert.equal(editor().getByLabelText("Fartstreck").checked, true); await user.click(screen.getByRole("button", { name: "Stäng" }));
+  console.log("PASS: beat quick path, live preview, cancel/Escape, focus restoration, independent camera locks, multi-character actions, save/reopen and preserved IDs/images/history");
+  project.promptStyle = { medium: "Custom drawn comic style", lines: "Variable ink lines", color: "Vibrant cel-shading", texture: "Paper grain" };
+  assert.match(buildImagePrompt(project, plan), /Custom drawn comic style/);
+  plan = { ...plan, promptDirection: { ...plan.promptDirection, depthOfField: "deep", focalPoint: "Knut's face", effects: ["chromatic_aberration"] } };
+  assert.match(buildImagePrompt(project, plan), /foreground and background remain sharp/); assert.doesNotMatch(buildImagePrompt(project, plan), /Sharp focus strictly/);
+  project.renderOptions = { linesOnly: true, colorMode: "line-art" };
+  const line = buildImagePrompt(project, plan); assert.doesNotMatch(line, /Vibrant cel-shading|color-separated edges/); assert.match(line, /no color/);
+  project.renderOptions = { linesOnly: false, colorMode: "grayscale" }; assert.match(buildImagePrompt(project, plan), /neutral grayscale/);
+  assert.doesNotMatch(buildImagePrompt(project, { ...plan, promptDirection: { effects: [] } }), /MODULE 3/);
+  const loaded = normalizeStoredProjects(JSON.parse(JSON.stringify([project])))[0]; assert.deepEqual(loaded.promptStyle, project.promptStyle); assert.deepEqual(loaded.adaptations[0].panelPlans[0].promptDirection, project.adaptations[0].panelPlans[0].promptDirection);
+  const backup = parseAlbumBackup(JSON.parse(JSON.stringify(packAlbumBackup(project)))); assert.deepEqual(backup.promptStyle, project.promptStyle); assert.deepEqual(backup.adaptations[0].panelPlans[0].promptDirection, project.adaptations[0].panelPlans[0].promptDirection);
+  const broken = packAlbumBackup(structuredClone(project)); broken.project.adaptations[0].panelPlans[0].promptDirection.effects = "bad"; assert.throws(() => parseAlbumBackup(broken));
+  console.log("PASS: album style, optional effects/optics, deep-focus compatibility, rendering modes, local reload and backup round trip/validation");
+  cleanup(); render(React.createElement(ImagePromptEditor, { project, panel: plan, locale: "en", onClose() {}, onSave() {} })); assert.ok(screen.getByRole("dialog", { name: "Adjust image prompt" })); assert.ok(screen.getByRole("button", { name: "Save image prompt" }));
+  console.log("PASS: English editor labels");
+} finally { cleanup(); rmSync(compiled, { recursive: true, force: true }); dom.window.close(); }
