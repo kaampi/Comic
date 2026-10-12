@@ -1,0 +1,35 @@
+[
+  {
+    "styleId": "manga-10",
+    "name": "Airy fine-line manga",
+    "colorMode": "color",
+    "image": "manga-10-color.png",
+    "prompt": "manga-10-prompt.txt",
+    "imageSha256": "9f29d0dc1b2314693fa7484aeb6a659ebce56a7e5b783b49b6a96b6de0b5e6a5",
+    "promptSha256": "80a475f0888229561a9a6e378ecf9e9a9025d7024828d4681dc152b0d9c312bc",
+    "promptCommit": "91e8621ed7c1c7f6c0bb9213de489169efdb9740",
+    "generationMethod": "built-in imagegen; exact application prompt; no reference images"
+  },
+  {
+    "styleId": "jp-1",
+    "name": "Chibi proportions",
+    "colorMode": "color",
+    "image": "jp-1-color.png",
+    "prompt": "jp-1-prompt.txt",
+    "imageSha256": "8c9904405269f86b3c62caeb8edfcd7d3edd86c6b36404d3e3d219a7a554cf5d",
+    "promptSha256": "4da309e9a2dd217b53ca3a0fe9b438efdf1ab9158b0d29cddc2aafa9eef6b3f5",
+    "promptCommit": "91e8621ed7c1c7f6c0bb9213de489169efdb9740",
+    "generationMethod": "built-in imagegen; exact application prompt; no reference images"
+  },
+  {
+    "styleId": "graphic-geometric",
+    "name": "Flat geometric illustration",
+    "colorMode": "color",
+    "image": "graphic-geometric-color.png",
+    "prompt": "graphic-geometric-prompt.txt",
+    "imageSha256": "d9b3452e79a1d3c4d86dda9215bcccde031caadc20d7473a5a5c2083b41af22c",
+    "promptSha256": "9b431a0e2fd40190b0757e1c319f3c43898fcda3dad1b153c4ed90e6b182f2ca",
+    "promptCommit": "91e8621ed7c1c7f6c0bb9213de489169efdb9740",
+    "generationMethod": "built-in imagegen; exact application prompt; no reference images"
+  }
+]

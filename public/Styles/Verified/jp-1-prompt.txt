@@ -1,0 +1,18 @@
+-- MODULE 1: GLOBAL STYLE --
+Illustration style: Entirely super-deformed chibi world with bold rounded ink and simple flat cel-color. Design people, animals, robots and scenery with the same compact oversized-head language; do not place chibi characters in a realistic scene.
+Preserve the requested characters, species, identities, actions, emotions, objects, setting and story period. Honor explicitly specified anatomy and proportions; interpret otherwise unspecified forms through the chosen drawing language. Do not add unrelated subjects or locations. No speech bubbles, captions or lettering.
+Lines, brushwork and form: Unless proportions are explicitly specified, every humanoid has a head nearly half its height, a tiny torso, very short thick limbs and small rounded mitten hands and feet. This also applies to robots: oversized simple block heads, squat bodies, stubby rounded-block limbs and circle joints; retain requested colossal or miniature relative scale. Animals have big rounded heads and short compact bodies. Preserve age and identity through a few clear distinguishing marks. Houses and props use a few chunky shapes; trees are plain trunks topped by broad scalloped masses, without individual leaves. Clothing patterns and surface wear use only a few large symbolic patches. Preserve the requested action and emotion.
+Color and shading: Uniform flat local-color fills, with at most one clean cel-shadow shape on each subject. No blended shading.
+Texture and finish: Equally thick smooth outlines around figures, robots, trees and all props. Large smooth untextured color areas. No mechanical micro-detail, mottled rust, scattered foliage marks, grass blades, realistic rocks, reflective water, painted backgrounds or realistic anatomy.
+-- MODULE 2: CAMERA & COMPOSITION --
+Shot: establishing-wide.
+Eye-level camera angle
+Composition should read clearly in a full-width comic panel.
+Interpret perspective and focus within the chosen illustration style.
+-- MODULE 4: SUBJECT & ACTION --
+Comic panel illustration.
+Action and staging: A complete wide landscape scene, 16:9: a colossal abandoned humanoid robot sits on the right at the edge of a forest, leaning back against trees, rusty moss-covered blue-gray blocky armor, slit eyes and ribbed chest, huge bent legs stretched toward the foreground. On the left exactly five rural villagers watch with quiet curiosity: three standing people (a young adult man in a cream shirt and overalls holding a farm fork, a younger adult woman in a checked dress, and an elderly gray-haired woman in a dark blouse and patterned skirt), and two men seated on a wooden horse cart (an elderly bearded man in a brimmed hat and a man in a flat cap). A brown horse with a pale facial blaze stands near center in front of the cart. Two wooden farmhouses, fenced ploughed fields, a winding dirt road and distant deciduous trees occupy the left background; dense woodland is behind the robot; a shallow stream crosses the lower-right foreground. All five people, horse, cart and entire seated robot should be visible.
+Scene lighting: Soft natural daylight.
+Preserve character identity and clothing continuity with adjacent panels.
+Leave natural negative space for later speech balloons or captions.
+Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI.

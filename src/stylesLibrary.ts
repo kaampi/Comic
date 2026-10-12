@@ -75,11 +75,13 @@ const retainedPreviewAssets: Record<string, { previewImage?: string; linePreview
     "previewImage": "/Styles/Manga/thumb_japanese_seinen_manga.jpg"
   },
   "manga-10": {
-    "previewImage": "/Styles/Manga/thumb_shojo_romance_manga.jpg"
+    "previewImage": "/Styles/Verified/manga-10-color.png"
   },
   "jp-1": {
-    "previewImage": "/Styles/Japanese/thumb_chibi_super_deformed.jpg",
-    "linePreviewImage": "/Styles/Japanese/thumb_chibi_super_deformed_lines.jpg"
+    "previewImage": "/Styles/Verified/jp-1-color.png"
+  },
+  "graphic-geometric": {
+    "previewImage": "/Styles/Verified/graphic-geometric-color.png"
   },
   "jp-2": {
     "previewImage": "/Styles/Japanese/thumb_gekiga.jpg",

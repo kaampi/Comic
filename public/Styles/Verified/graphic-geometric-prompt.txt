@@ -1,0 +1,18 @@
+-- MODULE 1: GLOBAL STYLE --
+Illustration style: Minimalist flat geometric vector poster, assembled from a very small number of large solid-color primitives. Reinterpret the requested scene as graphic symbols rather than a shaded illustration. All subjects and surfaces must follow this radical abstraction.
+Preserve the requested characters, species, identities, actions, emotions, objects, setting and story period. Honor explicitly specified anatomy and proportions; interpret otherwise unspecified forms through the chosen drawing language. Do not add unrelated subjects or locations. No speech bubbles, captions or lettering.
+Lines, brushwork and form: People are simple circle or oval heads on rectangle or trapezoid bodies with straight narrow limb shapes. Animals and machines are geometric silhouettes with only a few identifying parts. Robots are arrangements of flat rectangles and circles, not rendered three-dimensional armor. Trees are plain trunks and single circle or triangle canopies; woodland is a few large overlapping shapes. Buildings are rectangles and triangular roofs. Ground, paths and water are uninterrupted solid bands. Clothing patterns, corrosion and other surface details become one broad symbolic patch per object. Keep identities, requested anatomy, actions and relative scale recognizable.
+Color and shading: Perfectly uniform flat fills from a small coordinated palette. Exactly one solid color per primitive. Express lighting through palette selection only. No shadows, highlights, tonal modeling, side-plane shading or gradients anywhere, including the sky.
+Texture and finish: Clean straight and curved vector edges with no outlines or texture. No bevels, material rendering, stippling, individual leaves, grass, stones or tiny surface fragments. Every machine part and every background shape is a flat cutout-like symbol.
+-- MODULE 2: CAMERA & COMPOSITION --
+Shot: establishing-wide.
+Eye-level camera angle
+Composition should read clearly in a full-width comic panel.
+Interpret perspective and focus within the chosen illustration style.
+-- MODULE 4: SUBJECT & ACTION --
+Comic panel illustration.
+Action and staging: A complete wide landscape scene, 16:9: a colossal abandoned humanoid robot sits on the right at the edge of a forest, leaning back against trees, rusty moss-covered blue-gray blocky armor, slit eyes and ribbed chest, huge bent legs stretched toward the foreground. On the left exactly five rural villagers watch with quiet curiosity: three standing people (a young adult man in a cream shirt and overalls holding a farm fork, a younger adult woman in a checked dress, and an elderly gray-haired woman in a dark blouse and patterned skirt), and two men seated on a wooden horse cart (an elderly bearded man in a brimmed hat and a man in a flat cap). A brown horse with a pale facial blaze stands near center in front of the cart. Two wooden farmhouses, fenced ploughed fields, a winding dirt road and distant deciduous trees occupy the left background; dense woodland is behind the robot; a shallow stream crosses the lower-right foreground. All five people, horse, cart and entire seated robot should be visible.
+Scene lighting: Soft natural daylight.
+Preserve character identity and clothing continuity with adjacent panels.
+Leave natural negative space for later speech balloons or captions.
+Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI.

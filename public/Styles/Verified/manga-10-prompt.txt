@@ -1,0 +1,18 @@
+-- MODULE 1: GLOBAL STYLE --
+Illustration style: Classic shōjo manga in pale color, with unmistakably anime-stylized faces and elegant fine ink. The scene description supplies content, not a realistic drawing style. Reinterpret every subject and background through this manga design language.
+Preserve the requested characters, species, identities, actions, emotions, objects, setting and story period. Honor explicitly specified anatomy and proportions; interpret otherwise unspecified forms through the chosen drawing language. Do not add unrelated subjects or locations. No speech bubbles, captions or lettering.
+Lines, brushwork and form: Very large luminous almond eyes, dark curved upper lashes, expressive arched brows, tiny pointed single-mark noses and small delicate mouths. Eyes dominate the face even in side view; jaws taper to pointed chins. Graceful slim figures, flowing grouped hair locks and precise fine tapered ink. Keep adults and elders distinct through age cues, without reverting to realistically proportioned faces. Objects and environments use sparse fine outlines and broad open shapes; leave most background surfaces unmarked. Preserve requested anatomy, identities, actions and emotions.
+Color and shading: Broad light pastel local-color fields, generous white highlights and one pale flat shadow tone. The ink drawing remains primary; color is secondary.
+Texture and finish: Crisp fine manga line art with large white gaps. No realistic European portrait faces, painterly material modeling, dense foliage drawing, all-over hatching, grain or watercolor speckling. Every part of the image must read as shōjo manga, not a realistic watercolor scene.
+-- MODULE 2: CAMERA & COMPOSITION --
+Shot: establishing-wide.
+Eye-level camera angle
+Composition should read clearly in a full-width comic panel.
+Interpret perspective and focus within the chosen illustration style.
+-- MODULE 4: SUBJECT & ACTION --
+Comic panel illustration.
+Action and staging: A complete wide landscape scene, 16:9: a colossal abandoned humanoid robot sits on the right at the edge of a forest, leaning back against trees, rusty moss-covered blue-gray blocky armor, slit eyes and ribbed chest, huge bent legs stretched toward the foreground. On the left exactly five rural villagers watch with quiet curiosity: three standing people (a young adult man in a cream shirt and overalls holding a farm fork, a younger adult woman in a checked dress, and an elderly gray-haired woman in a dark blouse and patterned skirt), and two men seated on a wooden horse cart (an elderly bearded man in a brimmed hat and a man in a flat cap). A brown horse with a pale facial blaze stands near center in front of the cart. Two wooden farmhouses, fenced ploughed fields, a winding dirt road and distant deciduous trees occupy the left background; dense woodland is behind the robot; a shallow stream crosses the lower-right foreground. All five people, horse, cart and entire seated robot should be visible.
+Scene lighting: Soft natural daylight.
+Preserve character identity and clothing continuity with adjacent panels.
+Leave natural negative space for later speech balloons or captions.
+Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI.
