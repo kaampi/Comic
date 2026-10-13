@@ -200,5 +200,18 @@
     "generationMethod": "built-in imagegen; approved very slender leg refinement; no reference images",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived prompt is the approved robot test. Library distributes the tested shape and rendering instructions into four editable style fields and generalizes scene subjects, colors and patch counts. Closing emphasis uses the application standard reminder. Existing style ID and saved album snapshots retained."
+  },
+  {
+    "styleId": "eu-economical-figures",
+    "name": "Economical elongated cartoon",
+    "colorMode": "color",
+    "image": "eu-economical-figures-color.svg",
+    "prompt": "eu-economical-figures-prompt.txt",
+    "imageSha256": "41c74109a0be54885ec7573771291704a0c1ccb1e4519d83b144bf06bd0b84a3",
+    "originalImageSha256": "5269919b59f048843ff90ce675185762f773007628ed000f6c1de396f1ae8beb",
+    "promptSha256": "558747b9490728a1b07d9014ac03e70a9b031171066f96ad09e8b68563d7a759",
+    "generationMethod": "built-in imagegen; approved flat-color refinement of elongated cartoon; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived prompt is the approved robot test. Library retains four tested style fields and generalizes scene-specific subject examples, colors and patch counts. Closing emphasis uses standard application reminder. Existing style ID and saved album snapshots retained."
   }
 ]
