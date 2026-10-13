@@ -135,5 +135,18 @@
     "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90",
     "promptNotes": "Archived prompt is the approved robot test. Library modules generalize horse/robot examples to animals/machines and daylight to panel-specified lighting; opt-in closing emphasis uses the application's standard style reminder.",
     "promptSha256": "93664e95ba65bd6fbd4a12486069c1a7a4fdecfeed1627a4437a15f577419484"
+  },
+  {
+    "styleId": "animation-classic-fairytale",
+    "name": "Classic fairytale animation",
+    "colorMode": "color",
+    "image": "animation-classic-fairytale-color.webp",
+    "prompt": "animation-classic-fairytale-prompt.txt",
+    "imageSha256": "d3b0ff3b7bcb22691b927a0dabebe6e9fa3c482d45e09dfc79430e519a0e0537",
+    "originalImageSha256": "9e55654314d5d8f0bb7a4f9515fb95a7147432c034431a0f1ca75707126b0ba3",
+    "promptSha256": "0daafa71174db2828b39819b5737b7544857a5a436c1dfeb12725f6fdeabfc2c",
+    "generationMethod": "built-in imagegen; user-approved second test; no reference images",
+    "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90",
+    "promptNotes": "Archived prompt is the approved robot test. Library modules generalize villagers/horse/robot to requested subjects, preserve requested emotions and lighting, and use the application standard closing style reminder."
   }
 ]
