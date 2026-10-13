@@ -148,5 +148,18 @@
     "generationMethod": "built-in imagegen; user-approved second test; no reference images",
     "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90",
     "promptNotes": "Archived prompt is the approved robot test. Library modules generalize villagers/horse/robot to requested subjects, preserve requested emotions and lighting, and use the application standard closing style reminder."
+  },
+  {
+    "styleId": "comic-exaggerated-heroic",
+    "name": "Exaggerated heroic comic",
+    "colorMode": "color",
+    "image": "comic-exaggerated-heroic-color.svg",
+    "prompt": "comic-exaggerated-heroic-prompt.txt",
+    "imageSha256": "62c378590681f71aa75733955bdb7e6db086bd1aa521ac64adf311338048e9f2",
+    "originalImageSha256": "e5ab85519bb42199a717cbe5262fe264fc966a388a22b51e2094623e4fdeaece",
+    "promptSha256": "4f7e4afd2975d85f425fe2b273c8571d5c1c4f7155d132bb3400858a4e609004",
+    "generationMethod": "built-in imagegen; user-approved strengthened proportions and simplified graphic rendering; no reference images",
+    "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived prompt is the approved robot test. Four library style fields retain the tested global style; scene-specific anatomy emphasis remains in the archived scene, and closing emphasis uses the application standard style reminder."
   }
 ]
