@@ -226,5 +226,18 @@
     "generationMethod": "built-in imagegen; approved coarse two-ink relief-print refinement; no reference images",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived prompt is the approved robot test. Library distributes tested instructions into four editable fields and generalizes subject examples and mark counts. Closing emphasis uses standard application reminder. Existing style ID and saved album snapshots retained."
+  },
+  {
+    "styleId": "er-1",
+    "name": "Elegant fine-line realism",
+    "colorMode": "color",
+    "image": "er-1-color.svg",
+    "prompt": "er-1-prompt.txt",
+    "imageSha256": "7b16d1a68c6c8e81c86518b29f312e589c9938208d856c70667adaafa3f902b7",
+    "originalImageSha256": "e3332428a59520566fe6a33466cffcbc5b795042c2a50937e35d5d1ae879991d",
+    "promptSha256": "3ede79e0eb31b5a93f3f9440ee87ac166ed28461edd7723693175acbc418a052",
+    "generationMethod": "built-in imagegen; approved sparse contour and pale-tint refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived prompt is approved robot test. Library retains four editable style fields and generalizes scene subjects, colors and mark counts. Camera framing remains scene-specific. Closing emphasis uses application standard reminder. Existing style ID and saved album snapshots retained."
   }
 ]
