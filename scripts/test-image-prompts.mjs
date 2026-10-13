@@ -92,7 +92,7 @@ try {
   console.log("PASS: album style, optional effects/optics, deep-focus compatibility, rendering modes, local reload and backup round trip/validation");
   cleanup(); render(React.createElement(ImagePromptEditor, { project, panel: plan, locale: "en", onClose() {}, onSave() {} })); assert.ok(screen.getByRole("dialog", { name: "Adjust image prompt" })); assert.ok(screen.getByRole("button", { name: "Save image prompt" }));
   console.log("PASS: English editor labels");
-  assert.equal(BUILTIN_STYLES.length, 37);
+  assert.equal(BUILTIN_STYLES.length, 38);
   const charcoalStyle = BUILTIN_STYLES.find(s => s.id === "draw-expressive-charcoal");
   let charcoalProject = createProject("Charcoal emphasis", "blank", charcoalStyle);
   charcoalProject.renderOptions = { linesOnly: false, colorMode: "grayscale" };
@@ -150,5 +150,5 @@ try {
   fireEvent.change(screen.getByLabelText(/Perspektiv/), { target: { value: "50mm" } });
   fireEvent.change(screen.getByLabelText(/Skärpedjup/), { target: { value: "" } });
   assert.match(optics.querySelector("summary").textContent, /Anpassat/);
-  console.log("PASS: 37 distinct profiles in eight groups, removed motif/era instructions, removable visible optical/FX defaults, origin badges, snapshot/backup preservation and imaginary photographic subjects");
+  console.log("PASS: 38 distinct profiles in eight groups, removed motif/era instructions, removable visible optical/FX defaults, origin badges, snapshot/backup preservation and imaginary photographic subjects");
 } finally { cleanup(); rmSync(compiled, { recursive: true, force: true }); dom.window.close(); }
