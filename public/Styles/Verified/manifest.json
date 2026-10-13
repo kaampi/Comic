@@ -213,5 +213,18 @@
     "generationMethod": "built-in imagegen; approved flat-color refinement of elongated cartoon; no reference images",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived prompt is the approved robot test. Library retains four tested style fields and generalizes scene-specific subject examples, colors and patch counts. Closing emphasis uses standard application reminder. Existing style ID and saved album snapshots retained."
+  },
+  {
+    "styleId": "print-woodcut",
+    "name": "Woodcut & linocut",
+    "colorMode": "color",
+    "image": "print-woodcut-color.svg",
+    "prompt": "print-woodcut-prompt.txt",
+    "imageSha256": "61ef96132e82222553759e77858f0b0d085ed9d287ab7326c7f6e0dcf6e3df01",
+    "originalImageSha256": "16babd71e32dc5a684030ef841fdd034cfe96907830dc9298333c2d596b01ba5",
+    "promptSha256": "3a9f63b76a7e08390ba7bec2aac5d06deb466a1fcf398b0b542733416a7480d0",
+    "generationMethod": "built-in imagegen; approved coarse two-ink relief-print refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived prompt is the approved robot test. Library distributes tested instructions into four editable fields and generalizes subject examples and mark counts. Closing emphasis uses standard application reminder. Existing style ID and saved album snapshots retained."
   }
 ]
