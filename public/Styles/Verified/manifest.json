@@ -174,5 +174,18 @@
     "generationMethod": "built-in imagegen; text-only robot scene using revised figure-test style; approved by user",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Library retains the four tested global style fields. Camera and scene staging stay separate. Closing reminder uses the application standard style reminder. Existing style ID retained; saved album style snapshots are not migrated."
+  },
+  {
+    "styleId": "fb-1",
+    "name": "Ligne claire",
+    "colorMode": "color",
+    "image": "fb-1-color.svg",
+    "prompt": "fb-1-prompt.txt",
+    "imageSha256": "6978e9b19faada7c25698e30f21566bb84dc9260596e57d359c8a22ee4f0ba40",
+    "originalImageSha256": "66f808baba40ca29e35a38c54546510e37bc253b3b929358ff7faefae23ce7ca",
+    "promptSha256": "2c3d7f82dcfaffff5a87a357f733c178e662feda75d8ad63691b9eb4b59b3f56",
+    "generationMethod": "built-in imagegen; approved flat-color refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived prompt is the approved robot test. Library generalizes scene-specific colors and patch counts to requested subjects; four style fields retained. Closing emphasis uses application standard reminder. Existing album snapshots remain unchanged."
   }
 ]
