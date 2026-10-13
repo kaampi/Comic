@@ -1,0 +1,32 @@
+Create ONE original 16:9 landscape comic panel from TEXT ONLY. STRICT CLASSIC LIGNE CLAIRE, Hergé clear-line tradition. This is flat INK AND COLOR drawing, not painted illustration.
+
+MODULE 1 — GLOBAL STYLE
+
+Illustration style:
+Lucid classic Franco-Belgian clear-line 2D comic. All figures, animals, vehicles, machines and scenery share precise contour drawing and unshaded printed color. Simplified expressive faces, restrained cartoon proportions, coherent perspective. Preserve specified identities, ages, clothing, anatomy, actions, relative scale and setting. No lettering.
+
+Lines, brushwork and form:
+Fine BLACK ink contours of ONE CONSISTENT THIN WIDTH across the ENTIRE image. No heavy silhouette lines or thick brush accents. Essential structural lines only. Faces are small eyes, simple nose shape, short mouth curve, a few age marks. Hair one outlined shape. Clothing drawn by outer shape and at most two simple fold lines per garment. Machines use broad clean armor outlines, few seams, simple hinges and wide chest ribs. Describe architecture by clean perspective lines, not surface texture. Foliage is a handful of large outlined canopy shapes; rocks simple outlined chunks.
+
+Color and shading:
+ABSOLUTE FLAT COLOR: ONE UNIFORM SOLID FILL per object surface. The entire robot armor is the SAME uninterrupted light blue-gray, with no darker side-plane colors, no shadowed knees, no shaded foot faces, no bright highlights. Perspective is conveyed by contour ONLY. Black joint gaps are narrow structural openings, not shaded armor. Rust: ONLY THREE LARGE solid ochre patches across the whole robot. Moss: ONLY THREE LARGE solid olive patches. No extra smaller fragments. Horse one solid brown, no flank shading. Skin one solid peach, no cheek or neck shadows. Garments one solid color per garment, except sparse broad pattern marks. Rocks one flat gray. Tree canopies solid green. Sky solid light blue, clouds solid cream. Water solid blue. NO shading, highlights, gradients, continuous tonal modeling, reflected light or realistic material response ANYWHERE.
+
+Texture and finish:
+Smooth matte printed color, spacious empty interiors. No grain, tiny dots, scratches, cracks, mottling, hatching, individually drawn leaves, grass carpets, bark texture, stone speckling, wood grain or fabric microdetail. Checks are only three or four widely spaced lines in each direction; skirt pattern only a few large simple motifs. Woodland grouped into LARGE flat canopy silhouettes with sparse outline notches and simple trunk outlines. Ground a mostly empty solid ochre shape with only a few isolated grass symbols and stones. Fields flat broad color areas with a few parallel furrow lines. Water a plain blue ribbon with three or four thin black ripples. Keep considerable uninterrupted color space on EVERY subject. Camera and effects separate.
+
+MODULE 2 — CAMERA & COMPOSITION
+Wide eye-level establishing shot, all required subjects fully within frame. Entire robot, horse, cart and five people visible. Preserve original staging, readable profiles or three-quarter faces.
+
+MODULE 4 — SUBJECT & ACTION
+RIGHT: Colossal abandoned humanoid robot sits at forest edge leaning back against trees. Blue-gray blocky armor, slit eyes, ribbed chest. Huge bent legs stretch toward foreground. Complete head, torso, arms, hands, legs and feet visible. Specified rust and moss represented ONLY by the six broad flat graphic patches defined above.
+LEFT: Exactly five rural villagers watch with quiet curiosity.
+Three STANDING: young adult man in cream shirt and overalls holding farm fork; young adult woman in checked dress; elderly gray-haired woman in dark blouse and patterned skirt.
+Two men SEATED ON WOODEN HORSE CART: elderly bearded man in brimmed hat, adult man in flat cap. Clearly visible cart bed, wheels and shafts, both men supported by cart seat, not rocks or ground.
+NEAR CENTER: Complete brown horse with pale facial blaze stands in front of and harnessed to cart, all four legs and hooves visible.
+LEFT BACKGROUND: Two wooden farmhouses, fenced ploughed fields, winding dirt road, distant deciduous trees. Buildings clearly wooden through structure, not wood-grain texture.
+RIGHT BACKGROUND: Dense woodland behind robot, represented by a few overlapping flat canopy shapes.
+LOWER RIGHT: Small shallow stream, no river or lake.
+Natural daylight expressed through bright flat palette, no realistic light simulation. Preserve outfits and cast, no extra people or structures.
+
+FINAL RENDERING PRIORITY:
+Contour + ONE flat fill, never contour + shaded painted volume. The ROBOT, including round joints, knees, feet and chest, must be completely UNMODELED flat blue-gray shapes. Clean broad rust/moss symbols on otherwise empty armor. The scene describes objects, not detail density. If material realism conflicts with flat clear-line drawing, choose flat drawing. No lettering, captions, speech balloons, border, signature, watermark or interface.
