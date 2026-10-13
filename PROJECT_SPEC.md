@@ -197,13 +197,15 @@ Bilder ska genereras utan inbränd dialog eller berättartext. Planerad plats f�
 
 ### 9.0 Renodlat stilbibliotek
 
-Det inbyggda biblioteket har 35 profiler i åtta grupper: stiliserad serieteckning, realistisk serieteckning, manga/japansk teckning, modern serieteckning, måleri, teckning/tryck, collage/grafisk illustration och fotografisk återgivning. Grupperna beskriver bildspråk och material; berättelsegenre, miljö och tidsålder kommer från panelen. Bildspråksreferenser till Hergé, Uderzo, Morris, Franquin och Manara visas och kan sökas, men prompten beskriver tekniken och maneret utan att ange förebildens figurer eller motiv.
+Det inbyggda biblioteket har 36 profiler i åtta grupper: stiliserad serieteckning, realistisk serieteckning, manga/japansk teckning, modern serieteckning, måleri, teckning/tryck, collage/grafisk illustration och fotografisk återgivning. Grupperna beskriver bildspråk och material; berättelsegenre, miljö och tidsålder kommer från panelen. Bildspråksreferenser till Hergé, Uderzo, Morris, Franquin och Manara visas och kan sökas, men prompten beskriver tekniken och maneret utan att ange förebildens figurer eller motiv.
 
 Snarlika mallar har förenats utan att radera särpräglade maner. Nya profiler täcker nervig karikatyrtusch, färgpennor/vaxkrita, träsnitt/linoleumtryck, risografi, skrapkartong, gravyr, gouache, papperscollage, geometrisk illustration och tre fotografiska uttryck. Fotografiska profiler bevarar overkliga motiv, art och överdriven anatomi. Familjevänliga former kan gestalta alla efterfrågade känslor. Konsthistoriska materialegenskaper kan finnas kvar utan att föreskriva en historisk berättelsemiljö.
 
 Kamera- och effektförval lagras i stilens `panelDefaults` och kopieras endast till nya paneler. Befintliga paneler och sparade prompter ändras inte av ett stilbyte. Optik, fokus, effekter och kontinuitet visar aktiva val när avsnitten är stängda. Förval märks **Från stil**, ändrade fält **Anpassat**; blandade avsnitt visar båda. Avstängda effekter saknas i prompten. Raster, penseldrag och materialstruktur är stilteknik och ligger kvar i stilen.
 
 Befintliga album behåller sin stilsnapshot, även om stilens ID inte längre ingår i biblioteket. Ingen automatisk ersättning sker vid öppning, normalisering eller backupåterställning. Egna lokala mallar bevaras. Uppdaterade profiler väljs uttryckligen i stilbiblioteket. Befintliga förhandsbilder behålls där de fortfarande passar; nya profiler har tills vidare ingen genererad exempelbild.
+
+Den godkända profilen **Cinematic storybook comic** finns under Modern serieteckning med fyra stilmoduler och en färgförhandsbild från robot- och byborscenen. Den använder uttrycksfulla tecknade figurer och breda målade former även i maskiner och miljö. Motiv, ljus och kamera styrs av panelen. Testprompt och bildproveniens sparas med de verifierade stilresurserna.
 
 ### 9.1 Bildpromptredigering i manusläget
 
@@ -293,6 +295,3 @@ Första milstolpen är en fungerande kort serie på 1–3 sidor med ett fåtal k
 - Exakta lagrings-, backup- och migrationsdetaljer.
 - Sidformat, upplösning och typsnitt för första exporten.
 - Licens för projektet.
-
-
-

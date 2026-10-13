@@ -122,5 +122,18 @@
     "imageSha256": "0f13224930ce6b330508ae3a21231f0de42c4633121ff74cf79a16529f4c5f4c",
     "promptSha256": "146345a5e9ee3a87cc068c15b95c3a7cbf419526bb001bf809bcd7db40f2bdf4",
     "generationMethod": "built-in imagegen; exact application prompt with opt-in closing style emphasis; no reference image"
+  },
+  {
+    "styleId": "comic-cinematic-storybook",
+    "name": "Cinematic storybook comic",
+    "colorMode": "color",
+    "image": "comic-cinematic-storybook-color.webp",
+    "prompt": "comic-cinematic-storybook-prompt.txt",
+    "imageSha256": "94889ff5b3549739ed36d8bb9627b6098773d1083888c487aa3cc736aef3407b",
+    "originalImageSha256": "6dd480a641ea797cdc6a71d3460274d125e9fdc81416fd73c57d5520f7756ad3",
+    "generationMethod": "built-in imagegen; user-approved third test; no reference images",
+    "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90",
+    "promptNotes": "Archived prompt is the approved robot test. Library modules generalize horse/robot examples to animals/machines and daylight to panel-specified lighting; opt-in closing emphasis uses the application's standard style reminder.",
+    "promptSha256": "93664e95ba65bd6fbd4a12486069c1a7a4fdecfeed1627a4437a15f577419484"
   }
 ]

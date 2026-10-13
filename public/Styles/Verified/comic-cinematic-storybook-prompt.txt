@@ -1,0 +1,25 @@
+-- MODULE 1: GLOBAL STYLE --
+Illustration style: Expressive cinematic storybook comic, entirely drawn and digitally painted in 2D. Charming gently caricatured people and richly illustrated scenery, united by the same deliberately designed shapes. The entire scene must look like narrative comic artwork. A smoothly painted illustration, with clear contour drawing and selective detail. Preserve requested identities, species, anatomy, scale, actions, clothing, objects, setting and story period.
+
+Lines, brushwork and form: Fine supple brown contour drawing with expressive larger eyes, emphatic eyebrows and subtly exaggerated faces. Keep body weight and gestures believable. Age is conveyed through a few clear facial shapes. Group hair into broad curved locks and clothing into generous folds. Give the horse a drawn expressive head. Design the robot as a huge cartoon-illustrated machine made from a small number of broad readable armor masses, simple hinges and emphatic ribbed chest shapes. Use broad smooth painted planes on its armor, with sparse contour accents. The robot must share the drawn and painted shape language of the people. Group trees into large overlapping canopy masses with selective leafy accents at edges. Rocks are broad angular painted shapes. Ground uses broad calm earth-color areas with a few chosen stones and grass clusters. Water uses broad flowing color ribbons and a handful of painted glints. Keep rich scene content while simplifying the rendering of each material.
+
+Color and shading: Rich controlled local color, subtle warm-cool relationships, colored shadows and selective luminous highlights. Model every surface through two or three broad tonal masses and soft painted transitions. Reflected light is restrained. Preserve specified colors and daylight. Avoid granular tone construction and physically simulated material response.
+
+Texture and finish: Polished matte 2D digital painting with clearly drawn figures and broad painted scenery. Leave substantial smooth areas on every object. Rust on the robot is a few broad irregular ochre patches; moss is a few grouped olive-green shapes. No scattered tiny corrosion speckles or individually resolved moss and leaves. Indicate wood, cloth and stone with a few economical accents. Selective crisp focal details are balanced with softly painted supporting areas. No photographic underpainting, realistic metal microtexture, CGI, skin pores, all-over tiny marks or photorealistic water. Every subject is illustrated, including the robot and background.
+
+-- MODULE 2: CAMERA & COMPOSITION --
+Shot: establishing-wide.
+Eye-level camera angle.
+Composition should read clearly in a full-width comic panel.
+Interpret perspective and focus within the chosen illustration style.
+
+-- MODULE 4: SUBJECT & ACTION --
+Comic panel illustration.
+Action and staging: A complete wide landscape scene, 16:9: a colossal abandoned humanoid robot sits on the right at the edge of a forest, leaning back against trees, rusty moss-covered blue-gray blocky armor, slit eyes and ribbed chest, huge bent legs stretched toward the foreground. On the left exactly five rural villagers watch with quiet curiosity: three standing people (a young adult man in a cream shirt and overalls holding a farm fork, a younger adult woman in a checked dress, and an elderly gray-haired woman in a dark blouse and patterned skirt), and two men seated on a wooden horse cart (an elderly bearded man in a brimmed hat and a man in a flat cap). A brown horse with a pale facial blaze stands near center in front of the cart. Two wooden farmhouses, fenced ploughed fields, a winding dirt road and distant deciduous trees occupy the left background; dense woodland is behind the robot; a shallow stream crosses the lower-right foreground. All five people, horse, cart and entire seated robot should be visible.
+Scene lighting: Soft natural daylight.
+Preserve character identity and clothing continuity with adjacent panels.
+Leave natural negative space for later speech balloons or captions.
+Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI.
+
+-- STYLE APPLICATION REMINDER --
+The scene lists the required subjects and their identifying features, not the level of surface detail. Interpret every listed material through the broad painted shapes of this 2D storybook comic. The giant robot, rust, moss, foliage, ground, stone and water must have smooth simplified painted masses with sparse chosen accents. Give characters more expressive drawn faces while keeping scenery clearly illustrated. Maintain this medium throughout the whole image.
