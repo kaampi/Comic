@@ -187,5 +187,18 @@
     "generationMethod": "built-in imagegen; approved flat-color refinement; no reference images",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived prompt is the approved robot test. Library generalizes scene-specific colors and patch counts to requested subjects; four style fields retained. Closing emphasis uses application standard reminder. Existing album snapshots remain unchanged."
+  },
+  {
+    "styleId": "eu-rounded-caricature",
+    "name": "Rounded expressive caricature",
+    "colorMode": "color",
+    "image": "eu-rounded-caricature-color.svg",
+    "prompt": "eu-rounded-caricature-prompt.txt",
+    "imageSha256": "75c276d900d8bed6e48b1d6c43b97df988bcb698ba153fe7c548ff00f27cc54a",
+    "originalImageSha256": "ec1354db063c42836743ba43f363c2b2d144291e65b4d7ff8d6e8273868ad8ca",
+    "promptSha256": "bd222aff603faa51dc32a4c626744168eda65a4cba210ea3c4feb250ec5ae5eb",
+    "generationMethod": "built-in imagegen; approved very slender leg refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived prompt is the approved robot test. Library distributes the tested shape and rendering instructions into four editable style fields and generalizes scene subjects, colors and patch counts. Closing emphasis uses the application standard reminder. Existing style ID and saved album snapshots retained."
   }
 ]
