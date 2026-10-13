@@ -161,5 +161,18 @@
     "generationMethod": "built-in imagegen; user-approved strengthened proportions and simplified graphic rendering; no reference images",
     "previewEncoding": "WebP, resized proportionally to 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived prompt is the approved robot test. Four library style fields retain the tested global style; scene-specific anatomy emphasis remains in the archived scene, and closing emphasis uses the application standard style reminder."
+  },
+  {
+    "styleId": "anchor-2",
+    "name": "Elastic brush-ink cartoon",
+    "colorMode": "color",
+    "image": "anchor-2-color.svg",
+    "prompt": "anchor-2-prompt.txt",
+    "imageSha256": "9403c89e5ace8e859431720cb77e4c3c0bb6fe331ee577358f979ca86b173d52",
+    "originalImageSha256": "70a6f045dea339adef9b7f4ab0c511246f0fe452fb6faf0064b92000c491c15f",
+    "promptSha256": "d3faba6683132874bb45b4a18cbdb3b85815afd9538df227bca532e198e6b795",
+    "generationMethod": "built-in imagegen; text-only robot scene using revised figure-test style; approved by user",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Library retains the four tested global style fields. Camera and scene staging stay separate. Closing reminder uses the application standard style reminder. Existing style ID retained; saved album style snapshots are not migrated."
   }
 ]
