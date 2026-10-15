@@ -394,5 +394,31 @@
     "generationMethod": "built-in imagegen; approved final refinement; no reference images",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived four editable style fields adapted from approved test, with scene-specific examples and mark counts generalized; not verbatim generation transcript. Standard robot and five-villager test scene. Existing IDs retained; album snapshots unchanged."
+  },
+  {
+    "styleId": "jp-2",
+    "name": "Raw realist ink",
+    "colorMode": "color",
+    "image": "jp-2-color.svg",
+    "prompt": "jp-2-prompt.txt",
+    "imageSha256": "c9ea3bf1402df43a9424134b9d017ece616b743dbec6be43c1ef139911be4663",
+    "originalImageSha256": "a0950a731ca16080e837b5f603822c7ea8ecb2db9bed63f46ea0f6463108b5fc",
+    "promptSha256": "1cdfc068c4d0df019fe77c421911b907c2fcf028395019c95133cb542f1edd90",
+    "generationMethod": "built-in imagegen; approved replacement test; text-only, no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived exact replacement generation prompt. Editable library fields generalize scene-specific subject examples and mark counts; camera and staging remain separate. Standard application closing reminder. Existing style IDs and saved album snapshots retained."
+  },
+  {
+    "styleId": "manga-1",
+    "name": "Dynamic manga ink",
+    "colorMode": "color",
+    "image": "manga-1-color.svg",
+    "prompt": "manga-1-prompt.txt",
+    "imageSha256": "db1f0810cad23b7e2d843639e8c4033f444c4e51883ea713d011c719317f5766",
+    "originalImageSha256": "29f7ecfd6de1c7673931690d920e9d301105373f3ccc1720c5e7089a4b136b54",
+    "promptSha256": "b157d60d255dfd8b584459dc4fec5e9ae5bb3b5b7f3aff11d7897b5448e2f9c6",
+    "generationMethod": "built-in imagegen; approved replacement test; text-only, no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived exact replacement generation prompt. Editable library fields generalize scene-specific subject examples and mark counts; camera and staging remain separate. Standard application closing reminder. Existing style IDs and saved album snapshots retained."
   }
 ]
