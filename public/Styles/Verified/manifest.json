@@ -252,5 +252,17 @@
     "generationMethod": "built-in imagegen; approved selective unoutlined screentone refinement; no reference images",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived prompt is approved robot test. Four editable style fields generalize scene subjects, light direction, colors and mark counts. Camera and staging remain separate. Closing emphasis uses standard application reminder. Existing style ID and album snapshots retained."
+  },
+  {
+    "styleId": "manga-5",
+    "name": "Gestural brush manga",
+    "colorMode": "color",
+    "image": "manga-5-color.svg",
+    "prompt": "manga-5-prompt.txt",
+    "imageSha256": "24f6b56af6b5f3e55649104f0f1cac985602e79af713b722834be6745d4768db",
+    "originalImageSha256": "a5277754413b236eec80132eada117d6336c91a277802e2a69c42d68d49243dd",
+    "generationMethod": "built-in imagegen; approved coarse human-figure refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived text contains four editable style modules adapted from approved text-only test, plus scene summary; not a verbatim generation transcript. Existing style ID retained; saved album snapshots unchanged."
   }
 ]
