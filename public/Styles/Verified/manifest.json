@@ -264,5 +264,70 @@
     "generationMethod": "built-in imagegen; approved coarse human-figure refinement; no reference images",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived text contains four editable style modules adapted from approved text-only test, plus scene summary; not a verbatim generation transcript. Existing style ID retained; saved album snapshots unchanged."
+  },
+  {
+    "styleId": "am-1",
+    "name": "Polished digital comic",
+    "colorMode": "color",
+    "image": "am-1-color.svg",
+    "prompt": "am-1-prompt.txt",
+    "imageSha256": "9878198a69bb5bf11b6c6e9db92f171ff46395dc07893b1a42e0a9b61a4408f6",
+    "originalImageSha256": "45b113562f0548041695361331377f93a9cdba3d77e36bca27f37a7736fbb986",
+    "promptSha256": "664466300ec831596d727fd8b8271e67b9bf50b7eb643778756a9d5b99c1af66",
+    "generationMethod": "built-in imagegen; user-approved final refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived four editable style fields adapted from approved test. Scene-specific examples and mark counts generalized. Not a verbatim generation transcript. Preview uses standard robot/five-villager scene. Existing style ID and saved album snapshots retained."
+  },
+  {
+    "styleId": "am-3",
+    "name": "Bold sculptural comic",
+    "colorMode": "color",
+    "image": "am-3-color.svg",
+    "prompt": "am-3-prompt.txt",
+    "imageSha256": "f9edbf8b3ca01646656c2fd0bb33b3ae065aeaf6fe367e1cd90355e9a8dc5df6",
+    "originalImageSha256": "4c821d1e88e7c1f2ba277dff08865cecbe25f9d00c8e3749fcdcbfdb852715ed",
+    "promptSha256": "7e2cdb955839a886d7bce4102cb4e1d8ecc0098ecd7b93ff66c57279c48768a7",
+    "generationMethod": "built-in imagegen; user-approved final refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived four editable style fields adapted from approved test. Scene-specific examples and mark counts generalized. Not a verbatim generation transcript. Preview uses standard robot/five-villager scene. Existing style ID and saved album snapshots retained."
+  },
+  {
+    "styleId": "am-2",
+    "name": "Loose indie drawing",
+    "colorMode": "color",
+    "image": "am-2-color.svg",
+    "prompt": "am-2-prompt.txt",
+    "imageSha256": "abfecfac693f54ba240b59c269485164c11f54f0cc297d0bf326d7a86bb3b12c",
+    "originalImageSha256": "bcf0408e2ee071746a379e88b38ab7634e3b37dce2adad62e83f251905b4e4b4",
+    "promptSha256": "c76fe6198fe036fe8944baa69422b71f78a30419ee1b9c71b8e582e9a992dad0",
+    "generationMethod": "built-in imagegen; user-approved final refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived four editable style fields adapted from approved test. Scene-specific examples and mark counts generalized. Not a verbatim generation transcript. Preview uses standard robot/five-villager scene. Existing style ID and saved album snapshots retained."
+  },
+  {
+    "styleId": "noir-1",
+    "name": "High-contrast graphic ink",
+    "colorMode": "color",
+    "image": "noir-1-color.svg",
+    "prompt": "noir-1-prompt.txt",
+    "imageSha256": "9cc14b4c8a231967208b3ede5c60749a7ed0561d49be48bb6b626ee96629c780",
+    "originalImageSha256": "9b62b994b462a94611b5e60344804e6f1aac95b6fa1b25fe6c4180bd0fdd90a0",
+    "promptSha256": "19e8400bad1589f7cbe0c1a14352b7452718e72f2f458a83936682808bd36914",
+    "generationMethod": "built-in imagegen; user-approved final refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived four editable style fields adapted from approved test. Scene-specific examples and mark counts generalized. Not a verbatim generation transcript. Preview uses standard robot/five-villager scene. Existing style ID and saved album snapshots retained."
+  },
+  {
+    "styleId": "hum-3",
+    "name": "Soft rounded cartoon",
+    "colorMode": "color",
+    "image": "hum-3-color.svg",
+    "prompt": "hum-3-prompt.txt",
+    "imageSha256": "861d6e6682fd4d45f035c6e51761ff30ca396cba2ae035dada28852738e2fd78",
+    "originalImageSha256": "658ec7e85800a7c3e52383c7832e4b46199bb1777e152f963488039ad98afe36",
+    "promptSha256": "7da20169a316a33844e1bdd8d82148912ab5352bcdc134a2b3312c6ca1ff9bcc",
+    "generationMethod": "built-in imagegen; user-approved final refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived four editable style fields adapted from approved test. Scene-specific examples and mark counts generalized. Not a verbatim generation transcript. Preview uses standard robot/five-villager scene. Existing style ID and saved album snapshots retained."
   }
 ]
