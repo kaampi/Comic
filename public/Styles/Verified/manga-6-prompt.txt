@@ -1,0 +1,28 @@
+Create one original 16:9 wide NATURALISTIC MANGA comic panel from TEXT ONLY. Original characters in specified rural robot scene. Restrained flat COLOR, crisp Japanese manga ink, selective traditional screentone.
+
+DRAWING STYLE:
+Believable adult proportions, clearly drawn manga faces with almond eyes, decisive dark upper lids, angular eyebrows, economical nose/mouth marks and clean jaw contours. Distinct age cues for elderly, no chibi. Bold tapered silhouette ink, spare interior lines, grouped solid-black hair, solid-black deepest shadows and pure-white highlights. Broad simplified armor and naturalistic drawn animals. Same graphic rendering on all subjects. Preserve identities, ages, anatomy, species, clothing, poses, scale and location.
+
+THE KEY RENDERING RULE:
+Begin with completely SMOOTH UNIFORM FLAT COLORS and NO TEXTURE anywhere. Then apply traditional PRINTED SCREENTONE only as two or three broad natural shadow shapes. Fine uniform round ink dots on a regular grid, roughly 1–2 pixels across at this image size. Consistent grid, NOT random noise. Tone is an optical printing effect over local color, never physical surface detail.
+One coherent shadow under the robot's bent arm sweeps across torso and adjacent upper leg; another shadow on a foot underside; optionally a small clothing shadow beneath the cart seat. These follow light from upper left. Their boundaries are changes in illumination only: NO contour line, inset edge, rectangle, frame, seam, bevel or panel boundary around the tone. No dots across whole armor, no dotted clothing pattern. Dots do not represent holes, corrosion, gritty metal or fabric. Most robot armor, all lit planes and most clothes remain COMPLETELY SMOOTH FLAT COLOR. Do not add grain to emulate printing. No gradients or realistic painted volume.
+
+SIMPLIFICATION:
+Robot clean solid blue-gray with just TWO broad smooth ochre rust symbols and TWO broad smooth olive moss symbols on whole body. Each is a single flat shape, no small fragments, speckles, scratches, cracks or filaments. Structural seams few and clean.
+Foliage THREE OR FOUR LARGE solid green canopy masses, broad simple contour lobes, a few big solid-black shadow shapes, interiors completely empty of leaf marks. Trunks plain untextured brown.
+Ground almost empty solid earth-color area, only FOUR isolated simple grass clumps and a few plain outlined rocks. NO pebble scatter, mottling, short repeated marks or granular texture.
+Fields broad bands with a few long furrow lines. Water plain blue band with three white graphic ripples. Dress sparse broad checked grid, elderly skirt four large plain motifs. Clothes a few clear folds. Horse plain brown and white, no fur or muscle detail. Cart simple clean construction, no wood grain.
+
+FRAMING AND SCENE:
+Wide eye-level establishing shot, all subjects fully in frame with clear margin above robot head and below feet/hooves.
+RIGHT: Colossal abandoned humanoid robot seated against forest trees, blue-gray blocky armor, narrow slit eyes, broad ribbed chest, huge bent legs stretched toward foreground. Entire head, torso, arms, hands, legs and feet visible.
+LEFT: Exactly FIVE rural villagers quietly observe with curiosity. THREE standing: young adult farmer cream shirt and blue overalls holding farm fork; young adult woman checked dress; elderly gray-haired woman dark blouse and patterned skirt.
+TWO men seated ON WOODEN HORSE CART: elderly bearded man brimmed hat, adult man flat cap. Both supported by cart seat, not ground/rocks. Cart bed, wheels and shafts visible.
+NEAR CENTER: Complete brown horse with pale facial blaze, in front of and harnessed to cart, all four legs and hooves visible.
+LEFT BACKGROUND: Two wooden farmhouses, fenced ploughed fields, winding dirt road, distant deciduous trees.
+RIGHT BACKGROUND: Woodland behind robot, simplified into large canopy masses.
+LOWER RIGHT: Small shallow stream.
+Natural daylight from upper left, quiet curiosity, original outfits and ages. No extra people or structures.
+
+FINAL PRIORITY:
+Clean manga ink + UNTEXTURED flat color + ONLY a few unoutlined regular-dot SHADOW SHAPES. Not dotted armor panels, not random grain, not a realistic painted landscape. Keep wide smooth EMPTY surfaces on robot, ground and trees. No text, balloons, captions, border, signature, watermark or interface.
