@@ -1,0 +1,13 @@
+Illustration style:
+Radically sparse gestural manga sketch made with a large black ink brush on predominantly untouched white paper. At least half the image entirely unmarked white. Same coarse brush scale on humans, animals, machines and scenery. Preserve natural requested anatomy, identities, ages, species, actions, clothing, objects, relative scale and setting through coarse silhouette and selected marks.
+
+Lines, brushwork and form:
+Human silhouettes broad broken brush strokes with visible bristle gaps, not thin enclosing contours. Torso two or three pressed strokes, limbs single sweeping gestures, hands blunt readable shapes with one or two finger accents. Faces three or four broad pointed eye, brow, nose and mouth marks preserving age and manga rhythm. Hair one brush mass; beard a white gap bounded by broad strokes. No tiny features, wrinkles, individual hairs or knuckle anatomy. Clothing broad black-white masses and two loose folds. Machines monumental open masses defined by a handful of broad strokes, simple structural gestures, no fine seams. Animals flowing gestural contours and identifying head marks. Vehicles few structural brush strokes. No uniform fine outlines.
+
+Color and shading:
+Black and white dominate with only a few pale flat local-color accents behind selected strokes. Most surfaces pure white. Preserve specified colors, lighting and time of day through sparse hints. No continuous modeling, gradients, photographic shading, gray wash filling, noise or hatching.
+
+Texture and finish:
+Few sweeping large brush marks, obvious pressed bristle splits, white dragging gaps, blunt starts and sharply tapered endings. Large open gaps inside every subject. Not finished line art under a brush texture. Wear, rust or moss only one or two broad pale color dabs each, no smaller marks or trailing plants. Clothing patterns barely suggested by two broad crossing strokes or loose color dabs, no fine grid or repeated motifs. Woodland few sweeping canopy gestures and broad vertical trunks. Ground blank white with faint path gesture and isolated broad grass gestures. Rocks black wedges. Water few curved strokes and pale tint. No fine leaves, grass carpets, pebbles, speckles, stone grain or realistic material detail. Camera and effects separate. No calligraphy.
+
+Approved preview scene: wide 16:9 robot and five villagers; farmer with farm fork, adult woman in checked dress, elderly woman in patterned skirt, two men on wooden horse cart, brown horse with pale facial blaze, two farmhouses, fields, road, forest and shallow stream. Text-only generation, no reference images.
