@@ -239,5 +239,18 @@
     "generationMethod": "built-in imagegen; approved sparse contour and pale-tint refinement; no reference images",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived prompt is approved robot test. Library retains four editable style fields and generalizes scene subjects, colors and mark counts. Camera framing remains scene-specific. Closing emphasis uses application standard reminder. Existing style ID and saved album snapshots retained."
+  },
+  {
+    "styleId": "manga-6",
+    "name": "Naturalistic manga",
+    "colorMode": "color",
+    "image": "manga-6-color.svg",
+    "prompt": "manga-6-prompt.txt",
+    "imageSha256": "d67a543c5920d87a90ec2207d371cb52a9db85a54e17d409be81111e49cbabcd",
+    "originalImageSha256": "deef60cc48a4bc0aaba5cba400395570dab5e0721ed4308b5034b3cbc8566a3b",
+    "promptSha256": "475d510ee9d38290811e0883a56c176160c7182ffcf6b1a25fadba0d965a8622",
+    "generationMethod": "built-in imagegen; approved selective unoutlined screentone refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived prompt is approved robot test. Four editable style fields generalize scene subjects, light direction, colors and mark counts. Camera and staging remain separate. Closing emphasis uses standard application reminder. Existing style ID and album snapshots retained."
   }
 ]
