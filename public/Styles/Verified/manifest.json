@@ -329,5 +329,70 @@
     "generationMethod": "built-in imagegen; user-approved final refinement; no reference images",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived four editable style fields adapted from approved test. Scene-specific examples and mark counts generalized. Not a verbatim generation transcript. Preview uses standard robot/five-villager scene. Existing style ID and saved album snapshots retained."
+  },
+  {
+    "styleId": "print-risograph",
+    "name": "Risograph overprint",
+    "colorMode": "color",
+    "image": "print-risograph-color.svg",
+    "prompt": "print-risograph-prompt.txt",
+    "imageSha256": "bbece99e2bb52db1528c05fbcaf40734967c8848ff972ed4548ae8e0789d75a9",
+    "originalImageSha256": "718009ea84c080426aa16c28fd0d4e25df644273b75ffc2e967b1a08aaf2e052",
+    "promptSha256": "8aa9775bd73ac51e17a4dde21c312dd10fa4ccf1c0541a331c273594098dc0a4",
+    "generationMethod": "built-in imagegen; approved final refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived four editable style fields adapted from approved test, with scene-specific examples and mark counts generalized; not verbatim generation transcript. Standard robot and five-villager test scene. Existing IDs retained; album snapshots unchanged."
+  },
+  {
+    "styleId": "paint-gouache",
+    "name": "Stylized matte gouache",
+    "colorMode": "color",
+    "image": "paint-gouache-color.svg",
+    "prompt": "paint-gouache-prompt.txt",
+    "imageSha256": "b5900a79104a1a478be89aaf7c0bbc741834406e8daa52f6487be1242fa6d3d1",
+    "originalImageSha256": "4d21ee293bf68fe97934e5cb6de5d558a7536c0d6dec4391a395f594548e6051",
+    "promptSha256": "fe627cac2a907afee2c47e0af6a99a93d224dff750f93bbff7bc6da9b773ae90",
+    "generationMethod": "built-in imagegen; approved final refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived four editable style fields adapted from approved test, with scene-specific examples and mark counts generalized; not verbatim generation transcript. Standard robot and five-villager test scene. Existing IDs retained; album snapshots unchanged."
+  },
+  {
+    "styleId": "paint-broken-color",
+    "name": "Expressive broken color",
+    "colorMode": "color",
+    "image": "paint-broken-color-color.svg",
+    "prompt": "paint-broken-color-prompt.txt",
+    "imageSha256": "4a29ba58f45fdfa16db77f2cb4adcf0d03df13d499e0f08eeb1ae5cb8326ea9c",
+    "originalImageSha256": "3d4c0ce09dc4a134c689cac588fd60f351fded35e9c61fa28b859c4caf8e154a",
+    "promptSha256": "d879b455c07d17c3f6acb2a7345a1b85cf40d8fb5c7a4bcef8ca2ca5a4d54ebd",
+    "generationMethod": "built-in imagegen; approved final refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived four editable style fields adapted from approved test, with scene-specific examples and mark counts generalized; not verbatim generation transcript. Standard robot and five-villager test scene. Existing IDs retained; album snapshots unchanged."
+  },
+  {
+    "styleId": "paint-neo-expressionist",
+    "name": "Cinematic palette-knife expressionism",
+    "colorMode": "color",
+    "image": "paint-neo-expressionist-color.svg",
+    "prompt": "paint-neo-expressionist-prompt.txt",
+    "imageSha256": "a79db6e8a837a2c6560db203d9b4ba6b16e2b7e7fb65696d28a062f254407f35",
+    "originalImageSha256": "fa5268e1376e20acafd98254cbea465324d243a1b4bdebf22e8562c24b6f9ec3",
+    "promptSha256": "2947000cd906490494760755f196a7a1607807695679d06143425e011e056822",
+    "generationMethod": "built-in imagegen; approved final refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived four editable style fields adapted from approved test, with scene-specific examples and mark counts generalized; not verbatim generation transcript. Standard robot and five-villager test scene. Existing IDs retained; album snapshots unchanged."
+  },
+  {
+    "styleId": "paint-east-asian-silk",
+    "name": "East Asian ink and mineral color",
+    "colorMode": "color",
+    "image": "paint-east-asian-silk-color.svg",
+    "prompt": "paint-east-asian-silk-prompt.txt",
+    "imageSha256": "204d7de54c00438ee741d9fd9c9302b70fc56998ed96f5ec7dee7939bd610431",
+    "originalImageSha256": "9fe82ec41435029f879edb65b7d34f3990f2ff890568e53a1b01ed79a77f6af8",
+    "promptSha256": "0d4eea71bb9341e3c56a86d6c346cb20211ae59e09c21291b7e2a078990aa71c",
+    "generationMethod": "built-in imagegen; approved final refinement; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Archived four editable style fields adapted from approved test, with scene-specific examples and mark counts generalized; not verbatim generation transcript. Standard robot and five-villager test scene. Existing IDs retained; album snapshots unchanged."
   }
 ]
