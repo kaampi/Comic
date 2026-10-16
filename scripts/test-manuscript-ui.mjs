@@ -1733,6 +1733,7 @@ try {
     const contentsBefore=structuredClone(saved().pages[0].placements[1]);
     await user.click(screen.getByRole('button',{name:'Passa kanten',exact:true}));
     assert.equal(screen.queryByRole('alert'),null);
+    assert.equal(screen.getByText('Kanten på ruta 5 har passats mot ruta 1.').getAttribute('role'),'status');
     assert.equal(saved().pages[0].placements[1].width,3);
     assert.deepEqual(saved().pages[0].placements[1].image,contentsBefore.image);
     assert.deepEqual(saved().pages[0].placements[1].overlays,contentsBefore.overlays);
@@ -1798,6 +1799,48 @@ try {
     console.log('PASS: inherited album border, custom color/hex/thickness, hidden border, restoring defaults and intact frame contents/backup.');
 
   }finally{edgeView.unmount();}
+  // Reproduce the five-panel English layout from the reported screenshot.
+  const screenshotProject=structuredClone(edgeProject);
+  screenshotProject.id='neighbor-screenshot';screenshotProject.title='Neighbor screenshot';
+  screenshotProject.panelBorderDefaults={color:'#27211b',thicknessPt:2.55,visible:true};
+  const screenshotFrame=(id,x,y,width,height,shapePoints)=>({...baseFrame,id,x,y,width,height,readingOrder:Number(id),shapePoints});
+  screenshotProject.pages[0].placements=[
+    screenshotFrame('1',0,0,3,1),
+    screenshotFrame('2',0,1,1,1,[{x:0,y:0},{x:3,y:0},{x:4,y:4},{x:0,y:4}]),
+    screenshotFrame('3',1,1,2,1),
+    screenshotFrame('4',0,2,1,1),
+    screenshotFrame('5',1,2,2,1,[{x:0,y:0},{x:4,y:0},{x:4,y:4},{x:.5,y:4}])
+  ];
+  localStorage.setItem('comicbook-ai.projects',JSON.stringify([screenshotProject]));
+  localStorage.setItem('comicbook-ai.locale','en');
+  const screenshotView=render(React.createElement(App));
+  try{
+    await user.click(screen.getByRole('button',{name:/Neighbor screenshot/}));
+    await user.click(screen.getByRole('button',{name:'Pages',exact:true}));
+    await user.click(document.querySelectorAll('.drawn-panel')[2]);
+    await user.selectOptions(screen.getByLabelText('Neighboring panel'),'2');
+    await user.selectOptions(screen.getByLabelText('Place on side'),'right');
+    assert.ok(screen.getByText('Panel 3 will fit to the right of panel 2. Click Fit edge to apply.'));
+    const fitButton=screen.getByRole('button',{name:'Fit edge',exact:true});
+    assert.ok(fitButton.classList.contains('primary-button'),'apply action has visible button styling');
+    const before=structuredClone(saved().pages[0].placements);
+    await user.click(fitButton);
+    assert.equal(screen.queryByRole('alert'),null);
+    assert.ok(screen.getByText('Panel 3 fitted to panel 2.'));
+    const after=saved().pages[0].placements;
+    assert.equal(after[2].x,0);assert.equal(after[2].width,3);
+    assert.ok(after[2].shapePoints[0].x<after[2].shapePoints[3].x,'left edge follows the neighbor slope');
+    assert.deepEqual(after[2].image,before[2].image);assert.deepEqual(after[2].overlays,before[2].overlays);
+    for(const i of [0,1,3,4])assert.deepEqual(after[i],before[i]);
+    assert.deepEqual(JSON.parse(JSON.stringify(readProjects()[0].pages[0].placements)),after,'fitted shape survives saving/loading');
+    await user.selectOptions(screen.getByLabelText('Neighboring panel'),'4');
+    assert.equal(screen.queryByText('Panel 3 fitted to panel 2.'),null,'changing the target clears the previous confirmation');
+    await user.selectOptions(screen.getByLabelText('Place on side'),'above');
+    await user.click(screen.getByRole('button',{name:'Fit edge',exact:true}));
+    assert.ok(screen.getByRole('alert'),'fitting through panel 2 is rejected');
+    assert.deepEqual(saved().pages[0].placements,after,'failed fit preserves the entire page');
+  }finally{screenshotView.unmount();}
+  console.log('PASS: five-panel screenshot layout, right-side fit, visible action, result feedback, collision rejection and unchanged neighbors/images/text.');
   console.log('PASS: screenshot-style shared middle cell, neighbor-fit controls, adjustable gap, stable frame contents, overlap prevention and backup/load.');
   console.log(
     "PASS: manuscript frames/CRLF, prompt/image/history/dialogue inspector, selected-only AI append/failure/cancel, source edits/caret, no sequences, stable panel IDs and page images",
@@ -1807,6 +1850,7 @@ try {
   dom.window.close();
   rmSync(compiledRoot, { recursive: true, force: true });
 }
+
 
 
 

@@ -24,6 +24,7 @@
 .layout-canvas .panel-shape-outline polygon { stroke-width:.428571cqw; }
 
 .panel-edge-fit-controls { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px; border:1px solid var(--border); margin-bottom:12px; }
+.panel-edge-fit-controls > strong { flex-basis:100%; }
 .panel-edge-fit-controls label { display:grid; gap:4px; }
 .panel-edge-fit-controls p { flex-basis:100%; margin:0; }
 .layout-canvas .drawn-panel.is-shaped { pointer-events:none; }
@@ -36,3 +37,4 @@
 .panel-border-controls input[type=number] { width:80px; }
 .panel-frame-outline { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; z-index:3; }
 .layout-canvas .drawn-panel { border-color:transparent; overflow:visible; }
+

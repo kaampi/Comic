@@ -82,10 +82,13 @@ Slå av **Fri form** för att återgå till **Normalt läge** och handtagen för
 
 ## Passa kanten mot en grannruta
 
+Rubriken **Fit to neighboring panel** är namnet på verktyget. Välj grannruta och sida, och klicka sedan på den markerade knappen **Fit edge** (**Passa kanten**). En mening visar vilken ruta som ändras och på vilken sida av grannen den hamnar. Efter en lyckad passning visas en bekräftelse.
+
 Två polygonrutor kan dela samma celler i sidans rutnät. Placering, storleksändring och formändring kontrollerar polygonernas synliga konturer inklusive linjebredden. De omslutande rektanglarna får överlappa när formerna inte gör det.
 
 För exemplet med ruta 5 till vänster om en sned ruta 1: markera ruta 5, välj **Grannruta → Ruta 1**, **Placera på sidan → Till vänster** och en marginal, exempelvis **2 mm**. Klicka **Passa kanten**. Ruta 5 utökas i bredd och får en högerkant parallell med ruta 1:s vänsterkant. Marginalen mäts vinkelrätt mellan de synliga ramarna. Motsvarande passning finns åt höger, ovanför och under.
 
 Passningen ändrar endast den valda rutans utbredning och polygon. Grannrutan, rutans bild, textlager och läsordning behålls. Formen sparas med albumet, backupen och exporten. Passa kanten igen efter ändringar av grannrutan. Om formen inte ryms eller träffar en tredje ruta visas ett meddelande och ingen ändring görs.
+
 
 
