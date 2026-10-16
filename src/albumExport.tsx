@@ -1,5 +1,7 @@
 import { textPieces } from "./richText";
 import { panelBorderStyle, panelBorderWidth } from "./panelBorder";
+import { handDrawnBorderPath } from "./handDrawnBorder";
+import { panelOutline } from "./panelGeometry";
 import { imagePlacement } from "./imageView";
 import { pageLayerTextMetrics } from "./pageTypography";
 import { overlayFont } from "./overlayTypography";
@@ -71,7 +73,9 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
     overlays=overlays.replace(/<[^>]+vector-effect="non-scaling-stroke"[^>]*>/g,tag=>tag.replace(/stroke-width="([^"]+)"/,(_,v)=>`stroke-width="${Number(v)*outputScale}"`));
     body.push(overlays,"</g>");
     const frameWidth=background?0:panelBorderWidth(project,layer),frameColor=panelBorderStyle(project,layer).color;
-    if(shaped&&frameWidth>0)body.push(`<polygon points="${polygon}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}" stroke-linejoin="round"/>`);
+    const frameStyle=panelBorderStyle(project,layer);
+    if(!background&&frameWidth>0&&frameStyle.style==="hand-drawn"&&(frameStyle.roughness??50)>0)body.push(`<path d="${handDrawnBorderPath(panelOutline(page,layer,format),frameWidth,frameStyle.roughness??50,layer.id)}" fill="${frameColor}"/>`);
+    else if(shaped&&frameWidth>0)body.push(`<polygon points="${polygon}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}" stroke-linejoin="round"/>`);
     else if(!background&&frameWidth>0)body.push(`<rect x="${r.x+border/2}" y="${r.y+border/2}" width="${r.width-border}" height="${r.height-border}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}"/>`);
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${700*outputScale}" height="${height*outputScale}" viewBox="0 0 700 ${height}"><defs>${defs.join("")}<style>${fontCss}</style></defs>${body.join("")}</svg>`;
@@ -108,5 +112,6 @@ export async function exportAlbum(project:ComicProject,options:ExportOptions,onP
   if(options.format==="pdf") { const d=pageDimensions(options.pageFormat);return {blob:rasterPdf(images,d.widthMm,d.heightMm),name:`${base}.pdf`}; }
   return files.length===1?{blob:new Blob([files[0].bytes as BlobPart],{type:options.format==="png"?"image/png":"image/jpeg"}),name:files[0].name}:{blob:imageArchive(files),name:`${base}-${ext}.zip`};
 }
+
 
 

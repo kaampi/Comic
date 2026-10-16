@@ -92,3 +92,11 @@ Passningen ändrar endast den valda rutans utbredning och polygon. Grannrutan, r
 
 
 
+
+## Handritade ramar
+
+Under **Standardram för rutor** i albuminställningarna finns **Ramstil → Rak / Handritad**. För **Handritad** visas **Handritad styrka**, 0–100 procent. Vid 0 procent visas den vanliga raka ramen; högre styrka ger små ojämnheter och mer variation i tuschens tjocklek. Färg, synlighet och ramtjocklek fungerar som tidigare.
+
+En markerad ruta kan få en egen ramstil i sidans ramverktyg. **Använd albumets standardram** återgår till albumets inställningar. Befintliga album behåller raka ramar tills användaren väljer annat. Formen beräknas från rutans stabila ID, så tuschlinjen behåller sitt utseende vid omladdning och export. Bildbeskärning, text, rutgeometri och passning mot grannrutor ändras inte. Styrkereglaget samlar dragsteg innan albumet sparas.
+
+Inställningarna följer med i albumbackup och PDF/PNG/JPEG/CBZ-export. IDML använder samma tuschkontur som redigerbara fyllda vektorformer på lagret för panelramar.

@@ -6,7 +6,8 @@ import { exportFilename } from "./albumExport";
 import { albumPageFormat, layerRect, pageGridMetrics, pageAspect, pageDimensions, PANEL_BORDER, validPageFormat } from "./pageFormat";
 import { panelOutline } from "./panelGeometry";
 import { panelShapePoints } from "./panelShape";
-import { panelBorderStyle } from "./panelBorder";
+import { panelBorderStyle, panelBorderWidth } from "./panelBorder";
+import { handDrawnBorderPath } from "./handDrawnBorder";
 import { imagePlacement, imageAffineTransform } from "./imageView";
 import { imageArchive, imageDensity } from "./exportFiles";
 import { bodyPath, speechPath, shoutPath } from "./SvgOverlay";
@@ -95,7 +96,11 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
       items.push(shape(transformPaths([clip],map),background?"cbBackground":"cbImages",`Image frame ${layer.id}`,"#fffdf7","none",0,"",imageXml));
       if(!background) {
         const border=panelBorderStyle(project,layer);
-        if(border.visible&&border.thicknessPt>0)items.push(shape(transformPaths([polygonPath(panelOutline(page,layer,sourceFormat))],map),"cbFrames",`Panel border ${layer.id}`,"none",border.color,border.thicknessPt*scale/(pageDimensions(sourceFormat).widthMm*72/25.4/700)));
+        if(border.visible&&border.thicknessPt>0) {
+          const outline=panelOutline(page,layer,sourceFormat);
+          if(border.style==="hand-drawn"&&(border.roughness??50)>0)items.push(shape(transformPaths(svgGeometry(handDrawnBorderPath(outline,panelBorderWidth(project,layer),border.roughness??50,layer.id)),map),"cbFrames",`Panel border ${layer.id}`,border.color));
+          else items.push(shape(transformPaths([polygonPath(outline)],map),"cbFrames",`Panel border ${layer.id}`,"none",border.color,border.thicknessPt*scale/(pageDimensions(sourceFormat).widthMm*72/25.4/700)));
+        }
       }
       const connected=bubbleGroups(layer.overlays);
       for(const group of connected){
@@ -155,4 +160,5 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
   const readme=`ComicBook AI — IDML export (experimental)\n\n1. Extract the entire ZIP before opening ${base}.idml in InDesign or Affinity Publisher.\n2. Keep Links next to the IDML. If asked for missing images, select the Links folder.\n3. Install the fonts listed below or replace them in the destination application.\n4. Check text wrapping, overflow, layer order and page edges before production.\n\nLayers: Text; Bubbles and SFX; Panel borders; Images; Background.\nImages remain raster images, with editable clipping frames and placement. Bubble contours and tails are vector paths. Text remains editable. No font files are embedded.\n\nCurrent limitations: destination font metrics can change wrapping; text weights use available Regular/Bold desktop styles; text and bubble artwork extending beyond a panel are not clipped to its outline; page-edge crop should be checked when using Cover.\nAffinity import is one-way: save subsequent work in Affinity's own format.\n\nFonts:\n${[...fonts.values()].map(f=>`${f.family} — ${f.style}`).join("\n")||"None"}\n`;
   return {blob:imageArchive([{name:`${base}.idml`,bytes:new Uint8Array(await idml.arrayBuffer())},...assets,{name:"README.txt",bytes:encode(readme)}]),name:`${base}-idml.zip`};
 }
+
 

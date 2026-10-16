@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-idml-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform==='win32'?'junction':'dir');
-const names=['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts','idmlExport.ts'];
+const names=['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts','idmlExport.ts'];
 function archive(bytes) {
   const entries=new Map();let offset=0;const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   while(view.getUint32(offset,true)===0x04034b50) {
@@ -41,6 +41,17 @@ try {
   const options={format:'idml',pageIds:['second','first'],pageFormat:DEFAULT_PAGE_FORMAT,dpi:600,fit:'contain',jpegQuality:.95};
   const result=await exportAlbum(project,options,(...args)=>progress.push(args));
   assert.equal(JSON.stringify(project),snapshot,'export does not mutate project');assert.match(result.name,/-idml.zip$/);
+  const handProject={...project,panelBorderDefaults:{color:'#27211b',thicknessPt:3,visible:true,style:'hand-drawn',roughness:75}};
+  const handResult=await exportAlbum(handProject,options,()=>{}),handOuter=archive(new Uint8Array(await handResult.blob.arrayBuffer()));
+  const handInner=archive(handOuter.get('Test -album-.idml'));
+  const handFrames=[...handInner].filter(([p])=>p.startsWith('Spreads/')).flatMap(([,data])=>[...parse(data).querySelectorAll('Polygon')]).filter(e=>e.getAttribute('Name')==='Panel border layer');
+  assert.equal(handFrames.length,2);
+  for(const frame of handFrames){
+    assert.equal(frame.getAttribute('StrokeColor'),'Swatch/None','hand-drawn borders use filled variable-width vectors');
+    assert.notEqual(frame.getAttribute('FillColor'),'Swatch/None');
+    assert.equal(frame.querySelectorAll('GeometryPathType').length,8,'four ink ribbons and four round joins');
+    assert.ok([...frame.querySelectorAll('PathPointType')].some(p=>p.getAttribute('Anchor')!==p.getAttribute('LeftDirection')),'editable cubic curves retain their handles');
+  }
   assert.deepEqual(progress,[[0,2],[1,2],[2,2]]);
   const outer=archive(new Uint8Array(await result.blob.arrayBuffer()));assert.ok(outer.has('README.txt'));
   const inner=archive(outer.get('Test -album-.idml'));
@@ -108,4 +119,5 @@ try {
   });
   console.log('PASS: IDML XML, part references, unique IDs, layers, page ordering, editable Unicode text, curved paths, opacity, image packaging/deduplication, cancellation and immutable project.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}
+
 

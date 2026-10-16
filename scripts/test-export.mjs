@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
 try {
-  for(const name of ['panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+  for(const name of ['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
     const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
     fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
@@ -306,6 +306,32 @@ try {
   assert.equal(borders.panelBorderWidth(borderedProject,{...layer,panelBorder:{...blueOverride,visible:false}}),0);
   assert.equal(borders.validPanelBorder({...redDefault,color:'red'}),false);
   assert.equal(borders.validPanelBorder({...redDefault,thicknessPt:-1}),false);
+  for(const patch of [{style:'unknown'},{roughness:-1},{roughness:101},{roughness:'50'}])assert.equal(borders.validPanelBorder({...redDefault,...patch}),false);
+  const {handDrawnBorderPath}=await import(pathToFileURL(path.join(dir,'handDrawnBorder.mjs')));
+  const inkPoints=geometry.panelOutline(sharedPage,rightPanel,project.pageFormat);
+  const ink=handDrawnBorderPath(inkPoints,3,50,rightPanel.id);
+  assert.equal(ink,handDrawnBorderPath(inkPoints,3,50,rightPanel.id),'ink is deterministic across reloads');
+  assert.notEqual(ink,handDrawnBorderPath(inkPoints,3,50,'another-panel'),'different panels have different ink');
+  assert.notEqual(ink,handDrawnBorderPath(inkPoints,3,100,rightPanel.id));
+  assert.ok(!/NaN|Infinity/.test(ink));
+  const inkGeometry=(await import(pathToFileURL(path.join(dir,'idmlGeometry.mjs')))).svgGeometry(ink);
+  assert.equal(inkGeometry.length,inkPoints.length*2,'each edge and round join is a closed editable vector');
+  assert.ok(inkGeometry.every(p=>!p.open));
+  for(const path of inkGeometry)for(const {anchor:p} of path.points){
+    const distance=Math.min(...inkPoints.map((a,i)=>{const b=inkPoints[(i+1)%inkPoints.length],dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy)));return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);}));
+    assert.ok(distance<=1.5+1e-6,'ink stays inside the original stroke envelope, preserving neighbor clearance');
+  }
+  const handProject={...project,panelBorderDefaults:{...redDefault,style:'hand-drawn',roughness:70}};
+  const handPage={...page,placements:[{...layer,id:'ink-panel',overlays:[]}]};
+  const handSnapshot=JSON.stringify(handPage);
+  const handSvg=await pageSvg(handProject,handPage,'',1);
+  const expectedInk=handDrawnBorderPath(geometry.panelOutline(handPage,handPage.placements[0],project.pageFormat),borders.panelBorderWidth(handProject,handPage.placements[0]),70,'ink-panel');
+  assert.ok(handSvg.includes(`d="${expectedInk}" fill="#cc2233"`),'export uses the shared ink contour');
+  assert.equal(JSON.stringify(handPage),handSnapshot,'ink does not change the image clip, layout or text');
+  assert.equal(await pageSvg(handProject,handPage,'',1),handSvg);
+  assert.equal(await pageSvg({...handProject,panelBorderDefaults:{...redDefault,style:'hand-drawn',roughness:0}},handPage,'',1),await pageSvg({...project,panelBorderDefaults:redDefault},handPage,'',1),'zero strength is exactly the original straight frame');
+  assert.equal(await pageSvg({...handProject,panelBorderDefaults:{...redDefault,style:'straight',roughness:70}},handPage,'',1),await pageSvg({...project,panelBorderDefaults:redDefault},handPage,'',1));
+  console.log('PASS: deterministic hand-drawn ink, strength and panel identity, shared export paths, legacy/zero-strength compatibility and unchanged content.');
   const coloredPage={...page,placements:[{...layer,id:'red'},{...layer,id:'blue',x:1,shapePoints:shapes.PANEL_SHAPE_PRESETS[1].points,panelBorder:blueOverride},{...layer,id:'hidden',x:2,panelBorder:{...blueOverride,visible:false}}]};
   const coloredSvg=await pageSvg(borderedProject,coloredPage,'',1);
   assert.match(coloredSvg,/stroke="#cc2233"/);
@@ -331,5 +357,6 @@ try {
   console.log('SVG artwork, local text, stroke scaling and export cancellation passed.');
   console.log('Export formats, legacy geometry, pixel sizes, PDF cross references, ZIP CRC and JPEG density passed.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}
+
 
 
