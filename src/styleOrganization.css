@@ -5,4 +5,12 @@
 .style-tags details label { display: flex; align-items: center; gap: 6px; }
 .style-tags form, .own-tag-manager form, .style-organization-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
 .style-tags input:not([type=checkbox]), .own-tag-manager input { min-width: 0; width: 160px; }
-.style-organization-filters { padding: 0 0 14px; }
+.style-organization-filters { padding: 0 18px 12px; margin:0; align-items:flex-start; }
+.style-organization-filters > label { display:inline-flex; align-items:center; gap:6px; min-height:38px; white-space:nowrap; }
+.style-organization-filters > select { width:250px; max-width:100%; min-width:0; }
+.style-organization-filters > .own-tag-manager { min-width:0; flex:1 1 220px; }
+.style-organization-filters .own-tag-manager summary { min-height:38px; display:list-item; align-content:center; }
+.style-organization-filters .own-tag-manager form { margin:8px 0 0; }
+.style-organization-filters .own-tag-manager input { flex:1 1 140px; max-width:100%; }
+.style-tag-chips span { overflow-wrap:anywhere; max-width:100%; }
+

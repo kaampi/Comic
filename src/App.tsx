@@ -1036,6 +1036,7 @@ export function App() {
             </div></> : null}
           {panel === "guide" ? <><p className="eyebrow">{tr("guide").toUpperCase()}</p><h1>ComicBook AI {tr("guide")}</h1><p className="lede">{tr("guidePlaceholder")}</p></> : null}
           {panel === "styles" ? <div className="style-library">
+            <div className="style-library-toolbar">
               <div className="style-library-head">
                 <div><p className="eyebrow">{tr("styleTemplates")}</p><p className="style-library-subtitle">{activeProject ? `${activeProject.title} · ${activeProject.style.name}` : tr("styleTemplatesLead")}</p></div>
                 <div className="style-library-head-actions">
@@ -1050,6 +1051,7 @@ export function App() {
                 <input value={styleQuery} onChange={(e) => setStyleQuery(e.target.value)} placeholder={tr("searchStyle")} aria-label={tr("searchStyle")} autoFocus />
               </div>
               <div className="style-organization-filters"><label><input type="checkbox" checked={favoritesOnly} onChange={e => setFavoritesOnly(e.target.checked)} />{locale === "sv" ? "Bara favoriter" : "Favorites only"}</label><select aria-label={locale === "sv" ? "Filtrera på tagg" : "Filter by tag"} value={tagFilter} onChange={e => setTagFilter(e.target.value)}><option value="">{locale === "sv" ? "Alla taggar" : "All tags"}</option>{[...new Set(allStyles.flatMap(style => [...builtinTags(style, locale === "sv"), ...Object.values(organization.tags)]))].sort().map(tag => <option key={tag}>{tag}</option>)}</select><OwnTagManager value={organization} sv={locale === "sv"} onChange={next => { updateOrganization(next); setTagFilter(""); }} /></div>{organizationError ? <p role="alert">{organizationError}</p> : null}
+            </div>
               <div className="style-library-body">
                 <aside className="style-category-list" aria-label={tr("genre")}>
                   <button type="button" className={styleGenre==="__all__"?"is-active":""} onClick={()=>setStyleGenre("__all__")}><span>{tr("all")}</span><span>{allStyles.length}</span></button>
