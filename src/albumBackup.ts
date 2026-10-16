@@ -1,3 +1,4 @@
+import { readOrganization } from "./styleOrganization";
 import { validPanelBorder } from "./panelBorder";
 import { validPanelShape } from "./panelShape";
 import { normalizeProjectTypography } from "./pageTypography";
@@ -9,7 +10,7 @@ export function packAlbumBackup(
   project: ComicProject,
   exportedAt = new Date().toISOString(),
 ) {
-  return { kind: ALBUM_BACKUP_KIND, format: 1, exportedAt, project };
+  return { kind: ALBUM_BACKUP_KIND, format: 1, exportedAt, project, styleOrganization: readOrganization() };
 }
 export function albumBackupFilename(
   project: ComicProject,
@@ -236,6 +237,7 @@ export function restoredAlbumCopy(project: ComicProject): ComicProject {
     updatedAt: now,
   };
 }
+
 
 
 

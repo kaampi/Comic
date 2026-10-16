@@ -1,3 +1,5 @@
+import { StyleTags, OwnTagManager } from "./StyleTags";
+import { builtinTags, readOrganization, saveOrganization, mergeOrganization, type StyleOrganization } from "./styleOrganization";
 import { ColorInput } from "./ColorInput";
 import { editedTextStyles, deletionRange, formatTextRange, clearTextRange, textStyleAt } from "./richText";
 import type { TextOverlay } from "./project";
@@ -71,6 +73,11 @@ export function App() {
   const [localAiSettings, setLocalAiSettings] = useState(readLocalAiSettings);
   const [locale, setLocale] = useState<Locale>(readLocale);
   const [theme, setTheme] = useState<Theme>(readTheme);
+  const [organization, setOrganization] = useState(readOrganization);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [tagFilter, setTagFilter] = useState("");
+  const [organizationError, setOrganizationError] = useState("");
+  function updateOrganization(next: StyleOrganization) { try { saveOrganization(next); setOrganization(next); setOrganizationError(""); } catch { setOrganizationError(locale === "sv" ? "Taggar och favoriter kunde inte sparas. Försök igen." : "Could not save tags and favorites. Try again."); } }
   const [styleGenre, setStyleGenre] = useState("__all__");
   const [styleQuery, setStyleQuery] = useState("");
   const [customStyles, setCustomStyles] = useState<IllustrationStyle[]>(readCustomStyles);
@@ -173,7 +180,8 @@ export function App() {
     const normalize = (value: string) => value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const q = normalize(styleQuery.trim());
     const searchable = normalize([style.name, style.promptText, style.genre, styleGroupLabel(style.genre, locale), ...(style.visualReferences ?? [])].join(" "));
-    return genreMatch && (!q || searchable.includes(q));
+    const tags = [...builtinTags(style, locale === "sv"), ...(organization.assignments[style.id] ?? []).map(id => organization.tags[id])];
+    return genreMatch && (!favoritesOnly || organization.favorites.includes(style.id)) && (!tagFilter || tags.includes(tagFilter)) && (!q || (searchable + " " + normalize(tags.join(" "))).includes(q));
   });
   const persistCustomStyles = (next: IllustrationStyle[]) => { setCustomStyles(next); saveCustomStyles(next); };
   const saveDraft = () => {
@@ -704,7 +712,7 @@ export function App() {
       </header>
       {saveErrorMessage ? <div role="alert" className="import-error"><p>{saveErrorMessage}</p><button type="button" className="text-button" onClick={() => persistProjects(projectsRef.current)}>{locale === "sv" ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button>{activeProject ? <button type="button" className="text-button" onClick={() => setAlbumTool("backup")}>{locale === "sv" ? "Exportera albumbackup" : locale === "nb" ? "Eksporter albumbackup" : "Export album backup"}</button> : null}</div> : null}
 
-      <AlbumMenu section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} saving={saving} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={async project=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];const error=await persistProjects(next);if(error)throw new Error(projectSaveErrorText(error,locale));projectsRef.current=next;setProjects(next);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
+      <AlbumMenu section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} saving={saving} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={async (project, importedOrganization)=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];const error=await persistProjects(next);if(error)throw new Error(projectSaveErrorText(error,locale));if(importedOrganization)updateOrganization(mergeOrganization(organization, importedOrganization));projectsRef.current=next;setProjects(next);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
       <main className="home">
         {activeProject ? <section className="project-shell album-workspace-shell">
           <aside className="project-sidebar" aria-label={locale==="sv"?"Arbetsinställningar":"Workspace settings"}>
@@ -1042,6 +1050,7 @@ export function App() {
               <div className="style-library-search">
                 <input value={styleQuery} onChange={(e) => setStyleQuery(e.target.value)} placeholder={tr("searchStyle")} aria-label={tr("searchStyle")} autoFocus />
               </div>
+              <div className="style-organization-filters"><label><input type="checkbox" checked={favoritesOnly} onChange={e => setFavoritesOnly(e.target.checked)} />{locale === "sv" ? "Bara favoriter" : "Favorites only"}</label><select aria-label={locale === "sv" ? "Filtrera på tagg" : "Filter by tag"} value={tagFilter} onChange={e => setTagFilter(e.target.value)}><option value="">{locale === "sv" ? "Alla taggar" : "All tags"}</option>{[...new Set(allStyles.flatMap(style => [...builtinTags(style, locale === "sv"), ...Object.values(organization.tags)]))].sort().map(tag => <option key={tag}>{tag}</option>)}</select><OwnTagManager value={organization} sv={locale === "sv"} onChange={next => { updateOrganization(next); setTagFilter(""); }} /></div>{organizationError ? <p role="alert">{organizationError}</p> : null}
               <div className="style-library-body">
                 <aside className="style-category-list" aria-label={tr("genre")}>
                   <button type="button" className={styleGenre==="__all__"?"is-active":""} onClick={()=>setStyleGenre("__all__")}><span>{tr("all")}</span><span>{allStyles.length}</span></button>
@@ -1072,6 +1081,7 @@ export function App() {
                       <div className={lineFallback?"style-card-preview is-line-fallback":"style-card-preview"}>{resolvedPreviewImage?<img key={resolvedPreviewImage} src={resolvedPreviewImage} alt="" loading="lazy" decoding="async" />:<span>{tr("noImage")}</span>}<span className="style-preview-mode-badge">{supportedColorModes(style).map(mode => mode === "color" ? (locale === "sv" ? "FÄRG" : "COLOR") : mode === "grayscale" ? (locale === "sv" ? "GRÅSKALA" : "GRAYSCALE") : (locale === "sv" ? "LINJER" : "LINES")).join(" / ")}</span></div>
                       <button className="style-card-edit" type="button" title={custom?tr("edit"):tr("duplicate")} onClick={(e)=>{e.stopPropagation(); custom?setStyleDraft({...style}):duplicateStyle(style);}}>✎</button>
                       <div className="style-card-copy"><h2>{style.name}</h2>{style.visualReferences?.length ? <small className="quiet">{locale === "sv" ? "Bildspråksreferenser" : "Visual references"}: {style.visualReferences.join(" · ")}</small> : null}<p>{stylePromptForMode(style, colorMode)}</p><span className="style-genre">{styleGroupLabel(style.genre, locale)}{active?` · ${tr("activeStyle")}`:""}</span></div>
+                    <StyleTags style={style} value={organization} onChange={updateOrganization} sv={locale === "sv"} />
                     </article>;
                   })}</div>
                   {!visibleStyles.length?<p className="style-empty">{tr("noStylesFound")}</p>:null}
@@ -1092,6 +1102,7 @@ export function App() {
     </div>
   );
 }
+
 
 
 

@@ -20,7 +20,8 @@
     "test:save-errors": "node scripts/test-save-errors.mjs",
     "test:idml": "node scripts/test-idml.mjs",
     "test:page-spacing": "node scripts/test-page-spacing.mjs",
-    "test:project-storage": "node scripts/test-project-storage.mjs"
+    "test:project-storage": "node scripts/test-project-storage.mjs",
+    "test:style-organization": "node scripts/test-style-organization.mjs"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",
@@ -39,4 +40,3 @@
     "fake-indexeddb": "^6.2.4"
   }
 }
-

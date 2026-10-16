@@ -1,0 +1,8 @@
+.style-tags { padding: 0 16px 16px; }
+.style-tag-chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0; }
+.style-tag-chips span { border: 1px solid #b8bdc5; border-radius: 12px; padding: 2px 8px; font-size: .75rem; }
+.style-tags summary, .own-tag-manager summary { cursor: pointer; padding: 6px 0; }
+.style-tags details label { display: flex; align-items: center; gap: 6px; }
+.style-tags form, .own-tag-manager form, .style-organization-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
+.style-tags input:not([type=checkbox]), .own-tag-manager input { min-width: 0; width: 160px; }
+.style-organization-filters { padding: 0 0 14px; }

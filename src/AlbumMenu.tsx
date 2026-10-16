@@ -1,3 +1,4 @@
+import { parseOrganization, type StyleOrganization } from "./styleOrganization";
 import { PanelBorderControls } from "./PanelBorderControls";
 import { albumPanelBorder } from "./panelBorder";
 import { AlbumExportPanel } from "./AlbumExportPanel";
@@ -40,7 +41,7 @@ export function AlbumMenu({
   mode: AlbumTool;
   onMode: (mode: AlbumTool) => void;
   onUpdate: (update: (p: ComicProject) => ComicProject) => void;
-  onRestore: (p: ComicProject) => void | Promise<void>;
+  onRestore: (p: ComicProject, organization?: StyleOrganization) => void | Promise<void>;
   styles: IllustrationStyle[];
   onClose: () => void;
   saveError?: string;
@@ -50,6 +51,7 @@ export function AlbumMenu({
   onSection: (section: AlbumSection) => void;
 }) {
   const sv = locale === "sv";
+  const [previewOrganization, setPreviewOrganization] = useState<StyleOrganization>();
   const [preview, setPreview] = useState<ComicProject | null>(null),
     [error, setError] = useState(""),
     [download, setDownload] = useState(""), [layoutError, setLayoutError] = useState(false);
@@ -59,6 +61,7 @@ export function AlbumMenu({
   useEffect(() => {
     request.current++;
     setPreview(null);
+    setPreviewOrganization(undefined);
     setError("");
     setDownload("");
     setLayoutError(false);
@@ -131,6 +134,7 @@ export function AlbumMenu({
   async function read(file: File) {
     const current = ++request.current;
     setPreview(null);
+    setPreviewOrganization(undefined);
     setError("");
     try {
       const text = await new Promise<string>((resolve, reject) => {
@@ -139,7 +143,10 @@ export function AlbumMenu({
         reader.onerror = () => reject(reader.error);
         reader.readAsText(file);
       });
-      const value = parseAlbumBackup(JSON.parse(text));
+      const raw = JSON.parse(text);
+      const value = parseAlbumBackup(raw);
+      const organization = raw.styleOrganization === undefined ? undefined : parseOrganization(raw.styleOrganization);
+      if (current === request.current) setPreviewOrganization(organization);
       if (current === request.current) setPreview(value);
     } catch (err) {
       if (current !== request.current) return;
@@ -350,6 +357,7 @@ export function AlbumMenu({
                   {preview && (
                     <div className="album-backup-preview">
                       <strong>{preview.title}</strong>
+                      {previewOrganization ? <p>{sv ? "Egna taggar och favoriter läggs till i ditt stilbibliotek." : "Personal tags and favorites will be added to your style library."}</p> : null}
                       <p>
                         {preview.pages.length} {sv ? "sidor" : "pages"} ·{" "}
                         {preview.panels.length} {sv ? "rutor" : "panels"}
@@ -359,7 +367,7 @@ export function AlbumMenu({
                         disabled={saving}
                         onClick={async () => {
                           try {
-                            await onRestore(preview);
+                            await onRestore(preview, previewOrganization);
                             onMode(null);
                           } catch (err) {
                             setError(
@@ -392,5 +400,6 @@ export function AlbumMenu({
     </>
   );
 }
+
 
 

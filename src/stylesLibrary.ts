@@ -42,7 +42,6 @@ const retainedPreviewAssets: Record<string, { previewImage?: string; linePreview
   "paint-broken-color": { previewImage: "/Styles/Verified/paint-broken-color-color.svg" },
   "paint-neo-expressionist": { previewImage: "/Styles/Verified/paint-neo-expressionist-color.svg" },
   "paint-east-asian-silk": { previewImage: "/Styles/Verified/paint-east-asian-silk-color.svg" },
-  "manga-5": { previewImage: "/Styles/Verified/manga-5-color.svg" },
   "draw-expressive-charcoal": { previewImage: "/Styles/Verified/draw-expressive-charcoal-grayscale.png", linePreviewImage: "/Styles/Verified/draw-expressive-charcoal-grayscale.png" },
   "paint-gritty-dark-fantasy": { previewImage: "/Styles/Verified/paint-gritty-dark-fantasy-color.png" },
   "paint-zorn-alla-prima": { previewImage: "/Styles/Verified/paint-zorn-alla-prima-color.png" },
@@ -140,3 +139,4 @@ export function readCustomStyles(): IllustrationStyle[] {
 }
 export function saveCustomStyles(styles: IllustrationStyle[]): void { try { localStorage.setItem(CUSTOM_STYLES_KEY, JSON.stringify(styles)); } catch {} }
 export function createCustomStyleId(): string { return "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); }
+
