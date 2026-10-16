@@ -57,7 +57,7 @@ const retainedPreviewAssets: Record<string, { previewImage?: string; linePreview
     "previewImage": "/Styles/Verified/fb-1-color.svg",
   },
   "er-1": {
-    "previewImage": "/Styles/Verified/er-1-color.webp",
+    "previewImage": "/Styles/Verified/er-1-color-dba47ee67cce.webp",
   },
   "noir-1": { previewImage: "/Styles/Verified/noir-1-color.svg" },
   "hum-3": { previewImage: "/Styles/Verified/hum-3-color.svg" },

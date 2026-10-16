@@ -231,7 +231,7 @@
     "styleId": "er-1",
     "name": "Elegant fine-line realism",
     "colorMode": "color",
-    "image": "er-1-color.webp",
+    "image": "er-1-color-dba47ee67cce.webp",
     "prompt": "er-1-prompt.txt",
     "imageSha256": "dba47ee67ccecf89e5ed8f003fa9294ddd0bd5b54090acea53868b3b9f7a32ab",
     "originalImageSha256": "3ff90935fedfdfa5936e544545e2e3e1288fa973132508536f025f45d28fccde",
