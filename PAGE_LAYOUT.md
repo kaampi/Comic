@@ -100,3 +100,10 @@ Under **Standardram för rutor** i albuminställningarna finns **Ramstil → Rak
 En markerad ruta kan få en egen ramstil i sidans ramverktyg. **Använd albumets standardram** återgår till albumets inställningar. Befintliga album behåller raka ramar tills användaren väljer annat. Formen beräknas från rutans stabila ID, så tuschlinjen behåller sitt utseende vid omladdning och export. Bildbeskärning, text, rutgeometri och passning mot grannrutor ändras inte. Styrkereglaget samlar dragsteg innan albumet sparas.
 
 Inställningarna följer med i albumbackup och PDF/PNG/JPEG/CBZ-export. IDML använder samma tuschkontur som redigerbara fyllda vektorformer på lagret för panelramar.
+
+
+## Textfärg
+
+**Textfärg** finns i typografiverktygen för pratbubblor, tankebubblor, berättarrutor och SFX. Färgen är oberoende av bubblans fyllning och kontur, så vit text kan användas i en helt genomskinlig bubbla ovanpå en mörk bild. Utan textmarkering ändras grundfärgen; med en markering ändras bara den delen. **Ändra grundformatet** lämnar markeringen. Lokala färger behålls när grundfärgen ändras, och **Återställ textformatering** tar bort lokala avvikelser.
+
+Textfärger visas även vid direktredigering i bubblan, följer med vid textändringar och sparas i albumbackup samt alla exporter, inklusive redigerbara teckenformat i IDML. Befintliga SFX-färger behålls och äldre texter fortsätter vara mörka tills en färg väljs.

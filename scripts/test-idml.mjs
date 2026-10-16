@@ -35,7 +35,8 @@ try {
   const project={title:'Test <album>',pageFormat:{...DEFAULT_PAGE_FORMAT,spacing},pages:[{id:'second',number:2,gridColumns:3,gridRows:5,placements:[layer]},{id:'first',number:1,gridColumns:3,gridRows:5,background:{...layer,id:'bg',overlays:[]},placements:[layer]}]};
   const {linkBubbles}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
   const linked=linkBubbles([{...overlay,id:'linked-a',text:'Linked first',rotation:0,width:30,height:20,tailEnabled:false},{...overlay,id:'linked-b',text:'Linked second',x:55,y:40,width:30,height:20,tailEnabled:false}],'linked-a','linked-b');
-  linked[1].textStyles=[{start:7,end:13,fontFamily:'Comic Relief, sans-serif',fontSize:18,fontWeight:700}];
+  linked[1].textColor='#ffffff';
+  linked[1].textStyles=[{start:7,end:13,fontFamily:'Comic Relief, sans-serif',fontSize:18,fontWeight:700,textColor:'#ff0000'}];
   project.pages[1].background.overlays=linked;
   const snapshot=JSON.stringify(project),progress=[];
   const options={format:'idml',pageIds:['second','first'],pageFormat:DEFAULT_PAGE_FORMAT,dpi:600,fit:'contain',jpegQuality:.95};
@@ -69,6 +70,8 @@ try {
   const richStory=[...docs.values()].find(d=>[...d.querySelectorAll('Content')].map(e=>e.textContent).join('').includes('Linked second'));
   assert.ok(richStory);
   const richRanges=[...richStory.querySelectorAll('CharacterStyleRange')];assert.equal(richRanges.length,2);
+  assert.equal(richRanges[0].getAttribute('FillColor'),'Color/CBffffff','base text color exports to IDML');
+  assert.equal(richRanges[1].getAttribute('FillColor'),'Color/CBff0000','selection color exports to IDML');
   assert.equal(richRanges[1].querySelector('AppliedFont').textContent,'Comic Relief');assert.equal(richRanges[1].getAttribute('FontStyle'),'Bold');
   assert.ok(Number(richRanges[1].getAttribute('PointSize'))>Number(richRanges[0].getAttribute('PointSize')));
   const allIds=new Set();for(const d of docs.values())for(const e of d.querySelectorAll('[Self]')){assert.ok(!allIds.has(e.getAttribute('Self')),'unique Self');allIds.add(e.getAttribute('Self'));}

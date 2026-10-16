@@ -894,6 +894,7 @@ export function App() {
 <label>{tr("text")}<textarea rows={4} value={o.text} onBeforeInput={e=>{textEditRange.current??={overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd};}} onKeyDown={e=>{textEditRange.current={overlayId:o.id,...deletionRange(o.text,e.currentTarget.selectionStart,e.currentTarget.selectionEnd,e.key)};}} onPaste={e=>{textEditRange.current={overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd};}} onSelect={e=>setTextSelection({overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd})} onChange={(e)=>{updateOverlay(pg.id,pl.id,o.id,{text:e.target.value,textEdit:textEditRange.current?.overlayId===o.id?textEditRange.current:undefined});textEditRange.current=null;}}/>
 </label>
 <p className="quiet">{selectedText?`${tr("formatSelection")}: “${o.text.slice(selectedText.start,selectedText.end).slice(0,60)}”`:tr("formatWholeText")}</p>
+<label>{locale==="sv"?"Textfärg":locale==="nb"?"Tekstfarge":"Text color"}<ColorInput value={typeValues?.textColor??o.sfxTextColor??"#171411"} onChange={textColor=>formatSelectedText(pg.id,pl.id,o,{textColor})}/></label>
 <FontPicker label={tr("font")} value={typeValues?.fontFamily??"Comic Neue, sans-serif"} onChange={fontFamily=>formatSelectedText(pg.id,pl.id,o,{fontFamily})}/>
 <div className="type-secondary-grid">
 <label>{tr("weight")}<select value={typeValues?.fontWeight??600} onChange={(e)=>formatSelectedText(pg.id,pl.id,o,{fontWeight:Number(e.target.value)})}>
@@ -934,8 +935,6 @@ export function App() {
 <label>
 <input type="checkbox" checked={!o.sfxTextHidden} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{sfxTextHidden:!e.target.checked})}/>{locale==="sv"?"Visa text":"Show text"}</label>
 <label>{locale==="sv"?"Rotation (grader)":"Rotation (degrees)"}<input type="number" min="-180" max="180" value={o.rotation} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{rotation:Math.max(-180,Math.min(180,Number(e.target.value)||0))})}/>
-</label>
-<label>{locale==="sv"?"Textfärg":"Text color"}<ColorInput value={o.sfxTextColor??"#171411"} onChange={sfxTextColor=>updateOverlay(pg.id,pl.id,o.id,{sfxTextColor})}/>
 </label>
 </>:null}<label>{tr("roundness")}<input className="numeric-field" type="number" min="0" max="100" value={o.roundness??(o.type==="caption"?18:60)} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{roundness:Math.max(0,Math.min(100,Number(e.target.value)||0))})}/>
 </label>
@@ -1102,6 +1101,7 @@ export function App() {
     </div>
   );
 }
+
 
 
 

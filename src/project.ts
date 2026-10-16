@@ -21,13 +21,13 @@ export type TextOverlay = {
   sfxShapeId?: string; sfxTextHidden?: boolean; sfxTextColor?: string;
   sourcePanelId?: string; sourceTextId?: string;
   textAlign?: "left" | "center" | "right"; textPadding?: number;
-  fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle;
+  textColor?: string; fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle;
   tailStartAngle?: number;
   thoughtTailWidth?: number; thoughtTailCurve?: number;
   tailEnabled?: boolean; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number;
   strokeColor?: string; strokeWidth?: number; fillColor?: string; fillOpacity?: number; swatchId?: string;
 };
-export type TextStyle = { fontFamily?: string; fontSize?: number; fontWeight?: number };
+export type TextStyle = { textColor?: string; fontFamily?: string; fontSize?: number; fontWeight?: number };
 export type TextStyleRange = TextStyle & { start: number; end: number };
 export type BubbleSwatch = {
   id: string;
@@ -117,6 +117,7 @@ export function readProjects(): ComicProject[] {
 export function saveProjects(projects: ComicProject[]): boolean {
   return saveProjectData(PROJECTS_KEY, projects);
 }
+
 
 
 

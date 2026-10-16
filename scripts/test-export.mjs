@@ -103,6 +103,21 @@ try {
   assert.match(mixedMarkup,/rich-overlay-text/);assert.match(mixedMarkup,/font-family="Impact, sans-serif"/);assert.match(mixedMarkup,/font-weight="900"/);
   assert.ok([...mixedMarkup.matchAll(/font-size="([^"]+)"/g)].some(m=>Math.abs(Number(m[1])-20*25.4/72*700/210)<1e-7));
   console.log('PASS: mixed font families/weights/sizes, variable line heights, blank lines, edits/inheritance, reset, Unicode offsets and SVG export.');
+  for(const type of ['speech','thought','caption','sfx']){
+    const white={...a,type,text:'White RED white',textColor:'#ffffff',fillOpacity:0,width:100,height:100,fontSize:8};
+    const whitePage={...page,placements:[{...layer,overlays:[white]}]};
+    const plainWhite=await pageSvg(project,whitePage,'',1);
+    assert.match(plainWhite,/<text[^>]+fill="#ffffff"/);
+    white.textStyles=formatTextRange(white,6,9,{textColor:'#ff0000'});
+    assert.equal(editedTextStyles(white,'White RED! white')[0].textColor,'#ff0000','inserted text inherits local color');
+    const colored=await pageSvg(project,whitePage,'',1);
+    assert.match(colored,/<tspan[^>]+fill="#ff0000"[^>]*>RED<\/tspan>/);
+    assert.match(colored,/<tspan[^>]+fill="#ffffff"/);
+    assert.equal(clearTextRange(white,6,9).length,0,'reset removes the local color');
+    const legacy={...white,textColor:undefined,textStyles:undefined,sfxTextColor:'#123456'};
+    assert.match(await pageSvg(project,{...page,placements:[{...layer,overlays:[legacy]}]},'',1),/<text[^>]+fill="#123456"/,'legacy SFX colors remain compatible');
+  }
+  console.log('PASS: white text with transparent fill, all overlay types, mixed colors, insertion/reset and legacy SFX SVG colors.');
   const typography=await import(pathToFileURL(path.join(dir,'pageTypography.mjs')));
   const sized={...layer.overlays[0],text:'Same size',fontSize:12};
   const background={...layer,id:'background',overlays:[sized]};

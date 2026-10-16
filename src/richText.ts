@@ -5,9 +5,9 @@ import { PAGE_RENDER_WIDTH } from "./pageFormat";
 
 export function textStyleAt(o: TextOverlay, index: number): TextStyle {
   const r=o.textStyles?.find(r=>index>=r.start&&index<r.end);
-  return r?{fontFamily:r.fontFamily,fontSize:r.fontSize,fontWeight:r.fontWeight}:{};
+  return r?{fontFamily:r.fontFamily,fontSize:r.fontSize,fontWeight:r.fontWeight,...(r.textColor!==undefined?{textColor:r.textColor}:{})}:{};
 }
-const signature=(s:TextStyle)=>JSON.stringify([s.fontFamily,s.fontSize,s.fontWeight]);
+const signature=(s:TextStyle)=>JSON.stringify([s.fontFamily,s.fontSize,s.fontWeight,s.textColor]);
 function ranges(styles:TextStyle[]):TextStyleRange[]{
   const result:TextStyleRange[]=[];
   styles.forEach((style,i)=>{if(!Object.values(style).some(v=>v!==undefined))return;const last=result.at(-1);if(last&&last.end===i&&signature(last)===signature(style))last.end++;else result.push({...style,start:i,end:i+1});});
@@ -75,3 +75,4 @@ export function richTextLayout(o:TextOverlay,metrics:LayerTextMetrics){
   const totalHeight=rows.reduce((n,r)=>n+r.lineHeight,0);let top=(height-totalHeight)/2;
   return {width,height,totalHeight,rows:rows.map(row=>{let x=o.textAlign==="left"?padding:o.textAlign==="right"?width-padding-row.lineWidth:(width-row.lineWidth)/2;const y=top+row.size*.85;top+=row.lineHeight;return {...row,y,runs:row.runs.map(run=>{const out={...run,x};x+=run.width;return out;})};})};
 }
+

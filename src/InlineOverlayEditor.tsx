@@ -23,14 +23,14 @@ function RichInlineText({overlay,textMetrics,label,onChange,onSelection,onFinish
   useLayoutEffect(()=>{
     const root=ref.current;if(!root||composing.current)return;
     const selection=selectionOffsets(root),focused=document.activeElement===root;
-    root.replaceChildren(...textPieces(overlay).map(piece=>{const span=document.createElement('span');span.textContent=piece.text;span.style.fontFamily=piece.style.fontFamily??overlay.fontFamily??(overlay.type==='sfx'?'Impact, sans-serif':'Comic Neue, sans-serif');span.style.fontSize=`${(piece.style.fontSize??overlay.fontSize??(overlay.type==='sfx'?28:8))*factor}px`;span.style.fontWeight=String(piece.style.fontWeight??overlay.fontWeight??(overlay.type==='sfx'?800:600));return span;}));
+    root.replaceChildren(...textPieces(overlay).map(piece=>{const span=document.createElement('span');span.textContent=piece.text;span.style.color=piece.style.textColor??overlay.textColor??overlay.sfxTextColor??'#171411';span.style.fontFamily=piece.style.fontFamily??overlay.fontFamily??(overlay.type==='sfx'?'Impact, sans-serif':'Comic Neue, sans-serif');span.style.fontSize=`${(piece.style.fontSize??overlay.fontSize??(overlay.type==='sfx'?28:8))*factor}px`;span.style.fontWeight=String(piece.style.fontWeight??overlay.fontWeight??(overlay.type==='sfx'?800:600));return span;}));
     if(focused&&selection)restoreSelection(root,...selection);
-  },[overlay.text,overlay.textStyles,overlay.fontFamily,overlay.fontSize,overlay.fontWeight,factor]);
+  },[overlay.text,overlay.textStyles,overlay.fontFamily,overlay.fontSize,overlay.fontWeight,overlay.textColor,overlay.sfxTextColor,factor]);
   useEffect(()=>{ref.current?.focus();},[overlay.id]);
   const select=()=>{const root=ref.current;if(!root)return;const offsets=selectionOffsets(root);if(offsets)onSelection?.(...offsets);};
   const input=()=>{onChange(ref.current?.textContent??'',editRange.current);editRange.current=undefined;select();};
   const insert=(text:string)=>{const root=ref.current,selection=window.getSelection();if(!root||!selection?.rangeCount)return;const range=selection.getRangeAt(0);if(!root.contains(range.commonAncestorContainer))return;const offsets=selectionOffsets(root);if(offsets)editRange.current={start:offsets[0],end:offsets[1]};range.deleteContents();const node=document.createTextNode(text);range.insertNode(node);range.setStartAfter(node);range.collapse(true);selection.removeAllRanges();selection.addRange(range);input();};
-  return <div ref={ref} className="rich-inline-text" contentEditable suppressContentEditableWarning role="textbox" aria-multiline="true" aria-label={label} spellCheck={false} style={{textAlign:overlay.textAlign??'center',color:overlay.sfxTextColor??'#171411',fontSize:(overlay.fontSize??(overlay.type==='sfx'?28:8))*factor,lineHeight:1.15}} onInput={input} onMouseUp={select} onKeyUp={select} onBlur={onFinish} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;input();}} onPaste={event=>{event.preventDefault();insert(event.clipboardData.getData('text/plain').replace(/\r\n?/g,'\n'));}} onPointerDown={e=>e.stopPropagation()} onDoubleClick={e=>e.stopPropagation()} onBeforeInput={()=>{const offsets=ref.current&&selectionOffsets(ref.current);if(offsets)editRange.current??={start:offsets[0],end:offsets[1]};}} onKeyDown={event=>{const offsets=ref.current&&selectionOffsets(ref.current);if(offsets)editRange.current=deletionRange(overlay.text,...offsets,event.key);event.stopPropagation();if(event.nativeEvent.isComposing)return;if(event.key==='Escape'){event.preventDefault();onCancel();}else if(event.key==='Enter'){event.preventDefault();insert('\n');}}}/>;
+  return <div ref={ref} className="rich-inline-text" contentEditable suppressContentEditableWarning role="textbox" aria-multiline="true" aria-label={label} spellCheck={false} style={{textAlign:overlay.textAlign??'center',color:overlay.textColor??overlay.sfxTextColor??'#171411',fontSize:(overlay.fontSize??(overlay.type==='sfx'?28:8))*factor,lineHeight:1.15}} onInput={input} onMouseUp={select} onKeyUp={select} onBlur={onFinish} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;input();}} onPaste={event=>{event.preventDefault();insert(event.clipboardData.getData('text/plain').replace(/\r\n?/g,'\n'));}} onPointerDown={e=>e.stopPropagation()} onDoubleClick={e=>e.stopPropagation()} onBeforeInput={()=>{const offsets=ref.current&&selectionOffsets(ref.current);if(offsets)editRange.current??={start:offsets[0],end:offsets[1]};}} onKeyDown={event=>{const offsets=ref.current&&selectionOffsets(ref.current);if(offsets)editRange.current=deletionRange(overlay.text,...offsets,event.key);event.stopPropagation();if(event.nativeEvent.isComposing)return;if(event.key==='Escape'){event.preventDefault();onCancel();}else if(event.key==='Enter'){event.preventDefault();insert('\n');}}}/>;
 }
 
 // Use SvgOverlay's physical text coordinates for the same scale and rotation.
@@ -73,7 +73,7 @@ export function InlineOverlayEditor({ overlay, textMetrics, label, onChange, onS
             fontSize: layout.fontSize,
             fontWeight: overlay.fontWeight ?? (overlay.type === "sfx" ? 800 : 600),
             textAlign: overlay.textAlign ?? "center",
-            color: overlay.sfxTextColor ?? "#171411",
+            color: overlay.textColor ?? overlay.sfxTextColor ?? "#171411",
             height: Math.max(1, layout.textLines.length) * layout.fontSize * 1.15,
           }}
           onBeforeInput={event=>{editRange.current??={start:event.currentTarget.selectionStart,end:event.currentTarget.selectionEnd};}} onPaste={event=>{editRange.current={start:event.currentTarget.selectionStart,end:event.currentTarget.selectionEnd};}}
@@ -95,3 +95,4 @@ export function InlineOverlayEditor({ overlay, textMetrics, label, onChange, onS
     </foreignObject>
   </g>;
 }
+
