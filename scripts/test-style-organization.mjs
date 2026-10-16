@@ -35,11 +35,11 @@ function compile(directory = "") {
 try {
   compile();
   const React = await import("react");
-  const { render, screen, cleanup } = await import("@testing-library/react");
+  const { render, screen, cleanup, within, fireEvent } = await import("@testing-library/react");
   const { default: userEvent } = await import("@testing-library/user-event");
   const org = await import(pathToFileURL(join(temporary, "styleOrganization.mjs")));
   const { StyleTags, OwnTagManager } = await import(pathToFileURL(join(temporary, "StyleTags.mjs")));
-  const { BUILTIN_STYLES } = await import(pathToFileURL(join(temporary, "stylesLibrary.mjs")));
+  const { BUILTIN_STYLES, readCustomStyles } = await import(pathToFileURL(join(temporary, "stylesLibrary.mjs")));
   const user = userEvent.setup({ document });
   const style = BUILTIN_STYLES[0], prompt = style.promptText;
   let value = org.emptyOrganization();
@@ -94,7 +94,43 @@ try {
   await user.selectOptions(screen.getByRole("combobox", { name: "Filtrera på tagg" }), "");
   await user.type(screen.getByRole("textbox", { name: "Sök stillmall…" }), "Barnbok");
   assert.ok(count() > 0 && count() < BUILTIN_STYLES.length);
+  await user.clear(screen.getByRole('textbox',{name:'Sök stillmall…'}));
+  const source=BUILTIN_STYLES.find(s=>s.id==='er-1');
+  const card=screen.getByRole('heading',{name:source.name,exact:true}).closest('article');
+  await user.click(within(card).getByTitle('Duplicera'));
+  const editor=()=>within(document.querySelector('.style-editor'));
+  assert.equal(editor().getByLabelText('Linjer & former').value,source.promptModules.lines);
+  fireEvent.change(editor().getByLabelText('Linjer & former'),{target:{value:'CUSTOM LINE RULE'}});
+  fireEvent.change(editor().getByLabelText('Färg & skuggning'),{target:{value:'CUSTOM COLOR RULE'}});
+  fireEvent.change(editor().getByLabelText('Ytstruktur & finish'),{target:{value:'CUSTOM TEXTURE RULE'}});
+  assert.equal(editor().queryByLabelText('Promptvariant: color'),null,'derived variants cannot contradict structured fields');
+  await user.click(editor().getByRole('button',{name:'Spara',exact:true}));
+  const copy=readCustomStyles().find(s=>s.name===source.name+' – kopia');
+  assert.ok(copy&&copy.id!==source.id);
+  assert.equal(copy.promptModules.lines,'CUSTOM LINE RULE');
+  assert.equal(copy.reinforceAfterScene,source.reinforceAfterScene);
+  assert.deepEqual(copy.visualReferences,source.visualReferences);
+  assert.equal(copy.previewImage,source.previewImage);
+  assert.match(copy.modePromptText.color,/CUSTOM LINE RULE/);
+  assert.match(copy.modePromptText.color,/CUSTOM COLOR RULE/);
+  assert.match(copy.modePromptText.grayscale,/CUSTOM TEXTURE RULE/);
+  assert.doesNotMatch(copy.modePromptText.grayscale,/CUSTOM COLOR RULE/);
+  const {buildImagePrompt}=await import(pathToFileURL(join(temporary,'adaptation/prompts.mjs')));
+  const copiedProject=createProject('Copied template','blank',copy);
+  const panel={id:'copy-panel',visualDescription:'A captain walks in the rain.',characterIds:[],promptDirection:{cameraAngle:'high',effects:[]},sizeHint:'full-width'};
+  const generated=buildImagePrompt(copiedProject,panel);
+  for(const rule of ['CUSTOM LINE RULE','CUSTOM COLOR RULE','CUSTOM TEXTURE RULE'])assert.equal(generated.split(rule).length-1,2,'edited fields reach both style module and closing reminder');
+  assert.doesNotMatch(generated,/MODULE 3/,'no effects means no effects module');
+  assert.match(generated,/MODULE 4: SUBJECT/);
+  // An actual supported effect must be the only reason module 3 appears.
+  const {EFFECTS}=await import(pathToFileURL(join(temporary,'adaptation/prompts.mjs')));
+  assert.match(buildImagePrompt(copiedProject,{...panel,promptDirection:{effects:[Object.keys(EFFECTS)[0]]}}),/MODULE 3/);
+  const copyCard=screen.getByRole('heading',{name:copy.name,exact:true}).closest('article');
+  await user.click(within(copyCard).getByTitle('Redigera'));
+  assert.equal(editor().getByLabelText('Linjer & former').value,'CUSTOM LINE RULE','reopening retains the structured edits');
+  console.log('PASS: template duplicate/edit/save/reopen retains all style modules, metadata and emphasis; mode variants and new image prompts use the edited fields.');
   assert.equal(networkRequests, 0);
   cleanup();
   console.log("Style tags: favorites, create, assign, duplicate, rename, delete, persistence and backup merge passed.");
 } finally { dom.window.close(); rmSync(temporary, { recursive: true, force: true }); }
+

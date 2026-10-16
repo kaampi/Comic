@@ -131,6 +131,19 @@ export const STYLE_GENRES = [...new Set(BUILTIN_STYLES.map(style => style.genre)
 export function albumStyleModules(style: IllustrationStyle): AlbumPromptStyle {
   return { medium: style.promptText, lines: "", color: "", texture: "", ...style.promptModules };
 }
+// Structured fields are the source of truth. Rebuild legacy/mode text when a
+// template is edited so previews and saved copies cannot retain stale variants.
+export function synchronizeStylePrompts(style: IllustrationStyle): IllustrationStyle {
+  if (!style.promptModules) return style;
+  const { medium, lines, color, texture } = style.promptModules;
+  const base = [medium, lines, texture].filter(Boolean).join("\n");
+  const full = [base, color].filter(Boolean).join("\n");
+  return { ...style, promptText: full, modePromptText: {
+    color: full,
+    grayscale: base + "\nRender in black, white and neutral grayscale. Translate the shading technique into tonal values; no color or tinted paper.",
+    "line-art": [medium, lines, "Render as uncolored black ink contours and appropriate hatching on white paper. No painted fills, color or gray washes."].filter(Boolean).join("\n"),
+  } };
+}
 export function newPanelStyleDirection(style: IllustrationStyle): PromptDirection | undefined {
   if (!style.panelDefaults || !Object.keys(style.panelDefaults).length) return undefined;
   return { ...style.panelDefaults, ...(style.panelDefaults.effects ? { effects: [...style.panelDefaults.effects] } : {}),

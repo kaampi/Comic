@@ -42,7 +42,7 @@ import { hasProjectDatabase, loadProjectCollection, saveProjectCollection, Proje
 import { classifyProjectSaveError, projectSaveErrorText, type ProjectSaveFailure } from "./projectSaveStatus";
 import { ColorModeSelect } from "./ColorModeSelect";
 import { renderOptionsForStyle, resolveColorMode, supportedColorModes, stylePromptForMode } from "./styleColorMode";
-import { BUILTIN_STYLES, styleGroupLabel, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
+import { BUILTIN_STYLES, synchronizeStylePrompts, styleGroupLabel, createCustomStyleId, readCustomStyles, saveCustomStyles, type IllustrationStyle } from "./stylesLibrary";
 import { optimizeStylePreview } from "./stylePreview";
 import { createProject, readProjects, type BubbleSwatch, type ComicProject, type ProjectSource } from "./project";
 import { buildPanelPrompt } from "./promptBuilder";
@@ -185,33 +185,18 @@ export function App() {
   });
   const persistCustomStyles = (next: IllustrationStyle[]) => { setCustomStyles(next); saveCustomStyles(next); };
   const saveDraft = () => {
-    if (!styleDraft || !styleDraft.name.trim() || !styleDraft.promptText.trim()) return;
-    const style: IllustrationStyle = {
+    if (!styleDraft || !styleDraft.name.trim() || !(styleDraft.promptModules?.medium ?? styleDraft.promptText).trim()) return;
+    const style = synchronizeStylePrompts({
+      ...styleDraft,
       id: styleDraft.id ?? createCustomStyleId(),
       name: styleDraft.name.trim(),
       genre: styleDraft.genre.trim() || "Custom",
       promptText: styleDraft.promptText.trim(),
-      previewImage: styleDraft.previewImage,
-      supportedColorModes: styleDraft.supportedColorModes,
-      modePromptText: styleDraft.modePromptText,
-      decorativeSeals: styleDraft.decorativeSeals,
-      panelDefaults: styleDraft.panelDefaults,
-      linePreviewImage: styleDraft.linePreviewImage
-    };
+    });
     persistCustomStyles(styleDraft.id ? customStyles.map((item) => item.id === styleDraft.id ? style : item) : [...customStyles, style]);
     setStyleDraft(null);
   };
-  const duplicateStyle = (style: IllustrationStyle) => setStyleDraft({
-    name: style.name + " – kopia",
-    genre: style.genre,
-    promptText: style.promptText,
-    previewImage: style.previewImage,
-    supportedColorModes: style.supportedColorModes,
-    modePromptText: style.modePromptText,
-    decorativeSeals: style.decorativeSeals,
-    panelDefaults: style.panelDefaults,
-    linePreviewImage: style.linePreviewImage
-  });
+  const duplicateStyle = (style: IllustrationStyle) => setStyleDraft({ ...style, id: undefined, name: style.name + " – kopia" });
   const [saveFailure, setSaveFailure] = useState<ProjectSaveFailure | null>(null);
   const [saving, setSaving] = useState(false);
   const saveRevision = useRef(0);
@@ -1061,9 +1046,12 @@ export function App() {
                   {styleDraft ? <div className="style-editor">
                     <label>{tr("name")}<input value={styleDraft.name} onChange={(e) => setStyleDraft({ ...styleDraft, name: e.target.value })} /></label>
                     <label>{tr("genre")}<input value={styleDraft.genre} onChange={(e) => setStyleDraft({ ...styleDraft, genre: e.target.value })} /></label>
-                    <label>{tr("prompt")}<textarea rows={6} value={styleDraft.promptText} onChange={(e) => setStyleDraft({ ...styleDraft, promptText: e.target.value })} /></label>
+                    {styleDraft.promptModules ? <>
+                      {([['medium','Stil & medium','Illustration style'],['lines','Linjer & former','Lines, brushwork and form'],['color','Färg & skuggning','Color and shading'],['texture','Ytstruktur & finish','Texture and finish']] as const).map(([key,sv,en])=><label key={key}>{locale==="sv"?sv:en}<textarea rows={5} value={styleDraft.promptModules?.[key]??""} onChange={e=>setStyleDraft({...styleDraft,promptModules:{...styleDraft.promptModules!,[key]:e.target.value}})}/></label>)}
+                      <p className="quiet style-editor-note">{locale==="sv"?"Dessa fyra fält används när en ny bildprompt byggs. Färglägenas prompttexter uppdateras automatiskt vid sparning. Sparade bildprompter ändras först när du skapar om dem.":"These four fields are used to build new image prompts. Color-mode prompt variants update automatically when saved. Existing image prompts change only when regenerated."}</p>
+                    </> : <label>{tr("prompt")}<textarea rows={6} value={styleDraft.promptText} onChange={(e) => setStyleDraft({ ...styleDraft, promptText: e.target.value })} /></label>}
                     <label>{locale === "sv" ? "Tillåtna färglägen" : "Supported color modes"}<select value={styleDraft.supportedColorModes?.join(",") ?? "color,grayscale,line-art"} onChange={e => setStyleDraft({ ...styleDraft, supportedColorModes: e.target.value.split(",") as IllustrationStyle["supportedColorModes"] })}><option value="color,grayscale,line-art">{locale === "sv" ? "Alla lägen" : "All modes"}</option><option value="color,grayscale">{locale === "sv" ? "Färg och gråskala" : "Color and grayscale"}</option><option value="color">{locale === "sv" ? "Endast färg" : "Color only"}</option><option value="grayscale">{locale === "sv" ? "Endast gråskala" : "Grayscale only"}</option><option value="line-art">{locale === "sv" ? "Enbart linjer" : "Lines only"}</option></select></label>
-                    {(["color", "grayscale", "line-art"] as const).filter(mode => styleDraft.modePromptText?.[mode] !== undefined).map(mode => <label key={mode}>{locale === "sv" ? "Promptvariant" : "Prompt variant"}: {mode}<textarea rows={6} value={styleDraft.modePromptText?.[mode] ?? ""} onChange={e => setStyleDraft({ ...styleDraft, modePromptText: { ...styleDraft.modePromptText, [mode]: e.target.value } })}/></label>)}
+                    {!styleDraft.promptModules && (["color", "grayscale", "line-art"] as const).filter(mode => styleDraft.modePromptText?.[mode] !== undefined).map(mode => <label key={mode}>{locale === "sv" ? "Promptvariant" : "Prompt variant"}: {mode}<textarea rows={6} value={styleDraft.modePromptText?.[mode] ?? ""} onChange={e => setStyleDraft({ ...styleDraft, modePromptText: { ...styleDraft.modePromptText, [mode]: e.target.value } })}/></label>)}
                     <div className="style-editor-images">
                       <div className="style-editor-image-slot"><span>Color preview</span>{styleDraft.previewImage?<div className="style-editor-image-preview"><img src={styleDraft.previewImage} alt="" /></div>:<div className="style-editor-image-empty">{tr("noImage")}</div>}<div className="style-editor-image-actions"><label className="text-button style-image-upload">{styleDraft.previewImage?tr("changeImage"):tr("uploadImage")}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e)=>{const file=e.target.files?.[0];if(file)void updateStyleDraftImage("previewImage",file);e.currentTarget.value="";}} /></label>{styleDraft.previewImage?<button className="text-button danger-button" type="button" onClick={()=>setStyleDraft({...styleDraft,previewImage:undefined})}>{tr("deleteImage")}</button>:null}</div></div>
                       <div className="style-editor-image-slot"><span>Black and white preview</span>{styleDraft.linePreviewImage?<div className="style-editor-image-preview"><img src={styleDraft.linePreviewImage} alt="" /></div>:<div className="style-editor-image-empty">{tr("noImage")}</div>}<div className="style-editor-image-actions"><label className="text-button style-image-upload">{styleDraft.linePreviewImage?tr("changeImage"):tr("uploadImage")}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e)=>{const file=e.target.files?.[0];if(file)void updateStyleDraftImage("linePreviewImage",file);e.currentTarget.value="";}} /></label>{styleDraft.linePreviewImage?<button className="text-button danger-button" type="button" onClick={()=>setStyleDraft({...styleDraft,linePreviewImage:undefined})}>{tr("deleteImage")}</button>:null}</div></div>

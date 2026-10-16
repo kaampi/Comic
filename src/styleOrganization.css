@@ -13,4 +13,5 @@
 .style-organization-filters .own-tag-manager form { margin:8px 0 0; }
 .style-organization-filters .own-tag-manager input { flex:1 1 140px; max-width:100%; }
 .style-tag-chips span { overflow-wrap:anywhere; max-width:100%; }
+.style-editor .style-editor-note { grid-column:1 / -1; margin:0; }
 

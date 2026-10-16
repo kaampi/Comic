@@ -211,6 +211,8 @@ Den godkända profilen **Classic fairytale animation** finns under Stiliserad se
 
 ### 9.1 Bildpromptredigering i manusläget
 
+Kopiering och sparning av en strukturerad stilmall bevarar dess fyra stilfält, bildspråksreferenser, förhandsbilder, panelförval och inställning för avslutande stilpåminnelse. Mallredigeraren visar de fyra fält som promptbyggaren använder; sammanställd text och färglägesvarianter uppdateras tillsammans vid sparning. Äldre mallar utan strukturerade fält behåller sina manuella promptvarianter. Befintliga album och redan sparade bildprompter uppdateras först genom uttryckligt stilval respektive omskapande. Modul 3 för specialeffekter utelämnas när inga effekter är valda.
+
 Beats behåller snabbspåret för lokal bildpromptgenerering. Varje serieruta erbjuder också **Justera bildprompt** i ett modalt redigeringsfönster, cirka 80 procent av skärmens bredd och höjd. Handling, karaktärsankare och separat regi per karaktär, miljö, ljus, utsnitt och kameravinkel visas direkt. Optik, skärpedjup, visuell fokuspunkt, specialeffekter och kontinuitet är valfria utfällbara avsnitt. Optik och effekter är ospecificerade som standard. Utsnitt och vinkel kan låsas oberoende när ett nytt lokalt förslag hämtas från beatet.
 
 Förhandsvisningen uppdateras utan nätverksanrop eller projektsparning. **Spara bildprompt** sparar både rutans strukturerade regi och den sammansatta prompten. Avbryt, Stäng och Escape lämnar projektet oförändrat. Manuellt redigerade sparade prompter kan granskas i fönstret och ersätts först vid uttrycklig sparning eller omskapande. Rut-ID:n, prompt-ID:n och bildhistorik bevaras.
@@ -297,3 +299,4 @@ Första milstolpen är en fungerande kort serie på 1–3 sidor med ett fåtal k
 - Exakta lagrings-, backup- och migrationsdetaljer.
 - Sidformat, upplösning och typsnitt för första exporten.
 - Licens för projektet.
+
