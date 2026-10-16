@@ -231,14 +231,14 @@
     "styleId": "er-1",
     "name": "Elegant fine-line realism",
     "colorMode": "color",
-    "image": "er-1-color.svg",
+    "image": "er-1-color.webp",
     "prompt": "er-1-prompt.txt",
-    "imageSha256": "7b16d1a68c6c8e81c86518b29f312e589c9938208d856c70667adaafa3f902b7",
-    "originalImageSha256": "e3332428a59520566fe6a33466cffcbc5b795042c2a50937e35d5d1ae879991d",
-    "promptSha256": "3ede79e0eb31b5a93f3f9440ee87ac166ed28461edd7723693175acbc418a052",
-    "generationMethod": "built-in imagegen; approved sparse contour and pale-tint refinement; no reference images",
-    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
-    "promptNotes": "Archived prompt is approved robot test. Library retains four editable style fields and generalizes scene subjects, colors and mark counts. Camera framing remains scene-specific. Closing emphasis uses application standard reminder. Existing style ID and saved album snapshots retained."
+    "imageSha256": "dba47ee67ccecf89e5ed8f003fa9294ddd0bd5b54090acea53868b3b9f7a32ab",
+    "originalImageSha256": "3ff90935fedfdfa5936e544545e2e3e1288fa973132508536f025f45d28fccde",
+    "promptSha256": "3d089659a7bb99c28cae4e2789bfd6c964be208e1dd3a401c718eaa3b487b4ef",
+    "generationMethod": "built-in imagegen; exact application prompt; text-only, no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90",
+    "promptNotes": "Final fine-pen and restrained flat-color profile, including simplified garment shadows and restrained sky coloring. Generated from the shared five-villager, horse-cart and abandoned-robot scene through scripts/build-style-preview-prompts.mjs. Existing style ID and saved album snapshots retained."
   },
   {
     "styleId": "manga-6",
