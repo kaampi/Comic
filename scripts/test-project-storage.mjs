@@ -69,6 +69,24 @@ try {
   assert.equal((await loadProjectCollection())[0].title, "Newest revision");
   console.log("PASS: projects larger than the reported 10.76 MiB persist with localStorage writes blocked; rapid saves retain newest revision");
 
+  let burstWrites = 0;
+  IDBObjectStore.prototype.put = function(...args) { burstWrites++; return originalPut.apply(this, args); };
+  const firstSave = saveProjectCollection([{ ...project, title: "Active revision" }]);
+  await Promise.resolve(); // Start the active write, leaving IndexedDB pending.
+  const burst = Array.from({ length: 250 }, (_, index) => saveProjectCollection([{ ...project, title: "Burst " + index }]));
+  assert.ok(burst.every(promise => promise === burst[0]), "Pending callers share a bounded batch");
+  await Promise.all([firstSave, ...burst]);
+  assert.equal(burstWrites, 2, "One active write plus the latest pending revision, not 251 full snapshots");
+  assert.equal((await loadProjectCollection())[0].title, "Burst 249");
+  const captured = { ...project, title: "Captured revision" };
+  const capturedSave = saveProjectCollection([captured]);
+  captured.title = "Mutation after save request";
+  await capturedSave;
+  assert.equal((await loadProjectCollection())[0].title, "Captured revision");
+  IDBObjectStore.prototype.put = originalPut;
+  await saveProjectCollection([{ ...project, title: "Newest revision" }]);
+  console.log("PASS: 250 rapid edits retain only one pending batch, commit the newest revision and preserve snapshot isolation");
+
   IDBObjectStore.prototype.put = function(...args) { const request = originalPut.apply(this, args); this.transaction.abort(); return request; };
   await assert.rejects(saveProjectCollection([{ ...project, title: "Must not commit" }]), error => error instanceof ProjectStorageError && error.failure.errorName === "AbortError");
   IDBObjectStore.prototype.put = originalPut;
@@ -118,3 +136,4 @@ try {
   rmSync(temporary, { recursive: true, force: true });
   dom.window.close();
 }
+

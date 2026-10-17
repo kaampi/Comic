@@ -1,3 +1,4 @@
+import { recordDiagnostic, diagnosticErrorName } from "./diagnostics";
 import { normalizeStoredProjects, readProjects, saveProjects, type ComicProject } from "./project";
 import { classifyProjectSaveError, getProjectSaveFailure, type ProjectSaveFailure } from "./projectSaveStatus";
 
@@ -81,13 +82,43 @@ export async function loadProjectCollection(): Promise<ComicProject[]> {
   } catch (error) { throw new ProjectStorageError(classifyProjectSaveError(error, 'storage', 'indexedDB')); }
 }
 
+type PendingSave = { serialized: string; promise: Promise<void>; superseded: number };
+let pendingSave: PendingSave | undefined;
+
 export function saveProjectCollection(projects: ComicProject[]): Promise<void> {
   if (!hasProjectDatabase()) {
     return saveProjects(projects) ? Promise.resolve() : Promise.reject(new ProjectStorageError(getProjectSaveFailure()!));
   }
   let serialized: string;
+  const started = performance.now();
   try { serialized = JSON.stringify(projects); }
-  catch (error) { return Promise.reject(new ProjectStorageError(classifyProjectSaveError(error, 'serialization', 'indexedDB'))); }
-  // Capture this revision before awaiting; later in-memory edits cannot change it.
-  return queue(() => write(serialized)).then(() => undefined, error => { throw new ProjectStorageError(classifyProjectSaveError(error, 'storage', 'indexedDB', serialized.length * 2)); });
+  catch (error) { recordDiagnostic('serialization-error', { name: diagnosticErrorName(error) }); return Promise.reject(new ProjectStorageError(classifyProjectSaveError(error, 'serialization', 'indexedDB'))); }
+  recordDiagnostic('save-serialize', { durationMs: Math.round(performance.now() - started), bytes: serialized.length * 2, albums: projects.length });
+  // Keep at most one active snapshot and one pending snapshot. All callers in a
+  // pending batch settle only when its newest revision has atomically committed.
+  // Capture as text now so later in-memory mutation cannot change the snapshot.
+  if (pendingSave) {
+    pendingSave.serialized = serialized;
+    pendingSave.superseded++;
+    return pendingSave.promise;
+  }
+  const batch: PendingSave = { serialized, superseded: 0, promise: Promise.resolve() };
+  pendingSave = batch;
+  batch.promise = queue(async () => {
+    pendingSave = undefined;
+    const snapshot = batch.serialized;
+    batch.serialized = '';
+    const bytes = snapshot.length * 2;
+    const start = performance.now();
+    recordDiagnostic('save-start', { bytes, superseded: batch.superseded });
+    try {
+      await write(snapshot);
+      recordDiagnostic('save-complete', { bytes, durationMs: Math.round(performance.now() - start) });
+    } catch (error) {
+      recordDiagnostic('save-error', { name: diagnosticErrorName(error), bytes, durationMs: Math.round(performance.now() - start) });
+      throw new ProjectStorageError(classifyProjectSaveError(error, 'storage', 'indexedDB', bytes));
+    }
+  });
+  return batch.promise;
 }
+

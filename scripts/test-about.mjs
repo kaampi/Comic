@@ -66,6 +66,14 @@ try {
     assert.equal(screen.queryByRole("menu"), null);
     const dialog = screen.getByRole("dialog", { name: title });
     assert.ok(dialog.textContent.includes(packageInfo.version));
+    const loggingButton = within(dialog).getByRole("button", { name: locale === "sv" ? "Slå på diagnostiklogg" : locale === "nb" ? "Slå på diagnostikk" : "Enable diagnostics logging" });
+    assert.equal(loggingButton.getAttribute("aria-pressed"), "false");
+    await user.click(loggingButton);
+    assert.equal(loggingButton.getAttribute("aria-pressed"), "true");
+    assert.equal(localStorage.getItem("comicbook-ai.diagnostics.enabled"), "1");
+    await user.click(loggingButton);
+    assert.equal(loggingButton.getAttribute("aria-pressed"), "false");
+    assert.ok(within(dialog).getByRole("button", { name: locale === "sv" ? "Hämta diagnostiklogg" : locale === "nb" ? "Last ned diagnostikklogg" : "Download diagnostic log" }));
     assert.equal(within(dialog).getAllByRole("link", { name: "Google Fonts ↗" }).length, 15);
     assert.equal(dialog.querySelectorAll("details").length, 15);
     const details = dialog.querySelector("details");
@@ -94,3 +102,4 @@ try {
   rmSync(temporary, { recursive: true, force: true });
   dom.window.close();
 }
+

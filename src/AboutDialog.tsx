@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef } from "react";
+import { diagnosticsEnabled, setDiagnosticsEnabled, downloadDiagnostics } from "./diagnostics";
+import { useEffect, useId, useRef, useState } from "react";
 import { FONT_NOTICES } from "./fontNotices";
 import type { Locale } from "./settings";
 import packageInfo from "../package.json";
@@ -46,6 +47,7 @@ export function aboutLabel(locale: Locale) {
 
 export function AboutDialog({ locale, onClose, returnFocus }: { locale: Locale; onClose: () => void; returnFocus?: HTMLElement | null }) {
   const text = TEXT[locale];
+  const [logging, setLogging] = useState(diagnosticsEnabled);
   const titleId = useId();
   const dialog = useRef<HTMLElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -82,6 +84,12 @@ export function AboutDialog({ locale, onClose, returnFocus }: { locale: Locale; 
           <button ref={closeButton} className="text-button" type="button" onClick={onClose}>{text.close}</button>
         </header>
         <p>{text.intro}</p>
+        <section className="about-font-group">
+          <h2>{locale === 'sv' ? 'Felsökning' : locale === 'nb' ? 'Feilsøking' : 'Diagnostics'}</h2>
+          <p>{locale === 'sv' ? 'Slå på loggen innan du försöker återskapa kraschen. Efter omstart kan du hämta loggen här. Den innehåller tekniska mätvärden, inte dina texter, bilder eller API-nycklar. Inget skickas automatiskt.' : locale === 'nb' ? 'Slå på logging før du prøver å gjenskape krasjet. Last ned loggen her etter omstart. Den inneholder tekniske målinger, ikke tekst, bilder eller API-nøkler. Ingenting sendes automatisk.' : 'Enable logging before reproducing a crash. After restarting, download the log here. It contains technical measurements, not your text, images or API keys. Nothing is sent automatically.'}</p>
+          <button type="button" className="text-button" aria-pressed={logging} onClick={() => { setDiagnosticsEnabled(!logging); setLogging(!logging); }}>{locale === 'sv' ? logging ? 'Stäng av diagnostiklogg' : 'Slå på diagnostiklogg' : locale === 'nb' ? logging ? 'Slå av diagnostikk' : 'Slå på diagnostikk' : logging ? 'Disable diagnostics logging' : 'Enable diagnostics logging'}</button>{' '}
+          <button type="button" className="text-button" onClick={downloadDiagnostics}>{locale === 'sv' ? 'Hämta diagnostiklogg' : locale === 'nb' ? 'Last ned diagnostikklogg' : 'Download diagnostic log'}</button>
+        </section>
         <h2>{text.fonts}</h2>
         <p className="quiet">{text.lead}</p>
         {(["ui", "comic"] as const).map(group => (
@@ -110,3 +118,4 @@ export function AboutDialog({ locale, onClose, returnFocus }: { locale: Locale; 
     </div>
   );
 }
+
