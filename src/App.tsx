@@ -805,7 +805,8 @@ export function App() {
           </section>
         </section> : <>
           <header className="home-brand"><p className="eyebrow">{tr("comicWorkspace")}</p><h1>{tr("fromStory")}<br />{tr("toComic")}</h1>
-            <p className="lede">Planera bildrutor, bygg konsekventa bildprompter och skapa din serie utan att låsa projektet till en viss AI-tjänst.</p></header>
+            <p className="lede">Planera bildrutor, bygg konsekventa bildprompter och skapa din serie utan att låsa projektet till en viss AI-tjänst.</p>
+            <p><button className="text-button" type="button" onClick={() => setPanel("guide")}>New here? Read the getting started guide →</button></p></header>
           <section className="workspace-card"><div className="card-heading"><div><p className="eyebrow">{tr("yourProjects")}</p><h2>{projects.length ? tr("continueWhere") : tr("createFirst")}</h2></div>
             <button className="primary-button" type="button" onClick={() => setPanel("new-project")}>{tr("newAlbum")}</button></div>
             {projects.length ? <div className="project-list">{projects.map((project) => <button key={project.id} type="button" onClick={() => setActiveProjectId(project.id)}><strong>{project.title}</strong><span>{project.style.name}</span></button>)}</div> : <p className="quiet">{tr("localIndependent")}</p>}

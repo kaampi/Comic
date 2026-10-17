@@ -42,7 +42,8 @@ try {
   localStorage.setItem("comicbook-ai.locale", "en");
   const user = userEvent.setup({ document });
   render(React.createElement(App));
-  const trigger = await screen.findByRole("button", { name: "Guide", exact: true });
+  await screen.findByRole("button", { name: "Guide", exact: true });
+  const trigger = within(screen.getByRole("main")).getByRole("button", { name: "New here? Read the getting started guide →" });
   await user.click(trigger);
   const dialog = screen.getByRole("dialog", { name: GUIDE.title });
   assert.equal(dialog.lang, "en");
