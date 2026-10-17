@@ -300,3 +300,9 @@ Första milstolpen är en fungerande kort serie på 1–3 sidor med ett fåtal k
 - Sidformat, upplösning och typsnitt för första exporten.
 - Licens för projektet.
 
+
+## English beta guide
+
+The top-level Guide opens an English getting-started dialog. It starts with a no-AI exercise: create an album, draw page frames, upload images, add text, download a backup and export a page. Further sections explain manuscript beats, panel plans, image prompts, style snapshots and beta feedback.
+
+`src/guideContent.ts` is the shared source for the in-app guide and `docs/GETTING_STARTED.md`. Each topic has a stable ID and `shortHelp` for future contextual help beside UI headings. Run `npm run docs:guide` after editing content. `npm run test:guide` checks documentation freshness and guide navigation, keyboard focus and dismissal. Installation instructions are a separate documentation task.

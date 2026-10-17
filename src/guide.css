@@ -1,0 +1,23 @@
+.guide-card.getting-started-guide {
+  width: min(960px, 100%);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  line-height: 1.65;
+  font-size: 1rem;
+}
+.getting-started-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.getting-started-guide h1 { font-size: clamp(1.8rem, 4vw, 2.7rem); line-height: 1.2; }
+.getting-started-guide h2 { font-size: 1.35rem; line-height: 1.35; }
+.guide-intro { font-size: 1.15rem; }
+.guide-contents { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0; }
+.guide-contents ul { margin: 0; padding-left: 1.3rem; }
+.getting-started-guide a { color: var(--ink); text-decoration: underline; text-underline-offset: .2em; }
+.guide-topic { border-top: 1px solid var(--border); padding: 1.5rem 0; }
+.guide-topic h2 { scroll-margin-top: 1.5rem; }
+.guide-topic li { margin: .65rem 0; padding-left: .25rem; }
+.guide-tip { border-left: 3px solid var(--border); padding: .65rem 1rem; }
+.getting-started-guide :focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+@media (max-width: 650px) {
+  .guide-card.getting-started-guide { padding: 1.25rem; }
+  .guide-contents { grid-template-columns: 1fr; gap: 1rem; }
+}

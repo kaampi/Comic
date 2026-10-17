@@ -14,6 +14,10 @@ En fristående desktopapp som omvandlar litterär text till illustrerade serier 
 - Import skapar en självständig kopia. Ingen återskrivning, synkronisering eller direkt åtkomst till StoryBooks lagring.
 - StoryCore är en möjlig framtida integration, inte ett beroende för första versionen.
 
+## Getting started (English)
+
+New beta tester? Read the [getting started guide](docs/GETTING_STARTED.md), also available from **Guide** in the app. Make a first page with your own pictures, add dialogue, download an album backup and export a reading copy. No AI setup is needed for this first exercise.
+
 ## Dokumentation
 
 - [TODO.md](TODO.md): aktuella uppgifter och nästa steg.
@@ -111,3 +115,4 @@ Kontroll: `npm run test:page-spacing`.
 Album och bilder sparas i IndexedDB, så att bilder inte behöver rymmas inom localStorage-gränsen. Befintliga sparade album överförs automatiskt och textkopian tas bort först efter verifierad databassparning. Inställningar och egna stilmallar ligger fortsatt i localStorage.
 
 Om en äldre version har visat ett sparfel: exportera en albumbackup från den öppna appen innan omladdning. Osparade ändringar finns bara i minnet och kan sedan återställas från backupen. Överföringen kan endast läsa sådant som den äldre versionen faktiskt lyckades spara. Behåll backupen tills albumet har kontrollerats.
+

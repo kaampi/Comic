@@ -1,3 +1,4 @@
+import { GuideDialog } from "./GuideDialog";
 import { StyleTags, OwnTagManager } from "./StyleTags";
 import { builtinTags, readOrganization, saveOrganization, mergeOrganization, type StyleOrganization } from "./styleOrganization";
 import { ColorInput } from "./ColorInput";
@@ -1004,7 +1005,8 @@ export function App() {
 </div>})() : null}
       {inspectSourcePanelId && activeProject ? (()=>{const sourcePanel=activeProject.panels.find((item)=>item.id===inspectSourcePanelId);const sourceBeats=(sourcePanel?.sourceBeatIds??[]).map((id)=>activeAdaptation?.beats.find((beat)=>beat.id===id)).filter(Boolean);return <div className="source-inspector-backdrop" onPointerDown={(e)=>e.target===e.currentTarget&&setInspectSourcePanelId(null)}><section className="source-inspector"><header><div><p className="eyebrow">{tr("sourceForPanel")}</p><h2>{sourcePanel?.order ? `${tr("row")} ${sourcePanel.order}` : tr("inspectSource")}</h2></div><button className="text-button" type="button" onClick={()=>setInspectSourcePanelId(null)}>{tr("closeSource")}</button></header>{sourceBeats.length?<div className="source-beat-list">{sourceBeats.map((beat:any)=><article key={beat.id}><div className="adaptation-card-meta"><span>{tr("sourceBeats")} {beat.order}</span><span>{beat.beatType}</span></div><h3>{beat.title}</h3><p>{beat.sourceTextExcerpt}</p>{beat.dialogueCandidates?.length?<div className="adaptation-snippet"><strong>{tr("originalDialogue")}</strong>{beat.dialogueCandidates.map((dialogue:any)=><q key={dialogue.id}>{dialogue.text}</q>)}</div>:null}</article>)}</div>:<p className="quiet">{tr("sourceUnavailable")}</p>}</section></div>})() : null}
       {panel === "about" ? <AboutDialog locale={locale} onClose={closePanel} returnFocus={menuRef.current?.querySelector("button")} /> : null}
-      {panel && panel !== "about" ? <div className="overlay" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && closePanel()}>
+      {panel === "guide" ? <GuideDialog onClose={closePanel} /> : null}
+      {panel && panel !== "about" && panel !== "guide" ? <div className="overlay" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && closePanel()}>
         <article className="guide-card" role="dialog" aria-modal="true">
           <div className="guide-actions"><button className="text-button" type="button" onClick={closePanel}>{tr("close")}</button></div>
           {panel === "new-project" ? <><p className="eyebrow">{tr("newProject")}</p><h1>{tr("newAlbum")}</h1>
@@ -1019,7 +1021,6 @@ export function App() {
               <div className="style-preview"><span className="style-genre">{tr("projectSnapshot")}</span><p>{allStyles.find((style) => style.id === newStyleId)?.promptText}</p></div>
               <div className="style-editor-actions"><button className="text-button" type="button" onClick={closePanel}>{tr("cancel")}</button><button className="primary-button" type="button" disabled={!newTitle.trim() || (newSource==="storybook" && !storyBookImport)} onClick={newSource==="storybook" ? createFromStoryBook : createNewProject}>{newSource==="storybook" ? tr("importCreate") : tr("createProject")}</button></div>
             </div></> : null}
-          {panel === "guide" ? <><p className="eyebrow">{tr("guide").toUpperCase()}</p><h1>ComicBook AI {tr("guide")}</h1><p className="lede">{tr("guidePlaceholder")}</p></> : null}
           {panel === "styles" ? <div className="style-library">
             <div className="style-library-toolbar">
               <div className="style-library-head">

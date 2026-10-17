@@ -21,7 +21,9 @@
     "test:idml": "node scripts/test-idml.mjs",
     "test:page-spacing": "node scripts/test-page-spacing.mjs",
     "test:project-storage": "node scripts/test-project-storage.mjs",
-    "test:style-organization": "node scripts/test-style-organization.mjs"
+    "test:style-organization": "node scripts/test-style-organization.mjs",
+    "docs:guide": "node scripts/build-guide.mjs",
+    "test:guide": "node scripts/build-guide.mjs --check && node scripts/test-guide.mjs"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",
