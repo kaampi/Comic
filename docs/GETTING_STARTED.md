@@ -76,7 +76,7 @@ Use speech bubbles for spoken dialogue, thought bubbles for thoughts, captions f
 3. Select the text layer to adjust its font, size, alignment and Text color. Text size is measured in points (pt). Adjust the fill and its opacity separately.
 4. Position the tail so it clearly points to the speaker. Read the whole panel and check that text does not cover an important face or action.
 
-> For mixed typography, select part of the text in the text field and change its font, weight, size or color. Compatible speech or thought bubbles can be linked; the source bubble’s tail becomes the connection. Select either linked bubble, drag the white attachment points along the edges, and drag the two blue handles to make an arc or S curve. Arrow keys move a focused handle; Shift makes a larger step. Escape cancels a drag. Reset connection restores a straight link.
+> For mixed typography, select part of the text in the text field and change its font, weight, size or color. Compatible speech or thought bubbles can be linked; the source bubble’s tail becomes the connection. Select either linked bubble, drag the white attachment points along the edges, and drag the two blue handles to make an arc or S curve. Arrow keys move a focused handle; Shift makes a larger step. Set Start width and End width independently to make the connection taper or widen. The numbered source → destination label identifies the ends. Equal values give an even width. Escape cancels a drag. Reset connection restores a straight link and keeps both widths.
 
 <a id="backup"></a>
 

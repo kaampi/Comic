@@ -124,8 +124,19 @@ export function bubbleConnectionRibbon(a: TextOverlay, b: TextOverlay, link: Bub
   });
   // Monotone control projections prevent loops. Limit width at tight bends so
   // the inner edge cannot fold back over itself.
-  const half = Math.min(Math.min(a.width*g.mx,a.height*g.my,b.width*g.mx,b.height*g.my) * clamp(link.width,2,80) / 200, g.length * .22, ...samples.map(s => s.radius * .7));
-  const side = (sign: number) => samples.map(s => ({ x: (s.point.x + sign * s.nx * half) / g.mx, y: (s.point.y + sign * s.ny * half) / g.my }));
+  const size = Math.min(a.width*g.mx,a.height*g.my,b.width*g.mx,b.height*g.my);
+  const startHalf = size * clamp(link.startWidth ?? link.width,2,80) / 200;
+  const endHalf = size * clamp(link.endWidth ?? link.width,2,80) / 200;
+  // Scale both ends together at tight bends, retaining the authored taper ratio.
+  const maximum = Math.max(startHalf,endHalf);
+  const scale = Math.min(1, g.length * .22 / maximum, ...samples.map(s => s.radius * .7 / maximum));
+  const lengths = [0];
+  for (let i = 1; i < samples.length; i++) lengths.push(lengths[i-1] + Math.hypot(samples[i].point.x-samples[i-1].point.x,samples[i].point.y-samples[i-1].point.y));
+  const total = Math.max(1e-8,lengths[lengths.length-1]);
+  const side = (sign: number) => samples.map((s,i) => {
+    const progress = lengths[i] / total, half = scale * (startHalf*(1-progress)+endHalf*progress);
+    return { x: (s.point.x + sign * s.nx * half) / g.mx, y: (s.point.y + sign * s.ny * half) / g.my };
+  });
   // Interior caps overlap the bodies, eliminating seams at the attachment.
   return [center(a), ...side(1), center(b), ...side(-1).reverse()];
 }
@@ -153,7 +164,8 @@ function computeConnectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTex
   const mx=(metrics?.width??100)/100,my=(metrics?.height??100)/100;
   for (const o of group) for (const link of o.bubbleLinks??[]) {
     const b=group.find(b=>b.id===link.targetId);if(!b||b.id===o.id)continue;
-    if (link.startAngle !== undefined || link.endAngle !== undefined || link.startControl || link.endControl) {
+    const startWidth = link.startWidth ?? link.width, endWidth = link.endWidth ?? link.width;
+    if (link.startAngle !== undefined || link.endAngle !== undefined || link.startControl || link.endControl || startWidth !== endWidth) {
       const ribbon = bubbleConnectionRibbon(o,b,link,metrics);
       if (ribbon.length) {
         // Union caps separately: an attachment on a bubble's far side may
@@ -166,7 +178,7 @@ function computeConnectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTex
     }
     const a={x:o.x+o.width/2,y:o.y+o.height/2},end={x:b.x+b.width/2,y:b.y+b.height/2};
     const dx=(end.x-a.x)*mx,dy=(end.y-a.y)*my,len=Math.hypot(dx,dy);if(len<1e-7)continue;
-    const half=Math.min(o.width*mx,o.height*my,b.width*mx,b.height*my)*Math.max(2,Math.min(80,link.width))/200;
+    const half=Math.min(o.width*mx,o.height*my,b.width*mx,b.height*my)*Math.max(2,Math.min(80,startWidth))/200;
     const nx=-dy/len*half/mx,ny=dx/len*half/my;
     polygons.push([{x:a.x+nx,y:a.y+ny},{x:end.x+nx,y:end.y+ny},{x:end.x-nx,y:end.y-ny},{x:a.x-nx,y:a.y-ny}]);
   }

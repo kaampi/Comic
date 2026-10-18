@@ -16,6 +16,7 @@ export type OverlayType = "speech" | "thought" | "caption" | "sfx";
 export type BubbleStyle = "organic" | "wide" | "tall" | "oval" | "rounded" | "shout" | "whisper";
 export type BubbleLink = {
   targetId: string; width: number;
+  startWidth?: number; endWidth?: number;
   // Attachment angles are local to each bubble. Handles use the physical
   // endpoint chord as their frame, so they follow moves, rotation and resizing.
   startAngle?: number; endAngle?: number;

@@ -1238,9 +1238,22 @@ try {
   assert.ok(directEditor.querySelector('.connected-bubble-outline'));
   assert.equal(directEditor.querySelector('.editable-overlay.is-selected .overlay-tail-grip'),null,'source tail handle is replaced by connection');
   assert.ok(within(directEditor).getByText(/Svansen används som förbindelse/));
-  const widthControl=screen.getByLabelText(/Förbindelsens bredd/);
+  const widthControl=screen.getByLabelText('Startbredd (%)',{exact:true});
+  const endWidthControl=screen.getByLabelText('Slutbredd (%)',{exact:true});
+  assert.equal(widthControl.value,'20');assert.equal(endWidthControl.value,'20');
+  fireEvent.change(widthControl,{target:{value:'55'}});
+  assert.equal(saved().pages[0].background.overlays.at(-1).bubbleLinks[0].startWidth,55);
+  assert.equal(endWidthControl.value,'20','end width stays independent');
+  fireEvent.change(endWidthControl,{target:{value:'10'}});
+  assert.equal(saved().pages[0].background.overlays.at(-1).bubbleLinks[0].endWidth,10);
+  const taperedBackup=JSON.parse(JSON.stringify(packAlbumBackup(saved())));
+  assert.deepEqual(parseAlbumBackup(taperedBackup).pages[0].background.overlays,saved().pages[0].background.overlays);
+  for (const [field,value] of [['startWidth',0],['endWidth',81],['endWidth','10']]) {
+    const brokenWidth=structuredClone(taperedBackup);brokenWidth.project.pages[0].background.overlays.at(-1).bubbleLinks[0][field]=value;
+    assert.throws(()=>parseAlbumBackup(brokenWidth),/invalid-backup/);
+  }
   fireEvent.change(widthControl,{target:{value:'35'}});
-  assert.equal(saved().pages[0].background.overlays.at(-1).bubbleLinks[0].width,35);
+  fireEvent.change(endWidthControl,{target:{value:'35'}});
   assert.equal(directEditor.querySelectorAll('.bubble-connection-handle').length,4);
   const legacyLinkPath=directEditor.querySelector('.connected-bubble-outline').getAttribute('d');
   const connectionSvg=directEditor.querySelector('.panel-editor-stage > svg');
@@ -1278,7 +1291,7 @@ try {
   const brokenControls=structuredClone(linkedBackup);brokenControls.project.pages[0].background.overlays.at(-1).bubbleLinks[0].startControl.along=5;
   assert.throws(()=>parseAlbumBackup(brokenControls),/invalid-backup/);
   await user.click(screen.getByRole('button',{name:'Återställ förbindelse',exact:true}));
-  assert.deepEqual(saved().pages[0].background.overlays.at(-1).bubbleLinks,[{targetId:firstLinkBubble.id,width:35}]);
+  assert.deepEqual(saved().pages[0].background.overlays.at(-1).bubbleLinks,[{targetId:firstLinkBubble.id,width:20,startWidth:35,endWidth:35}]);
   assert.equal(directEditor.querySelector('.connected-bubble-outline').getAttribute('d'),legacyLinkPath);
   const brokenLinks=structuredClone(linkedBackup);brokenLinks.project.pages[0].background.overlays.at(-1).bubbleLinks[0].targetId='missing';
   assert.throws(()=>parseAlbumBackup(brokenLinks),/invalid-backup/);

@@ -73,6 +73,26 @@ try {
     assert.ok(!/NaN|Infinity/.test(geometry.fillPath));
   }
   assert.equal(connectedBubbleGeometry([{...a,bubbleLinks:[{targetId:'b',width:20}]},b],curveMetrics).fillPath,connectedBubbleGeometry(linked,curveMetrics).fillPath,'reset preserves legacy straight geometry');
+  const endpointWidth=(ribbon,index)=>{
+    const count=(ribbon.length-2)/2;
+    const left=ribbon[1+index],right=ribbon[2+count+(count-1-index)];
+    return Math.hypot((left.x-right.x)*curveMetrics.width/100,(left.y-right.y)*curveMetrics.height/100);
+  };
+  for(const controls of [{}, {startControl:{along:.3,across:.5},endControl:{along:.3,across:-.5}}]){
+    const taper={targetId:'b',width:20,startWidth:60,endWidth:10,...controls};
+    const taperedRibbon=bubbleConnectionRibbon(a,b,taper,curveMetrics);
+    assert.ok(Math.abs(endpointWidth(taperedRibbon,0)/endpointWidth(taperedRibbon,48)-6)<1e-6,'endpoint ratio survives bend safety limits');
+    const reverse=bubbleConnectionRibbon(a,b,{...taper,startWidth:10,endWidth:60},curveMetrics);
+    assert.ok(Math.abs(endpointWidth(reverse,48)/endpointWidth(reverse,0)-6)<1e-6,'taper reverses independently');
+    const taperedPair=[{...a,bubbleLinks:[taper]},b];
+    const g=connectedBubbleGeometry(taperedPair,curveMetrics);
+    assert.equal(g.polygons.length,1,'straight and curved tapers retain one joined contour');
+    assert.notEqual(g.fillPath,connectedBubbleGeometry([{...a,bubbleLinks:[{...taper,startWidth:10,endWidth:60}]},b],curveMetrics).fillPath);
+    const taperedPage={...page,placements:[{...layer,overlays:taperedPair}]};
+    const taperMarkup=await pageSvg({...project,pages:[taperedPage]},taperedPage,'',1);
+    assert.match(taperMarkup,/connected-bubble-outline/);
+  }
+  assert.equal(connectedBubbleGeometry([{...a,bubbleLinks:[{targetId:'b',width:20,startWidth:20,endWidth:20}]},b],curveMetrics).fillPath,connectedBubbleGeometry(linked,curveMetrics).fillPath,'equal explicit widths preserve legacy appearance');
   const curvedPage={...page,placements:[{...layer,overlays:curved}]};
   const curvedMarkup=await pageSvg({...project,pages:[curvedPage]},curvedPage,'',1);
   assert.match(curvedMarkup,/connected-bubble-outline/);
@@ -82,7 +102,7 @@ try {
   for(let i=0;i<150;i++){
     const body={...a,type:i%2?'thought':'speech',x:curveRandom()*60,y:curveRandom()*60,width:8+curveRandom()*30,height:8+curveRandom()*30,rotation:curveRandom()*360,tailEnabled:false};
     const other={...body,id:'b',x:curveRandom()*60,y:curveRandom()*60,rotation:curveRandom()*360};
-    const link={targetId:'b',width:2+curveRandom()*78,startAngle:curveRandom()*6.28,endAngle:curveRandom()*6.28,startControl:{along:.05+curveRandom()*.4,across:curveRandom()*1.5-.75},endControl:{along:.05+curveRandom()*.4,across:curveRandom()*1.5-.75}};
+    const link={targetId:'b',width:2+curveRandom()*78,startWidth:2+curveRandom()*78,endWidth:2+curveRandom()*78,startAngle:curveRandom()*6.28,endAngle:curveRandom()*6.28,startControl:{along:.05+curveRandom()*.4,across:curveRandom()*1.5-.75},endControl:{along:.05+curveRandom()*.4,across:curveRandom()*1.5-.75}};
     const geometry=connectedBubbleGeometry([{...body,bubbleLinks:[link]},other],{width:100+curveRandom()*700,height:100+curveRandom()*700});
     assert.ok(geometry.polygons.length&&!/NaN|Infinity/.test(geometry.fillPath),'seeded extreme attachments, overlaps and bends retain closed finite contours');
   }

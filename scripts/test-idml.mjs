@@ -67,7 +67,7 @@ try {
   assert.equal(joined[0].getAttribute('StrokeColor'),'Swatch/None','no internal strokes on fill');
   assert.equal(joined[0].querySelectorAll('GeometryPathType').length,1,'one joined contour');
   const curvedProject=structuredClone(project);
-  curvedProject.pages[1].background.overlays[0].bubbleLinks[0]={targetId:'linked-b',width:20,startAngle:0,endAngle:Math.PI,startControl:{along:.3,across:.5},endControl:{along:.3,across:-.5}};
+  curvedProject.pages[1].background.overlays[0].bubbleLinks[0]={targetId:'linked-b',width:20,startWidth:60,endWidth:10,startAngle:0,endAngle:Math.PI,startControl:{along:.3,across:.5},endControl:{along:.3,across:-.5}};
   const curvedResult=await exportAlbum(curvedProject,options,()=>{}),curvedOuter=archive(new Uint8Array(await curvedResult.blob.arrayBuffer()));
   const curvedInner=archive(curvedOuter.get('Test -album-.idml'));
   const curvedJoined=[...curvedInner].filter(([p])=>p.startsWith('Spreads/')).flatMap(([,data])=>[...parse(data).querySelectorAll('Polygon')]).find(e=>e.getAttribute('Name')==='Connected bubbles linked-a linked-b');
