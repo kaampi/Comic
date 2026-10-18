@@ -19,7 +19,8 @@ export function stepJelly(state: JellySpring, elapsed: number): JellySpring {
   }
   return next;
 }
-export function jellyTransform({ x, y }: JellySpring): string {
+export function jellyTransform(state: JellySpring): string {
+  const x = state.x * 0.8, y = state.y * 0.8;
   return `translate(${-x * 1.4}px, ${-y * 1.4}px) rotate(${x * 0.35}deg) skew(${x * 0.9}deg, ${y * 0.7}deg) scale(${1 + Math.abs(x) * 0.009 - Math.abs(y) * 0.005}, ${1 + Math.abs(y) * 0.009 - Math.abs(x) * 0.005})`;
 }
 export type PanelJelly = { nudge: (dx: number, dy: number) => void; settle: () => void; cancel: () => void };
