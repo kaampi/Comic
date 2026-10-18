@@ -73,3 +73,11 @@
   max-height: 100%;
   overflow: hidden;
 }
+
+
+.panel-move-hint { margin:.6rem 0; color:var(--text); opacity:.75; font-size:.8rem; }
+.layout-canvas.is-moving-panel, .layout-canvas.is-moving-panel * { cursor:grabbing !important; user-select:none; }
+.layout-canvas .drawn-panel.is-panel-moving { z-index:8; outline:3px solid #287957; outline-offset:3px; opacity:.85; user-select:none; }
+.layout-canvas .drawn-panel.is-panel-moving.is-move-invalid { outline-color:#c33131; }
+.layout-canvas .drawn-panel.is-panel-moving .panel-corner-handle { visibility:hidden; }
+.layout-canvas .drawn-panel { user-select:none; -webkit-user-select:none; }

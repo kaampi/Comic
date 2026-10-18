@@ -175,6 +175,14 @@ Läsordning lagras uttryckligen, separat från rutornas geometriska placering. H
 
 Albuminställningarna erbjuder fyra oberoende sidmarginaler och mellanrum mellan kolumner respektive rader, i millimeter. Dessa gäller alla albumets sidor och sparas i sidformatets `spacing`. Förhandsvisning, rutgeometri och export använder samma mått. Sidbakgrunden fyller hela sidan. Ändringar bevarar rut-ID:n, gridplaceringar, bildversioner och text; beskärning och radbrytning kan förändras när rutornas mått ändras. Om inställningarna saknas bevaras äldre layout. Om måtten inte lämnar plats för rutnätet ska ändringen avvisas.
 
+### 8.2 Flytta befintliga paneler inom sidan
+
+I normalt läge lossnar en panel efter 400 ms med vänster musknapp nedtryckt. Därefter kan hela panelen dras till en ny plats i sidans rutnät. Rörelse över 6 skärmpixlar före aktivering avbryter långtrycket. Vanliga klick markerar och dubbelklick öppnar redigeraren; hörnhandtag fortsätter ändra storlek direkt och formredigering använder sina befintliga handtag.
+
+Förhandsvisningen följer rutnätet med sidans marginaler och mellanrum. Bild, beskärning, texter, svansar, bubbelförbindelser, fri form, källkopplingar, stabila ID:n och läsordning bevaras. Kollisionskontrollen använder faktiska konvexa konturer och ramarnas bredd, inte bara panelernas omslutande rektanglar. Placering utanför rutnätet, över andra paneler eller över reserverad bakgrundstext markeras ogiltig.
+
+En giltig flytt sparas en gång vid släpp. Ogiltigt släpp, Escape, pointercancel, förlorad pointer capture, fönsterbyte, rullning, storleksändring eller byte av sida/album/läge avbryter utan att ändra projektet. Flytt mellan sidor ingår inte i detta steg.
+
 ## 9. Stilmotor och promptbyggare
 
 Stilbiblioteket ska stödja inbyggda och egna stilar med:

@@ -15,6 +15,7 @@
     "test:adaptation": "node scripts/test-adaptation.mjs",
     "test:image-prompts": "node scripts/test-image-prompts.mjs",
     "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs",
+    "test:panel-move": "node scripts/test-panel-move.mjs",
     "test:foreground": "node scripts/test-foreground.mjs",
     "test:export": "node scripts/test-export.mjs",
     "test:style-modes": "node scripts/test-style-modes.mjs",

@@ -50,7 +50,7 @@ A panel is a framed part of the comic page. Start with three simple rectangles a
 
 1. Drag across empty cells in the page grid, then release to create your first panel. Repeat for the other two panels.
 2. Right-click a panel and choose Upload image… to add a picture from your computer.
-3. Click a panel and drag a corner handle if you want to change its size. Double-click the panel to open its image and text editor.
+3. Click a panel and drag a corner handle if you want to change its size. In Normal mode, hold the mouse button on the panel for 0.4 seconds until it lifts, then drag and release to move it within the page. The picture, bubbles and free shape move together. A red outline means it cannot be placed there; releasing keeps the original position. Escape cancels. Double-click the panel to open its image and text editor.
 
 > Later, use Album settings to set page size, margins, gaps and the default panel border. These choices affect the space available for pictures and text.
 
@@ -182,7 +182,7 @@ An album holds your pages, images, text and visual style. Start with an empty pr
 
 ### Build your page
 
-Drag across empty grid cells to draw a panel. Click a panel to select it, drag its corner handles to resize it, or double-click it to open the editor.
+Drag across empty grid cells to draw a panel. Click a panel to select it, drag its corner handles to resize it, or hold it for 0.4 seconds and drag to move it. Double-click to open the editor.
 
 ### Position the picture
 
