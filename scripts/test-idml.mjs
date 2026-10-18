@@ -30,7 +30,7 @@ try {
   const {exportAlbum}=await import(pathToFileURL(path.join(dir,'albumExport.mjs')));
   const {DEFAULT_PAGE_FORMAT}=await import(pathToFileURL(path.join(dir,'pageFormat.mjs')));
   const overlay={id:'o&1',type:'speech',text:'ÅÄÖ <test> & friends\nSecond paragraph',x:8,y:12,width:72,height:30,rotation:12,fontSize:9,fontFamily:'Comic Neue, sans-serif',tailCurve:35,tailX:75,tailY:70,fillOpacity:.5};
-  const layer={id:'layer',x:0,y:0,width:2,height:2,readingOrder:1,shapePoints:[{x:0,y:0},{x:4,y:0},{x:3,y:4},{x:0,y:4}],overlays:[overlay,{...overlay,id:'thought',type:'thought',rotation:0},{...overlay,id:'sfx',type:'sfx',sfxShapeId:'question'}]};
+  const layer={id:'layer',x:0,y:0,width:2,height:2,readingOrder:1,shapePoints:[{x:0,y:0},{x:4,y:0},{x:3,y:4},{x:0,y:4}],overlays:[overlay,{...overlay,id:'thought',type:'thought',rotation:0},{...overlay,id:'sfx',type:'sfx',sfxShapeId:'question'},{...overlay,id:'caption-square',type:'caption',roundness:0},{...overlay,id:'caption-inward',type:'caption',roundness:-60}]};
   const spacing={topMm:12,rightMm:14,bottomMm:16,leftMm:18,columnGapMm:3,rowGapMm:4};
   const project={title:'Test <album>',pageFormat:{...DEFAULT_PAGE_FORMAT,spacing},pages:[{id:'second',number:2,gridColumns:3,gridRows:5,placements:[layer]},{id:'first',number:1,gridColumns:3,gridRows:5,background:{...layer,id:'bg',overlays:[]},placements:[layer]}]};
   const {linkBubbles}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
@@ -83,6 +83,13 @@ try {
   assert.equal(richRanges[1].getAttribute('FillColor'),'Color/CBff0000','selection color exports to IDML');
   assert.equal(richRanges[1].querySelector('AppliedFont').textContent,'Comic Relief');assert.equal(richRanges[1].getAttribute('FontStyle'),'Bold');
   assert.ok(Number(richRanges[1].getAttribute('PointSize'))>Number(richRanges[0].getAttribute('PointSize')));
+  const captionShapes=[...docs.values()].flatMap(d=>[...d.querySelectorAll('Polygon')]);
+  const squareCaption=captionShapes.find(e=>e.getAttribute('Name')==='caption caption-square');
+  const inwardCaption=captionShapes.find(e=>e.getAttribute('Name')==='caption caption-inward');
+  assert.ok(squareCaption&&inwardCaption);
+  assert.equal(squareCaption.querySelectorAll('PathPointType').length,4);
+  assert.ok([...squareCaption.querySelectorAll('PathPointType')].every(p=>p.getAttribute('Anchor')===p.getAttribute('LeftDirection')&&p.getAttribute('Anchor')===p.getAttribute('RightDirection')));
+  assert.ok([...inwardCaption.querySelectorAll('PathPointType')].some(p=>p.getAttribute('Anchor')!==p.getAttribute('RightDirection')),'inward caption curves remain vector curves in IDML');
   const allIds=new Set();for(const d of docs.values())for(const e of d.querySelectorAll('[Self]')){assert.ok(!allIds.has(e.getAttribute('Self')),'unique Self');allIds.add(e.getAttribute('Self'));}
   for(const d of docs.values()) {
     for(const e of d.querySelectorAll('[ItemLayer]'))assert.ok(allIds.has(e.getAttribute('ItemLayer')));

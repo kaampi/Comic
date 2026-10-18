@@ -36,6 +36,18 @@ export function bodyPath(o:TextOverlay,style:string){
  return d+" Z";
 }
 
+// Captions need an exact rectangle at zero. Negative values bow the four
+// sides inward while retaining the same bounds and four pointed corners.
+export function captionPath(o: TextOverlay) {
+ const round=Math.max(-100,Math.min(100,o.roundness??18));
+ if(round>0)return bodyPath({...o,roundness:round},"organic");
+ const left=o.width*.02,right=o.width*.98,top=o.height*.07,bottom=o.height*.93;
+ if(round===0)return `M ${left} ${top} L ${right} ${top} L ${right} ${bottom} L ${left} ${bottom} Z`;
+ const inset=Math.min(right-left,bottom-top)*(-round/100)*.24;
+ const cx=(left+right)/2,cy=(top+bottom)/2;
+ return `M ${left} ${top} Q ${cx} ${top+2*inset} ${right} ${top} Q ${right-2*inset} ${cy} ${right} ${bottom} Q ${cx} ${bottom-2*inset} ${left} ${bottom} Q ${left+2*inset} ${cy} ${left} ${top} Z`;
+}
+
 function speechAttachmentAngle(o:TextOverlay,style:string){
  const rx=o.width*(style==="wide"?.49:style==="tall"?.43:.48),ry=o.height*(style==="wide"?.37:style==="tall"?.48:.43);
  if(o.tailStartAngle===undefined)return Math.atan2(((o.tailY??o.y+o.height*1.12)-o.y-o.height/2)/ry,((o.tailX??o.x+o.width*.58)-o.x-o.width/2)/rx);
@@ -94,7 +106,7 @@ export function SvgOverlay({overlay,textMetrics,hideText=false,hideShape=false}:
  return <><g display={hideShape?"none":undefined} transform={`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>
   {overlay.type==="speech"?<path d={style==="shout"?shoutPath(overlay):speechPath(overlay,style)} {...common} strokeDasharray={style==="whisper"?"4 3":undefined}/>:null}
   {overlay.type==="thought"?<><g className="thought-trail">{thoughtTrailGeometry(overlay,cloud!.outline).map((circle,i)=><circle key={i} cx={circle.x} cy={circle.y} r={circle.r} {...common}/>)}</g><path className="thought-cloud" d={cloud!.path} {...common} strokeLinejoin="round" strokeLinecap="round"/></>:null}
-  {overlay.type==="caption"?<path d={bodyPath({...overlay,roundness:overlay.roundness??18},"organic")} {...common}/>:null}
+  {overlay.type==="caption"?<path d={captionPath(overlay)} {...common}/>:null}
   {overlay.type==="sfx"?<SfxArtwork shape={overlay.sfxShapeId??"none"} width={w} height={h} fill={overlay.fillColor} stroke={overlay.strokeColor} strokeWidth={overlay.strokeWidth} opacity={overlay.fillOpacity}/>:null}
  </g>
  <g transform={textMetrics&&pointLayout?`translate(${overlay.x} ${overlay.y}) scale(${100/textMetrics.width} ${100/textMetrics.height}) rotate(${overlay.rotation} ${pointLayout.width/2} ${pointLayout.height/2})`:`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>

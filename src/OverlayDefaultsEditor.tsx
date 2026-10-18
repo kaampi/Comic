@@ -50,13 +50,13 @@ export function OverlayDefaultsEditor({
                 {sv ? "Rundning" : "Roundness"}
                 <input
                   type="number"
-                  min="0"
+                  min={type === "caption" ? -100 : 0}
                   max="100"
                   value={value.roundness}
                   onChange={(e) =>
                     patch({
                       roundness: Math.max(
-                        0,
+                        type === "caption" ? -100 : 0,
                         Math.min(100, Number(e.target.value)),
                       ),
                     })
@@ -147,4 +147,5 @@ export function OverlayDefaultsEditor({
     </details>
   );
 }
+
 

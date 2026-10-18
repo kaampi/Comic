@@ -145,6 +145,10 @@ export function parseAlbumBackup(input: unknown): ComicProject {
           throw new Error("invalid-backup");
         for (const key of ["x", "y", "width", "height", "rotation"])
           number(overlay[key]);
+        if (overlay.roundness !== undefined) {
+          number(overlay.roundness);
+          if (overlay.roundness < (overlay.type === "caption" ? -100 : 0) || overlay.roundness > 100) throw new Error("invalid-backup");
+        }
         if (overlay.textStyles !== undefined) {
           list(overlay.textStyles);let end=0;
           for (const style of overlay.textStyles) {
@@ -221,10 +225,11 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   objects(p.bubbleSwatches);
   if (p.overlayDefaults !== undefined) {
     record(p.overlayDefaults);
-    for (const value of Object.values(p.overlayDefaults)) {
+    for (const [type,value] of Object.entries(p.overlayDefaults)) {
       record(value);
       for (const key of ["fontSize", "fontWeight", "roundness", "textPadding"])
         if (value[key] !== undefined) number(value[key]);
+      if (value.roundness !== undefined && (value.roundness < (type === "caption" ? -100 : 0) || value.roundness > 100)) throw new Error("invalid-backup");
       if (value.fontFamily !== undefined) string(value.fontFamily);
       if (
         value.textAlign !== undefined &&

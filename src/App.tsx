@@ -927,7 +927,7 @@ export function App() {
 <input type="checkbox" checked={!o.sfxTextHidden} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{sfxTextHidden:!e.target.checked})}/>{locale==="sv"?"Visa text":"Show text"}</label>
 <label>{locale==="sv"?"Rotation (grader)":"Rotation (degrees)"}<input type="number" min="-180" max="180" value={o.rotation} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{rotation:Math.max(-180,Math.min(180,Number(e.target.value)||0))})}/>
 </label>
-</>:null}<label>{tr("roundness")}<input className="numeric-field" type="number" min="0" max="100" value={o.roundness??(o.type==="caption"?18:60)} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{roundness:Math.max(0,Math.min(100,Number(e.target.value)||0))})}/>
+</>:null}<label>{tr("roundness")}<input className="numeric-field" type="number" min={o.type==="caption"?-100:0} max="100" value={o.roundness??(o.type==="caption"?18:60)} onChange={(e)=>updateOverlay(pg.id,pl.id,o.id,{roundness:Math.max(o.type==="caption"?-100:0,Math.min(100,Number(e.target.value)||0))})}/>
 </label>
 <>
 <div className="bubble-style-heading">

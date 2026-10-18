@@ -255,6 +255,10 @@ Pratbubblors böjda och avsmalnande förbindelser ansluter längs bubbelkonturen
 
 Dragning förhandsvisas lokalt och sparas först vid släpp; Escape, pointercancel och förlorat fönsterfokus avbryter. Handtagen kan även styras med piltangenter och Shift. Redigeringshandtag visas bara i panelredigeraren. Sidan och export använder samma sammanfogade kontur. Kurvdata följer IndexedDB/localStorage och albumbackup; ogiltiga vinklar och kontrollvärden avvisas vid backupimport.
 
+### 11.2 Berättarrutors rundning
+
+Berättarrutor har rundning från −100 till 100, både per ruta och i albumets standardvärden. Noll är en exakt rektangel med fyra raka sidor. Negativa värden behåller hörn och yttermått men böjer sidorna inåt för spetsigare hörn; positiva värden behåller den befintliga rundningen. Förhandsvisning, sidexport och IDML använder samma kontur. Värdena följer lokal sparning och albumbackup. Vid byte av texttyp används den nya typens albumstandardvärden, så berättarrutans negativa rundning inte följer med till pratbubblor.
+
 ## 12. Domänmodell
 
 Modellen delas upp för att hålla berättelse, layout och genereringshistorik åtskilda:

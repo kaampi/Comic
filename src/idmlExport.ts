@@ -10,7 +10,7 @@ import { panelBorderStyle, panelBorderWidth } from "./panelBorder";
 import { handDrawnBorderPath } from "./handDrawnBorder";
 import { imagePlacement, imageAffineTransform } from "./imageView";
 import { imageArchive, imageDensity } from "./exportFiles";
-import { bodyPath, speechPath, shoutPath } from "./SvgOverlay";
+import { captionPath, speechPath, shoutPath } from "./SvgOverlay";
 import { thoughtCloudGeometry, thoughtTrailGeometry } from "./thoughtBubble";
 import { sfxPrimitives } from "./sfxShapes";
 import { overlayFont } from "./overlayTypography";
@@ -40,7 +40,7 @@ function artwork(o:TextOverlay):{paths:GeometryPath[];fill:boolean}[] {
     return [...thoughtTrailGeometry(o,cloud.outline).map(c=>({paths:svgGeometry(`M ${c.x+c.r} ${c.y} A ${c.r} ${c.r} 0 1 1 ${c.x-c.r} ${c.y} A ${c.r} ${c.r} 0 1 1 ${c.x+c.r} ${c.y} Z`),fill:true})),{paths:svgGeometry(cloud.path),fill:true}];
   }
   if(o.type==="sfx")return sfxPrimitives(o.sfxShapeId??"none").map(p=>({paths:transformPaths(svgGeometry(p.d),q=>({x:q.x*o.width/100,y:q.y*o.height/60})),fill:p.fill}));
-  return [{paths:svgGeometry(o.type==="caption"?bodyPath({...o,roundness:o.roundness??18},"organic"):style==="shout"?shoutPath(o):speechPath(o,style)),fill:true}];
+  return [{paths:svgGeometry(o.type==="caption"?captionPath(o):style==="shout"?shoutPath(o):speechPath(o,style)),fill:true}];
 }
 type ArchiveFile={name:string;bytes:Uint8Array};
 export async function exportIdml(project:ComicProject,options:ExportOptions,onProgress:(done:number,total:number)=>void,signal?:AbortSignal) {

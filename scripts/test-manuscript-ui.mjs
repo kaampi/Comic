@@ -846,6 +846,12 @@ try {
   const oldOverlay = saved().pages[0].placements[0].overlays[0];
   const defaults = document.querySelector(".panel-editor-tools > details");
   await user.click(defaults.querySelector("summary"));
+  const captionDefaults=[...defaults.children].filter(el=>el.tagName==='DETAILS')[2];
+  await user.click(captionDefaults.querySelector('summary'));
+  const captionDefaultRoundness=within(captionDefaults).getByLabelText('Rundning');
+  assert.equal(captionDefaultRoundness.min,'-100');
+  fireEvent.change(captionDefaultRoundness,{target:{value:'-40'}});
+  assert.equal(saved().overlayDefaults.caption.roundness,-40);
   const speechDefaults = defaults.querySelector("details");
   await user.click(speechDefaults.querySelector("summary"));
   await user.click(within(speechDefaults).getByRole("combobox", {name:"Font",exact:true}));
@@ -1310,7 +1316,22 @@ try {
   assert.equal(saved().pages[0].background.overlays.find(o=>o.id===firstLinkBubble.id).text,firstLinkBubble.text,'connected text remains independent');
   await user.selectOptions(within(directEditor.querySelector('.selected-panel-tool')).getByLabelText('Typ'),'caption');
   assert.equal(directEditor.querySelector('.connected-bubble-outline'),null,'changing type disconnects incompatible bubbles');
+  const captionRoundness=within(directEditor.querySelector('.selected-panel-tool')).getByLabelText('Rundning');
+  assert.equal(captionRoundness.min,'-100');
+  assert.equal(saved().pages[0].background.overlays.at(-1).roundness,-40,'caption type uses the negative album default');
+  fireEvent.change(captionRoundness,{target:{value:'0'}});
+  assert.ok(!/ Q | C /.test(directEditor.querySelector('.editable-overlay.is-selected .overlay-drag-surface path').getAttribute('d')),'zero caption rounding draws straight edges');
+  fireEvent.change(captionRoundness,{target:{value:'-60'}});
+  assert.equal(saved().pages[0].background.overlays.at(-1).roundness,-60);
+  assert.ok(directEditor.querySelector('.editable-overlay.is-selected .overlay-drag-surface path').getAttribute('d').includes(' Q '));
+  const inwardBackup=JSON.parse(JSON.stringify(packAlbumBackup(saved())));
+  assert.equal(parseAlbumBackup(inwardBackup).pages[0].background.overlays.at(-1).roundness,-60);
+  assert.equal(parseAlbumBackup(inwardBackup).overlayDefaults.caption.roundness,-40);
+  const badCaption=structuredClone(inwardBackup);badCaption.project.pages[0].background.overlays.at(-1).roundness=-101;
+  assert.throws(()=>parseAlbumBackup(badCaption),/invalid-backup/);
+
   await user.selectOptions(within(directEditor.querySelector('.selected-panel-tool')).getByLabelText('Typ'),'speech');
+  assert.equal(saved().pages[0].background.overlays.at(-1).roundness,saved().overlayDefaults.speech.roundness,'switching to speech uses speech defaults instead of caption-only negative rounding');
   await user.selectOptions(screen.getByLabelText('Koppla till'),firstLinkBubble.id);
   await user.click(within(directEditor.querySelector('.panel-properties-heading')).getByRole('button',{name:'Ta bort',exact:true}));
   assert.equal(saved().pages[0].background.overlays.some(o=>o.id===secondLinkBubble.id),false);

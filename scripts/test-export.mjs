@@ -42,6 +42,22 @@ try {
   const {linkBubbles,unlinkBubble,bubbleGroups,connectedBubbleGeometry,bubbleTailIsConnection,bubbleConnectionControls,bubbleConnectionRibbon,moveConnectionHandle}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
   const a={...layer.overlays[0],id:'a',text:'First',x:10,y:10,width:30,height:20,tailEnabled:false,rotation:0};
   const b={...a,id:'b',text:'Second',x:60,y:10};
+  const {captionPath,bodyPath}=await import(pathToFileURL(path.join(dir,'SvgOverlay.mjs')));
+  const {svgGeometry}=await import(pathToFileURL(path.join(dir,'idmlGeometry.mjs')));
+  const caption={...a,type:'caption',roundness:0};
+  const square=svgGeometry(captionPath(caption))[0];
+  assert.equal(square.points.length,4,'zero-roundness captions have four exact corners');
+  assert.ok(square.points.every(p=>p.anchor.x===p.left.x&&p.anchor.y===p.left.y&&p.anchor.x===p.right.x&&p.anchor.y===p.right.y),'square edges have no curve handles');
+  for(const roundness of [-100,-50,-1]){
+    const d=captionPath({...caption,roundness}),inward=svgGeometry(d)[0];
+    assert.deepEqual(inward.points.map(p=>p.anchor),square.points.map(p=>p.anchor),'inward captions retain bounds and pointed corners');
+    assert.ok(inward.points[0].right.y>inward.points[0].anchor.y,'top side bows inward');
+    assert.ok(inward.points[1].right.x<inward.points[1].anchor.x,'right side bows inward');
+    const captionPage={...page,placements:[{...layer,overlays:[{...caption,roundness}]}]};
+    const captionMarkup=await pageSvg({...project,pages:[captionPage]},captionPage,'',1);
+    assert.ok(captionMarkup.includes(d),'export uses the same concave caption path');
+  }
+  for(const roundness of [1,18,50,100])assert.equal(captionPath({...caption,roundness}),bodyPath({...caption,roundness},'organic'),'existing positive caption rounding is unchanged');
   const original=[a,b],linked=linkBubbles(original,'a','b');
   assert.equal(original[0].bubbleLinks,undefined,'linking does not mutate source');
   assert.deepEqual(linked[0].bubbleLinks,[{targetId:'b',width:20}]);
