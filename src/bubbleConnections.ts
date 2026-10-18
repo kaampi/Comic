@@ -140,6 +140,66 @@ export function bubbleConnectionRibbon(a: TextOverlay, b: TextOverlay, link: Bub
   // Interior caps overlap the bodies, eliminating seams at the attachment.
   return [center(a), ...side(1), center(b), ...side(-1).reverse()];
 }
+// The central strip ends at the attachment cross-sections. Join those sides
+// to actual rim points with the rim tangent, rather than adding an exposed
+// straight triangle from each bubble's centre to the strip.
+function joinRibbonToBubbles(a: TextOverlay, b: TextOverlay, ribbon: Point[], metrics?: LayerTextMetrics): Point[] {
+  if (!ribbon.length) return ribbon;
+  const mx = (metrics?.width ?? 100) / 100, my = (metrics?.height ?? 100) / 100;
+  const physical = (p: Point) => ({ x: p.x * mx, y: p.y * my });
+  const logical = (p: Point) => ({ x: p.x / mx, y: p.y / my });
+  const count = (ribbon.length - 2) / 2;
+  const left = ribbon.slice(1,count+1).map(physical), right = ribbon.slice(count+2).reverse().map(physical);
+  const unit = (p: Point) => { const length = Math.max(1e-8,Math.hypot(p.x,p.y)); return { x:p.x/length,y:p.y/length }; };
+  const opening = (o: TextOverlay, l: Point, r: Point) => {
+    const outline = bodyOutline(o).map(physical), lengths = [0];
+    for (let i=0;i<outline.length;i++) lengths.push(lengths[i]+Math.hypot(outline[(i+1)%outline.length].x-outline[i].x,outline[(i+1)%outline.length].y-outline[i].y));
+    const perimeter = lengths[lengths.length-1], anchor = mix(l,r,.5);
+    let at = 0, nearest = Infinity;
+    for (let i=0;i<outline.length;i++) {
+      const edge = sub(outline[(i+1)%outline.length],outline[i]), offset = sub(anchor,outline[i]);
+      const square = edge.x**2+edge.y**2;
+      const t = square<1e-16?0:clamp((offset.x*edge.x+offset.y*edge.y)/square,0,1), p=mix(outline[i],outline[(i+1)%outline.length],t);
+      const distance = Math.hypot(p.x-anchor.x,p.y-anchor.y);
+      if(distance<nearest){nearest=distance;at=lengths[i]+t*Math.sqrt(square);}
+    }
+    const pointAt = (distance: number): Point => {
+      const s = ((distance%perimeter)+perimeter)%perimeter;
+      let i=0;while(i<outline.length-1&&lengths[i+1]<s)i++;
+      return mix(outline[i],outline[(i+1)%outline.length],(s-lengths[i])/Math.max(1e-8,lengths[i+1]-lengths[i]));
+    };
+    const half = Math.min(Math.hypot(l.x-r.x,l.y-r.y)/2,perimeter*.2);
+    const roots = [-1,1].map(direction=>{
+      const s=at+direction*half, point=pointAt(s), delta=Math.max(1e-5,Math.min(half*.02,perimeter/1000));
+      const tangent=unit(sub(pointAt(s+delta),pointAt(s-delta)));
+      return {point,toward:{x:-direction*tangent.x,y:-direction*tangent.y}};
+    });
+    const normal=sub(l,r);
+    if ((roots[0].point.x-roots[1].point.x)*normal.x+(roots[0].point.y-roots[1].point.y)*normal.y<0) roots.reverse();
+    return roots;
+  };
+  const start=opening(a,left[0],right[0]),end=opening(b,left[count-1],right[count-1]);
+  const joinSteps=8;
+  const cubic=(p0:Point,p1:Point,p2:Point,p3:Point,t:number)=>{
+    const u=1-t;return {x:u**3*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t**3*p3.x,y:u**3*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t**3*p3.y};
+  };
+  const join = (side: Point[], from: typeof start[number], to: typeof end[number]) => {
+    const result:Point[]=[],last=count-1;
+    const firstTangent=unit(sub(side[joinSteps+1],side[joinSteps-1])),lastTangent=unit(sub(side[last-joinSteps+1],side[last-joinSteps-1]));
+    const startCurveSpan=Math.hypot(side[joinSteps].x-from.point.x,side[joinSteps].y-from.point.y)*.35;
+    const endCurveSpan=Math.hypot(side[last-joinSteps].x-to.point.x,side[last-joinSteps].y-to.point.y)*.35;
+    // Keep the rim handles within the opening, while giving the curve-side
+    // handles enough length for a smooth transition into the main strip.
+    const startSpan=Math.min(startCurveSpan,Math.hypot(start[0].point.x-start[1].point.x,start[0].point.y-start[1].point.y)*.25);
+    const endSpan=Math.min(endCurveSpan,Math.hypot(end[0].point.x-end[1].point.x,end[0].point.y-end[1].point.y)*.25);
+    const steps=24;
+    for(let i=0;i<=steps;i++)result.push(cubic(from.point,{x:from.point.x+from.toward.x*startSpan,y:from.point.y+from.toward.y*startSpan},{x:side[joinSteps].x-firstTangent.x*startCurveSpan,y:side[joinSteps].y-firstTangent.y*startCurveSpan},side[joinSteps],i/steps));
+    result.push(...side.slice(joinSteps+1,last-joinSteps));
+    for(let i=0;i<=steps;i++)result.push(cubic(side[last-joinSteps],{x:side[last-joinSteps].x+lastTangent.x*endCurveSpan,y:side[last-joinSteps].y+lastTangent.y*endCurveSpan},{x:to.point.x+to.toward.x*endSpan,y:to.point.y+to.toward.y*endSpan},to.point,i/steps));
+    return result.map(logical);
+  };
+  return [center(a),...join(left,start[0],end[0]),center(b),...join(right,start[1],end[1]).reverse()];
+}
 const geometryCache = new Map<string, ReturnType<typeof computeConnectedBubbleGeometry>>();
 export function connectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTextMetrics) {
   // Paint and text cannot change the contour. Bound the cache so old geometry
@@ -166,13 +226,23 @@ function computeConnectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTex
     const b=group.find(b=>b.id===link.targetId);if(!b||b.id===o.id)continue;
     const startWidth = link.startWidth ?? link.width, endWidth = link.endWidth ?? link.width;
     if (link.startAngle !== undefined || link.endAngle !== undefined || link.startControl || link.endControl || startWidth !== endWidth) {
-      const ribbon = bubbleConnectionRibbon(o,b,link,metrics);
+      const rawRibbon = bubbleConnectionRibbon(o,b,link,metrics);
+      // Smooth speech rims use tangent joins; scalloped thought clouds retain
+      // their existing cloud attachment geometry.
+      const ribbon = o.type === "speech" ? joinRibbonToBubbles(o,b,rawRibbon,metrics) : rawRibbon;
       if (ribbon.length) {
         // Union caps separately: an attachment on a bubble's far side may
         // cross the ribbon, so one self-intersecting input polygon is unsafe.
         const count = (ribbon.length - 2) / 2;
         const left = ribbon.slice(1, count + 1), right = ribbon.slice(count + 2);
-        polygons.push([...left, ...right], [ribbon[0], left[0], right[right.length - 1]], [ribbon[count + 1], left[left.length - 1], right[0]]);
+        if(o.type === "speech") {
+          for(let i=0;i<count-1;i++){
+            // Convex pieces handle root curves crossing behind a rotated body.
+            const near=right[count-1-i],far=right[count-2-i];
+            polygons.push([left[i],left[i+1],far],[left[i],far,near]);
+          }
+        } else polygons.push([...left,...right]);
+        polygons.push([ribbon[0],left[0],right[count-1]],[ribbon[count+1],left[count-1],right[0]]);
       }
       continue;
     }
@@ -206,7 +276,7 @@ function computeConnectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTex
   }));
   const xy=(p:Point)=>`${p.x} ${p.y}`;
   const samePoint=(a:Point,b:Point)=>Math.hypot(a.x-b.x,a.y-b.y)<1e-5;
-  const unused=new Set(boundary.map((_,i)=>i)),outlines:Point[][]=[];
+  const unused=new Set(boundary.map((_,i)=>i)),outlines:Point[][]=[],slivers=new Set<number>();
   while(unused.size){
     const first=unused.values().next().value!,loop=[boundary[first][0]];
     let edge=first;
@@ -215,12 +285,17 @@ function computeConnectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTex
       if(samePoint(end,loop[0]))break;
       loop.push(end);
       const next=[...unused].find(i=>samePoint(boundary[i][0],end));
-      if(next===undefined)throw new Error("Disconnected bubble contour");
+      if(next===undefined){
+        // Overlapping triangulated joins can leave a tiny isolated line with
+        // zero fill area. It is not a contour and must not crash the editor.
+        if(loop.length===2&&Math.hypot(loop[0].x-end.x,loop[0].y-end.y)<.02){slivers.add(first);loop.length=0;break;}
+        throw new Error("Disconnected bubble contour");
+      }
       edge=next;
     }
-    outlines.push(loop);
+    if(loop.length>=3)outlines.push(loop);
   }
   const fillPath=outlines.map(p=>`M ${p.map(xy).join(' L ')} Z`).join(' ');
-  return {polygons:outlines,boundary,fillPath,strokePath:fillPath};
+  return {polygons:outlines,boundary:boundary.filter((_,i)=>!slivers.has(i)),fillPath,strokePath:fillPath};
 }
 

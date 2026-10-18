@@ -1255,13 +1255,17 @@ try {
   fireEvent.change(widthControl,{target:{value:'35'}});
   fireEvent.change(endWidthControl,{target:{value:'35'}});
   assert.equal(directEditor.querySelectorAll('.bubble-connection-handle').length,4);
+  assert.equal(Number(directEditor.querySelector('.connection-start').getAttribute('r')),.9);
+  assert.equal(Number(directEditor.querySelector('.connection-control1').getAttribute('r')),.75);
+  assert.equal(Number(directEditor.querySelector('.connection-start').parentNode.querySelector('.connection-hit-area').getAttribute('r')),1.8);
+
   const legacyLinkPath=directEditor.querySelector('.connected-bubble-outline').getAttribute('d');
   const connectionSvg=directEditor.querySelector('.panel-editor-stage > svg');
   const previousConnectionBox=connectionSvg.getBoundingClientRect;
   connectionSvg.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:1000,right:1000,bottom:1000});
   const startHandle=directEditor.querySelector('.connection-start');
   const beforeConnectionDrag=JSON.stringify(saved());
-  fireEvent.pointerDown(startHandle,{button:0,clientX:Number(startHandle.getAttribute('cx'))*10,clientY:Number(startHandle.getAttribute('cy'))*10});
+  fireEvent.pointerDown(startHandle.parentNode.querySelector('.connection-hit-area'),{button:0,clientX:Number(startHandle.getAttribute('cx'))*10,clientY:Number(startHandle.getAttribute('cy'))*10});
   fireEvent.pointerMove(window,{clientX:100,clientY:500});
   const originalAttachmentX=startHandle.getAttribute('cx');
   await waitFor(()=>assert.notEqual(startHandle.getAttribute('cx'),originalAttachmentX,'attachment previews before release'));

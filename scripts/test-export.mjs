@@ -97,9 +97,25 @@ try {
   const curvedMarkup=await pageSvg({...project,pages:[curvedPage]},curvedPage,'',1);
   assert.match(curvedMarkup,/connected-bubble-outline/);
   assert.ok(!curvedMarkup.includes('connection-handle'),'editing guides do not appear in exported pages');
+  // Reproduce a narrow-to-wide S join on elliptical bubbles. Only turns with
+  // visible-length neighbors count; tiny intersection slivers have no area.
+  for(const endWidth of [30,50]){
+    const rootA={...a,x:0,y:55,width:45,height:35,roundness:100};
+    const rootB={...rootA,id:'b',x:50,y:0};
+    const rootLink={targetId:'b',width:20,startWidth:10,endWidth,startAngle:-1.3,endAngle:1.3,startControl:{along:.3,across:-.45},endControl:{along:.3,across:.45}};
+    const contour=connectedBubbleGeometry([{...rootA,bubbleLinks:[rootLink]},rootB],{width:600,height:400});
+    assert.equal(contour.polygons.length,1);
+    const turns=contour.polygons[0].map((p,i,poly)=>{
+      const previous=poly[(i+poly.length-1)%poly.length],next=poly[(i+1)%poly.length];
+      const v={x:(p.x-previous.x)*6,y:(p.y-previous.y)*4},w={x:(next.x-p.x)*6,y:(next.y-p.y)*4};
+      const lv=Math.hypot(v.x,v.y),lw=Math.hypot(w.x,w.y);
+      return Math.min(lv,lw)<.25?0:Math.acos(Math.max(-1,Math.min(1,(v.x*w.x+v.y*w.y)/(lv*lw))));
+    });
+    assert.ok(Math.max(...turns)<1,'10–'+endWidth+' join has no exposed sharp cap corner: '+Math.max(...turns));
+  }
   let curveSeed=42;
   const curveRandom=()=>((curveSeed=(Math.imul(curveSeed,1664525)+1013904223)>>>0)/4294967296);
-  for(let i=0;i<150;i++){
+  for(let i=0;i<500;i++){
     const body={...a,type:i%2?'thought':'speech',x:curveRandom()*60,y:curveRandom()*60,width:8+curveRandom()*30,height:8+curveRandom()*30,rotation:curveRandom()*360,tailEnabled:false};
     const other={...body,id:'b',x:curveRandom()*60,y:curveRandom()*60,rotation:curveRandom()*360};
     const link={targetId:'b',width:2+curveRandom()*78,startWidth:2+curveRandom()*78,endWidth:2+curveRandom()*78,startAngle:curveRandom()*6.28,endAngle:curveRandom()*6.28,startControl:{along:.05+curveRandom()*.4,across:curveRandom()*1.5-.75},endControl:{along:.05+curveRandom()*.4,across:curveRandom()*1.5-.75}};

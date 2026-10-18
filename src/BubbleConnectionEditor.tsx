@@ -23,7 +23,7 @@ export function BubbleConnectionEditor({ overlays, selectedId, textMetrics, loca
   useEffect(() => () => stop.current?.(), [selectedId]);
   const preview = draft ? overlays.map(o => o.id !== draft.sourceId ? o : { ...o, bubbleLinks: o.bubbleLinks?.map(l => l.targetId === draft.link.targetId ? draft.link : l) }) : overlays;
   const links = preview.flatMap(source => (source.bubbleLinks ?? []).filter(link => source.id === selectedId || link.targetId === selectedId).map(link => ({ source, link, target: preview.find(o => o.id === link.targetId) })));
-  const begin = (event: ReactPointerEvent<SVGCircleElement>, source: TextOverlay, target: TextOverlay, link: BubbleLink, handle: ConnectionHandle) => {
+  const begin = (event: ReactPointerEvent<SVGElement>, source: TextOverlay, target: TextOverlay, link: BubbleLink, handle: ConnectionHandle) => {
     if (event.button !== 0) return;
     event.preventDefault(); event.stopPropagation(); stop.current?.();
     const svg = event.currentTarget.ownerSVGElement, box = svg?.getBoundingClientRect();
@@ -62,13 +62,13 @@ export function BubbleConnectionEditor({ overlays, selectedId, textMetrics, loca
         const handles: [ConnectionHandle, { x: number; y: number }][] = [['start', g.start], ['end', g.end], ['control1', g.control1], ['control2', g.control2]];
         return <g key={source.id + ':' + target.id} data-connection-source={source.id} data-connection-target={target.id}>
           <path d={`M ${g.start.x} ${g.start.y} L ${g.control1.x} ${g.control1.y} M ${g.end.x} ${g.end.y} L ${g.control2.x} ${g.control2.y}`} fill="none" stroke="#2473a6" strokeWidth="1" vectorEffect="non-scaling-stroke" strokeDasharray="3 3" style={{ pointerEvents: 'none' }}/>
-          {handles.map(([handle, point]) => <circle key={handle} className={`bubble-connection-handle connection-${handle}`} cx={point.x} cy={point.y} r={handle.startsWith('control') ? 1.5 : 1.8} fill={handle.startsWith('control') ? '#2473a6' : '#fffdf7'} stroke="#2473a6" strokeWidth="1.5" vectorEffect="non-scaling-stroke" style={{ cursor: 'grab', pointerEvents: 'all' }} role="button" tabIndex={0} aria-label={`${text.connection} ${index + 1}: ${text[handle]}`} onPointerDown={event => begin(event, source, target, link, handle)} onKeyDown={event => {
+          {handles.map(([handle, point]) => <g key={handle} onPointerDown={event => begin(event, source, target, link, handle)} style={{cursor:'grab'}}><circle className="connection-hit-area" cx={point.x} cy={point.y} r={handle.startsWith('control') ? 1.5 : 1.8} fill="transparent" stroke="none" aria-hidden="true" style={{pointerEvents:'all'}}/><circle className={`bubble-connection-handle connection-${handle}`} cx={point.x} cy={point.y} r={handle.startsWith('control') ? .75 : .9} fill={handle.startsWith('control') ? '#2473a6' : '#fffdf7'} stroke="#2473a6" strokeWidth=".75" vectorEffect="non-scaling-stroke" style={{ cursor: 'grab', pointerEvents: 'all' }} role="button" tabIndex={0} aria-label={`${text.connection} ${index + 1}: ${text[handle]}`} onKeyDown={event => {
             const dx = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0, dy = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
             if (!dx && !dy) return;
             event.preventDefault(); event.stopPropagation();
             const step = event.shiftKey ? 5 : 1;
             callback.current(source.id, moveConnectionHandle(source, target, link, handle, { x: point.x + dx * step, y: point.y + dy * step }, textMetrics));
-          }}><title>{text[handle]}</title></circle>)}
+          }}><title>{text[handle]}</title></circle></g>)}
         </g>;
       })}
     </g>
