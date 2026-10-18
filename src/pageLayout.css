@@ -81,3 +81,9 @@
 .layout-canvas .drawn-panel.is-panel-moving.is-move-invalid { outline-color:#c33131; }
 .layout-canvas .drawn-panel.is-panel-moving .panel-corner-handle { visibility:hidden; }
 .layout-canvas .drawn-panel { user-select:none; -webkit-user-select:none; }
+
+/* Deformation is separate from the snapped translate, so the drop target stays exact. */
+.layout-canvas .drawn-panel[data-panel-jelly] { filter:drop-shadow(0 4px 5px rgb(0 0 0 / .14)); }
+@media (prefers-reduced-motion: reduce) {
+  .layout-canvas .drawn-panel[data-panel-jelly] { filter:none; }
+}

@@ -49,6 +49,45 @@ try {
   const {relocatePanel,panelMoveAllowed} = await import(pathToFileURL(join(temporary,'panelMove.mjs')));
   const {pageGridMetrics,albumPageFormat,layerRect} = await import(pathToFileURL(join(temporary,'pageFormat.mjs')));
   const {panelsOverlap} = await import(pathToFileURL(join(temporary,'panelGeometry.mjs')));
+  const {nudgeJelly,stepJelly,createPanelJelly}=await import(pathToFileURL(join(temporary,'panelJelly.mjs')));
+  let spring=nudgeJelly({x:0,y:0,vx:0,vy:0},50,-30);
+  spring=stepJelly(spring,1/60);
+  assert.ok(spring.x>0&&spring.y<0,'jelly follows motion direction');
+  let crossed=false;
+  for(let i=0;i<180;i++){spring=stepJelly(spring,1/60);if(spring.x<0)crossed=true;}
+  assert.ok(crossed,'spring overshoots softly rather than stopping abruptly');
+  assert.ok(Math.max(...Object.values(spring).map(Math.abs))<0.001,'spring converges to rest');
+  let frameId=0,now=0;
+  const frames=new Map(),mediaListeners=new Set();
+  const media={matches:false,addEventListener:(_,fn)=>mediaListeners.add(fn),removeEventListener:(_,fn)=>mediaListeners.delete(fn)};
+  window.matchMedia=()=>media;
+  window.requestAnimationFrame=fn=>{frames.set(++frameId,fn);return frameId;};
+  window.cancelAnimationFrame=id=>frames.delete(id);
+  const frame=()=>{now+=1000/60;const queue=[...frames.values()];frames.clear();queue.forEach(fn=>fn(now));};
+  const target=document.createElement('div'),textLayer=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  target.style.transform='rotate(1deg)';target.style.translate='100px 50px';
+  document.body.append(target,textLayer);
+  const jelly=createPanelJelly(target,textLayer);
+  jelly.nudge(40,20);frame();
+  assert.notEqual(target.style.transform,'rotate(1deg)');
+  assert.equal(target.style.transform,textLayer.style.transform,'separate text layer follows the same wobble');
+  assert.equal(target.style.translate,'100px 50px','deformation never changes snapped translation');
+  jelly.settle();for(let i=0;i<180&&frames.size;i++)frame();
+  assert.equal(frames.size,0,'no perpetual animation loop');
+  assert.equal(mediaListeners.size,0,'media listener released after settling');
+  assert.equal(target.style.transform,'rotate(1deg)','restore exact original transform');
+  assert.equal(textLayer.style.transform,'');
+  assert.equal(target.style.willChange,'');
+  media.matches=true;
+  const reduced=createPanelJelly(target,textLayer);reduced.nudge(60,60);reduced.settle();
+  assert.equal(frames.size,0,'reduced motion disables wobble');
+  assert.equal(target.style.transform,'rotate(1deg)');
+  media.matches=false;
+  const interrupted=createPanelJelly(target,textLayer);interrupted.nudge(60,60);frame();
+  media.matches=true;[...mediaListeners].forEach(fn=>fn());
+  assert.equal(frames.size,0,'changing motion preference cancels current motion');
+  assert.equal(target.style.transform,'rotate(1deg)');
+  media.matches=false;target.remove();textLayer.remove();
   const project = createProject('Panel move test','blank');
   project.typographyVersion=2;
   project.pageFormat={preset:'a4',orientation:'portrait',widthMm:210,heightMm:297,spacing:{topMm:12,rightMm:10,bottomMm:8,leftMm:15,columnGapMm:3,rowGapMm:4}};
@@ -109,16 +148,21 @@ try {
 
   down(); await pause(440);
   assert.ok(panel().classList.contains('is-panel-moving'),'400ms hold lifts panel');
+  assert.ok(panel().hasAttribute('data-panel-jelly'));frame();
   move(1,1,{pointerId:8});
-  assert.equal(panel().style.transform,'translate(0px, 0px)','ignore another pointer');
-  move(1,1);
-  assert.equal(panel().style.transform,`translate(${stepX}px, ${stepY}px)`,'snap with actual margins, gaps and display scale');
+  assert.equal(panel().style.translate,'0px 0px','ignore another pointer');
+  move(1,1);frame();
+  assert.equal(panel().style.transform,document.querySelector('.page-foreground-texts [data-text-layer="moving"]').style.transform);
+  assert.equal(panel().style.translate,`${stepX}px ${stepY}px`,'snap with actual margins, gaps and display scale');
   assert.equal(saves,0,'preview never writes the album');
   const previewText=document.querySelector('.page-foreground-texts [data-text-layer="moving"]');
   assert.equal(Number(previewText.getAttribute('x')),layerRect(project.pages[0],{...original,x:1,y:1},albumPageFormat(project)).x+3,'panel text above foregrounds follows the preview');
   assert.deepEqual(current().pages[0].placements,baseline);
   up(1,1);
   assert.equal(saves,1,'commit once on release');
+  for(let i=0;i<180&&frames.size;i++)frame();
+  assert.equal(panel().style.transform,'','landing restores exact panel geometry');
+  assert.equal(frames.size,0);
   assert.deepEqual(current().pages[0].placements[0],{...baseline[0],x:1,y:1},'all picture, text, link, shape and source metadata preserved');
   assert.deepEqual(current().pages[0].placements[1],baseline[1]);
   fireEvent.click(panel());fireEvent.doubleClick(panel());
@@ -136,6 +180,8 @@ try {
   for(const cancel of [()=>fireEvent.keyDown(window,{key:'Escape'}),()=>fireEvent.pointerCancel(window,{pointerId:7}),()=>fireEvent.blur(window),()=>fireEvent.scroll(window),()=>fireEvent.resize(window)]) {
     down();await pause(440);move(0,1);cancel();
     assert.equal(document.querySelector('.is-panel-moving'),null);
+    assert.equal(document.querySelector('[data-panel-jelly]'),null);
+    assert.equal(frames.size,0);
     up(0,1);assert.equal(JSON.stringify(current()),checkpoint,'cancel leaves album untouched');
   }
   down();await pause(440);move(0,1);
@@ -156,9 +202,11 @@ try {
   cleanup();up(0,1);
   assert.equal(JSON.stringify(current()),checkpoint,'unmount during drag does not save');
   assert.equal(saves,1);
+  assert.equal(frames.size,0,'unmount cancels remaining animation frames');
   assert.equal(networkRequests,0);
   window.Storage.prototype.setItem=originalSet;
   cleanup();
+  console.log('PASS: spring direction, damping, text sync, reduced motion and complete animation cleanup');
   console.log('PASS: hold threshold, click/double click, early motion, shaped contours, scaled grid snapping, preview without saves, single commit with content intact, invalid drops and cancellation');
 } finally {
   rmSync(temporary,{recursive:true,force:true});dom.window.close();

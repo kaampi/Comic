@@ -181,6 +181,8 @@ I normalt läge lossnar en panel efter 400 ms med vänster musknapp nedtryckt. D
 
 Förhandsvisningen följer rutnätet med sidans marginaler och mellanrum. Bild, beskärning, texter, svansar, bubbelförbindelser, fri form, källkopplingar, stabila ID:n och läsordning bevaras. Kollisionskontrollen använder faktiska konvexa konturer och ramarnas bredd, inte bara panelernas omslutande rektanglar. Placering utanför rutnätet, över andra paneler eller över reserverad bakgrundstext markeras ogiltig.
 
+Dragningen har en subtil visuell geléeffekt med dämpad fjädring, eftersläpning och ett kort landningsgung. Effekten omfattar bild, ram och paneltext även när texten ligger ovanpå förgrundsbilder. Den ändrar inga projektdata eller kollisionskonturer, återställer alla visuella transformeringar och stängs av vid minskad rörelse i systeminställningarna.
+
 En giltig flytt sparas en gång vid släpp. Ogiltigt släpp, Escape, pointercancel, förlorad pointer capture, fönsterbyte, rullning, storleksändring eller byte av sida/album/läge avbryter utan att ändra projektet. Flytt mellan sidor ingår inte i detta steg.
 
 ## 9. Stilmotor och promptbyggare
