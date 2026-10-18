@@ -9,7 +9,7 @@ import ts from "typescript";
 // Compile only the local domain modules; no app, browser or manuscript fixture is needed.
 const temporary = mkdtempSync(join(tmpdir(), "comicbook-adaptation-"));
 globalThis.crypto ??= { randomUUID };
-const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "localAi", "project", "projectSaveStatus", "stylesLibrary", "styleColorMode", "painterlyStyles", "manuscriptModel", "adaptation/prompts", "pageLayout", "overlayTypography", "pageFormat", "pageTypography"];
+const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "visualSceneAi", "localAi", "project", "projectSaveStatus", "stylesLibrary", "styleColorMode", "painterlyStyles", "manuscriptModel", "adaptation/prompts", "pageLayout", "overlayTypography", "pageFormat", "pageTypography", "pageBackground", "panelGeometry", "panelBorder", "panelShape"];
 for (const file of files) {
   const source = readFileSync(new URL("../src/" + file + ".ts", import.meta.url), "utf8");
   const result = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });
@@ -237,7 +237,7 @@ try {
 
   const excerpt = 'Holmes opened the gate. "Wait here," he said.';
   const beatReply = JSON.stringify({ beats: [{
-    from: 1, to: 2, title: "At the gate", summary: "Holmes opens the gate.", beatType: "action"
+    from: 1, to: 2, title: "At the gate", summary: "Holmes opens the gate.", visualDescription: "At the gate, Holmes holds the open gate and raises a hand toward his companion.", beatType: "action"
   }] });
   const beatContext = { characters: [{ id: "holmes", name: "Holmes" }], locations: [{ id: "gate", name: "Gate" }] };
   const proposals = ai.parseAiBeats(beatReply, excerpt, beatContext, 50);
@@ -311,6 +311,14 @@ try {
   assert.equal(splitDialogue[0].dialogueCandidates[0].text, "Wait here.");
   assert.equal(splitDialogue[1].dialogueCandidates[0].text, "Keep the gate open.");
   assert.ok(splitDialogue.every(beat => beat.dialogueCandidates.every(line => beat.sourceTextExcerpt.includes(line.text))));
+  assert.notEqual(proposals[0].visualCandidates[0].description, proposals[0].summary);
+  assert.equal(panelize(proposals)[0].visualDescription, proposals[0].visualCandidates[0].description);
+  const pronounSource = "Holmes stops. He raises his hand.";
+  const pronoun = { beats: [{from:2,to:2,title:"Stop",summary:"A warning gesture.",visualDescription:"Holmes faces his companion with one palm held up.",beatType:"action",characterIds:["holmes"],locationId:null}] };
+  assert.deepEqual(ai.parseAiBeats(JSON.stringify(pronoun),pronounSource,beatContext,0,true)[0].characterIds,["holmes"]);
+  assert.throws(()=>ai.parseAiBeats(JSON.stringify({...pronoun,beats:[{...pronoun.beats[0],characterIds:["invented"]}]}),pronounSource,beatContext,0,true));
+  assert.throws(()=>ai.parseAiBeats(JSON.stringify({...pronoun,beats:[{...pronoun.beats[0],locationId:"invented"}]}),pronounSource,beatContext,0,true));
+  assert.throws(()=>ai.parseAiBeats(JSON.stringify({...pronoun,beats:[{...pronoun.beats[0],visualDescription:undefined}]}),pronounSource,beatContext,0,true));
   console.log("PASS: numbered references restore exact original text and dialogue, handle repetition/overlap/whitespace, reject invalid IDs/order, and send compact prompts");
   {
   const { renderOptionsForStyle, resolveColorMode } = await import(pathToFileURL(join(temporary, "styleColorMode.mjs")));
@@ -346,11 +354,12 @@ try {
   const changedStyle = { ...saved, style: oil, renderOptions: renderOptionsForStyle(oil, saved.renderOptions) };
   assert.equal(changedStyle.renderOptions.colorMode, 'color');
   assert.equal(JSON.stringify(saved.style), originalSnapshot);
-  assert.match(buildImagePrompt(createProject('Silk', 'manual', silk), samplePanel), /DECORATIVE|decorative calligraphic/);
-  assert.doesNotMatch(generateImagePrompts(createProject('Silk', 'manual', silk), [samplePanel])[0].negativePrompt, /signature|lettering/);
+  assert.match(buildImagePrompt(createProject('Silk', 'manual', silk), samplePanel), /No photographic underpainting, hatching, decorative writing, calligraphy, seals or stamps/);
+  assert.match(generateImagePrompts(createProject('Silk', 'manual', silk), [samplePanel])[0].negativePrompt, /lettering/);
   console.log('PASS: style mode restrictions, legacy line mode, gray prompt variants in every length, negative prompts, save/load and snapshot preservation');
   }
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }
+
 

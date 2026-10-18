@@ -608,6 +608,7 @@ export function ManuscriptWorkspace({
                     )
                   }
                 />
+                <label>{locale === "sv" ? "Föreslagen bildscen" : "Suggested visual scene"}<textarea rows={3} value={b.visualCandidates[0]?.description ?? ""} onChange={e => setDraft(d => d ? { ...d, beats: d.beats.map(x => x.id === b.id ? { ...x, visualCandidates: x.visualCandidates.map((v, i) => i === 0 ? { ...v, description: e.target.value } : v) } : x) } : d)} /></label>
                 <blockquote>{b.sourceTextExcerpt}</blockquote>
               </article>
             ))}
@@ -1181,11 +1182,12 @@ export function ManuscriptWorkspace({
           </div>
         </>
       ) : null}
-      {promptPanel ? <ImagePromptEditor key={project.id + promptPanel.id} project={project} panel={promptPanel} locale={locale} onClose={() => setPromptPanelId(null)} onSave={patch => {
+      {promptPanel ? <ImagePromptEditor key={project.id + promptPanel.id} project={project} panel={promptPanel} locale={locale} settings={settings} onClose={() => setPromptPanelId(null)} onSave={patch => {
         onUpdate(p => generateBeatPanelPrompt(patchBeatPanel(p, promptPanel.id, patch), promptPanel.id));
         setPromptPanelId(null);
       }} /> : null}
     </section>
   );
 }
+
 

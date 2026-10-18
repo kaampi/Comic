@@ -1,3 +1,5 @@
+import { readLocalAiSettings, type LocalAiSettings } from "./localAi";
+import { suggestVisualScene } from "./visualSceneAi";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ComicProject } from "./project";
@@ -6,13 +8,39 @@ import type { Locale } from "./settings";
 import { buildImagePrompt, CAMERA_ANGLES, DEPTHS, EFFECTS, LENSES } from "./adaptation/prompts";
 import "./imagePromptEditor.css";
 
-export function ImagePromptEditor({ project, panel, locale, onClose, onSave }: {
-  project: ComicProject; panel: PanelPlan; locale: Locale; onClose: () => void;
+export function ImagePromptEditor({ project, panel, locale, settings, onClose, onSave }: {
+  project: ComicProject; panel: PanelPlan; locale: Locale; settings?: LocalAiSettings; onClose: () => void;
   onSave: (patch: Pick<PanelPlan, "visualDescription" | "shotType" | "promptDirection">) => void;
 }) {
   const sv = locale === "sv", tr = (swedish: string, english: string) => sv ? swedish : english;
   const [draft, setDraft] = useState<PanelPlan>(() => ({ ...panel, promptDirection: { ...panel.promptDirection, characterActions: { ...panel.promptDirection?.characterActions }, effects: [...(panel.promptDirection?.effects ?? [])] } }));
   const [notice, setNotice] = useState("");
+  const [sceneBusy, setSceneBusy] = useState(false);
+  const [sceneSuggestion, setSceneSuggestion] = useState<string | null>(null);
+  const [sceneError, setSceneError] = useState("");
+  const sceneRequest = useRef<AbortController | null>(null);
+  const sceneTimer = useRef<number | null>(null);
+  useEffect(() => () => { sceneRequest.current?.abort(); sceneRequest.current = null; if (sceneTimer.current !== null) window.clearTimeout(sceneTimer.current); }, []);
+  const aiSettings = settings ?? readLocalAiSettings();
+  const hasModel = Boolean(aiSettings.servers[aiSettings.engine].model.trim());
+  const rewriteScene = async () => {
+    if (!hasModel) return;
+    sceneRequest.current?.abort();
+    const controller = new AbortController(); sceneRequest.current = controller;
+    setSceneBusy(true); setSceneError(""); setSceneSuggestion(null); setNotice("");
+    const timer = window.setTimeout(() => controller.abort(), 180000); sceneTimer.current = timer;
+    try {
+      const suggestion = await suggestVisualScene({ project, panel: draft, settings: aiSettings, signal: controller.signal });
+      if (sceneRequest.current === controller && !controller.signal.aborted) setSceneSuggestion(suggestion);
+    } catch (error) {
+      if (sceneRequest.current === controller) setSceneError(controller.signal.aborted
+        ? tr("Omskrivningen avbröts. Din beskrivning behölls.", "Rewrite cancelled. Your description was kept.")
+        : tr("Kunde inte skriva om scenen. ", "Could not rewrite the scene. ") + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      window.clearTimeout(timer); if (sceneTimer.current === timer) sceneTimer.current = null;
+      if (sceneRequest.current === controller) { sceneRequest.current = null; setSceneBusy(false); }
+    }
+  };
   const modal = useRef<HTMLDivElement>(null);
   const close = useRef(onClose); close.current = onClose;
   const d = draft.promptDirection!;
@@ -63,6 +91,10 @@ export function ImagePromptEditor({ project, panel, locale, onClose, onSave }: {
       <div className="image-prompt-style"><strong>{tr("Albumstil", "Album style")} · {project.style.name}</strong><span className="quiet">{tr("Ärvs från albuminställningarna", "Inherited from album settings")}</span></div>
       <h3>{tr("Motiv & handling", "Subject & action")}</h3>
       <label>{tr("Handling & placering", "Action & staging")}<textarea rows={3} value={draft.visualDescription} onChange={e => setDraft(p => ({ ...p, visualDescription: e.target.value }))} /></label>
+      <div className="image-prompt-ai-actions"><button type="button" className="secondary-button" disabled={!hasModel || sceneBusy} onClick={() => void rewriteScene()}>{sceneBusy?tr("Skriver bildscen…", "Writing visual scene…"):tr("Skriv om till bildscen med lokal AI", "Rewrite as visual scene with local AI")}</button>{sceneBusy?<button type="button" className="text-button" onClick={() => sceneRequest.current?.abort()}>{tr("Avbryt AI", "Cancel AI")}</button>:null}</div>
+      <p className="quiet">{hasModel?tr("Skickar rutans källavsnitt och regi till din valda lokala modell. Du granskar förslaget före användning.", "Sends this panel's source passage and direction to your selected local model. Review the suggestion before applying it."):tr("Välj en lokal textmodell i Inställningar för att få en AI-omskriven bildscen.", "Choose a local text model in Settings to get an AI-written visual scene.")}</p>
+      {sceneError?<p role="alert">{sceneError}</p>:null}
+      {sceneSuggestion?<section className="image-prompt-ai-suggestion" aria-label={tr("Föreslagen bildscen", "Suggested visual scene")}><h4>{tr("Föreslagen bildscen", "Suggested visual scene")}</h4><p>{sceneSuggestion}</p><button type="button" className="secondary-button" onClick={() => { setDraft(p => ({ ...p, visualDescription: sceneSuggestion })); setSceneSuggestion(null); setNotice(tr("Förslaget används i utkastet. Granska och spara bildprompten när du är nöjd.", "Suggestion applied to the draft. Review it and save the image prompt when ready.")); }}>{tr("Använd bildscenen", "Use visual scene")}</button><button type="button" className="text-button" onClick={() => setSceneSuggestion(null)}>{tr("Förkasta förslag", "Discard suggestion")}</button></section>:null}
       {project.characters.filter(c => draft.characterIds.includes(c.id)).map(c => <div className="image-prompt-character" key={c.id}><strong>{c.name}</strong><p className="quiet">{c.visualIdentity || c.description}</p><label>{tr("Handling, pose & uttryck", "Action, pose & expression")}<textarea rows={2} value={d.characterActions?.[c.id] ?? ""} onChange={e => patch({ characterActions: { ...d.characterActions, [c.id]: e.target.value } })} /></label></div>)}
       <label>{tr("Miljö", "Environment")}<textarea rows={2} value={d.setting ?? ""} placeholder={project.locations.find(l => l.id === panel.locationId)?.visualIdentity || project.locations.find(l => l.id === panel.locationId)?.description || tr("Valfritt — använd rutans miljö", "Optional — use the panel location")} onChange={e => patch({ setting: e.target.value })} /></label>
       <label>{tr("Ljussättning & tid", "Lighting & time")}<input value={d.lighting ?? ""} placeholder={tr("Exempel: skymning, varmt ljus från lyktan", "Example: dusk, warm lantern light")} onChange={e => patch({ lighting: e.target.value })} /></label>
@@ -74,3 +106,4 @@ export function ImagePromptEditor({ project, panel, locale, onClose, onSave }: {
     <footer className="image-prompt-footer"><button type="button" className="text-button" onClick={suggest}>{tr("Nytt förslag från beat", "New suggestion from beat")}</button><div><button type="button" className="text-button" onClick={onClose}>{tr("Avbryt", "Cancel")}</button><button type="button" className="primary-button" onClick={() => onSave({ visualDescription: draft.visualDescription, shotType: draft.shotType, promptDirection: draft.promptDirection })}>{tr("Spara bildprompt", "Save image prompt")}</button></div></footer>
   </div></div>, document.body);
 }
+

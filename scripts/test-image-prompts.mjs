@@ -22,7 +22,7 @@ function compile(dir = "") {
 compile();
 const local = path => import(pathToFileURL(join(compiled, path + ".mjs")));
 const React = await import("react");
-const { render, screen, fireEvent, cleanup, within } = await import("@testing-library/react");
+const { render, screen, fireEvent, cleanup, within, waitFor, act } = await import("@testing-library/react");
 const { default: userEvent } = await import("@testing-library/user-event");
 const { createProject, normalizeStoredProjects } = await local("project");
 const { addManualBeat, activeManuscriptAdaptation, patchBeatPanel, generateBeatPanelPrompt } = await local("manuscriptModel");
@@ -40,7 +40,8 @@ try {
   project = patchBeatPanel(project, plan.id, { characterIds: ["knut", "robot"], image: { name: "current.png", dataUrl: "data:image/png;base64,current" }, imageVersions: [{ name: "old.png", dataUrl: "data:image/png;base64,old" }] });
   project = generateBeatPanelPrompt(project, plan.id);
   const original = structuredClone(project);
-  const settings = { baseUrl: "http://localhost:11434", provider: "ollama", model: "", enabled: false };
+  const {defaultLocalAiSettings} = await local("localAi");
+  const settings = defaultLocalAiSettings();
   function Harness() { const [p, set] = React.useState(project); return React.createElement(ManuscriptWorkspace, { project: p, locale: "sv", settings, onSettings() {}, onUpdate(fn) { set(old => { const next = fn(old); project = next; return next; }); } }); }
   const user = userEvent.setup();
   const editor = () => within(screen.getByRole("dialog"));
@@ -151,4 +152,69 @@ try {
   fireEvent.change(screen.getByLabelText(/Skärpedjup/), { target: { value: "" } });
   assert.match(optics.querySelector("summary").textContent, /Anpassat/);
   console.log("PASS: 38 distinct profiles in eight groups, removed motif/era instructions, removable visible optical/FX defaults, origin badges, snapshot/backup preservation and imaginary photographic subjects");
+  cleanup();
+  const {suggestVisualScene,parseVisualScene,copiesSourcePassage}=await local('visualSceneAi');
+  const narrative='Knut had been walking for hours when he suddenly understood that the great metal figure was watching his every movement.';
+  assert.equal(copiesSourcePassage(narrative,narrative),true);
+  assert.throws(()=>parseVisualScene(JSON.stringify({visualDescription:'Depict this: '+narrative}),[narrative]));
+  assert.throws(()=>parseVisualScene('not JSON',[]));
+  assert.throws(()=>parseVisualScene('{"visualDescription":42}',[]));
+  const scene='Knut stands in the foreground, leaning back with his gaze fixed on the robot. Behind him, the robot’s blue eye is open and directed toward him.';
+  assert.equal(parseVisualScene(JSON.stringify({visualDescription:scene}),[narrative]),scene);
+  const aiProject=structuredClone(project);
+  aiProject.source.textSnapshot+='\nUNSELECTED_PASSAGE_MUST_NOT_BE_SENT';
+  const aiPlan={...activeManuscriptAdaptation(aiProject).panelPlans[0],shotType:'close-up',promptDirection:{cameraAngle:'low-angle',lockShot:true,lockAngle:true,effects:[],characterActions:{knut:'Leans back'},continuity:'Keep his glasses'}};
+  const aiSettings=defaultLocalAiSettings();aiSettings.servers.ollama.model='fixture-model';
+  let savedPatch=null,calls=0;
+  const beforeAi=structuredClone(aiProject);
+  globalThis.fetch=async(url,init)=>{
+    calls++;
+    assert.equal(url,'http://localhost:11434/api/chat');
+    const request=JSON.parse(init.body),input=JSON.parse(request.messages[1].content);
+    assert.ok(!init.body.includes('UNSELECTED_PASSAGE_MUST_NOT_BE_SENT'));
+    assert.ok(!init.body.includes('data:image'));
+    assert.equal(input.panel.shotType,'close-up');
+    assert.equal(input.panel.direction.cameraAngle,'low-angle');
+    assert.match(request.messages[0].content,/ONE drawable instant/);
+    return new Response(JSON.stringify({message:{content:JSON.stringify({visualDescription:scene})},done_reason:'stop'}));
+  };
+  render(React.createElement(ImagePromptEditor,{project:aiProject,panel:aiPlan,locale:'en',settings:aiSettings,onClose(){},onSave(patch){savedPatch=patch;}}));
+  assert.equal(calls,0,'opening editor never calls a model');
+  const action=screen.getByLabelText('Action & staging');
+  const originalScene=action.value;
+  await user.click(screen.getByRole('button',{name:'Rewrite as visual scene with local AI'}));
+  await screen.findByRole('region',{name:'Suggested visual scene'});
+  assert.equal(action.value,originalScene,'AI reply is a proposal until explicitly applied');
+  assert.equal(savedPatch,null);
+  assert.deepEqual(aiProject,beforeAi,'AI requests cannot mutate album, images or prompts');
+  await user.click(screen.getByRole('button',{name:'Use visual scene'}));
+  assert.equal(action.value,scene);
+  assert.equal(screen.getByLabelText('Shot type').value,'close-up');
+  assert.equal(screen.getByLabelText('Camera angle').value,'low-angle');
+  assert.equal(savedPatch,null,'applying suggestion only updates editor draft');
+  await user.click(screen.getByRole('button',{name:'Save image prompt'}));
+  assert.equal(savedPatch.visualDescription,scene);
+  assert.deepEqual(savedPatch.promptDirection,aiPlan.promptDirection);
+  globalThis.fetch=async()=>new Response(JSON.stringify({message:{content:JSON.stringify({visualDescription:narrative})}}));
+  // Use the current narrative as source to ensure a verbatim model reply is rejected.
+  await assert.rejects(suggestVisualScene({project:{...aiProject,adaptations:aiProject.adaptations.map(a=>({...a,beats:a.beats.map(b=>({...b,sourceTextExcerpt:narrative}))}))},panel:aiPlan,settings:aiSettings}),/copied/);
+  globalThis.fetch=async()=>new Response('unavailable',{status:503});
+  await user.click(screen.getByRole('button',{name:'Rewrite as visual scene with local AI'}));
+  await waitFor(()=>assert.match(screen.getByRole('alert').textContent,/503/));
+  assert.equal(action.value,scene,'failure keeps current draft');
+  globalThis.fetch=(_url,init)=>new Promise((_resolve,reject)=>init.signal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true}));
+  await user.click(screen.getByRole('button',{name:'Rewrite as visual scene with local AI'}));
+  await user.click(screen.getByRole('button',{name:'Cancel AI'}));
+  await waitFor(()=>assert.match(screen.getByRole('alert').textContent,/cancelled/));
+  assert.equal(action.value,scene);
+  let resolveLate;
+  globalThis.fetch=()=>new Promise(resolve=>{resolveLate=resolve;});
+  await user.click(screen.getByRole('button',{name:'Rewrite as visual scene with local AI'}));
+  cleanup();
+  await act(async()=>{resolveLate(new Response(JSON.stringify({message:{content:JSON.stringify({visualDescription:scene})}})));await Promise.resolve();});
+  assert.deepEqual(aiProject,beforeAi,'closing editor ignores late replies');
+  await assert.rejects(suggestVisualScene({project:aiProject,panel:{...aiPlan,visualDescription:'x'.repeat(20000)},settings:aiSettings}),/context/);
+  console.log('PASS: local visual rewrite uses only selected sources, rejects copied/invalid output, preserves direction/images, requires review/apply/save and handles failure, abort and late replies');
+
 } finally { cleanup(); rmSync(compiled, { recursive: true, force: true }); dom.window.close(); }
+

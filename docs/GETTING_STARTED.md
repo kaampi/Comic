@@ -128,7 +128,7 @@ Once you are comfortable with the editor, use Manuscript to plan a longer story.
 1. Enter your source text in Manuscript, or create an album from a StoryBook export. Importing copies the content into ComicBook AI and does not change StoryBook.
 2. Select a short passage in the manuscript and use the selection menu to create a beat. Choose a moment that can be shown clearly.
 3. Give the beat one or more panel plans. Describe the visible action and prepare dialogue or captions separately from the illustration.
-4. If you want help suggesting beats, configure a local text model in Settings first. Review its suggestions before adding them to your plan.
+4. If you want help suggesting beats, configure a local text model in Settings first. The model proposes visual moments with separate event summaries and drawable scene descriptions. Review and edit them before adding them to your plan.
 
 > One sentence does not have to equal one panel. An action may need several images; a long description may need only one establishing shot.
 
@@ -138,7 +138,7 @@ Once you are comfortable with the editor, use Manuscript to plan a longer story.
 
 In the prompt workflow, ComicBook AI prepares the text instructions for an image tool. Creating a prompt does not create a picture. Keep dialogue out of the illustration so that it stays editable in the comic editor.
 
-1. Open a panel plan in Manuscript. Generate its image prompt, or open Adjust image prompt to refine characters, action, setting and camera choices.
+1. Open a panel plan in Manuscript. Generate its image prompt, or open Adjust image prompt to refine characters, action, setting and camera choices. With a local model configured, choose Rewrite as visual scene with local AI to turn prose into one drawable moment. Review the separate proposal and choose Use visual scene before saving; camera choices and other direction are retained.
 2. Copy the prompt to the image-generation tool you use. Review the result for character identity, clothing, staging and space for text.
 3. Upload the finished picture to its panel plan. In Pages, find it in the Image library and drag an unplaced image into an existing frame or an empty area of the page.
 
