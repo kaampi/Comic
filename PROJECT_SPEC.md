@@ -261,7 +261,7 @@ Berättarrutor har rundning från −100 till 100, både per ruta och i albumets
 
 ### 11.3 Sidövergripande förgrundslager
 
-Varje sida kan ha flera förgrundslager med stabila ID:n, originalbild och egna textlager. PNG/WebP-transparens bevaras; ingen panel eller vit bakgrund skapas runt förgrundsbilden. Bilderna ligger över panelbilder och panelramar men under sidans texter och bubblor. Lagerordning kan ändras i listan, med främsta bilden överst. Förgrundens bubblor använder hela sidans koordinater och kan länkas över panelgränser inom samma förgrundslager.
+Kontrollerna för förgrundsbilder ligger i sidinställningspanelen direkt under Sidans bakgrund. Varje sida kan ha flera förgrundslager med stabila ID:n, originalbild och egna textlager. PNG/WebP-transparens bevaras; ingen panel eller vit bakgrund skapas runt förgrundsbilden. Bilderna ligger över panelbilder och panelramar men under sidans texter och bubblor. Lagerordning kan ändras i listan, med främsta bilden överst. Förgrundens bubblor använder hela sidans koordinater och kan länkas över panelgränser inom samma förgrundslager.
 
 Redigeraren visar hela sidans bildkomposition. Bilden kan flyttas, skalas, roteras och spegelvändas. Som standard lämnar bildflyttning bubblorna på plats; valet att flytta bild och bubblor tillsammans flyttar deras positioner och svansändar lika mycket. Zoom, rotation och spegling gäller bilden. Bilddragning förhandsvisas lokalt och sparas vid släpp; Escape och avbruten dragning återställer bilden och dess grupp. Förgrundsredigering ändrar inte paneler, källbilder eller andra förgrundslager.
 

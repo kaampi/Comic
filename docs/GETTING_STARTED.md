@@ -111,7 +111,7 @@ Finish the exercise by looking at the exported page, where the grid and editing 
 
 Use foreground images for a character, object or decoration that crosses panel borders. PNG and WebP transparency is preserved. The foreground artwork sits above panel images and borders, with text and bubbles above it.
 
-1. On Pages, choose Add foreground image in the Foreground images section. Select a PNG, WebP or JPEG from your computer.
+1. On Pages, find Foreground images in the page settings sidebar, directly below Page background, and choose Add foreground image. Select a PNG, WebP or JPEG from your computer.
 2. Choose Edit image and bubbles. The editor shows the whole page so that you can place the foreground against the other panels.
 3. Choose Edit image to drag, zoom, rotate or flip the picture. Position changes leave its bubbles in place unless Move image and bubbles together is enabled. That option moves positions together; zoom, rotation and flips affect the image.
 4. Add text layers in this editor. Their positions use the whole page, so bubbles can cross panel borders and be connected to other bubbles in the same foreground layer.
