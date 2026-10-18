@@ -247,6 +247,12 @@ Textpositioner lagras i ett gemensamt koordinatsystem så att redigerare och exp
 
 Första exporter: PNG per sida och PDF. CBZ paketerar sidbilder i stabil läsordning och kommer i nästa steg. Textoverflow, saknade bilder och resurser ska upptäckas före export. Typsnitt och upplösning måste ge läsbart resultat i vald sidstorlek.
 
+### 11.1 Redigerbara bubbelförbindelser
+
+Kopplade prat- eller tankebubblor har två fästpunkter som kan flyttas längs respektive bubbels kontur och två oberoende kurvhandtag. En kubisk kurva ger både bågar och S-former. Fästvinklar lagras lokalt till bubblorna; kurvhandtag använder förbindelsens fysiska koordinater och följer flyttning, skalning och rotation. Vid kraftiga böjar begränsas handtag och faktisk bredd för att undvika övervikningar. Befintliga förbindelser behåller sin raka geometri tills de redigeras. Återställ förbindelse tar bort kurvinställningar men bevarar bredden och texterna.
+
+Dragning förhandsvisas lokalt och sparas först vid släpp; Escape, pointercancel och förlorat fönsterfokus avbryter. Handtagen kan även styras med piltangenter och Shift. Redigeringshandtag visas bara i panelredigeraren. Sidan och export använder samma sammanfogade kontur. Kurvdata följer IndexedDB/localStorage och albumbackup; ogiltiga vinklar och kontrollvärden avvisas vid backupimport.
+
 ## 12. Domänmodell
 
 Modellen delas upp för att hålla berättelse, layout och genereringshistorik åtskilda:

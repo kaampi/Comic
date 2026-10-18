@@ -14,9 +14,17 @@ export type ProjectSource = "blank" | "text" | "storybook";
 
 export type OverlayType = "speech" | "thought" | "caption" | "sfx";
 export type BubbleStyle = "organic" | "wide" | "tall" | "oval" | "rounded" | "shout" | "whisper";
+export type BubbleLink = {
+  targetId: string; width: number;
+  // Attachment angles are local to each bubble. Handles use the physical
+  // endpoint chord as their frame, so they follow moves, rotation and resizing.
+  startAngle?: number; endAngle?: number;
+  startControl?: { along: number; across: number };
+  endControl?: { along: number; across: number };
+};
 export type TextOverlay = {
   textStyles?: TextStyleRange[];
-  bubbleLinks?: { targetId: string; width: number }[];
+  bubbleLinks?: BubbleLink[];
   id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number;
   sfxShapeId?: string; sfxTextHidden?: boolean; sfxTextColor?: string;
   sourcePanelId?: string; sourceTextId?: string;

@@ -1,5 +1,5 @@
-import type { TextOverlay } from "./project";
-import { speechPath, shoutPath } from "./SvgOverlay";
+import type { TextOverlay, BubbleLink } from "./project";
+import { speechPath, shoutPath, bubbleTailStartAngle } from "./SvgOverlay";
 import { svgGeometry, type Point } from "./idmlGeometry";
 import { thoughtCloudGeometry, thoughtTrailGeometry } from "./thoughtBubble";
 import type { LayerTextMetrics } from "./pageTypography";
@@ -63,6 +63,72 @@ function inside(p: Point, polygon: Point[]) {
   }
   return yes;
 }
+// Work in physical panel coordinates when constructing a constant-width ribbon.
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+const center = (o: TextOverlay): Point => ({ x: o.x + o.width / 2, y: o.y + o.height / 2 });
+function bodyOutline(o: TextOverlay): Point[] {
+  const local = o.type === "thought" ? thoughtCloudGeometry(o.width, o.height).outline
+    : flatten(o.bubbleStyle === "shout" ? shoutPath(o) : speechPath({ ...o, tailEnabled: false }, o.bubbleStyle ?? "organic"))[0];
+  const a = o.rotation * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), mid = center(o);
+  return local.map(p => ({ x: mid.x + (p.x - o.width / 2) * c - (p.y - o.height / 2) * s, y: mid.y + (p.x - o.width / 2) * s + (p.y - o.height / 2) * c }));
+}
+function attachment(o: TextOverlay, angle: number): Point {
+  const mid = center(o), a = angle + o.rotation * Math.PI / 180, ray = { x: Math.cos(a), y: Math.sin(a) };
+  const outline = bodyOutline(o);
+  let distance = Infinity;
+  for (let i = 0; i < outline.length; i++) {
+    const p = outline[i], edge = sub(outline[(i + 1) % outline.length], p), den = cross(ray, edge);
+    if (Math.abs(den) < 1e-10) continue;
+    const offset = sub(p, mid), t = cross(offset, edge) / den, u = cross(offset, ray) / den;
+    if (t >= 0 && u >= -1e-8 && u <= 1 + 1e-8) distance = Math.min(distance, t);
+  }
+  return Number.isFinite(distance) ? { x: mid.x + ray.x * distance, y: mid.y + ray.y * distance } : mid;
+}
+export function bubbleConnectionControls(a: TextOverlay, b: TextOverlay, link: BubbleLink, metrics?: LayerTextMetrics) {
+  const mx = (metrics?.width ?? 100) / 100, my = (metrics?.height ?? 100) / 100;
+  const am = center(a), bm = center(b);
+  const startAngle = link.startAngle ?? bubbleTailStartAngle(a, bm.x, bm.y);
+  const endAngle = link.endAngle ?? bubbleTailStartAngle(b, am.x, am.y);
+  const start = attachment(a, startAngle), end = attachment(b, endAngle);
+  const dx = (end.x - start.x) * mx, dy = (end.y - start.y) * my;
+  const length = Math.hypot(dx, dy);
+  const control = (p: Point, v: BubbleLink['startControl'], direction: number) => {
+    const along = clamp(v?.along ?? 1 / 3, .05, .45), across = clamp(v?.across ?? 0, -.75, .75);
+    return { x: p.x + (dx * along * direction - dy * across) / mx, y: p.y + (dy * along * direction + dx * across) / my };
+  };
+  return { start, end, startAngle, endAngle, control1: control(start, link.startControl, 1), control2: control(end, link.endControl, -1), mx, my, dx, dy, length };
+}
+export type ConnectionHandle = 'start' | 'end' | 'control1' | 'control2';
+export function moveConnectionHandle(a: TextOverlay, b: TextOverlay, link: BubbleLink, handle: ConnectionHandle, point: Point, metrics?: LayerTextMetrics): BubbleLink {
+  if (handle === 'start' || handle === 'end') return { ...link, [handle === 'start' ? 'startAngle' : 'endAngle']: bubbleTailStartAngle(handle === 'start' ? a : b, point.x, point.y) };
+  const g = bubbleConnectionControls(a, b, link, metrics), origin = handle === 'control1' ? g.start : g.end;
+  if (g.length < 1e-6) return link;
+  const x = (point.x - origin.x) * g.mx, y = (point.y - origin.y) * g.my, square = g.length ** 2;
+  return { ...link, [handle === 'control1' ? 'startControl' : 'endControl']: {
+    along: clamp((x * g.dx + y * g.dy) / square * (handle === 'control1' ? 1 : -1), .05, .45),
+    across: clamp((-x * g.dy + y * g.dx) / square, -.75, .75),
+  } };
+}
+export function bubbleConnectionRibbon(a: TextOverlay, b: TextOverlay, link: BubbleLink, metrics?: LayerTextMetrics): Point[] {
+  const g = bubbleConnectionControls(a, b, link, metrics);
+  if (g.length < 1e-6) return [];
+  const physical = (p: Point) => ({ x: p.x * g.mx, y: p.y * g.my });
+  const p = [g.start, g.control1, g.control2, g.end].map(physical);
+  const samples = Array.from({ length: 49 }, (_, i) => {
+    const t = i / 48, u = 1 - t;
+    const point = { x: u**3*p[0].x + 3*u*u*t*p[1].x + 3*u*t*t*p[2].x + t**3*p[3].x, y: u**3*p[0].y + 3*u*u*t*p[1].y + 3*u*t*t*p[2].y + t**3*p[3].y };
+    const d = { x: 3*u*u*(p[1].x-p[0].x)+6*u*t*(p[2].x-p[1].x)+3*t*t*(p[3].x-p[2].x), y: 3*u*u*(p[1].y-p[0].y)+6*u*t*(p[2].y-p[1].y)+3*t*t*(p[3].y-p[2].y) };
+    const dd = { x: 6*u*(p[2].x-2*p[1].x+p[0].x)+6*t*(p[3].x-2*p[2].x+p[1].x), y: 6*u*(p[2].y-2*p[1].y+p[0].y)+6*t*(p[3].y-2*p[2].y+p[1].y) };
+    const speed = Math.max(1e-8, Math.hypot(d.x, d.y)), bend = Math.abs(cross(d, dd));
+    return { point, nx: -d.y / speed, ny: d.x / speed, radius: bend < 1e-10 ? Infinity : speed**3 / bend };
+  });
+  // Monotone control projections prevent loops. Limit width at tight bends so
+  // the inner edge cannot fold back over itself.
+  const half = Math.min(Math.min(a.width*g.mx,a.height*g.my,b.width*g.mx,b.height*g.my) * clamp(link.width,2,80) / 200, g.length * .22, ...samples.map(s => s.radius * .7));
+  const side = (sign: number) => samples.map(s => ({ x: (s.point.x + sign * s.nx * half) / g.mx, y: (s.point.y + sign * s.ny * half) / g.my }));
+  // Interior caps overlap the bodies, eliminating seams at the attachment.
+  return [center(a), ...side(1), center(b), ...side(-1).reverse()];
+}
 const geometryCache = new Map<string, ReturnType<typeof computeConnectedBubbleGeometry>>();
 export function connectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTextMetrics) {
   // Paint and text cannot change the contour. Bound the cache so old geometry
@@ -87,6 +153,17 @@ function computeConnectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTex
   const mx=(metrics?.width??100)/100,my=(metrics?.height??100)/100;
   for (const o of group) for (const link of o.bubbleLinks??[]) {
     const b=group.find(b=>b.id===link.targetId);if(!b||b.id===o.id)continue;
+    if (link.startAngle !== undefined || link.endAngle !== undefined || link.startControl || link.endControl) {
+      const ribbon = bubbleConnectionRibbon(o,b,link,metrics);
+      if (ribbon.length) {
+        // Union caps separately: an attachment on a bubble's far side may
+        // cross the ribbon, so one self-intersecting input polygon is unsafe.
+        const count = (ribbon.length - 2) / 2;
+        const left = ribbon.slice(1, count + 1), right = ribbon.slice(count + 2);
+        polygons.push([...left, ...right], [ribbon[0], left[0], right[right.length - 1]], [ribbon[count + 1], left[left.length - 1], right[0]]);
+      }
+      continue;
+    }
     const a={x:o.x+o.width/2,y:o.y+o.height/2},end={x:b.x+b.width/2,y:b.y+b.height/2};
     const dx=(end.x-a.x)*mx,dy=(end.y-a.y)*my,len=Math.hypot(dx,dy);if(len<1e-7)continue;
     const half=Math.min(o.width*mx,o.height*my,b.width*mx,b.height*my)*Math.max(2,Math.min(80,link.width))/200;
@@ -134,3 +211,4 @@ function computeConnectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTex
   const fillPath=outlines.map(p=>`M ${p.map(xy).join(' L ')} Z`).join(' ');
   return {polygons:outlines,boundary,fillPath,strokePath:fillPath};
 }
+

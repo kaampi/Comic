@@ -66,6 +66,15 @@ try {
   assert.equal(joined.length,1,'one shared vector fill for linked bubbles');
   assert.equal(joined[0].getAttribute('StrokeColor'),'Swatch/None','no internal strokes on fill');
   assert.equal(joined[0].querySelectorAll('GeometryPathType').length,1,'one joined contour');
+  const curvedProject=structuredClone(project);
+  curvedProject.pages[1].background.overlays[0].bubbleLinks[0]={targetId:'linked-b',width:20,startAngle:0,endAngle:Math.PI,startControl:{along:.3,across:.5},endControl:{along:.3,across:-.5}};
+  const curvedResult=await exportAlbum(curvedProject,options,()=>{}),curvedOuter=archive(new Uint8Array(await curvedResult.blob.arrayBuffer()));
+  const curvedInner=archive(curvedOuter.get('Test -album-.idml'));
+  const curvedJoined=[...curvedInner].filter(([p])=>p.startsWith('Spreads/')).flatMap(([,data])=>[...parse(data).querySelectorAll('Polygon')]).find(e=>e.getAttribute('Name')==='Connected bubbles linked-a linked-b');
+  assert.ok(curvedJoined);
+  assert.equal(curvedJoined.querySelectorAll('GeometryPathType').length,1,'S curve exports one joined closed vector contour');
+  assert.notEqual(curvedJoined.querySelector('PathGeometry').outerHTML,joined[0].querySelector('PathGeometry').outerHTML,'curve changes reach IDML geometry');
+
   assert.ok([...docs.values()].some(d=>d.documentElement.outerHTML.includes('Linked first')));
   const richStory=[...docs.values()].find(d=>[...d.querySelectorAll('Content')].map(e=>e.textContent).join('').includes('Linked second'));
   assert.ok(richStory);

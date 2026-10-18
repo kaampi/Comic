@@ -39,7 +39,7 @@ try {
   assert.match(markup,/<svg[^>]+width="2100"/);assert.match(markup,/stroke-width="6"[^>]*vector-effect="non-scaling-stroke"/);
   assert.match(markup,/ÅÄÖ/);assert.match(markup,/Second line/);assert.match(markup,/clip-path/);
   assert.ok(!markup.includes('readingOrder')&&!markup.includes('panel-corner-handle')&&!markup.includes('grid-cell'));
-  const {linkBubbles,unlinkBubble,bubbleGroups,connectedBubbleGeometry,bubbleTailIsConnection}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
+  const {linkBubbles,unlinkBubble,bubbleGroups,connectedBubbleGeometry,bubbleTailIsConnection,bubbleConnectionControls,bubbleConnectionRibbon,moveConnectionHandle}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
   const a={...layer.overlays[0],id:'a',text:'First',x:10,y:10,width:30,height:20,tailEnabled:false,rotation:0};
   const b={...a,id:'b',text:'Second',x:60,y:10};
   const original=[a,b],linked=linkBubbles(original,'a','b');
@@ -53,6 +53,40 @@ try {
   for(const patch of [{x:11},{width:31},{rotation:10},{roundness:10},{bubbleStyle:'shout'},{bubbleLinks:[{targetId:'b',width:40}]}]) {
     assert.notEqual(connectedBubbleGeometry([{...linked[0],...patch},linked[1]]),shape,'shape changes invalidate cached contours');
   }
+  const curveMetrics={width:500,height:250};
+  const curvedLink={targetId:'b',width:20,startControl:{along:.3,across:.5},endControl:{along:.3,across:-.5}};
+  const curved=[{...linked[0],bubbleLinks:[curvedLink]},linked[1]];
+  const curveGeometry=connectedBubbleGeometry(curved,curveMetrics);
+  assert.notEqual(curveGeometry.fillPath,connectedBubbleGeometry(linked,curveMetrics).fillPath);
+  assert.equal(curveGeometry.polygons.length,1,'S curve stays joined to both bubbles');
+  const ribbon=bubbleConnectionRibbon(a,b,curvedLink,curveMetrics),controls=bubbleConnectionControls(a,b,curvedLink,curveMetrics);
+  assert.ok(ribbon.some(p=>p.y<controls.start.y)&&ribbon.some(p=>p.y>controls.start.y),'S curve crosses both sides of its chord');
+  for(const handle of ['start','end','control1','control2']){
+    const changed=moveConnectionHandle(a,b,curvedLink,handle,{x:45,y:45},curveMetrics);
+    assert.notDeepEqual(changed,curvedLink);
+    assert.ok(!/NaN|Infinity/.test(connectedBubbleGeometry([{...a,bubbleLinks:[changed]},b],curveMetrics).fillPath));
+  }
+  for(const type of ['speech','thought']) for(const rotation of [0,37,-90]) for(const across of [-.75,-.3,0,.3,.75]) {
+    const pair=[{...a,type,rotation,bubbleLinks:[{...curvedLink,startAngle:rotation/180,endAngle:Math.PI,startControl:{along:.05,across},endControl:{along:.45,across:-across}}]},{...b,type,y:60,rotation:-rotation}];
+    const geometry=connectedBubbleGeometry(pair,curveMetrics);
+    assert.ok(geometry.polygons.length&&geometry.boundary.length);
+    assert.ok(!/NaN|Infinity/.test(geometry.fillPath));
+  }
+  assert.equal(connectedBubbleGeometry([{...a,bubbleLinks:[{targetId:'b',width:20}]},b],curveMetrics).fillPath,connectedBubbleGeometry(linked,curveMetrics).fillPath,'reset preserves legacy straight geometry');
+  const curvedPage={...page,placements:[{...layer,overlays:curved}]};
+  const curvedMarkup=await pageSvg({...project,pages:[curvedPage]},curvedPage,'',1);
+  assert.match(curvedMarkup,/connected-bubble-outline/);
+  assert.ok(!curvedMarkup.includes('connection-handle'),'editing guides do not appear in exported pages');
+  let curveSeed=42;
+  const curveRandom=()=>((curveSeed=(Math.imul(curveSeed,1664525)+1013904223)>>>0)/4294967296);
+  for(let i=0;i<150;i++){
+    const body={...a,type:i%2?'thought':'speech',x:curveRandom()*60,y:curveRandom()*60,width:8+curveRandom()*30,height:8+curveRandom()*30,rotation:curveRandom()*360,tailEnabled:false};
+    const other={...body,id:'b',x:curveRandom()*60,y:curveRandom()*60,rotation:curveRandom()*360};
+    const link={targetId:'b',width:2+curveRandom()*78,startAngle:curveRandom()*6.28,endAngle:curveRandom()*6.28,startControl:{along:.05+curveRandom()*.4,across:curveRandom()*1.5-.75},endControl:{along:.05+curveRandom()*.4,across:curveRandom()*1.5-.75}};
+    const geometry=connectedBubbleGeometry([{...body,bubbleLinks:[link]},other],{width:100+curveRandom()*700,height:100+curveRandom()*700});
+    assert.ok(geometry.polygons.length&&!/NaN|Infinity/.test(geometry.fillPath),'seeded extreme attachments, overlaps and bends retain closed finite contours');
+  }
+  console.log('PASS: independent endpoints and handles, S curves, physical aspect ratios, rotated speech/thought bubbles and curved SVG export');
   assert.equal(shape.polygons.length,1,'separate bubbles become one closed contour');
   assert.ok(shape.boundary.every(([a,b])=>Number.isFinite(a.x+b.y)));
   const area=poly=>Math.abs(poly.reduce((sum,p,i)=>sum+p.x*poly[(i+1)%poly.length].y-p.y*poly[(i+1)%poly.length].x,0))/2;

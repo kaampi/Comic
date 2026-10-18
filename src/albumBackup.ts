@@ -164,6 +164,11 @@ export function parseAlbumBackup(input: unknown): ComicProject {
             record(link); string(link.targetId); number(link.width);
             const target = place.overlays.find((o: any) => o.id === link.targetId);
             if (!["speech", "thought"].includes(overlay.type) || !target || target.type !== overlay.type || target.id === overlay.id || targets.has(link.targetId) || link.width < 2 || link.width > 80) throw new Error("invalid-backup");
+            for (const key of ['startAngle', 'endAngle']) if (link[key] !== undefined) { number(link[key]); if (Math.abs(link[key]) > Math.PI * 2) throw new Error("invalid-backup"); }
+            for (const key of ['startControl', 'endControl']) if (link[key] !== undefined) {
+              record(link[key]); number(link[key].along); number(link[key].across);
+              if (link[key].along < .05 || link[key].along > .45 || Math.abs(link[key].across) > .75) throw new Error("invalid-backup");
+            }
             targets.add(link.targetId);
           }
         }
