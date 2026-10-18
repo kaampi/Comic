@@ -3,7 +3,7 @@
 export type JellySpring = { x: number; y: number; vx: number; vy: number };
 const clamp = (value: number, limit: number) => Math.max(-limit, Math.min(limit, value));
 export function nudgeJelly(state: JellySpring, dx: number, dy: number): JellySpring {
-  return { ...state, vx: clamp(state.vx + clamp(dx, 60) * 1.3, 80), vy: clamp(state.vy + clamp(dy, 60) * 1.3, 80) };
+  return { ...state, vx: clamp(state.vx + clamp(dx, 60) * 4.5, 180), vy: clamp(state.vy + clamp(dy, 60) * 4.5, 180) };
 }
 export function stepJelly(state: JellySpring, elapsed: number): JellySpring {
   const next = { ...state };
@@ -11,16 +11,16 @@ export function stepJelly(state: JellySpring, elapsed: number): JellySpring {
   let remaining = Math.max(0, Math.min(elapsed, 0.05));
   while (remaining > 0) {
     const dt = Math.min(remaining, 1 / 120);
-    next.vx += (-200 * next.x - 18 * next.vx) * dt;
-    next.vy += (-200 * next.y - 18 * next.vy) * dt;
-    next.x = clamp(next.x + next.vx * dt, 6);
-    next.y = clamp(next.y + next.vy * dt, 6);
+    next.vx += (-140 * next.x - 12 * next.vx) * dt;
+    next.vy += (-140 * next.y - 12 * next.vy) * dt;
+    next.x = clamp(next.x + next.vx * dt, 9);
+    next.y = clamp(next.y + next.vy * dt, 9);
     remaining -= dt;
   }
   return next;
 }
 export function jellyTransform({ x, y }: JellySpring): string {
-  return `translate(${-x * 0.65}px, ${-y * 0.65}px) rotate(${x * 0.22}deg) skew(${x * 0.6}deg, ${y * 0.45}deg) scale(${1 + Math.abs(x) * 0.004 - Math.abs(y) * 0.003}, ${1 + Math.abs(y) * 0.004 - Math.abs(x) * 0.003})`;
+  return `translate(${-x * 1.4}px, ${-y * 1.4}px) rotate(${x * 0.35}deg) skew(${x * 0.9}deg, ${y * 0.7}deg) scale(${1 + Math.abs(x) * 0.009 - Math.abs(y) * 0.005}, ${1 + Math.abs(y) * 0.009 - Math.abs(x) * 0.005})`;
 }
 export type PanelJelly = { nudge: (dx: number, dy: number) => void; settle: () => void; cancel: () => void };
 const noMotion: PanelJelly = { nudge() {}, settle() {}, cancel() {} };

@@ -57,6 +57,16 @@ try {
   for(let i=0;i<180;i++){spring=stepJelly(spring,1/60);if(spring.x<0)crossed=true;}
   assert.ok(crossed,'spring overshoots softly rather than stopping abruptly');
   assert.ok(Math.max(...Object.values(spring).map(Math.abs))<0.001,'spring converges to rest');
+  // Regress the reported issue: ordinary motion must produce a visible shape
+  // change, not merely a non-empty transform string at extreme pointer speed.
+  for(const hz of [60,120]){
+    let ordinary={x:0,y:0,vx:0,vy:0},peak=0;
+    for(let i=0;i<hz;i++){ordinary=stepJelly(nudgeJelly(ordinary,100/hz,0),1/hz);peak=Math.max(peak,ordinary.x);}
+    assert.ok(peak*.9>2,`visible skew at 100px/s and ${hz}Hz`);
+    assert.ok(peak*.009>.02,`visible stretch at ordinary speed and ${hz}Hz`);
+    for(let i=0;i<300;i++)ordinary=stepJelly(nudgeJelly(ordinary,10000,-10000),1/hz);
+    assert.ok(Math.abs(ordinary.x)<=9&&Math.abs(ordinary.y)<=9,'extreme pointer motion stays bounded');
+  }
   let frameId=0,now=0;
   const frames=new Map(),mediaListeners=new Set();
   const media={matches:false,addEventListener:(_,fn)=>mediaListeners.add(fn),removeEventListener:(_,fn)=>mediaListeners.delete(fn)};
