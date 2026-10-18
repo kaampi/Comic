@@ -632,10 +632,27 @@ try {
       exact: true,
     }),
   );
+  const analysisDialog=screen.getByRole("dialog",{name:"Föreslår beats"});
+  assert.equal(analysisDialog.getAttribute("aria-modal"),"true");
+  assert.equal(analysisDialog.querySelectorAll(".beat-analysis-spinner circle").length,12);
+  assert.match(within(analysisDialog).getByRole("status").textContent,/1 \/ 1/);
+  const cancelAnalysis=within(analysisDialog).getByRole("button",{name:"Avbryt",exact:true});
+  assert.equal(document.activeElement,cancelAnalysis);
+  assert.ok(document.querySelector(".manuscript-studio").closest("[inert]"),"background is blocked during analysis");
+  await user.keyboard("{Tab}");assert.equal(document.activeElement,cancelAnalysis);
+  await user.keyboard("{Shift>}{Tab}{/Shift}");assert.equal(document.activeElement,cancelAnalysis);
+  await user.keyboard("{Escape}");
+  assert.equal(screen.queryByRole("dialog",{name:"Föreslår beats"}),null,"Escape cancels and closes modal");
+  assert.equal(document.querySelector("[inert]"),null,"background unlocked after cancellation");
+  assert.notEqual(document.activeElement,document.body,"focus returns to the workspace");
+  assert.deepEqual(saved().adaptations,afterAccept);
+  selectText(0,6);
+  await user.click(screen.getByRole("button",{name:"Föreslå beats för markeringen",exact:true}));
   await user.click(screen.getByRole("button", { name: "Avbryt", exact: true }));
   await waitFor(() =>
     assert.equal(screen.queryByText(/Analyserar avsnitt/), null),
   );
+  assert.equal(document.body.style.overflow,"","body scroll restored");
   assert.deepEqual(saved().adaptations, afterAccept);
   // Source insertion outside beats retains their IDs and updates offsets.
   editor = screen.getByRole("textbox", { name: "Manus", exact: true });

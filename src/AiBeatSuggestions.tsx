@@ -1,3 +1,4 @@
+import { BeatAnalysisDialog } from "./BeatAnalysisDialog";
 import { useEffect, useRef, useState } from "react";
 import { adaptationFromAiBeats, splitBeatSource, suggestAiBeats } from "./adaptation/aiBeats";
 import type { AdaptationBeat, StoryAdaptation } from "./adaptation/types";
@@ -89,9 +90,8 @@ export function AiBeatSuggestions({ project, adaptation, settings, locale, onApp
       <p className="quiet" role="status">{analysisRange.start !== 0 || analysisRange.end !== fullSource.length ? t.selected : t.whole} · {t.preview} · {analysisSource.length} {t.chars} · {splitBeatSource(analysisSource, settings.contextWindow).length} {t.parts}</p>
       <div className="adaptation-step-actions">
         <button className="primary-button" type="button" disabled={busy || !configured || !analysisSource.trim()} onClick={() => void analyse()}>{busy ? t.analysing + " " + Math.min(progress.done + 1, progress.total) + " / " + progress.total : t.analyse}</button>
-        {busy ? <button className="text-button" type="button" onClick={() => controller.current?.abort()}>{t.cancel}</button> : null}
       </div>
-      {busy ? <p role="status">{t.analysing} {Math.min(progress.done + 1, progress.total)} / {progress.total}</p> : null}
+      {busy ? <BeatAnalysisDialog locale={locale} progress={progress.total ? `${Math.min(progress.done + 1, progress.total)} / ${progress.total}` : ""} onCancel={() => { requestNumber.current++; controller.current?.abort(); setBusy(false); setMessage(t.cancelled); }} /> : null}
       {message ? <p className="import-error" role="alert">{message}</p> : null}
       {draft ? <section className="ai-beat-review">
         <h3>{t.review} · {draft.beats.length}</h3>
@@ -115,3 +115,4 @@ export function AiBeatSuggestions({ project, adaptation, settings, locale, onApp
     </div>
   </details>;
 }
+

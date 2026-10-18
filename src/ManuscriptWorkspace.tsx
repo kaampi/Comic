@@ -1,3 +1,4 @@
+import { BeatAnalysisDialog } from "./BeatAnalysisDialog";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
@@ -517,21 +518,7 @@ export function ManuscriptWorkspace({
             </button>
           </div>
         ) : null}
-        {busy ? (
-          <div role="status">
-            {t.analysing} {progress}
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => {
-                abort.current?.abort();
-                setBusy(false);
-              }}
-            >
-              {t.cancel}
-            </button>
-          </div>
-        ) : null}
+        {busy ? <BeatAnalysisDialog locale={locale} progress={progress} returnFocus={editor.current} onCancel={() => { request.current++; abort.current?.abort(); setBusy(false); setMessage(t.cancelled); }} /> : null}
         {message ? (
           <p role="alert">
             {message}

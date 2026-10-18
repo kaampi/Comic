@@ -1,0 +1,12 @@
+.beat-analysis-backdrop { position:fixed; inset:0; z-index:1500; display:flex; align-items:center; justify-content:center; padding:24px; background:rgb(0 0 0 / .55); }
+.beat-analysis-dialog { width:min(100%,440px); padding:32px; border:1px solid var(--border); border-radius:14px; background:var(--panel); color:var(--text); text-align:center; box-shadow:0 20px 70px #0005; }
+.beat-analysis-dialog h2 { margin:18px 0 10px; }
+.beat-analysis-dialog p { line-height:1.6; }
+.beat-analysis-dialog button { margin-top:12px; min-width:120px; }
+.beat-analysis-status { font-weight:600; font-variant-numeric:tabular-nums; }
+.beat-analysis-spinner { display:block; margin:auto; color:var(--text); overflow:visible; }
+.beat-analysis-spinner g { transform-origin:12px 12px; animation:beat-spinner-rotate 6s linear infinite; }
+.beat-analysis-spinner circle { transform-box:fill-box; transform-origin:center; animation:beat-spinner-pulse 1.2s ease-in-out infinite; }
+@keyframes beat-spinner-rotate { from { transform:rotate(360deg); } to { transform:rotate(0deg); } }
+@keyframes beat-spinner-pulse { 0%,50%,100% { transform:scale(1); } 25% { transform:scale(2); } }
+@media (prefers-reduced-motion: reduce) { .beat-analysis-spinner g,.beat-analysis-spinner circle { animation:none; } }
