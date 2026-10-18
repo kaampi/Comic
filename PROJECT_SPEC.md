@@ -259,6 +259,14 @@ Dragning förhandsvisas lokalt och sparas först vid släpp; Escape, pointercanc
 
 Berättarrutor har rundning från −100 till 100, både per ruta och i albumets standardvärden. Noll är en exakt rektangel med fyra raka sidor. Negativa värden behåller hörn och yttermått men böjer sidorna inåt för spetsigare hörn; positiva värden behåller den befintliga rundningen. Förhandsvisning, sidexport och IDML använder samma kontur. Värdena följer lokal sparning och albumbackup. Vid byte av texttyp används den nya typens albumstandardvärden, så berättarrutans negativa rundning inte följer med till pratbubblor.
 
+### 11.3 Sidövergripande förgrundslager
+
+Varje sida kan ha flera förgrundslager med stabila ID:n, originalbild och egna textlager. PNG/WebP-transparens bevaras; ingen panel eller vit bakgrund skapas runt förgrundsbilden. Bilderna ligger över panelbilder och panelramar men under sidans texter och bubblor. Lagerordning kan ändras i listan, med främsta bilden överst. Förgrundens bubblor använder hela sidans koordinater och kan länkas över panelgränser inom samma förgrundslager.
+
+Redigeraren visar hela sidans bildkomposition. Bilden kan flyttas, skalas, roteras och spegelvändas. Som standard lämnar bildflyttning bubblorna på plats; valet att flytta bild och bubblor tillsammans flyttar deras positioner och svansändar lika mycket. Zoom, rotation och spegling gäller bilden. Bilddragning förhandsvisas lokalt och sparas vid släpp; Escape och avbruten dragning återställer bilden och dess grupp. Förgrundsredigering ändrar inte paneler, källbilder eller andra förgrundslager.
+
+Originalbild, lagerordning, gruppläge och redigerbara texter följer lokal lagring och albumbackup. Sidexport och IDML behåller transparens, fullsidiga koordinater och text över förgrundsbilder. Att ta bort bara bilden lämnar texterna kvar; borttagning av hela förgrundslagret tar även bort dess texter efter bekräftelse.
+
 ## 12. Domänmodell
 
 Modellen delas upp för att hålla berättelse, layout och genereringshistorik åtskilda:

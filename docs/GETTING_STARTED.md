@@ -20,6 +20,8 @@ This guide describes the current beta. Some features and labels may change. The 
 
 - [6. Export and read your first page](#export)
 
+- [Foreground images and page-wide bubbles](#foreground-images)
+
 - [From manuscript to panel plans](#manuscript)
 
 - [Prepare prompts and bring pictures back](#image-prompts)
@@ -103,6 +105,20 @@ Finish the exercise by looking at the exported page, where the grid and editing 
 
 > IDML — InDesign / Affinity (beta) is for further editing in a page-layout application. Extract the entire ZIP before opening the IDML file, and check fonts, wrapping and layout after import.
 
+<a id="foreground-images"></a>
+
+## Foreground images and page-wide bubbles
+
+Use foreground images for a character, object or decoration that crosses panel borders. PNG and WebP transparency is preserved. The foreground artwork sits above panel images and borders, with text and bubbles above it.
+
+1. On Pages, choose Add foreground image in the Foreground images section. Select a PNG, WebP or JPEG from your computer.
+2. Choose Edit image and bubbles. The editor shows the whole page so that you can place the foreground against the other panels.
+3. Choose Edit image to drag, zoom, rotate or flip the picture. Position changes leave its bubbles in place unless Move image and bubbles together is enabled. That option moves positions together; zoom, rotation and flips affect the image.
+4. Add text layers in this editor. Their positions use the whole page, so bubbles can cross panel borders and be connected to other bubbles in the same foreground layer.
+5. Use Bring forward or Send backward in the foreground list to arrange multiple pictures. The top image in the list is in front.
+
+> Remove image in the editor keeps the layer and its text so you can replace the picture. Remove foreground layer removes the picture and all text belonging to it. Album backups include the original images, their order and the editable bubbles.
+
 <a id="manuscript"></a>
 
 ## From manuscript to panel plans
@@ -183,6 +199,10 @@ Automatic saving keeps the album in this browser. Download an album backup to ke
 ### Export and read your first page
 
 Export creates files for reading or further layout work. Choose PDF, PNG, JPEG or IDML. Keep an album backup as well if you want to continue editing in ComicBook AI.
+
+### Foreground images and page-wide bubbles
+
+Add a transparent PNG above the frames, then choose Edit image and bubbles. Its text can span the whole page. Move the image alone or enable Move image and bubbles together. The top image in the list is in front.
 
 ### From manuscript to panel plans
 

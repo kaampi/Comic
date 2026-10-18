@@ -59,7 +59,8 @@ function image(value: unknown) {
   if (value.positionMode !== undefined && value.positionMode !== "frame") throw new Error("invalid-backup");
   string(value.name);
   string(value.dataUrl);
-  if (value.rotation !== undefined) number(value.rotation);
+  for(const key of ["rotation","zoom","offsetX","offsetY"])if(value[key]!==undefined)number(value[key]);
+  if(value.zoom!==undefined&&value.zoom<=0)throw new Error("invalid-backup");
   for (const key of ["flipX", "flipY"]) if (value[key] !== undefined && typeof value[key] !== "boolean") throw new Error("invalid-backup");
 }
 export function parseAlbumBackup(input: unknown): ComicProject {
@@ -130,6 +131,11 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   for (const page of objects(p.pages)) {
     if (page.gridMode !== undefined && page.gridMode !== "preset" && page.gridMode !== "custom") throw new Error("invalid-backup");
     for (const key of ["number", "gridColumns", "gridRows"]) number(page[key]);
+    if(page.foregrounds!==undefined){
+      list(page.foregrounds);
+      const ids=new Set([...objects(page.placements),...(page.background?[page.background]:[])].map(layer=>layer.id));
+      for(const layer of page.foregrounds){record(layer);string(layer.id);if(ids.has(layer.id))throw new Error("invalid-backup");ids.add(layer.id);if(layer.moveWithText!==undefined&&typeof layer.moveWithText!=="boolean")throw new Error("invalid-backup");}
+    }
     for (const place of objects(pageLayers(page))) {
       for (const key of ["x", "y", "width", "height", "readingOrder"])
         number(place[key]);

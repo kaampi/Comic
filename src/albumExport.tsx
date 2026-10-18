@@ -1,3 +1,4 @@
+import { pageLayers, isPageWideLayer } from "./pageBackground";
 import { textPieces } from "./richText";
 import { panelBorderStyle, panelBorderWidth } from "./panelBorder";
 import { handDrawnBorderPath } from "./handDrawnBorder";
@@ -43,23 +44,24 @@ async function embeddedFonts(families: Set<string>, signal?: AbortSignal) {
 export async function pageSvg(project: ComicProject, page: ComicProject["pages"][number], fontCss: string, outputScale: number) {
   // Server-rendered SVG has no effects: load the fonts before measuring its lines.
   if (typeof document !== "undefined" && document.fonts) {
-    const overlays = [...(page.background ? [page.background] : []), ...page.placements].flatMap(layer => layer.overlays ?? []);
+    const overlays = pageLayers(page).flatMap(layer => layer.overlays ?? []);
     await Promise.all(overlays.flatMap(overlay => [overlay,...textPieces(overlay).map(piece=>({...overlay,...Object.fromEntries(Object.entries(piece.style).filter(([,v])=>v!==undefined))}))]).map(overlay => document.fonts.load(overlayFont(overlay,16),overlay.text || "ÅÄÖ abc")));
   }
   const format=albumPageFormat(project), height=PAGE_RENDER_WIDTH/pageAspect(format), defs:string[]=[], body:string[]=[];
   body.push(`<rect width="700" height="${height}" fill="#fffdf7"/>`);
-  const layers=[...(page.background?[page.background]:[]),...page.placements];
-  for(const [i,layer] of layers.entries()) {
-    const background=layer===page.background, r=background?{x:0,y:0,width:700,height}:layerRect(page,layer,format), border=background?0:PANEL_BORDER;
-    const shaped=!background&&shapedPanel(layer);
-    if(!background&&!shaped) body.push(`<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}" fill="#fffdf7"/>`);
+  const layers=[...(page.background?[page.background]:[]),...page.placements,...(page.foregrounds??[])];
+  const passes=page.foregrounds?.length?[...layers.map(layer=>({layer,art:true,text:false})),...layers.map(layer=>({layer,art:false,text:true}))]:layers.map(layer=>({layer,art:true,text:true}));
+  for(const [i,paint] of passes.entries()) {
+    const layer=paint.layer,full=isPageWideLayer(page,layer.id),r=full?{x:0,y:0,width:700,height}:layerRect(page,layer,format),border=full?0:PANEL_BORDER;
+    const shaped=!full&&shapedPanel(layer);
+    if(paint.art&&!full&&!shaped) body.push(`<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}" fill="#fffdf7"/>`);
     const x=r.x+border, y=r.y+border, w=r.width-2*border, h=r.height-2*border, id=`layer-${i}`;
     if(w<=0||h<=0)throw new Error("invalid-layout");
     const polygon=panelShapePoints(layer).map(p=>`${x+p.x/4*w},${y+p.y/4*h}`).join(" ");
     defs.push(`<clipPath id="${id}">${shaped?`<polygon points="${polygon}"/>`:`<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`}</clipPath>`);
     body.push(`<g clip-path="url(#${id})">`);
-    if(shaped)body.push(`<polygon points="${polygon}" fill="#fffdf7"/>`);
-    if(layer.image) {
+    if(paint.art&&shaped)body.push(`<polygon points="${polygon}" fill="#fffdf7"/>`);
+    if(paint.art&&layer.image) {
       let url=layer.image.dataUrl;
       if(url.startsWith("blob:"))url=await blobData(await (await fetch(url)).blob());
       if(!url.startsWith("data:image/"))throw new Error("image-load-failed");
@@ -68,15 +70,15 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
       const transform=[layer.image.rotation ? `rotate(${layer.image.rotation} ${cx} ${cy})` : "", layer.image.flipX || layer.image.flipY ? `translate(${cx} ${cy}) scale(${layer.image.flipX?-1:1} ${layer.image.flipY?-1:1}) translate(${-cx} ${-cy})` : ""].filter(Boolean).join(" ");
       body.push(`<image href="${xml(url)}" x="${x+placed.x}" y="${y+placed.y}" width="${placed.width}" height="${placed.height}" preserveAspectRatio="none"${transform ? ` transform="${transform}"` : ""}/>`);
     }
-    let overlays=renderToStaticMarkup(<svg x={x} y={y} width={w} height={h} viewBox="0 0 100 100" preserveAspectRatio="none"><ConnectedBubbles overlays={layer.overlays??[]} textMetrics={pageLayerTextMetrics(project,page,layer)}/> {(layer.overlays??[]).map(o=><SvgOverlay key={o.id} overlay={o} textMetrics={pageLayerTextMetrics(project,page,layer)} hideShape={bubbleGroups(layer.overlays??[]).some(g=>g.some(b=>b.id===o.id))}/>)}</svg>);
+    let overlays=paint.text?renderToStaticMarkup(<svg x={x} y={y} width={w} height={h} viewBox="0 0 100 100" preserveAspectRatio="none"><ConnectedBubbles overlays={layer.overlays??[]} textMetrics={pageLayerTextMetrics(project,page,layer)}/> {(layer.overlays??[]).map(o=><SvgOverlay key={o.id} overlay={o} textMetrics={pageLayerTextMetrics(project,page,layer)} hideShape={bubbleGroups(layer.overlays??[]).some(g=>g.some(b=>b.id===o.id))}/>)}</svg>):"";
     // Non-scaling strokes stay proportional to the canonical 700px page at every DPI.
     overlays=overlays.replace(/<[^>]+vector-effect="non-scaling-stroke"[^>]*>/g,tag=>tag.replace(/stroke-width="([^"]+)"/,(_,v)=>`stroke-width="${Number(v)*outputScale}"`));
     body.push(overlays,"</g>");
-    const frameWidth=background?0:panelBorderWidth(project,layer),frameColor=panelBorderStyle(project,layer).color;
+    const frameWidth=full||!paint.art?0:panelBorderWidth(project,layer),frameColor=panelBorderStyle(project,layer).color;
     const frameStyle=panelBorderStyle(project,layer);
-    if(!background&&frameWidth>0&&frameStyle.style==="hand-drawn"&&(frameStyle.roughness??50)>0)body.push(`<path d="${handDrawnBorderPath(panelOutline(page,layer,format),frameWidth,frameStyle.roughness??50,layer.id)}" fill="${frameColor}"/>`);
+    if(!full&&frameWidth>0&&frameStyle.style==="hand-drawn"&&(frameStyle.roughness??50)>0)body.push(`<path d="${handDrawnBorderPath(panelOutline(page,layer,format),frameWidth,frameStyle.roughness??50,layer.id)}" fill="${frameColor}"/>`);
     else if(shaped&&frameWidth>0)body.push(`<polygon points="${polygon}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}" stroke-linejoin="round"/>`);
-    else if(!background&&frameWidth>0)body.push(`<rect x="${r.x+border/2}" y="${r.y+border/2}" width="${r.width-border}" height="${r.height-border}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}"/>`);
+    else if(!full&&frameWidth>0)body.push(`<rect x="${r.x+border/2}" y="${r.y+border/2}" width="${r.width-border}" height="${r.height-border}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}"/>`);
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${700*outputScale}" height="${height*outputScale}" viewBox="0 0 700 ${height}"><defs>${defs.join("")}<style>${fontCss}</style></defs>${body.join("")}</svg>`;
 }
@@ -100,7 +102,7 @@ export async function exportAlbum(project:ComicProject,options:ExportOptions,onP
   const pages=[...project.pages].sort((a,b)=>a.number-b.number).filter(p=>options.pageIds.includes(p.id));
   if(!pages.length)throw new Error("no-pages"); rasterDimensions(options.pageFormat,options.dpi);
   check(signal);
-  const families=new Set(pages.flatMap(p=>[...(p.background?[p.background]:[]),...p.placements].flatMap(l=>(l.overlays??[]).flatMap(o=>[o,...(o.textStyles??[]).map(style=>({...o,...Object.fromEntries(Object.entries(style).filter(([,v])=>v!==undefined))}))]).map(o=>(o.fontFamily??(o.type==="sfx"?"Impact":"Comic Neue")).split(",")[0].replace(/["']/g,"").trim()))));
+  const families=new Set(pages.flatMap(p=>pageLayers(p).flatMap(l=>(l.overlays??[]).flatMap(o=>[o,...(o.textStyles??[]).map(style=>({...o,...Object.fromEntries(Object.entries(style).filter(([,v])=>v!==undefined))}))]).map(o=>(o.fontFamily??(o.type==="sfx"?"Impact":"Comic Neue")).split(",")[0].replace(/["']/g,"").trim()))));
   await document.fonts.ready; const css=await embeddedFonts(families,signal), images:PdfRasterPage[]=[], files:{name:string;bytes:Uint8Array}[]=[], base=exportFilename(project.title),ext=options.format==="jpeg"?"jpg":"png";
   onProgress(0,pages.length);
   for(const [i,page] of pages.entries()) {

@@ -1,11 +1,12 @@
+import { isPageWideLayer } from "./pageBackground";
 import type { ComicProject, PageLayer, TextOverlay } from "./project";
 import { albumPageFormat, layerRect, pageDimensions, pageAspect, PAGE_RENDER_WIDTH, PANEL_BORDER } from "./pageFormat";
 import { overlayTextMeasure, wrapOverlayTextToWidth, type MeasureText } from "./overlayTypography";
 export type LayerTextMetrics = { width: number; height: number; pageWidthMm: number };
 export function pageLayerTextMetrics(project: ComicProject, page: ComicProject["pages"][number], layer: PageLayer): LayerTextMetrics {
   const format = albumPageFormat(project);
-  const rect = layer.id === page.background?.id ? {width: PAGE_RENDER_WIDTH, height: PAGE_RENDER_WIDTH / pageAspect(format)} : layerRect(page, layer, format);
-  const border = layer.id === page.background?.id ? 0 : 2 * PANEL_BORDER;
+  const rect = isPageWideLayer(page,layer.id) ? {width: PAGE_RENDER_WIDTH, height: PAGE_RENDER_WIDTH / pageAspect(format)} : layerRect(page, layer, format);
+  const border = isPageWideLayer(page,layer.id) ? 0 : 2 * PANEL_BORDER;
   return { width: Math.max(1, rect.width - border), height: Math.max(1, rect.height - border), pageWidthMm: pageDimensions(format).widthMm };
 }
 export function overlayTextLayout(overlay: TextOverlay, metrics: LayerTextMetrics, measureText?: MeasureText) {
@@ -28,6 +29,7 @@ export function normalizeProjectTypography(project: ComicProject): ComicProject 
   const grid = project.pageDefaults ?? {gridColumns:3,gridRows:5};
   const defaultMetrics = pageLayerTextMetrics(project, {id:"defaults", number:1, ...grid, placements:[]}, {id:"defaults-layer",x:0,y:0,width:1,height:1,readingOrder:1,overlays:[]});
   const overlayDefaults = Object.fromEntries(Object.entries(project.overlayDefaults ?? {}).map(([type, defaults]) => [type, {...defaults, ...(defaults.fontSize === undefined ? {} : {fontSize:convertSize(defaults.fontSize,defaultMetrics)})}]));
-  return {...project, typographyVersion:2, overlayDefaults, pages:project.pages.map(page => ({...page, background:page.background ? convertLayer(page,page.background) : undefined, placements:page.placements.map(layer => convertLayer(page,layer))}))};
+  return {...project, typographyVersion:2, overlayDefaults, pages:project.pages.map(page => ({...page, background:page.background ? convertLayer(page,page.background) : undefined, foregrounds:page.foregrounds?.map(layer=>convertLayer(page,layer)), placements:page.placements.map(layer => convertLayer(page,layer))}))};
 }
+
 

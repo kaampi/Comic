@@ -55,10 +55,10 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
   let count=0;const id=()=>`cb${++count}`;
   const add=(name:string,content:string)=>files.push({name,bytes:encode(content)});
   const color=(value:string)=>{if(value==="none")return "Swatch/None";if(!/^#[0-9a-f]{6}$/i.test(value))throw new Error("invalid-export-color");const hex=value.toLowerCase();if(!colors.has(hex))colors.set(hex,`Color/CB${hex.slice(1)}`);return colors.get(hex)!;};
-  const layers=[{id:"cbText",name:"Text"},{id:"cbBubbles",name:"Bubbles and SFX"},{id:"cbFrames",name:"Panel borders"},{id:"cbImages",name:"Images"},{id:"cbBackground",name:"Background"}];
+  const layers=[{id:"cbText",name:"Text"},{id:"cbBubbles",name:"Bubbles and SFX"},...(pages.some(page=>page.foregrounds?.length)?[{id:"cbForeground",name:"Foreground images"}]:[]),{id:"cbFrames",name:"Panel borders"},{id:"cbImages",name:"Images"},{id:"cbBackground",name:"Background"}];
   const shape=(paths:GeometryPath[],layer:string,name:string,fill:string,stroke="none",weight=0,extra="",children="",transform="1 0 0 1 0 0",tag="Polygon")=>
     `<${tag} Self="${id()}" Name="${xml(name)}" ItemLayer="${layer}" ItemTransform="${transform}" ContentType="${children.startsWith("<Image ")?"GraphicType":"Unassigned"}" FillColor="${color(fill)}" StrokeColor="${color(stroke)}" StrokeWeight="${num(weight)}" StrokeAlignment="CenterAlignment" EndJoin="RoundEndJoin" AppliedObjectStyle="ObjectStyle/$ID/[None]" Visible="true" Locked="false" ${extra}><Properties>${idmlPathGeometry(paths)}</Properties>${children}</${tag}>`;
-  const fontLoads=pages.flatMap(p=>[...(p.background?[p.background]:[]),...p.placements].flatMap(l=>l.overlays)).flatMap(o=>[o,...textPieces(o).map(p=>({...o,...Object.fromEntries(Object.entries(p.style).filter(([,v])=>v!==undefined))}))]).map(o=>typeof document!=="undefined"?document.fonts?.load(overlayFont(o,16),o.text||"ÅÄÖ abc"):undefined);
+  const fontLoads=pages.flatMap(p=>[...(p.background?[p.background]:[]),...p.placements,...(p.foregrounds??[])].flatMap(l=>l.overlays)).flatMap(o=>[o,...textPieces(o).map(p=>({...o,...Object.fromEntries(Object.entries(p.style).filter(([,v])=>v!==undefined))}))]).map(o=>typeof document!=="undefined"?document.fonts?.load(overlayFont(o,16),o.text||"ÅÄÖ abc"):undefined);
   if(typeof document!=="undefined")await Promise.all(fontLoads);check(signal);
   const imageCache=new Map<string,{name:string;width:number;height:number;mime:string}>();
   async function imageAsset(url:string) {
@@ -83,18 +83,20 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
   for(const [index,page] of pages.entries()) {
     check(signal);const items:string[]=[],gridMetrics=pageGridMetrics(page,sourceFormat);
     items.push(shape([rectanglePath(0,0,w,h)],"cbBackground","Page background","#fffdf7"));
-    for(const layer of [...(page.background?[page.background]:[]),...page.placements]) {
-      const background=layer.id===page.background?.id,r=background?{x:0,y:0,width:700,height:sourceH}:layerRect(page,layer,sourceFormat),inset=background?0:PANEL_BORDER;
+    for(const layer of [...(page.background?[page.background]:[]),...page.placements,...(page.foregrounds??[])]) {
+      const background=layer.id===page.background?.id,foreground=!!page.foregrounds?.some(l=>l.id===layer.id),full=background||foreground;
+      const r=full?{x:0,y:0,width:700,height:sourceH}:layerRect(page,layer,sourceFormat),inset=full?0:PANEL_BORDER;
+      const bubbleLayer=background&&!page.foregrounds?.length?"cbBackground":"cbBubbles",textLayer=background&&!page.foregrounds?.length?"cbBackground":"cbText";
       const x=r.x+inset,y=r.y+inset,lw=r.width-2*inset,lh=r.height-2*inset;
       if(lw<=0||lh<=0)throw new Error("invalid-layout");
-      const clip=background?rectanglePath(x,y,lw,lh):polygonPath(panelShapePoints(layer).map(p=>({x:x+p.x/4*lw,y:y+p.y/4*lh})));
+      const clip=full?rectanglePath(x,y,lw,lh):polygonPath(panelShapePoints(layer).map(p=>({x:x+p.x/4*lw,y:y+p.y/4*lh})));
       let imageXml="";
       if(layer.image) {
         const asset=await imageAsset(layer.image.dataUrl),placed=imagePlacement(layer.image,lw,lh,asset.width,asset.height),matrix=imageAffineTransform(layer.image,placed,asset.width,asset.height),pos=map({x:x+matrix.e,y:y+matrix.f});
         imageXml=`<Image Self="${id()}" ItemTransform="${num(matrix.a*scale)} ${num(matrix.b*scale)} ${num(matrix.c*scale)} ${num(matrix.d*scale)} ${pair(pos)}" ActualPpi="72 72" Space="$ID/#Links_RGB" ImageTypeName="$ID/${asset.mime==="image/jpeg"?"JPEG":"PNG"}" AppliedObjectStyle="ObjectStyle/$ID/[None]"><Properties><Profile type="string">$ID/None</Profile><GraphicBounds Left="0" Top="0" Right="${asset.width}" Bottom="${asset.height}"/></Properties><Link Self="${id()}" LinkResourceURI="file:${asset.name}" LinkResourceFormat="$ID/${asset.mime==="image/jpeg"?"JPEG":"PNG"}" StoredState="Normal" LinkResourceModified="false" LinkObjectModified="false" ShowInUI="true" CanEmbed="true" CanUnembed="true" CanPackage="true" ImportPolicy="NoAutoImport" ExportPolicy="NoAutoExport"/></Image>`;
       }
-      items.push(shape(transformPaths([clip],map),background?"cbBackground":"cbImages",`Image frame ${layer.id}`,"#fffdf7","none",0,"",imageXml));
-      if(!background) {
+      items.push(shape(transformPaths([clip],map),foreground?"cbForeground":background?"cbBackground":"cbImages",`Image frame ${layer.id}`,foreground?"none":"#fffdf7","none",0,"",imageXml));
+      if(!full) {
         const border=panelBorderStyle(project,layer);
         if(border.visible&&border.thicknessPt>0) {
           const outline=panelOutline(page,layer,sourceFormat);
@@ -106,7 +108,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
       for(const group of connected){
         const o=group[0],geometry=connectedBubbleGeometry(group,{width:lw,height:lh,pageWidthMm:pageDimensions(sourceFormat).widthMm});
         const local=(p:Point)=>map({x:x+p.x*lw/100,y:y+p.y*lh/100});
-        const name=`Connected bubbles ${group.map(o=>o.id).join(" ")}`,itemLayer=background?"cbBackground":"cbBubbles";
+        const name=`Connected bubbles ${group.map(o=>o.id).join(" ")}`,itemLayer=bubbleLayer;
         items.push(shape(transformPaths(svgGeometry(geometry.fillPath),local),itemLayer,name,o.fillColor??"#fffdf7","none",0,"",`<FillTransparencySetting><BlendingSetting Opacity="${num(Math.max(0,Math.min(1,o.fillOpacity??1))*100)}" BlendMode="Normal"/></FillTransparencySetting>`));
         items.push(shape(transformPaths(svgGeometry(geometry.strokePath),local),itemLayer,`${name} outline`,"none",o.strokeColor??"#171411",(o.strokeWidth??2)*scale,o.bubbleStyle==="whisper"?'StrokeType="StrokeStyle/$ID/Dashed"':""));
       }
@@ -114,7 +116,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
         const a=o.rotation*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
         const local=(p:Point)=>{const ux=p.x-o.width/2,uy=p.y-o.height/2;return map({x:x+(o.x+o.width/2+c*ux-s*uy)*lw/100,y:y+(o.y+o.height/2+s*ux+c*uy)*lh/100});};
         const fill=o.fillColor??"#fffdf7",stroke=o.strokeColor??"#171411",opacity=Math.max(0,Math.min(1,o.fillOpacity??1));
-        for(const primitive of connected.some(g=>g.some(b=>b.id===o.id))?[]:artwork(o))items.push(shape(transformPaths(primitive.paths,local),background?"cbBackground":"cbBubbles",`${o.type} ${o.id}`,primitive.fill?fill:"none",stroke,(o.strokeWidth??2)*scale,o.bubbleStyle==="whisper"?'StrokeType="StrokeStyle/$ID/Dashed"':"",`<FillTransparencySetting><BlendingSetting Opacity="${num(opacity*100)}" BlendMode="Normal"/></FillTransparencySetting>`));
+        for(const primitive of connected.some(g=>g.some(b=>b.id===o.id))?[]:artwork(o))items.push(shape(transformPaths(primitive.paths,local),bubbleLayer,`${o.type} ${o.id}`,primitive.fill?fill:"none",stroke,(o.strokeWidth??2)*scale,o.bubbleStyle==="whisper"?'StrokeType="StrokeStyle/$ID/Dashed"':"",`<FillTransparencySetting><BlendingSetting Opacity="${num(opacity*100)}" BlendMode="Normal"/></FillTransparencySetting>`));
         if(o.type==="sfx"&&o.sfxTextHidden)continue;
         const font=idmlFont(o);fonts.set(`${font.family}/${font.style}`,font);
         const story=id(),storyPath=`Stories/Story_${story}.xml`,padding=o.width*lw/100*Math.max(0,Math.min(25,o.textPadding??4))/100*scale;
@@ -138,7 +140,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
         }).join(""):undefined;
         const paragraphs=richParagraphs??plainParagraphs;
         add(storyPath,part("Story",`<Story Self="${story}"><StoryPreference StoryOrientation="Horizontal" StoryDirection="LeftToRightDirection"/>${paragraphs}</Story>`));stories.push(storyPath);
-        items.push(`<TextFrame Self="${id()}" Name="${xml(`Text ${o.id}`)}" ParentStory="${story}" PreviousTextFrame="n" NextTextFrame="n" ContentType="TextType" ItemLayer="${background?"cbBackground":"cbText"}" ItemTransform="${matrix}" FillColor="Swatch/None" StrokeColor="Swatch/None" AppliedObjectStyle="ObjectStyle/$ID/[None]"><Properties>${idmlPathGeometry([rectanglePath(0,0,tw,th)])}</Properties><TextFramePreference TextColumnCount="1" VerticalJustification="CenterAlign" FirstBaselineOffset="AscentOffset"><Properties><InsetSpacing type="list"><ListItem type="unit">0</ListItem><ListItem type="unit">${num(padding)}</ListItem><ListItem type="unit">0</ListItem><ListItem type="unit">${num(padding)}</ListItem></InsetSpacing></Properties></TextFramePreference></TextFrame>`);
+        items.push(`<TextFrame Self="${id()}" Name="${xml(`Text ${o.id}`)}" ParentStory="${story}" PreviousTextFrame="n" NextTextFrame="n" ContentType="TextType" ItemLayer="${textLayer}" ItemTransform="${matrix}" FillColor="Swatch/None" StrokeColor="Swatch/None" AppliedObjectStyle="ObjectStyle/$ID/[None]"><Properties>${idmlPathGeometry([rectanglePath(0,0,tw,th)])}</Properties><TextFramePreference TextColumnCount="1" VerticalJustification="CenterAlign" FirstBaselineOffset="AscentOffset"><Properties><InsetSpacing type="list"><ListItem type="unit">0</ListItem><ListItem type="unit">${num(padding)}</ListItem><ListItem type="unit">0</ListItem><ListItem type="unit">${num(padding)}</ListItem></InsetSpacing></Properties></TextFramePreference></TextFrame>`);
       }
     }
     const spread=id(),spreadPath=`Spreads/Spread_${spread}.xml`;

@@ -91,6 +91,11 @@ export function editPageBackground(
   };
 }
 export function pageLayers(page: Page) {
-  return [...page.placements, ...(page.background ? [page.background] : [])];
+  return [...page.placements, ...(page.background ? [page.background] : []), ...(page.foregrounds ?? [])];
 }
 
+
+
+export function isPageWideLayer(page: Page, id: string): boolean {
+  return page.background?.id === id || !!page.foregrounds?.some(layer => layer.id === id);
+}
