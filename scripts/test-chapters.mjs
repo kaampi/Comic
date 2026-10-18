@@ -48,6 +48,20 @@ try {
   const {addManualBeat,editManuscriptChapter,activeManuscriptAdaptation,patchBeatPanel,generateBeatPanelPrompt}=await local('manuscriptModel');
   const {packAlbumBackup,parseAlbumBackup}=await local('albumBackup');
   const {App}=await local('App');
+  const {manuscriptHtml}=await local('manuscriptFormatting');
+  const formattedText='First <paragraph> & a face 🙂.\r\n\r\nSecond line.\nA soft break.\n  \nLast paragraph.';
+  const divider=formattedText.indexOf('\r\n');
+  const formatBeats=[{id:'first',sourceStart:0,sourceEnd:divider+2},{id:'second',sourceStart:divider+2,sourceEnd:formattedText.length}];
+  const formatted=document.createElement('div');formatted.innerHTML=manuscriptHtml(formattedText,formatBeats,'second');
+  assert.equal(formatted.textContent,formattedText,'paragraph display preserves every source character and CRLF');
+  assert.equal(formatted.querySelectorAll('.manuscript-paragraph-break').length,2);
+  assert.equal(formatted.querySelector('.manuscript-paragraph-break').textContent,'\r\n\r\n','beat boundary inside separator stays one visual paragraph gap');
+  assert.ok(formatted.querySelector('.manuscript-beat.is-selected'));
+  const excerptStart=formattedText.indexOf('Second');
+  const chapterFormatted=document.createElement('div');chapterFormatted.innerHTML=manuscriptHtml(formattedText,formatBeats,null,excerptStart,formattedText.length);
+  assert.equal(chapterFormatted.textContent,formattedText.slice(excerptStart),'chapter rendering preserves global source offsets');
+  console.log('PASS: compact paragraph display preserves exact text, CRLF, single line breaks, markup escaping and beat boundaries');
+
   const raw={kind:'storycore.manuscript-export',format:1,sourceApp:'storybook-ai',exportedAt:'2026-10-18T17:00:00Z',sourceBookId:'source-book',title:'Chapter fixture',illustrationStyle:'',bible:[],chapters:[
     {id:'c3',sequence_index:2,title:'Return',prose:'He returns to the gate.\r\n"Wait," he says.'},
     {id:'c1',sequence_index:0,title:'Arrival',prose:'He arrives at the gate.\r\n"Wait," he says.'},

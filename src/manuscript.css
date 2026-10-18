@@ -21,7 +21,7 @@
   min-height: 60vh;
   padding: 28px;
   font:
-    18px/1.95 Georgia,
+    18px/1.5 Georgia,
     serif;
   background: var(--paper);
   outline: none;
@@ -308,3 +308,7 @@
 .manuscript-chapters > span { white-space:nowrap; font-variant-numeric:tabular-nums; }
 .manuscript-original { margin-top:16px; }
 .manuscript-original pre { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; padding:16px; border:1px solid var(--border); }
+
+/* Source newlines remain in the DOM for exact beat/selection offsets. */
+.manuscript-source .manuscript-paragraph-break { display:block; height:.6em; line-height:0; white-space:normal; }
+.manuscript-source .manuscript-paragraph-break .manuscript-beat { outline:none; background:none; }

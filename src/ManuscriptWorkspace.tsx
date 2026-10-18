@@ -1,3 +1,4 @@
+import { manuscriptHtml } from "./manuscriptFormatting";
 import { manuscriptChapters } from "./manuscriptChapters";
 import { BeatAnalysisDialog } from "./BeatAnalysisDialog";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -302,39 +303,7 @@ export function ManuscriptWorkspace({
   const patch = (change: Partial<AdaptationBeat>) => {
     if (beat) onUpdate((p) => patchManuscriptBeat(p, beat.id, change));
   };
-  const boundaries = [
-    ...new Set([
-      viewStart,
-      viewEnd,
-      ...scopedBeats.flatMap((b) =>
-        b.sourceStart === undefined || b.sourceEnd === undefined
-          ? []
-          : [b.sourceStart, b.sourceEnd].filter(offset=>offset>=viewStart&&offset<=viewEnd),
-      ),
-    ]),
-  ].sort((a, b) => a - b);
-  const escapeHtml = (text: string) =>
-    text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/\r/g, "&#13;");
-  const markedSource = boundaries
-    .slice(0, -1)
-    .map((start, i) => {
-      const end = boundaries[i + 1],
-        beats = adaptation.beats.filter(
-          (b) =>
-            b.sourceStart !== undefined &&
-            b.sourceEnd !== undefined &&
-            b.sourceStart <= start &&
-            b.sourceEnd >= end,
-        ),
-        active = beats.some((b) => b.id === selected);
-      return `<span${beats.length ? ` data-beat-ids="${escapeHtml(beats.map((b) => b.id).join(" "))}" class="manuscript-beat${active ? " is-selected" : ""}${beats.some((b) => b.sourceNeedsReview) ? " needs-review" : ""}"` : ""}>${escapeHtml(source.slice(start, end))}</span>`;
-    })
-    .join("");
+  const markedSource=manuscriptHtml(source,scopedBeats,selected,viewStart,viewEnd);
   const editPrompt = (plan: PanelPlan, value: string) =>
     onUpdate((p) => {
       const a = activeManuscriptAdaptation(p),
