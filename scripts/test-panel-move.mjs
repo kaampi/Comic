@@ -151,14 +151,24 @@ try {
   assert.ok(panel().hasAttribute('data-panel-jelly'));frame();
   move(1,1,{pointerId:8});
   assert.equal(panel().style.translate,'0px 0px','ignore another pointer');
-  move(1,1);frame();
+  move(0.3,0.2);frame();
+  const translation=()=>panel().style.translate.split(' ').map(parseFloat);
+  assert.ok(Math.abs(translation()[0]-stepX*0.3)<1e-8,'follow pointer before reaching next grid cell');
+  assert.ok(Math.abs(translation()[1]-stepY*0.2)<1e-8);
+  const {panelOutline}=await import(pathToFileURL(join(temporary,'panelGeometry.mjs')));
+  const targetPoints=layer=>panelOutline(project.pages[0],layer,albumPageFormat(project)).map(p=>`${p.x},${p.y}`).join(' ');
+  assert.equal(document.querySelector('.panel-move-target polygon').getAttribute('points'),targetPoints(original),'drop outline stays snapped while panel moves freely');
+  move(0.65,0.8);frame();
   assert.equal(panel().style.transform,document.querySelector('.page-foreground-texts [data-text-layer="moving"]').style.transform);
-  assert.equal(panel().style.translate,`${stepX}px ${stepY}px`,'snap with actual margins, gaps and display scale');
+  assert.ok(Math.abs(translation()[0]-stepX*0.65)<1e-8);
+  assert.ok(Math.abs(translation()[1]-stepY*0.8)<1e-8);
+  assert.equal(document.querySelector('.panel-move-target polygon').getAttribute('points'),targetPoints({...original,x:1,y:1}),'nearest grid target crosses cell boundaries independently');
   assert.equal(saves,0,'preview never writes the album');
   const previewText=document.querySelector('.page-foreground-texts [data-text-layer="moving"]');
-  assert.equal(Number(previewText.getAttribute('x')),layerRect(project.pages[0],{...original,x:1,y:1},albumPageFormat(project)).x+3,'panel text above foregrounds follows the preview');
+  assert.ok(Math.abs(Number(previewText.getAttribute('x'))-(layerRect(project.pages[0],{...original,x:0.65,y:0.8},albumPageFormat(project)).x+3))<1e-8,'panel text above foregrounds follows continuous pointer motion');
   assert.deepEqual(current().pages[0].placements,baseline);
-  up(1,1);
+  up(0.65,0.8);
+  assert.equal(document.querySelector('.panel-move-target'),null);
   assert.equal(saves,1,'commit once on release');
   for(let i=0;i<180&&frames.size;i++)frame();
   assert.equal(panel().style.transform,'','landing restores exact panel geometry');
@@ -170,7 +180,8 @@ try {
 
   const checkpoint=JSON.stringify(current());
   down(); await pause(440);move(1,-1);
-  assert.ok(panel().classList.contains('is-move-invalid'),'colliding contour is red');up(1,-1);
+  assert.ok(panel().classList.contains('is-move-invalid'),'colliding contour is red');
+  assert.ok(document.querySelector('.panel-move-target.is-invalid'));up(1,-1);
   assert.equal(JSON.stringify(current()),checkpoint,'invalid drop leaves original album untouched');
   assert.equal(saves,1);
   down();await pause(440);move(-3,0);

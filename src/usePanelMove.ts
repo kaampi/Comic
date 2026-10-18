@@ -8,7 +8,7 @@ import { panelMoveAllowed } from "./panelMove";
 export const PANEL_HOLD_MS = 400;
 const HOLD_SLOP = 6;
 type Page = ComicProject["pages"][number];
-type Preview = { pageId: string; layer: PageLayer; valid: boolean; dx: number; dy: number };
+type Preview = { pageId: string; layer: PageLayer; visualLayer: PageLayer; valid: boolean; dx: number; dy: number };
 type Options = {
   project: ComicProject | null; pageId: string | null; enabled: boolean;
   onSelect: (pageId: string, id: string) => void;
@@ -42,7 +42,8 @@ export function usePanelMove(options: Options) {
       candidate = { ...layer, x: layer.x + Math.round((x - sx) / stepX), y: layer.y + Math.round((y - sy) / stepY) };
       const current = latest.current.project, currentPage = current?.pages.find(p => p.id === page.id);
       setPreview({ pageId: page.id, layer: candidate, valid: !!current && !!currentPage && panelMoveAllowed(current, currentPage, candidate),
-        dx: (candidate.x - layer.x) * stepX, dy: (candidate.y - layer.y) * stepY });
+        visualLayer: { ...layer, x: layer.x + (x - sx) / stepX, y: layer.y + (y - sy) / stepY },
+        dx: x - sx, dy: y - sy });
     };
     const timer = window.setTimeout(() => {
       active = true; suppressUntil.current = Number.POSITIVE_INFINITY;

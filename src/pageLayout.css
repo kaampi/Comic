@@ -82,8 +82,12 @@
 .layout-canvas .drawn-panel.is-panel-moving .panel-corner-handle { visibility:hidden; }
 .layout-canvas .drawn-panel { user-select:none; -webkit-user-select:none; }
 
-/* Deformation is separate from the snapped translate, so the drop target stays exact. */
+/* Deformation is separate from pointer translation; the drop target stays on the grid. */
 .layout-canvas .drawn-panel[data-panel-jelly] { filter:drop-shadow(0 4px 5px rgb(0 0 0 / .14)); }
 @media (prefers-reduced-motion: reduce) {
   .layout-canvas .drawn-panel[data-panel-jelly] { filter:none; }
 }
+
+.panel-move-target { position:absolute; inset:0; width:100%; height:100%; z-index:5; pointer-events:none; overflow:hidden; color:#287957; }
+.panel-move-target.is-invalid { color:#c33131; }
+.panel-move-target polygon { fill:currentColor; fill-opacity:.08; stroke:currentColor; stroke-width:2; stroke-dasharray:7 5; vector-effect:non-scaling-stroke; }
