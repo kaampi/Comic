@@ -1,3 +1,4 @@
+import { validManuscriptChapters } from "./manuscriptChapters";
 import { readOrganization } from "./styleOrganization";
 import { validPanelBorder } from "./panelBorder";
 import { validPanelShape } from "./panelShape";
@@ -75,6 +76,12 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   if (!["blank", "text", "storybook"].includes(p.source.type))
     throw new Error("invalid-backup");
   if (p.source.textSnapshot !== undefined) string(p.source.textSnapshot);
+  if(p.source.chapters!==undefined&&!validManuscriptChapters(p.source.chapters,p.source.textSnapshot??""))throw new Error("invalid-backup");
+  const chapterIds=new Set((p.source.chapters??[]).map((c:any)=>c.id));
+  for(const adaptation of Array.isArray(p.adaptations)?p.adaptations:[]){
+    for(const item of [...(Array.isArray(adaptation?.beats)?adaptation.beats:[]),...(Array.isArray(adaptation?.panelPlans)?adaptation.panelPlans:[])])if(item && item.chapterId!==undefined&&(typeof item.chapterId!=="string"||(p.source.chapters!==undefined&&!chapterIds.has(item.chapterId))))throw new Error("invalid-backup");
+  }
+  for(const item of Array.isArray(p.panels)?p.panels:[])if(item && item.chapterId!==undefined&&(typeof item.chapterId!=="string"||(p.source.chapters!==undefined&&!chapterIds.has(item.chapterId))))throw new Error("invalid-backup");
   record(p.style);
   for (const key of ["id", "name", "promptText"]) string(p.style[key]);
   if (p.style.promptModules !== undefined) {

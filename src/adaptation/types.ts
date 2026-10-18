@@ -47,6 +47,7 @@ export type VisualCandidate = {
 };
 
 export type AdaptationBeat = {
+  chapterId?: string;
   id: string;
   order: number;
   title: string;
@@ -97,6 +98,7 @@ export type PanelCaption = {
 };
 
 export type PanelPlan = {
+  chapterId?: string;
   id: string;
   sequenceId?: string; // Read older projects; new panels are linked directly to beats.
   sourceBeatIds: string[];
@@ -143,6 +145,7 @@ export type StoryAdaptation = {
   panelPlans: PanelPlan[];
   imagePrompts: ImagePrompt[];
 };
+
 
 
 

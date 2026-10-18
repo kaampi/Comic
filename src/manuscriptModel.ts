@@ -1,3 +1,4 @@
+import { manuscriptChapters, chapterForRange } from "./manuscriptChapters";
 import type { ComicProject } from "./project";
 import type {
   AdaptationBeat,
@@ -51,7 +52,7 @@ export function activeManuscriptAdaptation(
   const source = project.source.textSnapshot ?? "";
   const previous = project.adaptations[0];
   if (previous)
-    return { ...previous, beats: anchorBeats(source, previous.beats) };
+    return { ...previous, beats: anchorBeats(source, previous.beats).map(beat=>{const chapter=chapterForRange(project,beat.sourceStart,beat.sourceEnd);return chapter?{...beat,chapterId:chapter.id}:beat;}) };
   const now = new Date().toISOString();
   return {
     id: id("adaptation"),
@@ -70,6 +71,12 @@ export function withAdaptation(
   project: ComicProject,
   adaptation: StoryAdaptation,
 ): ComicProject {
+  const chapterBeats=adaptation.beats.map(beat=>{const chapter=chapterForRange(project,beat.sourceStart,beat.sourceEnd);return chapter?{...beat,chapterId:chapter.id}:beat;});
+  adaptation={...adaptation,beats:chapterBeats,panelPlans:adaptation.panelPlans.map(panel=>{
+    const chapters=new Set(chapterBeats.filter(beat=>panel.sourceBeatIds.includes(beat.id)).map(beat=>beat.chapterId));
+    const chapterId=chapters.size===1?[...chapters][0]:undefined;
+    return chapterId?{...panel,chapterId}:panel;
+  })};
   const sceneId = "scene-adaptation-" + adaptation.id;
   const existing = new Set(project.adaptations.flatMap(a => a.panelPlans.map(p => p.id)));
   adaptation = { ...adaptation, panelPlans: adaptation.panelPlans.map(panel =>
@@ -125,6 +132,7 @@ export function withAdaptation(
         previous && old && old.locationId === plan.locationId
           ? previous.locationId
           : plan.locationId,
+      ...(plan.chapterId?{chapterId:plan.chapterId}:{}),
       adaptationPanelPlanId: plan.id,
       sourceBeatIds: plan.sourceBeatIds,
     };
@@ -275,6 +283,7 @@ export function appendAiBeats(
 export function editManuscript(
   project: ComicProject,
   nextSource: string,
+  change?: {start:number;oldEnd:number;newEnd:number},
 ): ComicProject {
   const previousSource = project.source.textSnapshot ?? "";
   if (previousSource === nextSource) return project;
@@ -294,7 +303,12 @@ export function editManuscript(
     oldEnd--;
     newEnd--;
   }
+  if(change){start=change.start;oldEnd=change.oldEnd;newEnd=change.newEnd;}
   const delta = newEnd - oldEnd;
+  if(!change && manuscriptChapters(project).length){
+    const chapter=manuscriptChapters(project).find(c=>start>=c.start&&oldEnd<=c.end);
+    return chapter?editManuscriptChapter(project,chapter.id,nextSource.slice(chapter.start,chapter.end+delta)):project;
+  }
   const adaptations = project.adaptations.map((adaptation) => {
     const beats = anchorBeats(previousSource, adaptation.beats).map((beat) => {
       if (beat.sourceStart === undefined || beat.sourceEnd === undefined)
@@ -334,6 +348,19 @@ export function editManuscript(
     adaptations,
   };
 }
+export function editManuscriptChapter(project:ComicProject,chapterId:string,text:string):ComicProject {
+  const chapters=manuscriptChapters(project),chapter=chapters.find(c=>c.id===chapterId);
+  if(!chapter)return project;
+  const source=project.source.textSnapshot??"",previous=source.slice(chapter.start,chapter.end);
+  if(previous===text)return project;
+  let start=0,oldEnd=previous.length,newEnd=text.length;
+  while(start<Math.min(previous.length,text.length)&&previous[start]===text[start])start++;
+  while(oldEnd>start&&newEnd>start&&previous[oldEnd-1]===text[newEnd-1]){oldEnd--;newEnd--;}
+  const delta=text.length-previous.length;
+  const result=editManuscript(project,source.slice(0,chapter.start)+text+source.slice(chapter.end),{start:chapter.start+start,oldEnd:chapter.start+oldEnd,newEnd:chapter.start+newEnd});
+  return {...result,source:{...result.source,chapters:chapters.map(c=>c.id===chapter.id?{...c,end:c.start+text.length}:c.order>chapter.order?{...c,start:c.start+delta,end:c.end+delta}:c)}};
+}
+
 export function patchManuscriptBeat(
   project: ComicProject,
   beatId: string,
@@ -518,4 +545,5 @@ export function ensureBeatPanels(project: ComicProject): ComicProject {
     ],
   });
 }
+
 

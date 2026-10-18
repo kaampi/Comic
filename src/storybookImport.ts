@@ -7,7 +7,7 @@ export type StoryBookImport = {
   title: string;
   text: string;
   illustrationStyle: string;
-  chapters: Array<{ id: string; title: string; text: string }>;
+  chapters: Array<{ id: string; title: string; text: string; sourceIndex?: number }>;
   characters: Array<{ id: string; name: string; description: string; pronoun?: string; approximateAge?: number }>;
   locations: Array<{ id: string; name: string; description: string }>;
 };
@@ -88,14 +88,15 @@ export function parseStoryBookExport(raw: string): StoryBookImport {
     throw err;
   }
 
+  const chapters=[...manuscript.chapters].sort((a,b)=>a.sequence_index-b.sequence_index);
   return {
     kind: "storybook-ai.manuscript",
     format: 1,
     sourceBookId: manuscript.sourceBookId,
     title: manuscript.title || "Importerat StoryBook-manus",
-    text: manuscript.chapters.map((chapter) => chapter.prose).filter(Boolean).join("\n\n"),
+    text: chapters.map((chapter) => chapter.prose).join("\n\n"),
     illustrationStyle: manuscript.illustrationStyle,
-    chapters: manuscript.chapters.map((chapter) => ({ id: chapter.id, title: chapter.title || "Kapitel", text: chapter.prose })),
+    chapters: chapters.map((chapter) => ({ id: chapter.id, title: chapter.title || "Kapitel", text: chapter.prose, sourceIndex: chapter.sequence_index })),
     characters: entitiesOfKind(manuscript, "characters").map((entity) => ({
       id: entity.entity_ref,
       name: entity.name,
@@ -141,3 +142,4 @@ export function parseStoryBookCards(raw: string): StoryBookCardsImport {
 export function cardMatchesBook(card: StoryBookCard, bookId: string): boolean {
   return Boolean(bookId) && card.id.startsWith(`sb-${bookId}-`);
 }
+

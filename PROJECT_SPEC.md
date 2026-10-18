@@ -155,6 +155,16 @@ Textändringar före ett beat flyttar dess källkoppling. Ändringar i ett länk
 
 Prototypen sparar album och bilder i webbläsarens lokala IndexedDB med atomiska transaktioner. Befintliga localStorage-album flyttas först efter validering; textkopian tas bort först när databaskopian är sparad och verifierad. I äldre miljöer utan IndexedDB används localStorage som reserv. Projektmappar, separata bildfiler och atomisk sparning enligt avsnitt 3.2 kvarstår som mål för desktoplagringen.
 
+### 7.2 Kapitel från StoryBook
+
+StoryBook är sanningskällan. Import av dess export för andra appar är enkelriktad och skapar en självständig arbetskopia i ComicBook. Endast ComicBooks repository och lagring ändras. Ingen anslutning till StoryBooks repository, databas eller originalfil införs och ingen återexport till StoryBook görs.
+
+Kapitel behåller rubriker, ordning enligt exportens `sequence_index`, ursprungliga kapitel-ID:n och exakt importerad originaltext inklusive radslut och tomma kapitel. Varje kapitel får även ett eget stabilt ComicBook-ID och ett intervall i arbetskopians sammanhängande text. Originaltexten förblir en skrivskyddad lokal referens; textredigering ändrar bara arbetskopian. Beats och panelplaner har kapitelkopplingar, medan deras källpositioner fortsatt är globala och stabila vid kapitelbyte.
+
+Manusvyn visar ett kapitel åt gången med kapitelval och föregående/nästa. Beatlista och beatnavigering följer valt kapitel. Man kan analysera en markering eller uttryckligen välja Föreslå beats för kapitlet. Navigation och import startar aldrig AI. Kapitelredigering bevarar andra kapitel, käll-ID:n, originalreferenser, bilder, sparade prompter och sidlayout; senare textintervall förskjuts och ändrade beats/paneler markeras för granskning.
+
+Kapiteldata följer lokal lagring och albumbackup; ogiltiga eller överlappande intervall och okända kapitelreferenser avvisas vid återställning. Äldre album fungerar utan kapitel. Tidigare StoryBook-importer får återställda kapitel endast om de bevarade scenkopiorna exakt motsvarar hela texten; gränser eller förlorade ursprungliga kapitel-ID:n gissas aldrig. Inläsning och jämförelse av en ny StoryBook-export mot pågående adaption ingår inte i detta steg.
+
 ## 8. Sidplanerare
 
 Första versionen använder sidmallar. Fri drag-and-drop och rutnät är en senare utbyggnad.

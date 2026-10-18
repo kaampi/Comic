@@ -1,3 +1,4 @@
+import { importManuscriptChapters } from "./manuscriptChapters";
 import { PanelMoveTarget } from "./PanelMoveTarget";
 import { usePanelMove } from "./usePanelMove";
 import { relocatePanel } from "./panelMove";
@@ -678,7 +679,8 @@ export function App() {
       if(card?.portraitDataUrl) portraits[character.id]=card.portraitDataUrl;
       if(card){character.description=card.personality||character.description;character.visualIdentity=card.appearance||"";character.pronoun=card.pronoun??character.pronoun;character.approximateAge=card.approximateAge??character.approximateAge;}
     }
-    const project: ComicProject={...base,pageDefaults:{...appPageGrid},source:{type:"storybook",textSnapshot:storyBookImport.text,storyBookId:storyBookImport.sourceBookId||undefined},references:{characterPortraits:portraits},
+    const importedManuscript=importManuscriptChapters(storyBookImport.chapters);
+    const project: ComicProject={...base,pageDefaults:{...appPageGrid},source:{type:"storybook",textSnapshot:importedManuscript.text,chapters:importedManuscript.chapters,storyBookId:storyBookImport.sourceBookId||undefined},references:{characterPortraits:portraits},
       characters:importedCharacters,
       locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:""})):[],
       scenes:storyBookImport.chapters.filter((chapter)=>chapter.text).map((chapter)=>({id:"scene-"+crypto.randomUUID(),title:chapter.title,sourceText:chapter.text,panelIds:[]}))

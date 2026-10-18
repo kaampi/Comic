@@ -300,3 +300,11 @@
 .beat-inline-panel-group > .section-heading {
   justify-content: flex-end;
 }
+
+
+.manuscript-chapters { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.manuscript-chapters label { display:grid; gap:5px; flex:1; min-width:0; }
+.manuscript-chapters select { width:100%; min-width:0; }
+.manuscript-chapters > span { white-space:nowrap; font-variant-numeric:tabular-nums; }
+.manuscript-original { margin-top:16px; }
+.manuscript-original pre { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; padding:16px; border:1px solid var(--border); }

@@ -125,10 +125,10 @@ Use foreground images for a character, object or decoration that crosses panel b
 
 Once you are comfortable with the editor, use Manuscript to plan a longer story. A manuscript is the source text; a beat is a meaningful story moment; a panel plan describes one illustration. A page frame is where that panel is placed in the layout.
 
-1. Enter your source text in Manuscript, or create an album from a StoryBook export. Importing copies the content into ComicBook AI and does not change StoryBook.
+1. Enter your source text in Manuscript, or create an album from a StoryBook export. Importing copies the content into ComicBook AI and does not change StoryBook. Imported books keep their chapters: choose a chapter above the manuscript or use Previous chapter and Next chapter. The original imported text remains available as a read-only reference; edits affect only the ComicBook working copy.
 2. Select a short passage in the manuscript and use the selection menu to create a beat. Choose a moment that can be shown clearly.
 3. Give the beat one or more panel plans. Describe the visible action and prepare dialogue or captions separately from the illustration.
-4. If you want help suggesting beats, configure a local text model in Settings first. The model proposes visual moments with separate event summaries and drawable scene descriptions. Review and edit them before adding them to your plan.
+4. If you want help suggesting beats, configure a local text model in Settings first. The model proposes visual moments with separate event summaries and drawable scene descriptions. Review and edit them before adding them to your plan. For imported books, Suggest beats for chapter analyses only the current chapter, while selection analysis uses only your marked passage.
 
 > One sentence does not have to equal one panel. An action may need several images; a long description may need only one establishing shot.
 

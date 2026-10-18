@@ -1,3 +1,4 @@
+import { manuscriptChapters } from "./manuscriptChapters";
 import { BeatAnalysisDialog } from "./BeatAnalysisDialog";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ComicProject } from "./project";
@@ -12,6 +13,7 @@ import {
   ensureBeatPanels,
   appendAiBeats,
   editManuscript,
+  editManuscriptChapter,
   generateBeatPanelPrompt,
   patchBeatPanel,
   patchManuscriptBeat,
@@ -97,6 +99,12 @@ export function ManuscriptWorkspace({
   const t = manuscriptText(locale),
     source = project.source.textSnapshot ?? "",
     adaptation = activeManuscriptAdaptation(project);
+  const chapters=manuscriptChapters(project);
+  const [chapterId,setChapterId]=useState<string|null>(chapters[0]?.id??null);
+  const chapter=chapters.find(c=>c.id===chapterId)??chapters[0];
+  const viewStart=chapter?.start??0,viewEnd=chapter?.end??source.length;
+  const scopedBeats=chapter?adaptation.beats.filter(b=>b.chapterId===chapter.id||(b.sourceStart!==undefined&&b.sourceEnd!==undefined&&b.sourceStart<viewEnd&&b.sourceEnd>viewStart)):adaptation.beats;
+  const ct=locale==="sv"?{chapter:"Kapitel",previous:"Föregående kapitel",next:"Nästa kapitel",analyse:"Föreslå beats för kapitlet",copy:"Lokal arbetskopia från StoryBook. Ändringar här påverkar inte originalet.",original:"Importerad originaltext (skrivskyddad)"}:locale==="nb"?{chapter:"Kapittel",previous:"Forrige kapittel",next:"Neste kapittel",analyse:"Foreslå beats for kapittelet",copy:"Lokal arbeidskopi fra StoryBook. Endringer her påvirker ikke originalen.",original:"Importert originaltekst (skrivebeskyttet)"}:{chapter:"Chapter",previous:"Previous chapter",next:"Next chapter",analyse:"Suggest beats for chapter",copy:"Local working copy from StoryBook. Changes here do not affect the original.",original:"Imported original text (read-only)"};
   const [selected, setSelected] = useState<string | null>(
       adaptation.beats[0]?.id ?? null,
     ),
@@ -151,6 +159,12 @@ export function ManuscriptWorkspace({
       abort.current?.abort();
     };
   }, [source]);
+  const switchChapter=(id:string)=>{caret.current=null;setChapterId(id);};
+  useEffect(()=>{
+    request.current++;abort.current?.abort();setBusy(false);setRange(null);setMenu(null);setDraft(null);setMessage("");caret.current=null;
+    if(chapter)setSelected(scopedBeats[0]?.id??null);
+  },[chapter?.id]);
+  const updateSource=(p:ComicProject,value:string)=>chapter?editManuscriptChapter(p,chapter.id,value):editManuscript(p,value);
   useEffect(() => {
     try {
       localStorage.setItem(
@@ -169,12 +183,12 @@ export function ManuscriptWorkspace({
     const prefix = r.cloneRange();
     prefix.selectNodeContents(root);
     prefix.setEnd(r.startContainer, r.startOffset);
-    const start = prefix.toString().length;
+    const start = viewStart + prefix.toString().length;
     return { start, end: start + r.toString().length };
   };
   useLayoutEffect(() => {
     if (!caret.current || !editor.current) return;
-    const desired = caret.current;
+    const desired = {start:caret.current.start-viewStart,end:caret.current.end-viewStart};
     caret.current = null;
     const walker = document.createTreeWalker(
       editor.current,
@@ -199,7 +213,7 @@ export function ManuscriptWorkspace({
       }
       total += length;
     }
-  }, [source, selected]);
+  }, [source, selected, chapter?.id]);
   const capture = () => {
     const next = readRange();
     setRange(next && next.end > next.start ? next : null);
@@ -219,14 +233,15 @@ export function ManuscriptWorkspace({
     });
     setMenu(null);
   };
-  const analyse = async () => {
+  const analyse = async (chapterRange?:TextRange) => {
     setMenu(null);
-    if (!range) return;
+    const target=chapterRange??range;
+    if (!target) return;
     if (!settings.servers[settings.engine].model.trim()) {
       setMessage(t.noModel);
       return;
     }
-    const scope = { ...range },
+    const scope = { ...target },
       snapshot = source;
     abort.current?.abort();
     const controller = new AbortController();
@@ -278,8 +293,8 @@ export function ManuscriptWorkspace({
       if (token === request.current) setBusy(false);
     }
   };
-  const beat = adaptation.beats.find((b) => b.id === selected),
-    index = adaptation.beats.findIndex((b) => b.id === selected);
+  const beat = scopedBeats.find((b) => b.id === selected),
+    index = scopedBeats.findIndex((b) => b.id === selected);
   const beatPanels = adaptation.panelPlans.filter((plan) =>
     plan.sourceBeatIds.includes(beat?.id ?? ""),
   );
@@ -289,12 +304,12 @@ export function ManuscriptWorkspace({
   };
   const boundaries = [
     ...new Set([
-      0,
-      source.length,
-      ...adaptation.beats.flatMap((b) =>
+      viewStart,
+      viewEnd,
+      ...scopedBeats.flatMap((b) =>
         b.sourceStart === undefined || b.sourceEnd === undefined
           ? []
-          : [b.sourceStart, b.sourceEnd],
+          : [b.sourceStart, b.sourceEnd].filter(offset=>offset>=viewStart&&offset<=viewEnd),
       ),
     ]),
   ].sort((a, b) => a - b);
@@ -376,7 +391,7 @@ export function ManuscriptWorkspace({
     selection.addRange(target);
     caret.current = readRange();
     const value = editor.current.textContent ?? "";
-    onUpdate((p) => editManuscript(p, value));
+    onUpdate((p) => updateSource(p, value));
   };
   return (
     <section
@@ -388,10 +403,12 @@ export function ManuscriptWorkspace({
       }
     >
       <div className="manuscript-document">
+        {chapter?<nav className="manuscript-chapters" aria-label={ct.chapter}><button type="button" className="text-button" aria-label={ct.previous} disabled={chapter.order===1} onClick={()=>switchChapter(chapters[chapter.order-2].id)}>←</button><label>{ct.chapter}<select value={chapter.id} onChange={e=>switchChapter(e.target.value)}>{chapters.map(c=><option key={c.id} value={c.id}>{c.order}. {c.title}</option>)}</select></label><span>{chapter.order} / {chapters.length}</span><button type="button" className="text-button" aria-label={ct.next} disabled={chapter.order===chapters.length} onClick={()=>switchChapter(chapters[chapter.order].id)}>→</button></nav>:null}
+        {chapter?<p className="quiet">{ct.copy}</p>:null}
         <div className="section-heading">
-          <h2>{t.zoom}</h2>
+          <h2>{chapter?.title??t.zoom}</h2>
           <span>
-            {adaptation.beats.length} {t.count}
+            {scopedBeats.length} {t.count}
           </span>
         </div>
         <p className="quiet">{t.hint}</p>
@@ -414,6 +431,7 @@ export function ManuscriptWorkspace({
           >
             {t.ai}
           </button>
+          {chapter?<button type="button" className="text-button" disabled={busy||!source.slice(viewStart,viewEnd).trim()} onClick={()=>void analyse({start:viewStart,end:viewEnd})}>{ct.analyse}</button>:null}
           {range ? (
             <small>
               {t.mark}: {range.end - range.start} {t.chars}
@@ -433,7 +451,7 @@ export function ManuscriptWorkspace({
           onInput={(e) => {
             caret.current = readRange();
             const value = e.currentTarget.textContent ?? "";
-            onUpdate((p) => editManuscript(p, value));
+            onUpdate((p) => updateSource(p, value));
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -465,6 +483,7 @@ export function ManuscriptWorkspace({
           }}
           dangerouslySetInnerHTML={{ __html: markedSource }}
         />
+        {chapter?<details className="manuscript-original"><summary>{ct.original}</summary><pre>{chapter.originalText}</pre></details>:null}
       </div>
       <div
         className="beat-resizer"
@@ -633,18 +652,18 @@ export function ManuscriptWorkspace({
                 type="button"
                 aria-label={t.previous}
                 disabled={index <= 0}
-                onClick={() => choose(adaptation.beats[index - 1].id)}
+                onClick={() => choose(scopedBeats[index - 1].id)}
               >
                 ←
               </button>
               <strong>
-                {t.beat} {index + 1} {t.of} {adaptation.beats.length}
+                {t.beat} {index + 1} {t.of} {scopedBeats.length}
               </strong>
               <button
                 type="button"
                 aria-label={t.next}
-                disabled={index >= adaptation.beats.length - 1}
-                onClick={() => choose(adaptation.beats[index + 1].id)}
+                disabled={index >= scopedBeats.length - 1}
+                onClick={() => choose(scopedBeats[index + 1].id)}
               >
                 →
               </button>
@@ -658,8 +677,8 @@ export function ManuscriptWorkspace({
                   return removeManuscriptBeat(p, beat.id);
                 });
                 setSelected(
-                  adaptation.beats[index + 1]?.id ??
-                    adaptation.beats[index - 1]?.id ??
+                  scopedBeats[index + 1]?.id ??
+                    scopedBeats[index - 1]?.id ??
                     null,
                 );
               }}
@@ -1126,7 +1145,7 @@ export function ManuscriptWorkspace({
         )}
         <details className="manuscript-beat-list" open>
           <summary>{t.beatList}</summary>
-          {adaptation.beats.map((b) => (
+          {scopedBeats.map((b) => (
             <button
               type="button"
               className={selected === b.id ? "is-active" : ""}

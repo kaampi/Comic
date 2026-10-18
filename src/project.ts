@@ -1,3 +1,4 @@
+import type { ManuscriptChapter } from "./manuscriptChapters";
 import { saveProjectData } from "./projectSaveStatus";
 import { renderOptionsForStyle, type RenderOptions } from "./styleColorMode";
 import type { PanelBorderStyle } from "./panelBorder";
@@ -56,7 +57,7 @@ export type ComicProject = {
   title: string;
   createdAt: string;
   updatedAt: string;
-  source: { type: ProjectSource; textSnapshot?: string; storyBookId?: string };
+  source: { type: ProjectSource; textSnapshot?: string; storyBookId?: string; chapters?: ManuscriptChapter[] };
   references?: { characterPortraits?: Record<string, string> };
   style: IllustrationStyle;
   promptStyle?: AlbumPromptStyle;
@@ -69,7 +70,7 @@ export type ComicProject = {
   locations: Array<{ id: string; name: string; description: string; visualIdentity: string; sourceId?: string }>;
   scenes: Array<{ id: string; title: string; sourceText: string; panelIds: string[] }>;
   panels: Array<{
-    id: string; sceneId: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string;
+    id: string; sceneId: string; chapterId?: string; order: number; action: string; dialogue: string; narration: string; imagePrompt: string;
     characterIds: string[]; locationId?: string; adaptationPanelPlanId?: string; sourceBeatIds?: string[];
     image?: PanelImage;
   }>;

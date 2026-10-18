@@ -22,6 +22,7 @@ export function panelForBeat(
   return {
     id: id("panel-plan"),
     sourceBeatIds: [beat.id],
+    ...(beat.chapterId?{chapterId:beat.chapterId}:{}),
     order,
     title: variation ? `${beat.title} · ${variation + 1}` : beat.title,
     purpose: beat.beatType,
@@ -70,3 +71,4 @@ export function panelize(
   }
   return panels;
 }
+
