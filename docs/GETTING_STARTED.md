@@ -37,7 +37,7 @@ This guide describes the current beta. Some features and labels may change. The 
 For your first test, tell a simple three-panel story: someone arrives, notices something unexpected, and reacts. Have three PNG, JPEG or WebP pictures ready. Photos or sketches work just as well as AI illustrations.
 
 1. On the home screen, choose Create pages directly. Give the album a name, such as My first comic. The other start cards open a manuscript, import a StoryBook export or open a saved project.
-2. Choose a visual style by opening a style group. Only one group opens at a time. Compare the large preview images and select a style; your selection stays visible above the groups. Styles without a preview are labelled. Then select Create project.
+2. Choose a visual style by opening a style group. Only one group opens at a time. Compare the large preview images and select a style; your selection stays visible above the groups. Styles without a preview are labelled. Use Enlarge on a preview to inspect the image in a lightbox, and Original size to view its available resolution. Escape, Close image or the backdrop closes only the image and leaves your style choice and draft intact. The same control is available in Style templates. Then select Create project.
 3. The album opens directly in Pages with an empty first page ready for your layout. Recently opened albums on the home screen return to the last workspace you used. Open a project shows all local albums and offers album backup restoration.
 
 > You do not need an AI account, a local model or a StoryBook project for this exercise. The style template helps build image prompts; it does not repaint pictures you upload.

@@ -1,3 +1,4 @@
+import { StyleImageZoom } from "./StyleImageZoom";
 import { ProjectStart, ProjectChooser, readRecentVisits, recordRecentVisit, recentAlbums, type StartRoute } from "./ProjectStart";
 import { NewAlbumStylePicker } from "./NewAlbumStylePicker";
 import { importManuscriptChapters } from "./manuscriptChapters";
@@ -1153,7 +1154,7 @@ export function App() {
                     const resolvedPreviewImage = previewImage;
                     const lineFallback = linesOnly && !style.linePreviewImage && Boolean(style.previewImage);
                     return <article className={active?"style-card is-active":"style-card"} key={style.id} onClick={()=>activeProject&&applyStyleToActiveProject(style)}>
-                      <div className={lineFallback?"style-card-preview is-line-fallback":"style-card-preview"}>{resolvedPreviewImage?<img key={resolvedPreviewImage} src={resolvedPreviewImage} alt="" loading="lazy" decoding="async" />:<span>{tr("noImage")}</span>}<span className="style-preview-mode-badge">{supportedColorModes(style).map(mode => mode === "color" ? (locale === "sv" ? "FÄRG" : "COLOR") : mode === "grayscale" ? (locale === "sv" ? "GRÅSKALA" : "GRAYSCALE") : (locale === "sv" ? "LINJER" : "LINES")).join(" / ")}</span></div>
+                      <div className={lineFallback?"style-card-preview is-line-fallback":"style-card-preview"}>{resolvedPreviewImage?<img key={resolvedPreviewImage} src={resolvedPreviewImage} alt="" loading="lazy" decoding="async" />:<span>{tr("noImage")}</span>}<StyleImageZoom src={resolvedPreviewImage} name={style.name} locale={locale} grayscale={lineFallback} compact /><span className="style-preview-mode-badge">{supportedColorModes(style).map(mode => mode === "color" ? (locale === "sv" ? "FÄRG" : "COLOR") : mode === "grayscale" ? (locale === "sv" ? "GRÅSKALA" : "GRAYSCALE") : (locale === "sv" ? "LINJER" : "LINES")).join(" / ")}</span></div>
                       <button className="style-card-edit" type="button" title={custom?tr("edit"):tr("duplicate")} onClick={(e)=>{e.stopPropagation(); custom?setStyleDraft({...style}):duplicateStyle(style);}}>✎</button>
                       <div className="style-card-copy"><h2>{style.name}</h2>{style.visualReferences?.length ? <small className="quiet">{locale === "sv" ? "Bildspråksreferenser" : "Visual references"}: {style.visualReferences.join(" · ")}</small> : null}<p>{stylePromptForMode(style, colorMode)}</p><span className="style-genre">{styleGroupLabel(style.genre, locale)}{active?` · ${tr("activeStyle")}`:""}</span></div>
                     <StyleTags style={style} value={organization} onChange={updateOrganization} sv={locale === "sv"} />
