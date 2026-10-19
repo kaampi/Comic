@@ -1,6 +1,6 @@
 # ComicBook AI — aktuella uppgifter
 
-Uppdaterad 2026-10-09. IDML-export (beta), sidmarginaler och mellanrum mellan bildrutor finns på main.
+Uppdaterad 2026-10-19. Exportkontroller, albumkort och den nya startguiden finns på main.
 
 ## Genomfört
 
@@ -8,6 +8,12 @@ Uppdaterad 2026-10-09. IDML-export (beta), sidmarginaler och mellanrum mellan bi
 - [x] Mellanrum mellan bildrutornas kolumner och rader i millimeter.
 - [x] Gemensam geometri för sidvy, export och drag/släpp; inställningar följer med backup.
 - [x] IDML-export med separata lager, länkade bilder och redigerbar text/vektorgeometri.
+
+- [x] Startguide för namn, bildstil och textutseende; stora stilbilder med lightbox.
+- [x] Albumkort med omslag, introduktion och StoryBook-märkning; thumbnails på startsidan och i projektlistan.
+- [x] Kapitel från StoryBook och flödet Manus → Beats → Bildmanus → Bilder → Sidor.
+- [x] Flytt av paneler inom sidan med långtryck, fri dragning och geléeffekt.
+- [x] Sidövergripande förgrundsbilder med egna textlager.
 
 ## Pågående
 
@@ -19,7 +25,8 @@ Uppdaterad 2026-10-09. IDML-export (beta), sidmarginaler och mellanrum mellan bi
 
 - [x] Länka prat- och tankebubblor med förbindelser; separata redigerbara textområden och svansar, justerbar förbindelsebredd, gemensam kontur utan invändiga ramlinjer samt export inklusive IDML.
 - [x] Blandad typografi inom en textruta: markera text och ändra typsnitt, storlek och vikt för just markeringen. Radbrytning och radhöjd följer textdelarna. Direktredigering, återställning, lokal lagring, backup och export inklusive IDML:s teckenformat.
-- [ ] Kontroller före export: text som inte får plats, saknade bilder och låg effektiv bildresolution.
+- [x] Kontroller före export: uppskattad textöverfyllnad, tomma/oläsbara bilder och låg effektiv bildupplösning vid exportens fysiska storlek. Visa öppnar berörd panel/text. Varningar tillåter läskopior; oläsbara bilder stoppar exporten.
+- [ ] Flytta befintliga paneler mellan sidor med bibehållet innehåll och stabila ID:n.
 
 ## Senare
 
@@ -28,4 +35,3 @@ Uppdaterad 2026-10-09. IDML-export (beta), sidmarginaler och mellanrum mellan bi
 - [ ] CBZ-export.
 
 Se PROJECT_SPEC.md för produktgränser och den övergripande planen. StoryBook får endast läsas genom användarvald export och får aldrig ändras av ComicBook.
-

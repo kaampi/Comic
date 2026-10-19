@@ -1,6 +1,7 @@
 import { parseOrganization, type StyleOrganization } from "./styleOrganization";
 import { PanelBorderControls } from "./PanelBorderControls";
 import { albumPanelBorder } from "./panelBorder";
+import type { ExportIssue } from "./exportPreflight";
 import { AlbumExportPanel } from "./AlbumExportPanel";
 import { PageSpacingEditor } from "./PageSpacingEditor";
 import { PageFormatEditor } from "./PageFormatEditor";
@@ -35,6 +36,7 @@ export function AlbumMenu({
   onRetrySave,
   section,
   onSection,
+  onInspectExportIssue,
 }: {
   project: ComicProject | null;
   locale: Locale;
@@ -47,6 +49,7 @@ export function AlbumMenu({
   saveError?: string;
   saving?: boolean;
   onRetrySave?: () => void;
+  onInspectExportIssue?: (issue: ExportIssue) => void;
   section: AlbumSection;
   onSection: (section: AlbumSection) => void;
 }) {
@@ -316,7 +319,7 @@ export function AlbumMenu({
                 </p> : null}
               </>
             ) : null}
-            {mode === "export" && project ? <AlbumExportPanel key={project.id} project={project} locale={locale}/> : null}
+            {mode === "export" && project ? <AlbumExportPanel key={project.id} project={project} locale={locale} onInspect={onInspectExportIssue}/> : null}
             {mode === "backup" && (
               <>
                 {project && (

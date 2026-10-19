@@ -39,7 +39,7 @@ For your first test, tell a simple three-panel story: someone arrives, notices s
 1. On the home screen, choose Create pages directly or Start with a manuscript. Enter the album name in the first wizard step and choose Next. You can rename the album later.
 2. Choose the illustration style in step two. Open a style group, compare three large previews per row on larger screens, and select a style. Use Enlarge and Original size to inspect an image without changing the selection. Then choose Next.
 3. In step three, click the Speech bubble, Thought bubble or Caption box example and adjust font, size, shape, colors and border. The live examples use the page renderer. Keep the defaults if you prefer. Choose Create album to save and open Pages with an empty first page, or Manuscript for a text-based album. Back keeps your choices; Cancel creates no album. All text defaults remain editable in Album settings.
-4. Import from StoryBook AI first opens the file chooser and import review, then follows the same three steps with the book name filled in. Nothing is saved until Create album. Open a project on the home screen lists local albums and offers backup restoration; recently opened albums return to their last workspace.
+4. Import from StoryBook AI first opens the file chooser and import review, then follows the same three steps with the book name filled in. Nothing is saved until Create album. Open a project on the home screen lists local albums and offers backup restoration; clicking a saved album opens its information card, where you can add a cover and introduction. Open album for editing returns to its last workspace.
 
 > You do not need an AI account, a local model or a StoryBook project for this exercise. The style template helps build image prompts; it does not repaint pictures you upload.
 
@@ -101,7 +101,7 @@ Albums are saved automatically in this browser on this device. There is no cloud
 Finish the exercise by looking at the exported page, where the grid and editing handles are hidden.
 
 1. Open Export in the album menu. Select PDF for a convenient reading copy, or PNG/JPEG for page images.
-2. Choose the pages and resolution, then select Download export. Multiple PNG/JPEG pages are packaged in a ZIP.
+2. Choose the pages and resolution. Pre-export check reviews text box space, empty or unreadable images, and effective image resolution at the printed size. Show opens the affected panel or text. Warnings allow draft exports; unreadable images must be replaced or removed. Then select Download export. Multiple PNG/JPEG pages are packaged in a ZIP.
 3. Open the downloaded file and check reading order, picture crops, text size, contrast and line wrapping.
 
 > IDML — InDesign / Affinity (beta) is for further editing in a page-layout application. Extract the entire ZIP before opening the IDML file, and check fonts, wrapping and layout after import.

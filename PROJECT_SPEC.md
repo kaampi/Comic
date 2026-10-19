@@ -279,6 +279,12 @@ Textpositioner lagras i ett gemensamt koordinatsystem så att redigerare och exp
 
 Första exporter: PNG per sida och PDF. CBZ paketerar sidbilder i stabil läsordning och kommer i nästa steg. Textoverflow, saknade bilder och resurser ska upptäckas före export. Typsnitt och upplösning måste ge läsbart resultat i vald sidstorlek.
 
+### 11.0 Kontroller före export
+
+Exportpanelen kontrollerar automatiskt de valda sidorna före PDF-, PNG-, JPEG- och IDML-export. Textens radbrytning, punktstorlek och blandade typografi mäts med samma mått som SVG-exporten. Text som överstiger textrutans rektangulära utrymme flaggas som möjlig överfyllnad; rundade bubbelsidor, fria panelkonturer och beskärning vid sidkanter behöver fortsatt granskas visuellt. Dolda SFX-texter ignoreras.
+
+Tomma bildrutor och rasterbilder under 300 effektiv dpi vid exportens fysiska storlek visas som varningar. Bildens inpassning, zoom och exportens contain/cover-anpassning ingår; ändrad raster-dpi skapar inte fler detaljer i originalbilden. Sidbakgrunder och förgrunder kontrolleras, men rena textlager kräver ingen bild. Oläsbara bilder stoppar export tills bilden ersatts eller tagits bort. Kontrollen läser endast lokala data-/blob-bilder och ändrar inte projektet. Varningar tillåter export av exempelvis läskopior med tomma rutor. Visa öppnar rätt panel/lager och markerar berörd text. Byte av sidor eller exportinställningar avbryter tidigare kontroll och export inväntar det aktuella resultatet.
+
 ### 11.1 Redigerbara bubbelförbindelser
 
 Kopplade prat- eller tankebubblor har två fästpunkter som kan flyttas längs respektive bubbels kontur och två oberoende kurvhandtag. En kubisk kurva ger både bågar och S-former. Fästvinklar lagras lokalt till bubblorna; kurvhandtag använder förbindelsens fysiska koordinater och följer flyttning, skalning och rotation. Vid kraftiga böjar begränsas handtag och faktisk bredd för att undvika övervikningar. Befintliga förbindelser behåller sin raka geometri tills de redigeras. Startbredd och slutbredd kan anges oberoende (2–80 procent av den gemensamma referensstorleken). Bredden interpoleras längs kurvans längd; skyddsbegränsningen vid skarpa böjar skalar båda ändarna lika så att förhållandet behålls. Äldre förbindelser använder sin befintliga bredd i båda ändarna. Återställ förbindelse tar bort kurvinställningar men bevarar båda bredderna och texterna.

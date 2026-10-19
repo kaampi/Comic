@@ -3,8 +3,9 @@ import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
 import { PageFormatEditor } from "./PageFormatEditor";
 import { albumPageFormat, pageDimensions, rasterDimensions } from "./pageFormat";
+import { checkExport, type ExportIssue } from "./exportPreflight";
 import type { ExportOptions } from "./albumExport";
-export function AlbumExportPanel({project, locale}: {project: ComicProject; locale: Locale}) {
+export function AlbumExportPanel({project, locale, onInspect}: {project: ComicProject; locale: Locale; onInspect?: (issue: ExportIssue) => void}) {
   const sv=locale==="sv";
   const [options,setOptions]=useState<ExportOptions>(()=>({format:"pdf",pageIds:project.pages.map(p=>p.id),pageFormat:albumPageFormat(project),dpi:300,fit:"contain",jpegQuality:.95}));
   const [busy,setBusy]=useState(false), [progress,setProgress]=useState([0,0]), [error,setError]=useState(""), [complete,setComplete]=useState("");
@@ -12,9 +13,20 @@ export function AlbumExportPanel({project, locale}: {project: ComicProject; loca
   useEffect(()=>()=>abort.current?.abort(),[]);
   let dimensions:ReturnType<typeof rasterDimensions>|undefined;try{dimensions=rasterDimensions(options.pageFormat,options.dpi);}catch{}
   const pages=[...project.pages].sort((a,b)=>a.number-b.number), selected=pages.filter(p=>options.pageIds.includes(p.id));
-  const emptyImages=selected.reduce((n,p)=>n+p.placements.filter(l=>!l.image).length,0);
+  const [report,setReport]=useState<{project:ComicProject;options:ExportOptions;issues:ExportIssue[];failed?:boolean}|null>(null);
+  const [retry,setRetry]=useState(0);
+  useEffect(()=>{
+    const controller=new AbortController();setReport(null);
+    checkExport(project,options,controller.signal).then(issues=>{if(!controller.signal.aborted)setReport({project,options,issues});},()=>{if(!controller.signal.aborted)setReport({project,options,issues:[],failed:true});});
+    return()=>controller.abort();
+  },[project,options,retry]);
+  const current=report?.project===project && report.options===options?report:null;
+  const issues=current?.issues??[], errors=issues.some(issue=>issue.severity==="error");
+  const location=(issue:ExportIssue)=>`${sv?"Sida":"Page"} ${issue.pageNumber} · ${issue.layerKind==="background"?(sv?"Sidbakgrund":"Page background"):issue.layerKind==="foreground"?(sv?"Förgrund":"Foreground"):`${sv?"Panel":"Panel"} ${issue.panelNumber}`}`;
+  const message=(issue:ExportIssue)=>issue.kind==="empty-image"?(sv?"Bildrutan saknar bild och exporteras utan bild.":"This frame has no image and will export without one."):issue.kind==="unreadable-image"?(sv?"Bilden kan inte läsas. Byt ut eller ta bort den före export.":"The image cannot be read. Replace or remove it before exporting."):issue.kind==="low-resolution"?(sv?`Cirka ${issue.dpi} dpi i exportens storlek. Under rekommenderade 300 dpi för tryck.`:`About ${issue.dpi} DPI at export size. Below the recommended 300 DPI for print.`):(sv?"Texten kan vara för stor för textrutan. Öka rutan eller minska textstorleken.":"Text may not fit its text box. Enlarge the box or reduce the text size.");
   const source=pageDimensions(albumPageFormat(project)), target=pageDimensions(options.pageFormat), changedAspect=Math.abs(source.widthMm/source.heightMm-target.widthMm/target.heightMm)>.001;
   async function run() {
+    if(!current || current.failed || errors)return;
     const controller=new AbortController();abort.current=controller;setBusy(true);setError("");setComplete("");
     try {
       const { exportAlbum } = await import("./albumExport");
@@ -40,11 +52,20 @@ export function AlbumExportPanel({project, locale}: {project: ComicProject; loca
       </>:null}
       {options.format==="idml"?<p className="quiet">{sv?"ZIP med IDML och bildmapp. Packa upp allt före öppning. Bilder, panelramar, bubblor och text ligger på separata lager. Installera använda typsnitt och kontrollera radbrytning i InDesign eller Affinity. Text och bubblor som går utanför en panel beskärs inte i denna betaversion.":"ZIP with IDML and images. Extract everything before opening. Images, panel borders, bubbles and text use separate layers. Install the fonts used and check wrapping in InDesign or Affinity. Text and bubbles extending beyond a panel are not clipped in this beta."}</p>:null}
       {options.format==="jpeg"?<label>{sv?"JPEG-kvalitet (%)":"JPEG quality (%)"}<input type="number" min="50" max="100" value={Math.round(options.jpegQuality*100)} onChange={e=>setOptions({...options,jpegQuality:Math.max(.5,Math.min(1,Number(e.target.value)/100))})}/></label>:null}
-      {emptyImages?<p className="quiet">{emptyImages} {sv?"bildrutor saknar bild och exporteras med vit bakgrund.":"frames have no image and will export with a white background."}</p>:null}
-      <button type="button" className="primary-button" disabled={!selected.length||(options.format!=="idml"&&!dimensions)} onClick={()=>void run()}>{sv?"Ladda ner export":"Download export"}</button>
+      <section className="export-preflight" aria-labelledby="export-check-title" aria-busy={!current}>
+        <h3 id="export-check-title">{sv?"Kontroll före export":"Pre-export check"}</h3>
+        {!current?<p role="status">{sv?"Kontrollerar text och bilder…":"Checking text and images…"}</p>:current.failed?<><p role="alert">{sv?"Kontrollen kunde inte slutföras. Försök igen.":"The check could not be completed. Please try again."}</p><button type="button" onClick={()=>setRetry(value=>value+1)}>{sv?"Försök igen":"Retry"}</button></>:<>
+          <p role="status">{issues.length?`${issues.length} ${sv?"saker att granska":"items to review"}`:(sv?"Inga problem hittades i de valda sidorna.":"No issues found on the selected pages.")}</p>
+          {issues.length?<ul>{issues.map((issue,index)=><li key={`${issue.layerId}-${issue.kind}-${issue.overlayId??index}`}><div><strong>{location(issue)}</strong><p>{message(issue)}</p>{issue.excerpt?<q>{issue.excerpt}</q>:null}</div>{onInspect?<button type="button" className="text-button" onClick={()=>onInspect(issue)}>{sv?"Visa":"Show"}</button>:null}</li>)}</ul>:null}
+          <p className="quiet">{sv?"Textkontrollen uppskattar utrymmet i textrutan. Granska även rundade bubblor och fria panelkonturer visuellt. 300 dpi gäller bildens storlek på papper; högre export-dpi ger inte fler detaljer i originalbilden.":"Text checks estimate the text box space. Also inspect rounded bubbles and custom panel outlines visually. 300 DPI refers to the image's printed size; increasing export DPI adds no detail to the original image."}</p>
+          {issues.length&&!errors?<p>{sv?"Du kan exportera ändå, till exempel en läskopia med tomma rutor.":"You can still export, for example a reading copy with empty frames."}</p>:null}
+        </>}
+      </section>
+      <button type="button" className="primary-button" disabled={!selected.length||!current||Boolean(current.failed)||errors||(options.format!=="idml"&&!dimensions)} onClick={()=>void run()}>{sv?"Ladda ner export":"Download export"}</button>
     </fieldset>
     {busy?<><progress className="export-progress" value={progress[0]} max={progress[1]||1}/><p role="status">{sv?"Skapar sida":"Rendering page"} {progress[0]} / {progress[1]}</p><button type="button" onClick={()=>{abort.current?.abort();setBusy(false);}}>{sv?"Avbryt export":"Cancel export"}</button></>:null}
     {error?<p role="alert">{error}</p>:null}{complete?<p role="status">{sv?"Exportfil skapad":"Export file created"}: {complete}</p>:null}
   </div>;
 }
+
 
