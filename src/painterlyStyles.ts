@@ -117,7 +117,7 @@ Color Mode & Finish:
 Color with warm silk patina, subtle mineral pigments, and red seals. No grayscale or black-and-white. Traditional ink-and-pigment textures only. No digital gradients, photorealistic lens effects, glossy rendering, speech bubbles, comic panel borders, or narrative text boxes.`
   },
   {
-    id: 'print-vintage-halftone', previewImage: '/Styles/Painterly/print-vintage-halftone-color.jpg', linePreviewImage: '/Styles/Painterly/print-vintage-halftone-gray.jpg', name: 'Vintage indie halftone comic', genre: 'Drawing / Print', supportedColorModes: ['color', 'grayscale'],
+    id: 'print-vintage-halftone', previewImage: '/Styles/Verified/print-vintage-halftone-color.svg', name: 'Vintage indie halftone comic', genre: 'Drawing / Print', supportedColorModes: ['color', 'grayscale'],
     promptText: halftoneBase + '\n\n' + halftoneColor,
     modePromptText: { color: halftoneBase + '\n\n' + halftoneColor, grayscale: halftoneBase + '\n\n' + halftoneGray }
   }

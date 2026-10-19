@@ -420,5 +420,18 @@
     "generationMethod": "built-in imagegen; approved replacement test; text-only, no reference images",
     "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
     "promptNotes": "Archived exact replacement generation prompt. Editable library fields generalize scene-specific subject examples and mark counts; camera and staging remain separate. Standard application closing reminder. Existing style IDs and saved album snapshots retained."
+  },
+  {
+    "styleId": "print-vintage-halftone",
+    "name": "Vintage indie halftone comic",
+    "colorMode": "color",
+    "image": "print-vintage-halftone-color.svg",
+    "prompt": "print-vintage-halftone-prompt.txt",
+    "imageSha256": "a6fade1d8952a0be4c6ea63de466ce6a95b8faa935073fdfc92a534c69cd6820",
+    "originalImageSha256": "a3c655467521f200e4f082392a5c06fa01dd3c514b62946ae42bbb3b9d90b00c",
+    "promptSha256": "06d380b74f1d22141d0020c5cca10b49439c8cf0aef7b1ae128bc851f4b3969e",
+    "generationMethod": "built-in imagegen; exact application prompt; no reference images",
+    "previewEncoding": "WebP, 1400px maximum edge, quality 90; embedded in SVG",
+    "promptNotes": "Shared five-villager, horse-cart and abandoned-robot scene generated through scripts/build-style-preview-prompts.mjs. Replaces the bicycle workshop preview. Grayscale uses the existing CSS fallback from this color image. Style instructions and saved album snapshots remain unchanged."
   }
 ]

@@ -1,0 +1,27 @@
+-- MODULE 1: GLOBAL STYLE --
+Illustration style: Visual Style & Medium:
+A 2D vintage graphic novel and indie comic illustration with a tactile, analog print aesthetic. Clear, dark, slightly textured ink contours with natural hand-drawn variation in line weight. Combine confident outlines with selective finer sketch marks. Flat matte fills, with all intermediate shading and tonal transitions created through clearly visible Ben-Day-style dots, halftone screens, and patterned stippling. No smooth digital gradients.
+
+Drawing & Shading:
+A deliberately flat, graphic interpretation of the requested scene. Preserve recognizable characters, expressions, actions, and essential objects. Use readable forms and graphic value design while respecting the panel camera and perspective. Represent cast shadows, contact shadows, and recessed areas through solid ink accents and controlled dot patterns. Vary dot size, density, and spacing to create distinct tonal values. Keep the printed dots visible at the intended viewing size without obscuring faces or small details.
+
+Print Texture & Surface:
+Visible paper fibers, fine grain, subtle ink spread, occasional broken ink edges, and restrained print wear. Small scuffs and irregularities create a lived-in quality while preserving clean visual storytelling. Let the paper show through highlights and selected open areas without replacing the requested environment with an empty background. The finish evokes alternative comics, indie animation, and printed ephemera of the 1980s–1990s.
+
+Rendering Constraints:
+Traditional-looking ink and printed halftone textures. No glossy 3D rendering or airbrushed shading. Panel camera and effects remain separately controlled. No speech bubbles, comic panel borders, text boxes, or lettering.
+
+Color Mode:
+Use a matte, muted retro palette of dusty reds, faded blues, subdued ochres, and restrained greens, printed on warm off-white or pale beige paper. Preserve clear separation between the limited colors. Build shading with visible colored or black halftone dots over flat fills. Keep the paper tone subtle enough that the palette retains distinct hues.
+-- MODULE 2: CAMERA & COMPOSITION --
+Shot: establishing-wide.
+Eye-level camera angle
+Composition should read clearly in a full-width comic panel.
+Interpret perspective and focus within the chosen illustration style.
+-- MODULE 4: SUBJECT & ACTION --
+Comic panel illustration.
+Action and staging: A complete wide landscape scene, 16:9: a colossal abandoned humanoid robot sits on the right at the edge of a forest, leaning back against trees, rusty moss-covered blue-gray blocky armor, slit eyes and ribbed chest, huge bent legs stretched toward the foreground. On the left exactly five rural villagers watch with quiet curiosity: three standing people (a young adult man in a cream shirt and overalls holding a farm fork, a younger adult woman in a checked dress, and an elderly gray-haired woman in a dark blouse and patterned skirt), and two men seated on a wooden horse cart (an elderly bearded man in a brimmed hat and a man in a flat cap). A brown horse with a pale facial blaze stands near center in front of the cart. Two wooden farmhouses, fenced ploughed fields, a winding dirt road and distant deciduous trees occupy the left background; dense woodland is behind the robot; a shallow stream crosses the lower-right foreground. All five people, horse, cart and entire seated robot should be visible.
+Scene lighting: Soft natural daylight.
+Preserve character identity and clothing continuity with adjacent panels.
+Leave natural negative space for later speech balloons or captions.
+Do not render dialogue, captions, lettering, speech bubbles, watermarks, signatures, or UI.
