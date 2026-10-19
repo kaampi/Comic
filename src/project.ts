@@ -55,6 +55,8 @@ export type ComicProject = {
   format: 1;
   id: string;
   title: string;
+  introduction?: string;
+  cover?: { name: string; dataUrl: string };
   createdAt: string;
   updatedAt: string;
   source: { type: ProjectSource; textSnapshot?: string; storyBookId?: string; chapters?: ManuscriptChapter[] };

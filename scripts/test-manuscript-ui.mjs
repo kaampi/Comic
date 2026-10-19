@@ -445,6 +445,7 @@ try {
   await user.click(
     screen.getByRole("menuitem", { name: "Local AI test", exact: true }),
   );
+  await user.click(screen.getByRole("button", { name: /Öppna album för redigering/ }));
   const selectText = (start, end) => {
     const editor = screen.getByRole("textbox", { name: "Manus", exact: true });
     editor.focus();
@@ -1843,6 +1844,7 @@ try {
   const edgeView=render(React.createElement(App));
   try{
     await user.click(screen.getByRole('button',{name:/Diagonaltest/}));
+    await user.click(screen.getByRole('button',{name:/Öppna album för redigering/}));
     await user.click(screen.getByRole('button',{name:'Sidor',exact:true}));
     await user.click(screen.getByLabelText('ruta 5',{exact:true}));
     assert.equal(screen.getByLabelText('Marginal mellan rutor (mm)').value,'2');
@@ -1956,6 +1958,7 @@ try {
   const screenshotView=render(React.createElement(App));
   try{
     await user.click(screen.getByRole('button',{name:/Neighbor screenshot/}));
+    await user.click(screen.getByRole('button',{name:/Open album for editing/}));
     await user.click(screen.getByRole('button',{name:'Pages',exact:true}));
     await user.click(document.querySelectorAll('.drawn-panel')[2]);
     await user.selectOptions(screen.getByLabelText('Neighboring panel'),'2');

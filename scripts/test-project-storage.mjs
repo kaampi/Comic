@@ -47,10 +47,12 @@ try {
   const originalSet = dom.window.Storage.prototype.setItem;
   const project = createProject("Storage migration", "blank");
   project.pages = [{ id: "page-storage", number: 1, gridColumns: 3, gridRows: 5, placements: [{ id: "frame-storage", x: 0, y: 0, width: 1, height: 1, readingOrder: 1, overlays: [], image: { id: "image-storage", name: "image", dataUrl: "data:image/png;base64,AAAA", zoom: 2, offsetX: 10, offsetY: 20, fit: "contain" } }] }];
+  project.introduction="A synthetic album introduction.";project.cover={name:"cover.webp",dataUrl:"data:image/webp;base64,AAAA"};
   const legacy = JSON.stringify([project]);
   setFactory();localStorage.clear();localStorage.setItem(legacyKey, legacy);
   const migrated = await loadProjectCollection();
   assert.equal(migrated[0].id, project.id);
+  assert.equal(migrated[0].introduction,project.introduction);assert.deepEqual(migrated[0].cover,project.cover);
   assert.deepEqual(JSON.parse(JSON.stringify(migrated[0].pages[0].placements[0])), project.pages[0].placements[0]);
   assert.equal(localStorage.getItem(legacyKey), null);
   assert.equal((await loadProjectCollection())[0].id, project.id);
@@ -64,6 +66,7 @@ try {
   assert.ok(JSON.stringify([huge]).length * 2 > 11_000_000);
   await saveProjectCollection([huge]);
   assert.equal((await loadProjectCollection())[0].source.textSnapshot.length, 6_000_000);
+  assert.deepEqual((await loadProjectCollection())[0].cover,project.cover);assert.equal((await loadProjectCollection())[0].introduction,project.introduction);
   assert.equal(localStorage.getItem(legacyKey), null);
   await Promise.all(["Revision one", "Revision two", "Newest revision"].map(title => saveProjectCollection([{ ...project, title }])));
   assert.equal((await loadProjectCollection())[0].title, "Newest revision");
@@ -120,6 +123,7 @@ try {
   const user = userEvent.setup({ document });
   await user.click(screen.getByRole("button", { name: "Retry", exact: true }));
   await user.click(await screen.findByRole("button", { name: /Storage migration/ }));
+  await user.click(screen.getByRole("button", { name: /Open album for editing/ }));
   await user.click(screen.getByRole("button", { name: "Album settings", exact: true }));
   const dialog = screen.getByRole("dialog", { name: "Album settings" });
   dom.window.Storage.prototype.setItem = function(key, value) { if (key === legacyKey) throw new DOMException("Full", "QuotaExceededError"); return originalSet.call(this, key, value); };

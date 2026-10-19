@@ -1,0 +1,11 @@
+.guide-card.album-details-dialog{width:min(900px,94vw);max-width:900px;box-sizing:border-box;max-height:90dvh;overflow:auto}
+.album-card h1{font-family:var(--font-prose);font-size:clamp(1.8rem,4vw,2.6rem);font-weight:400;overflow-wrap:anywhere;margin:8px 0 14px}
+.album-source-tag{display:inline-block;padding:5px 10px;border:1px solid var(--border);border-radius:20px;font-size:.75rem;color:var(--ink);background:var(--raised)}
+.album-card-body{display:grid;grid-template-columns:minmax(150px,240px) minmax(0,1fr);gap:32px;margin:28px 0}
+.album-cover{display:grid;place-items:center;overflow:hidden;background:var(--raised);border:1px solid var(--border);border-radius:4px;aspect-ratio:3/4;flex-shrink:0}
+.album-cover img{width:100%;height:100%;object-fit:contain;min-height:0}.album-cover svg{width:35%;height:auto;color:var(--text-dim)}
+.album-card-art{display:grid;align-content:start;gap:12px}.album-card-art>.album-cover{width:100%}.album-card-art .file-picker{font-size:.8rem}
+.album-card-copy>label{display:grid;gap:10px;font-size:.9rem}.album-card-copy textarea{width:100%;box-sizing:border-box;resize:vertical;padding:12px;font:inherit;line-height:1.6;color:var(--text);background:var(--paper);border:1px solid var(--border);border-radius:5px}.album-card-copy .quiet{font-size:.85rem;line-height:1.5}
+.album-card footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;border-top:1px solid var(--border);padding-top:20px}.album-delete-button{color:#bb4242}
+.project-start-recent-list .album-cover,.project-chooser-list .album-cover{width:46px;height:60px}.project-chooser-list>button>span.project-chooser-copy{flex:1;display:grid;gap:5px;color:var(--text);white-space:normal}.project-start-recent-title .album-source-tag{justify-self:start}.project-start-recent-title .album-intro{font-size:.8rem;color:var(--text-dim);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+@media(max-width:580px){.album-card-body{grid-template-columns:1fr;gap:20px}.album-card-art{max-width:210px;margin:auto}.album-card footer{align-items:stretch;flex-direction:column-reverse}}

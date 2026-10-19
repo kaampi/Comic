@@ -173,6 +173,10 @@ StoryBook-valet öppnar först filväljaren och en importgranskning med befintli
 
 Bildstilen väljs i grupper med stora förhandsbilder och lightbox. Textsteget visar separata levande exempel för pratbubblor, tankebubblor och berättarrutor med samma renderer som sidbyggaren. Exemplen visar en normal ny bubbla i en rutnätscell från albumets startrutnät, förstorad som helhet med sidbyggarens fysiska textmått och proportioner. Förhandsvisningens förstoring ändrar inte sparade punktstorlekar. Typsnitt, storlek, vikt, justering, marginal, rundning, bubbelform, text- och bakgrundsfärg, ram och opacitet sparas som albumets standard för nya textlager. Inställningarna kan ändras i albuminställningarna och följer lokal lagring och backup. Befintliga textlager behåller sina värden; tidigare pratbubblors utseende och uttryckligt valda karaktärsswatcher behåller företräde vid relevant nyskapande.
 
+### 7.4 Albumkort
+
+Befintliga album öppnas först i ett albumkort från startsidan, projektlistan och projektmenyn. Kortet visar titel, bildstil, sidantal och en märkning för album med StoryBook som importkälla. Omslagsbild och kort introduktion kan redigeras; Spara albuminfo eller Öppna album för redigering sparar ändringarna lokalt. Omslaget visas på startsidan och i projektlistan. Informationen följer lokal lagring och albumbackup. Öppna återupptar albumets senaste arbetssteg. Ta bort album använder befintlig raderingsbekräftelse och påverkar endast den valda lokala ComicBook-kopian, aldrig StoryBooks original eller andra album.
+
 ## 8. Sidplanerare
 
 Första versionen använder sidmallar. Fri drag-and-drop och rutnät är en senare utbyggnad.

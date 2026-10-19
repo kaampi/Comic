@@ -79,6 +79,7 @@ try {
 
   render(React.createElement(App));
   await user.click(screen.getByRole("button", { name: /Save diagnostics/ }));
+  await user.click(screen.getByRole("button", { name: /Open album for editing/ }));
   await user.click(screen.getByRole("button", { name: "Album settings", exact: true }));
   const dialog = screen.getByRole("dialog", { name: "Album settings" });
   assert.ok(dialog.textContent.includes("Changes are saved automatically"));
@@ -103,3 +104,4 @@ try {
   rmSync(temporary, { recursive: true, force: true });
   dom.window.close();
 }
+

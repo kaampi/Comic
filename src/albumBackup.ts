@@ -72,6 +72,8 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   record(p);
   if (p.format !== 1) throw new Error("unsupported-backup");
   for (const key of ["id", "title", "createdAt", "updatedAt"]) string(p[key]);
+  if(p.introduction !== undefined) string(p.introduction);
+  if(p.cover !== undefined){record(p.cover);string(p.cover.name);string(p.cover.dataUrl);if(!/^data:image\/(png|jpeg|webp|gif);base64,/i.test(p.cover.dataUrl))throw new Error("invalid-backup");}
   record(p.source);
   if (!["blank", "text", "storybook"].includes(p.source.type))
     throw new Error("invalid-backup");
