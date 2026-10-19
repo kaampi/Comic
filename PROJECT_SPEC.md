@@ -161,6 +161,12 @@ IndexedDB-sparning jämför den aktuella databaskopian med den som appinstansen 
 
 Upp till tre återställningspunkter sparas i samma databas, atomiskt tillsammans med huvudkopian. Föregående projektlista bevaras före första ändringen efter inläsning, därefter högst vartannat minut vid vanliga sparningar, samt före borttagning av album. Migration från localStorage sparar också en återställningskopia innan den gamla nyckeln tas bort. Avbrutna transaktioner ändrar varken huvudkopian eller historiken. Lokal återställning från startsidan och projektväljaren visar historiska album och låter användaren hämta vanliga albumbackupfiler utan att skriva över aktuella album. Kvarvarande äldre localStorage-album visas också. Funktionen kan läsa återställningspunkter vid korrupt huvudsnapshot; den kan inte återskapa data som redan raderats ur all webbläsarlagring. Diagnostik registrerar endast antal album, datastorlek och teknisk lagringsstatus, aldrig manus eller bilder.
 
+### 7.1.2 Påminnelse om separat backupfil
+
+Backup i toppmenyn markeras rött med en liten prick efter 30 minuters aktivt arbete med ändringar som saknar skapad backupfil, eller efter 10 nya bilder/paneler. Dold flik, ofokuserat fönster och inaktivitet över en minut räknas inte som arbetstid. Markeringen pulserar svagt tre gånger och ligger sedan kvar; minskad rörelse stänger av pulsen. Status och räknare sparas separat per album och påverkar inte albumets innehåll eller automatiska sparning. Poolflytt och återanvändning av samma bild räknas inte som nya resurser.
+
+Create backup… / Skapa säkerhetskopia… skapar albumfilen och återställer påminnelsen för just den versionen; misslyckat filskapande gör det inte. Webbläsaren kan inte bekräfta att användaren fullföljt en eventuell spara-dialog. Återställning av en befintlig albumbackup börjar utan påminnelse tills nya ändringar gjorts. PDF-/bildexport och backup från äldre återställningspunkter återställer inte det aktuella albumets räknare. Restore backup… / Återställ säkerhetskopia… används konsekvent för återläsning. Sparfel visas separat och omedelbart, oberoende av backup-påminnelsen.
+
 ### 7.2 Kapitel från StoryBook
 
 StoryBook är sanningskällan. Import av dess export för andra appar är enkelriktad och skapar en självständig arbetskopia i ComicBook. Endast ComicBooks repository och lagring ändras. Ingen anslutning till StoryBooks repository, databas eller originalfil införs och ingen återexport till StoryBook görs.

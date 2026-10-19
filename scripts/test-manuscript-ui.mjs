@@ -1786,7 +1786,7 @@ try {
   };
   const beforeBackup = saved();
   await user.click(
-    screen.getByRole("button", { name: "Ladda ner albumbackup", exact: true }),
+    screen.getByRole("button", { name: "Skapa säkerhetskopia…", exact: true }),
   );
   assert.ok(downloadedName.endsWith(".json"));
   assert.deepEqual(
@@ -1799,7 +1799,7 @@ try {
   window.HTMLAnchorElement.prototype.click = originalClick;
   const beforeRestore = localStorage.getItem("comicbook-ai.projects");
   await user.upload(
-    screen.getByLabelText("Välj albumbackup"),
+    screen.getByLabelText("Återställ säkerhetskopia…"),
     new window.File(["{}"], "wrong.json", { type: "application/json" }),
   );
   await screen.findByRole("alert");
@@ -1809,7 +1809,7 @@ try {
     null,
   );
   await user.upload(
-    screen.getByLabelText("Välj albumbackup"),
+    screen.getByLabelText("Återställ säkerhetskopia…"),
     new window.File(
       [JSON.stringify(packAlbumBackup(beforeBackup))],
       "album.json",

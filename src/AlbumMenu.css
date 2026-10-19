@@ -166,3 +166,10 @@
 
 .page-spacing-editor { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
 .page-spacing-editor p { grid-column: 1 / -1; margin: 0; }
+
+
+.album-topbar .backup-reminder{color:#b52620;background:#b526200a;border-color:#b5262055;animation:backup-reminder-pulse 1.6s ease-in-out 3}
+.album-topbar .backup-reminder::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:7px;background:currentColor;vertical-align:middle}
+[data-theme="dark"] .album-topbar .backup-reminder{color:#ffaaa2}
+@keyframes backup-reminder-pulse{0%,100%{box-shadow:0 0 0 0 #cc423400}50%{box-shadow:0 0 0 4px #cc423426}}
+@media(prefers-reduced-motion:reduce){.album-topbar .backup-reminder{animation:none}}

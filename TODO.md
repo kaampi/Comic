@@ -17,6 +17,8 @@ Uppdaterad 2026-10-19. Exportkontroller, albumkort och den nya startguiden finns
 
 - [x] IndexedDB-skydd mot överskrivning från gamla flikar/appinstanser och upp till tre atomiska återställningspunkter med nedladdning som albumbackup. Orsaken till tidigare rapporterad projektförlust är ännu inte fastställd.
 
+- [x] Diskret röd Backup-påminnelse per album efter aktiv arbetstid eller nya bilder/paneler; kort puls, minskad rörelse, återställning vid skapad backup och tydliga Create/Restore backup-knappar.
+
 ## Pågående
 
 - [ ] Importtesta IDML i InDesign och Affinity och jämför med samma album som PDF.

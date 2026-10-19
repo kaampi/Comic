@@ -90,11 +90,11 @@ Use speech bubbles for spoken dialogue, thought bubbles for thoughts, captions f
 
 Albums are saved automatically in this browser on this device. There is no cloud sync. Another browser, browser profile or app address has separate storage; clearing site data can remove locally saved albums.
 
-1. Open the album menu and choose the backup option. Download an album backup and keep the file somewhere you can find it.
-2. To recover it, open Project → Restore album backup, choose the file and review the import. Restoring creates a separate album.
-3. Make another backup before updating the beta or moving to a different computer or browser.
+1. Open the album menu and choose Backup, then Create backup… and keep the file somewhere you can find it.
+2. To recover it, open Project → Restore backup…, choose the file and review the import. Restoring creates a separate album.
+3. Make another backup before updating the beta or moving to a different computer or browser. Backup turns red after 30 minutes of active work with unbacked changes, or 10 new images/panels. It pulses briefly, then stays marked until you create a new backup. Automatic saving errors are reported separately.
 
-> If the app reports a saving error, download a backup of the open album before reloading or closing the tab. Unsaved changes may still exist only in the open app.
+> If the app reports a saving error, create a backup of the open album before reloading or closing the tab. Unsaved changes may still exist only in the open app.
 
 <a id="export"></a>
 
@@ -173,7 +173,7 @@ If an image prompt still describes an old style, apply the desired style to the 
 2. Describe the expected result and the actual result. Include a screenshot, browser and operating system, and any error message.
 3. For layout problems, compare the editor with a PDF or PNG export and say whether the issue appears in both.
 
-> A useful first beta session is complete when you have made one page, edited a bubble directly, repositioned an image, exported the page and downloaded an album backup.
+> A useful first beta session is complete when you have made one page, edited a bubble directly, repositioned an image, exported the page and created an album backup.
 
 ## Contextual help reference
 
@@ -197,7 +197,7 @@ Add a speech bubble, thought bubble, caption or sound effect. Double-click its t
 
 ### Save a backup you can restore
 
-Automatic saving keeps the album in this browser. If another tab has changed the saved collection, saving stops rather than overwriting it: download your unsaved album backup before reloading. Local recovery points on the home screen offer up to three earlier collection snapshots as individual album backups. They share the browser storage and do not replace downloaded backups. Download an album backup to keep an editable copy with images. A PDF or PNG export is not an album backup.
+Automatic saving keeps the album in this browser. If another tab has changed the saved collection, saving stops rather than overwriting it: create a backup of your unsaved album before reloading. Local recovery points on the home screen offer up to three earlier collection snapshots as individual album backups. They share the browser storage and do not replace downloaded backups. Choose Create backup… to keep an editable copy with images. A PDF or PNG export is not an album backup.
 
 ### Export and read your first page
 

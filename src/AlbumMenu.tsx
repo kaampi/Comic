@@ -1,3 +1,4 @@
+import { useBackupReminder } from "./useBackupReminder";
 import { parseOrganization, type StyleOrganization } from "./styleOrganization";
 import { PanelBorderControls } from "./PanelBorderControls";
 import { albumPanelBorder } from "./panelBorder";
@@ -54,6 +55,8 @@ export function AlbumMenu({
   onSection: (section: AlbumSection) => void;
 }) {
   const sv = locale === "sv";
+  const backupReminder=useBackupReminder(project);
+  const backupHint=sv?"Du har ändringar som inte finns i en separat backupfil.":"You have changes that are not included in a separate backup file.";
   const [previewOrganization, setPreviewOrganization] = useState<StyleOrganization>();
   const [preview, setPreview] = useState<ComicProject | null>(null),
     [error, setError] = useState(""),
@@ -124,6 +127,7 @@ export function AlbumMenu({
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+      backupReminder.created();
       setDownload(filename);
       setError("");
     } catch {
@@ -195,9 +199,9 @@ export function AlbumMenu({
             {sv ? "Albuminställningar" : "Album settings"}
           </button>
           <button onClick={() => onMode("export")}>{sv ? "Exportera" : "Export"}</button>
-          <button onClick={() => onMode("backup")}>Backup</button>
+          <button key={project.id} className={backupReminder.due?"backup-reminder":""} aria-describedby={backupReminder.due?"backup-reminder-info":undefined} title={backupReminder.due?backupHint:undefined} onClick={() => onMode("backup")}>Backup</button>{backupReminder.due?<span className="visually-hidden" id="backup-reminder-info">{backupHint}</span>:null}
           <button onClick={() => onMode("backup")}>
-            {sv ? "Återställ backup" : "Restore backup"}
+            {sv ? "Återställ säkerhetskopia…" : "Restore backup…"}
           </button>
           <button onClick={onClose}>
             {sv ? "Stäng album" : "Close album"}
@@ -331,7 +335,7 @@ export function AlbumMenu({
                         : "Save the whole album, including manuscript, images, image history, pages, text layers and album settings, in one file."}
                     </p>
                     <button className="primary-button" onClick={backup}>
-                      {sv ? "Ladda ner albumbackup" : "Download album backup"}
+                      {sv ? "Skapa säkerhetskopia…" : "Create backup…"}
                     </button>
                     {download && (
                       <p role="status">
@@ -342,14 +346,14 @@ export function AlbumMenu({
                   </section>
                 )}
                 <section>
-                  <h3>{sv ? "Återställ backup" : "Restore backup"}</h3>
+                  <h3>{sv ? "Återställ säkerhetskopia…" : "Restore backup…"}</h3>
                   <p className="quiet">
                     {sv
                       ? "Backupen öppnas som ett separat album. Dina befintliga album finns kvar."
                       : "The backup opens as a separate album. Your existing albums remain available."}
                   </p>
                   <label>
-                    {sv ? "Välj albumbackup" : "Choose album backup"}
+                    {sv ? "Återställ säkerhetskopia…" : "Restore backup…"}
                     <input
                       type="file"
                       accept=".json,application/json"

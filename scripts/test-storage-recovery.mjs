@@ -92,7 +92,7 @@ try {
   const user=userEvent.setup({document});render(React.createElement(LocalRecovery,{locale:"en"}));
   await waitFor(()=>assert.equal(screen.getAllByRole("button",{name:/View albums/}).length,3));
   await user.click(screen.getAllByRole("button",{name:/View albums/})[0]);
-  await user.click(await screen.findByRole("button",{name:"Download album backup",exact:true}));
+  await user.click(await screen.findByRole("button",{name:"Create backup…",exact:true}));
   assert.equal(blobs.length,1);const downloaded=parseAlbumBackup(JSON.parse(await blobs[0].text()));assert.ok(downloaded.id);assert.deepEqual(downloaded.unplacedPanels,project.unplacedPanels);
   await assert.rejects(tabA.loadProjectCollection(),undefined,"recovery download never replaces or clears the corrupt primary record");
   cleanup();URL.createObjectURL=originalCreate;URL.revokeObjectURL=originalRevoke;dom.window.HTMLAnchorElement.prototype.click=originalClick;

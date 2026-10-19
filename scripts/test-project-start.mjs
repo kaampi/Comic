@@ -285,9 +285,9 @@ try {
   await user.keyboard("{Escape}");await start(/Öppna ett projekt/);
   const chooser=screen.getByRole("dialog",{name:"Öppna ett projekt"});
   assert.equal(within(chooser).getAllByRole("button",{name:/→/}).length,3);
-  await user.click(within(chooser).getByRole("button",{name:"Välj albumbackup",exact:true}));
+  await user.click(within(chooser).getByRole("button",{name:"Återställ säkerhetskopia…",exact:true}));
   const backup=packAlbumBackup({...imported,title:"Restored independent fixture"}),backupFile=new File([JSON.stringify(backup)],"synthetic-backup.json",{type:"application/json"});
-  await user.upload(screen.getByLabelText("Välj albumbackup"),backupFile);
+  await user.upload(screen.getByLabelText("Återställ säkerhetskopia…"),backupFile);
   await user.click(await screen.findByRole("button",{name:"Öppna som nytt album",exact:true}));
   await waitFor(()=>assert.equal(stored().length,4));
   const restored=stored().find(p=>p.id!==imported.id&&p.source.storyBookId===imported.source.storyBookId);

@@ -28,6 +28,7 @@
     "test:page-spacing": "node scripts/test-page-spacing.mjs",
     "test:project-storage": "node scripts/test-project-storage.mjs",
     "test:storage-recovery": "node scripts/test-storage-recovery.mjs",
+    "test:backup-reminder": "node scripts/test-backup-reminder.mjs",
     "test:style-organization": "node scripts/test-style-organization.mjs",
     "docs:guide": "node scripts/build-guide.mjs",
     "test:guide": "node scripts/build-guide.mjs --check && node scripts/test-guide.mjs",

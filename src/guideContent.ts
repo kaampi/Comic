@@ -37,10 +37,10 @@ export const GUIDE = {
     },
     {
       id: "backup", title: "5. Save a backup you can restore", group: "start",
-      shortHelp: "Automatic saving keeps the album in this browser. If another tab has changed the saved collection, saving stops rather than overwriting it: download your unsaved album backup before reloading. Local recovery points on the home screen offer up to three earlier collection snapshots as individual album backups. They share the browser storage and do not replace downloaded backups. Download an album backup to keep an editable copy with images. A PDF or PNG export is not an album backup.",
+      shortHelp: "Automatic saving keeps the album in this browser. If another tab has changed the saved collection, saving stops rather than overwriting it: create a backup of your unsaved album before reloading. Local recovery points on the home screen offer up to three earlier collection snapshots as individual album backups. They share the browser storage and do not replace downloaded backups. Choose Create backup… to keep an editable copy with images. A PDF or PNG export is not an album backup.",
       paragraphs: ["Albums are saved automatically in this browser on this device. There is no cloud sync. Another browser, browser profile or app address has separate storage; clearing site data can remove locally saved albums."],
-      steps: ["Open the album menu and choose the backup option. Download an album backup and keep the file somewhere you can find it.", "To recover it, open Project → Restore album backup, choose the file and review the import. Restoring creates a separate album.", "Make another backup before updating the beta or moving to a different computer or browser."],
-      tip: "If the app reports a saving error, download a backup of the open album before reloading or closing the tab. Unsaved changes may still exist only in the open app."
+      steps: ["Open the album menu and choose Backup, then Create backup… and keep the file somewhere you can find it.", "To recover it, open Project → Restore backup…, choose the file and review the import. Restoring creates a separate album.", "Make another backup before updating the beta or moving to a different computer or browser. Backup turns red after 30 minutes of active work with unbacked changes, or 10 new images/panels. It pulses briefly, then stays marked until you create a new backup. Automatic saving errors are reported separately."],
+      tip: "If the app reports a saving error, create a backup of the open album before reloading or closing the tab. Unsaved changes may still exist only in the open app."
     },
     {
       id: "export", title: "6. Export and read your first page", group: "start",
@@ -82,7 +82,7 @@ export const GUIDE = {
       shortHelp: "For a useful beta report, include what you tried, what you expected, what happened, the steps to repeat it and a screenshot. Back up the album before investigating a saving problem.",
       paragraphs: ["If the Image library is empty, upload pictures to panel plans in Manuscript first, or use right-click → Upload image… on a page panel. If all pictures seem to have disappeared from the library, check Show unplaced only.", "If text disappears over a dark image, select its text layer and set Text color to a lighter color. Changing the bubble fill does not change the text color.", "If an image prompt still describes an old style, apply the desired style to the album and regenerate that prompt. If an album seems missing, return to the same browser, profile and app address, or restore your backup."],
       steps: ["Write down the steps that led to the problem, including the section and control you used.", "Describe the expected result and the actual result. Include a screenshot, browser and operating system, and any error message.", "For layout problems, compare the editor with a PDF or PNG export and say whether the issue appears in both."],
-      tip: "A useful first beta session is complete when you have made one page, edited a bubble directly, repositioned an image, exported the page and downloaded an album backup."
+      tip: "A useful first beta session is complete when you have made one page, edited a bubble directly, repositioned an image, exported the page and created an album backup."
     }
   ]
 } as const;
