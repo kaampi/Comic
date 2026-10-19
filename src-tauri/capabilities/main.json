@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Local editor window. No frontend access to native filesystem, shell or process commands.",
+  "windows": ["main"],
+  "permissions": []
+}

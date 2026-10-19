@@ -20,6 +20,7 @@ New beta tester? Read the [getting started guide](docs/GETTING_STARTED.md), also
 
 ## Dokumentation
 
+- [DESKTOP.md](DESKTOP.md): starta Tauri-prototypen på Windows och bygg en installationsfil; flytta album via backup.
 - [TODO.md](TODO.md): aktuella uppgifter och nästa steg.
 - [PROJECT_SPEC.md](PROJECT_SPEC.md): funktioner, arkitektur, datamodell och utvecklingsplan.
 - [AGENTS.md](AGENTS.md): regler för arbete i detta repository.

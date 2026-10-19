@@ -1,7 +1,7 @@
 {
   "name": "comicbook-ai",
   "version": "0.1.0",
-  "description": "ComicBook AI \u2014 local-first comic creation workspace.",
+  "description": "ComicBook AI — local-first comic creation workspace.",
   "type": "module",
   "private": true,
   "scripts": {
@@ -33,7 +33,10 @@
     "docs:guide": "node scripts/build-guide.mjs",
     "test:guide": "node scripts/build-guide.mjs --check && node scripts/test-guide.mjs",
     "test:story-workflow": "node scripts/test-story-workflow.mjs",
-    "test:project-start": "node scripts/test-project-start.mjs"
+    "test:project-start": "node scripts/test-project-start.mjs",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "desktop:info": "tauri info"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",
@@ -41,14 +44,15 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "2.12.3",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "^5.5.4",
-    "vite": "^6.4.3",
-    "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.1",
+    "fake-indexeddb": "^6.2.4",
     "jsdom": "^26.1.0",
-    "fake-indexeddb": "^6.2.4"
+    "typescript": "^5.5.4",
+    "vite": "^6.4.3"
   }
 }

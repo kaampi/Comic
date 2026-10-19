@@ -53,6 +53,8 @@ Detta ersätter ursprungsspecens antagande om Next.js och serverbaserade API-rou
 
 ### 3.2 Projektformat
 
+Första desktopsteget (2026-10-19) har ett Tauri 2-skal för Windows med samma React/Vite-app och befintlig IndexedDB-lagring. `npm run desktop:dev` startar utvecklingsfönstret; `npm run desktop:build` konfigurerar ett NSIS-bygge. Single-instance-plugin fokuserar befintligt fönster vid en andra start. HTML-dragning behålls för paneler och bildbibliotek. Webbläsare, utvecklingsfönster och installerad app har separata lagringsmiljöer; album flyttas med användarvald backup. Windows-kompilering och provkörning återstår. Se DESKTOP.md. Projektformatet nedan beskriver nästa lagringssteg och är ännu inte implementerat.
+
 Ett projekt lagras i en projektmapp:
 
 - project.json: projektmetadata, manus, layout och textlager.

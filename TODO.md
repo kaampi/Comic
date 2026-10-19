@@ -21,6 +21,7 @@ Uppdaterad 2026-10-19. Exportkontroller, albumkort och den nya startguiden finns
 
 ## Pågående
 
+- [ ] Kompilera och provköra Tauri-prototypen på Windows: omstart/lagring, backup, drag/släpp, export och NSIS-installation. Desktopskal och byggkommandon finns; Windows-bygge är ännu inte verifierat. Se DESKTOP.md.
 - [ ] Importtesta IDML i InDesign och Affinity och jämför med samma album som PDF.
 - [ ] Rätta eventuella problem med bildlänkar, fontstilar, textöverflöd och lagerordning.
 - [ ] Beskära text och bubbelgrafik vid panelkonturer i IDML-exporten.
