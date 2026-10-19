@@ -712,7 +712,7 @@ try {
     `[data-panel-id="${originalPanel}"]`,
   );
   assert.ok(libraryCard.querySelector("img"));
-  assert.equal(document.querySelector('.page-sidebar h3').firstChild.textContent.trim(),'Bildbibliotek');
+  assert.equal(document.querySelector('.page-sidebar .panel-library h3').firstChild.textContent.trim(),'Bildbibliotek');
   assert.equal(document.querySelector('.page-sidebar .page-list'),null);
   assert.ok(document.querySelector('.page-canvas-header .page-new-button'));
   assert.equal(within(document.querySelector('.page-sidebar')).queryByRole('button',{name:'Ny sida',exact:true}),null);
@@ -1383,6 +1383,12 @@ try {
   await user.click(screen.getByRole("button",{name:"Redigera bakgrund och text",exact:true}));
   let backgroundEditor = document.querySelector(".panel-editor-modal");
   assert.ok(backgroundEditor.textContent.includes("Bakgrund"));
+  // Panels preserved in the pool are no longer available as duplicate library images.
+  // A remaining text-only library entry can receive its own background image.
+  if(!saved().pages[0].background.image){
+    await user.upload(backgroundEditor.querySelector('input[type="file"]'),new window.File(["synthetic image"],"background-seed.png",{type:"image/png"}));
+    await waitFor(()=>assert.ok(saved().pages[0].background.image));
+  }
   await user.click(within(backgroundEditor.querySelector('.panel-image-controls')).getByRole('button',{name:'Ta bort bild',exact:true}));
   const backgroundUpload = backgroundEditor.querySelector('input[type="file"]');
   assert.ok(backgroundUpload);

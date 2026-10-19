@@ -52,6 +52,8 @@ A panel is a framed part of the comic page. Start with three simple rectangles a
 1. Drag across empty cells in the page grid, then release to create your first panel. Repeat for the other two panels.
 2. Right-click a panel and choose Upload image… to add a picture from your computer.
 3. Click a panel and drag a corner handle if you want to change its size. In Normal mode, hold the mouse button on the panel for 0.4 seconds until it lifts, then drag freely within the page. A dashed outline shows the nearest grid position; release to snap the panel there. The picture, bubbles and free shape move together. A red outline means it cannot be placed there; releasing keeps the original position. Escape cancels. Double-click the panel to open its image and text editor.
+4. To reorganize pages, right-click a panel and choose Lift to panel pool or Move to another page…. For several panels, expand Move / lift panels from this page in the sidebar, select the panels and choose Move selected…. Choose the album pool, an existing page or New page. Panels wait beside the destination page even if it is full.
+5. Drag a waiting panel from its thumbnail onto a free position; green means it fits and red means it cannot be placed. You can also enter Column and Row and choose Place on page. Pictures, text, bubble connections and free shapes are preserved. Different page grids can change panel proportions when placed. Undo panel change reverses the latest unchanged pool operation. Delete panel asks for confirmation; waiting panels stay in backups but are not exported.
 
 > Later, use Album settings to set page size, margins, gaps and the default panel border. These choices affect the space available for pictures and text.
 

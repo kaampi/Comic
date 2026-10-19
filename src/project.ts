@@ -77,6 +77,7 @@ export type ComicProject = {
     image?: PanelImage;
   }>;
   pages: Array<{ id: string; number: number; gridColumns: number; gridRows: number; gridMode?: "preset" | "custom"; background?: PageLayer; foregrounds?: PageLayer[]; placements: PageLayer[] }>;
+  unplacedPanels?: import("./panelPool").PooledPanel[];
   adaptations: StoryAdaptation[];
   overlayDefaults?: Partial<Record<OverlayType, Partial<import("./overlayTypography").OverlayTypography>>>;
   bubbleSwatches: BubbleSwatch[];

@@ -45,7 +45,7 @@ export function libraryDropTarget(project: ComicProject, pageId: string, x: numb
 export function dropLibraryPanel(project: ComicProject, pageId: string, target: LibraryDropTarget, panelId: string): { project: ComicProject; undo: LibraryDropUndo } | null {
   const page = project.pages.find(page => page.id === pageId);
   const entry = libraryEntries(project).find(entry => entry.panel.id === panelId);
-  if (!page || !entry?.image) return null;
+  if (!page || !entry?.image || entry.parked) return null;
   const previous = target.kind === "frame" ? page.placements.find(layer => layer.id === target.placementId) : undefined;
   if (target.kind === "frame" && !previous) return null;
   if (entry.pages.some(usedPage => usedPage.id !== pageId || [...(usedPage.background ? [usedPage.background] : []), ...usedPage.placements].some(layer =>
@@ -80,5 +80,6 @@ export function undoLibraryDrop(project: ComicProject, undo: LibraryDropUndo): C
     ...page, placements: undo.previous ? page.placements.map(layer => layer.id === undo.placementId ? undo.previous! : layer) : page.placements.filter(layer => layer.id !== undo.placementId),
   }) };
 }
+
 
 

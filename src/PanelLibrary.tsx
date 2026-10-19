@@ -32,7 +32,7 @@ export function PanelLibrary({
   const entries = libraryEntries(project);
   const empty = !!target && !target.panelId && !target.adaptationPanelPlanId;
   const groups: Array<{id:string;label:string;order:number;entries:typeof entries}>=[];
-  for(const entry of entries.filter(e=>!unplacedOnly||!e.pages.length)){
+  for(const entry of entries.filter(e=>!unplacedOnly||(!e.pages.length&&!e.parked))){
     const id=entry.beat?.id??entry.panel.id;
     let group=groups.at(-1);
     if(group?.id.split("::")[0]!==id)group=undefined;
@@ -61,9 +61,9 @@ export function PanelLibrary({
       <div className="panel-library-list">
         {groups.map(group=><section className="panel-library-beat" key={group.id} aria-label={group.label}>
           <h4>{group.label}</h4>
-          {group.entries.map(entry=><button type="button" className="panel-library-card" data-panel-id={entry.panel.id} key={entry.panel.id} aria-label={entry.title} title={entry.title} disabled={!!entry.pages.length||(!empty&&!entry.image)} draggable={!!entry.image&&!entry.pages.length} onClick={()=>{if(empty&&!entry.pages.length)onAssign(entry.panel.id);}} onDragStart={event=>{if(!entry.image||entry.pages.length){event.preventDefault();return;}event.dataTransfer.setData(LIBRARY_DRAG_TYPE,JSON.stringify({projectId:project.id,panelId:entry.panel.id}));event.dataTransfer.effectAllowed="copy";onDragStart?.(entry.panel.id);}} onDragEnd={()=>onDragEnd?.()}>
+          {group.entries.map(entry=><button type="button" className="panel-library-card" data-panel-id={entry.panel.id} key={entry.panel.id} aria-label={entry.title} title={entry.title} disabled={entry.parked||!!entry.pages.length||(!empty&&!entry.image)} draggable={!!entry.image&&!entry.pages.length&&!entry.parked} onClick={()=>{if(empty&&!entry.pages.length&&!entry.parked)onAssign(entry.panel.id);}} onDragStart={event=>{if(!entry.image||entry.pages.length||entry.parked){event.preventDefault();return;}event.dataTransfer.setData(LIBRARY_DRAG_TYPE,JSON.stringify({projectId:project.id,panelId:entry.panel.id}));event.dataTransfer.effectAllowed="copy";onDragStart?.(entry.panel.id);}} onDragEnd={()=>onDragEnd?.()}>
             {entry.image?<img src={entry.image.dataUrl} alt="" draggable={false}/>:<span className="panel-library-placeholder">{sv?"Ingen bild ännu":"No image yet"}</span>}
-            <span className="panel-library-info"><small>{entry.pages.length?entry.pages.map(p=>`${sv?"Sida":"Page"} ${p.number}`).join(", "):(sv?"Oplacerad":"Unplaced")}</small></span>
+            <span className="panel-library-info"><small>{entry.parked?(sv?"I panelpool / väntande":"In panel pool / waiting"):entry.pages.length?entry.pages.map(p=>`${sv?"Sida":"Page"} ${p.number}`).join(", "):(sv?"Oplacerad":"Unplaced")}</small></span>
           </button>)}
         </section>)}
       </div>
@@ -76,7 +76,7 @@ export function PanelLibrary({
       )}
       {unplacedOnly &&
         entries.length > 0 &&
-        entries.every((e) => e.pages.length) && (
+        entries.every((e) => e.pages.length || e.parked) && (
           <p className="quiet">
             {sv ? "Alla rutor är placerade." : "All panels are placed."}
           </p>

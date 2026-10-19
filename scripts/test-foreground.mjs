@@ -64,6 +64,7 @@ try {
   const user=userEvent.setup({document});
   render(React.createElement(App));
   await user.click(screen.getByRole('button',{name:/Foreground test/}));
+  await user.click(screen.getByRole('button',{name:/Open album for editing/}));
   await user.click(screen.getByRole('button',{name:'Pages',exact:true}));
   await user.upload(screen.getByLabelText('Add foreground image',{selector:'input'}),new window.File([png],'hero.png',{type:'image/png'}));
   await waitFor(()=>assert.equal(current().pages[0].foregrounds?.length,1));

@@ -205,7 +205,17 @@ Den lossade panelen följer musen fritt och kontinuerligt, även mellan rutnäts
 
 Dragningen har en tydligt synlig men begränsad geléeffekt med dämpad fjädring, eftersläpning och ett kort landningsgung, även vid normal och långsam musrörelse. Deformationen begränsas så att snabba rörelser inte förstör läsbarheten. Effekten omfattar bild, ram och paneltext även när texten ligger ovanpå förgrundsbilder. Den ändrar inga projektdata eller kollisionskonturer, återställer alla visuella transformeringar och stängs av vid minskad rörelse i systeminställningarna. I det läget visar draghjälpen varför geléeffekten är avstängd.
 
-En giltig flytt sparas en gång vid släpp. Ogiltigt släpp, Escape, pointercancel, förlorad pointer capture, fönsterbyte, rullning, storleksändring eller byte av sida/album/läge avbryter utan att ändra projektet. Flytt mellan sidor ingår inte i detta steg.
+En giltig flytt sparas en gång vid släpp. Ogiltigt släpp, Escape, pointercancel, förlorad pointer capture, fönsterbyte, rullning, storleksändring eller byte av sida/album/läge avbryter utan att ändra projektet. Flytt mellan sidor hanteras via panelpoolen nedan.
+
+### 8.3 Panelpool och väntande paneler
+
+Albumets panelpool lagrar hela sidpaneler som inte är placerade. En panel kan antingen tillhöra den gemensamma poolen eller vänta på en bestämd sida. Bild, beskärning, form, ram, texter, typografi, svansar, bubbelförbindelser, källkopplingar och stabila ID:n bevaras. Det tidigare rutnätet sparas för förhandsvisningen. Sidbakgrund och förgrundslager är separata lager och flyttas inte som paneler.
+
+Högerklick erbjuder Lyft till panelpool och Flytta till annan sida. I sidopanelen kan flera av den aktuella sidans paneler markeras och flyttas samtidigt till poolen, en befintlig sida eller en ny sida. På målsidan hamnar de under Väntar på placering även om layouten är full. Ingen befintlig panel ersätts. Poolens miniatyrer visar bild och bubblor; destination kan ändras och enskilda paneler raderas efter bekräftelse.
+
+Paneler dras från poolen till sidan med en grön/röd kontur som visar om de får plats. Alternativt anges kolumn och rad med en placeringsknapp. Rutnätsstorlek i celler och fri form bevaras; andra sidrutnät kan förändra proportionerna vid placering. Samma kontroll mot sidgränser, faktiska panelkonturer och reserverad bakgrundstext används som vid flytt inom sidan. Endast giltig placering tar bort panelen från poolen. Ångra paneländring återställer den senaste pooländringen om inga senare panel-/layoutändringar skulle skrivas över.
+
+Vid radering av en sida flyttas dess paneler och sidans väntande paneler till albumets pool; sidbakgrund och förgrundslager tas bort efter tydlig bekräftelse. Vid byte av rutnät väntar sidans paneler på ny placering i stället för att försvinna. Bildbiblioteket får inte duplicera en panel som ligger i poolen. Poolen följer lokal lagring, engångskonvertering av äldre typografi och albumbackup med validerade ID:n, målsidor, rutnät och textkopplingar. Väntande paneler exporteras inte; exportkontrollen påminner om albumets fria paneler och väntande paneler på de valda sidorna.
 
 ## 9. Stilmotor och promptbyggare
 

@@ -137,7 +137,19 @@ export function parseAlbumBackup(input: unknown): ComicProject {
     strings(panel.characterIds);
     image(panel.image);
   }
-  for (const page of objects(p.pages)) {
+  const pooledPages:any[]=[];
+  if(p.unplacedPanels!==undefined){
+    list(p.unplacedPanels);
+    const ids=new Set(objects(p.pages).flatMap((page:any)=>pageLayers(page).map(layer=>layer.id)));
+    for(const item of p.unplacedPanels){
+      record(item);record(item.layer);string(item.layer.id);record(item.sourceGrid);
+      if(ids.has(item.layer.id))throw new Error("invalid-backup");ids.add(item.layer.id);
+      for(const key of ["gridColumns","gridRows"]){number(item.sourceGrid[key]);if(!Number.isInteger(item.sourceGrid[key])||item.sourceGrid[key]<1||item.sourceGrid[key]>100)throw new Error("invalid-backup");}
+      if(item.targetPageId!==undefined){string(item.targetPageId);if(!p.pages.some((page:any)=>page.id===item.targetPageId))throw new Error("invalid-backup");}
+      pooledPages.push({id:`pool-${item.layer.id}`,number:0,...item.sourceGrid,placements:[item.layer]});
+    }
+  }
+  for (const page of [...objects(p.pages),...pooledPages]) {
     if (page.gridMode !== undefined && page.gridMode !== "preset" && page.gridMode !== "custom") throw new Error("invalid-backup");
     for (const key of ["number", "gridColumns", "gridRows"]) number(page[key]);
     if(page.foregrounds!==undefined){

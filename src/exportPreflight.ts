@@ -8,10 +8,10 @@ import { richTextLayout, textPieces } from "./richText";
 import { imagePlacement } from "./imageView";
 
 export type ExportIssue = {
-  kind: "empty-image" | "unreadable-image" | "low-resolution" | "text-overflow";
+  kind: "empty-image" | "unreadable-image" | "low-resolution" | "text-overflow" | "unplaced-panel";
   severity: "warning" | "error";
   pageId: string; pageNumber: number; layerId: string;
-  layerKind: "panel" | "background" | "foreground"; panelNumber: number;
+  layerKind: "panel" | "background" | "foreground" | "pool"; panelNumber: number;
   overlayId?: string; excerpt?: string; dpi?: number;
 };
 export type ImageSize = { width: number; height: number };
@@ -54,6 +54,11 @@ export async function checkExport(project: ComicProject, options: ExportOptions,
   const format=albumPageFormat(project), target=pageDimensions(options.pageFormat);
   const mmPerUnit=(options.fit==="cover"?Math.max:Math.min)(target.widthMm/PAGE_RENDER_WIDTH,target.heightMm/(PAGE_RENDER_WIDTH/pageAspect(format)));
   const issues: ExportIssue[]=[];
+  if(pages.length)for(const item of project.unplacedPanels??[]){
+    if(item.targetPageId&&!options.pageIds.includes(item.targetPageId))continue;
+    const page=pages.find(page=>page.id===item.targetPageId);
+    issues.push({kind:"unplaced-panel",severity:"warning",pageId:page?.id??"",pageNumber:page?.number??0,layerId:item.layer.id,layerKind:"pool",panelNumber:item.layer.readingOrder});
+  }
   const images=new Map<string,Promise<ImageSize>>();
   for(const page of pages)for(const layer of pageLayers(page)){
     check(signal);

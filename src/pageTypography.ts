@@ -29,7 +29,7 @@ export function normalizeProjectTypography(project: ComicProject): ComicProject 
   const grid = project.pageDefaults ?? {gridColumns:3,gridRows:5};
   const defaultMetrics = pageLayerTextMetrics(project, {id:"defaults", number:1, ...grid, placements:[]}, {id:"defaults-layer",x:0,y:0,width:1,height:1,readingOrder:1,overlays:[]});
   const overlayDefaults = Object.fromEntries(Object.entries(project.overlayDefaults ?? {}).map(([type, defaults]) => [type, {...defaults, ...(defaults.fontSize === undefined ? {} : {fontSize:convertSize(defaults.fontSize,defaultMetrics)})}]));
-  return {...project, typographyVersion:2, overlayDefaults, pages:project.pages.map(page => ({...page, background:page.background ? convertLayer(page,page.background) : undefined, foregrounds:page.foregrounds?.map(layer=>convertLayer(page,layer)), placements:page.placements.map(layer => convertLayer(page,layer))}))};
+  return {...project, ...(project.unplacedPanels?{unplacedPanels:project.unplacedPanels.map(item=>({...item,layer:convertLayer({id:"pooled",number:0,...item.sourceGrid,placements:[]},item.layer)}))}:{}), typographyVersion:2, overlayDefaults, pages:project.pages.map(page => ({...page, background:page.background ? convertLayer(page,page.background) : undefined, foregrounds:page.foregrounds?.map(layer=>convertLayer(page,layer)), placements:page.placements.map(layer => convertLayer(page,layer))}))};
 }
 
 

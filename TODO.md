@@ -26,7 +26,7 @@ Uppdaterad 2026-10-19. Exportkontroller, albumkort och den nya startguiden finns
 - [x] Länka prat- och tankebubblor med förbindelser; separata redigerbara textområden och svansar, justerbar förbindelsebredd, gemensam kontur utan invändiga ramlinjer samt export inklusive IDML.
 - [x] Blandad typografi inom en textruta: markera text och ändra typsnitt, storlek och vikt för just markeringen. Radbrytning och radhöjd följer textdelarna. Direktredigering, återställning, lokal lagring, backup och export inklusive IDML:s teckenformat.
 - [x] Kontroller före export: uppskattad textöverfyllnad, tomma/oläsbara bilder och låg effektiv bildupplösning vid exportens fysiska storlek. Visa öppnar berörd panel/text. Varningar tillåter läskopior; oläsbara bilder stoppar exporten.
-- [ ] Flytta befintliga paneler mellan sidor med bibehållet innehåll och stabila ID:n.
+- [x] Panelpool och väntande paneler per sida: flytta flera hela paneler, skapa målsida, dra/placera tillbaka, ångra, backup och exportpåminnelser. Sidborttagning och byte av rutnät bevarar panelerna i poolen.
 
 ## Senare
 

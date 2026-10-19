@@ -129,6 +129,7 @@ try {
   const user=userEvent.setup({document});
   render(React.createElement(App));
   await user.click(screen.getByRole('button',{name:/Panel move test/}));
+  await user.click(screen.getByRole('button',{name:/Open album for editing/}));
   await user.click(screen.getByRole('button',{name:'Pages',exact:true}));
   const panel=()=>document.querySelector('.drawn-panel[aria-label="Row 2"]')??document.querySelector('.drawn-panel');
   const grid=document.querySelector('.layout-panels');

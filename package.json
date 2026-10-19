@@ -17,6 +17,7 @@
     "test:image-prompts": "node scripts/test-image-prompts.mjs",
     "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs",
     "test:panel-move": "node scripts/test-panel-move.mjs",
+    "test:panel-pool": "node scripts/test-panel-pool.mjs",
     "test:foreground": "node scripts/test-foreground.mjs",
     "test:export": "node scripts/test-export.mjs",
     "test:export-preflight": "node scripts/test-export-preflight.mjs",

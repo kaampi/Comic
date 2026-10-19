@@ -23,8 +23,9 @@ export function libraryEntries(project: ComicProject) {
       title: plan?.title || panel.action || `Ruta ${panel.order}`,
       image: plan?.image ?? panel.image,
       pages,
+      parked: !!project.unplacedPanels?.some(item=>item.layer.panelId===panel.id || (!!plan && item.layer.adaptationPanelPlanId===plan.id)),
     };
-  }).filter(entry => !entry.plan?.archived || entry.pages.length > 0)
+  }).filter(entry => !entry.plan?.archived || entry.pages.length > 0 || entry.parked)
     .sort((a,b)=>(a.plan?.order ?? a.panel.order)-(b.plan?.order ?? b.panel.order));
 }
 
@@ -39,7 +40,7 @@ export function assignLibraryPanel(
     .find((p) => p.id === pageId)
     ?.placements.find((p) => p.id === placementId);
   if (
-    !entry ||
+    !entry || entry.parked ||
     !target ||
     (target.panelId && target.panelId !== panelId) ||
     (target.adaptationPanelPlanId &&

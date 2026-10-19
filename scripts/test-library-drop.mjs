@@ -76,6 +76,7 @@ try {
   localStorage.clear();localStorage.setItem("comicbook-ai.locale","sv");saveProjects([project]);
   const user=userEvent.setup({document});render(React.createElement(App));
   await user.click(screen.getByRole("button",{name:/Drag fixture/}));
+  await user.click(screen.getByRole("button",{name:/Öppna album för redigering/}));
   await user.click(screen.getByRole("button",{name:"Sidor",exact:true}));
   const canvas=document.querySelector(".layout-canvas"), layout=document.querySelector(".layout-panels");
   layout.getBoundingClientRect=()=>({left:10,top:10,width:680,height:680,right:690,bottom:690});
@@ -115,3 +116,4 @@ try {
 } finally {
   rmSync(temporary,{recursive:true,force:true});dom.window.close();
 }
+
