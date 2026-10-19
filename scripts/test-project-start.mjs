@@ -1,0 +1,156 @@
+import assert from "node:assert/strict";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { join, dirname, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import ts from "typescript";
+import { JSDOM } from "jsdom";
+
+const root = fileURLToPath(new URL("../", import.meta.url));
+const temporary = mkdtempSync(join(root, ".project-start-test-"));
+const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost:5176/" });
+for (const key of ["window", "document", "navigator", "localStorage", "HTMLElement", "Node", "Event", "MouseEvent", "FileReader", "File", "HTMLInputElement", "SVGElement", "NodeFilter", "HTMLTextAreaElement"]) {
+  Object.defineProperty(globalThis, key, { value: dom.window[key], configurable: true });
+}
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+dom.window.PointerEvent=dom.window.MouseEvent;
+Object.defineProperty(globalThis,"PointerEvent",{value:dom.window.MouseEvent,configurable:true});
+dom.window.confirm=()=>true;
+let networkRequests = 0;
+const nativeFetch=globalThis.fetch;
+globalThis.fetch = async url => { if(String(url).startsWith('data:'))return nativeFetch(url); networkRequests++; throw new Error("offline"); };
+symlinkSync(join(root, "node_modules"), join(temporary, "node_modules"), process.platform === "win32" ? "junction" : "dir");
+
+function compile(directory = "") {
+  for (const entry of readdirSync(join(root, "src", directory), { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) { compile(path); continue; }
+    if (!/\.tsx?$/.test(entry.name) || entry.name === "main.tsx") continue;
+    const output = ts.transpileModule(readFileSync(join(root, "src", path), "utf8"), {
+      compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
+    }).outputText.replace(/import "[^"\n]+\.css";?/g, "").replace(/from "(\.[^"]+)"/g, (_, imported) => {
+      if (imported.endsWith(".json")) return 'from "' + pathToFileURL(resolve(root, "src", dirname(path), imported)) + '" with { type: "json" }';
+      return 'from "' + imported + '.mjs"';
+    });
+    mkdirSync(join(temporary, directory), { recursive: true });
+    writeFileSync(join(temporary, path.replace(/\.tsx?$/, ".mjs")), output.replace(/import\("(\.[^"]+)"\)/g,'import("$1.mjs")'));
+  }
+}
+
+try {
+  compile();
+  const React=await import("react");
+  const {render,screen,within,fireEvent,waitFor,cleanup,act}=await import("@testing-library/react");
+  const {default:userEvent}=await import("@testing-library/user-event");
+  const local=path=>import(pathToFileURL(join(temporary,path+".mjs")));
+  const {App}=await local("App");
+  const {BUILTIN_STYLES,styleGroupLabel}=await local("stylesLibrary");
+  const {NewAlbumStylePicker}=await local("NewAlbumStylePicker");
+  const {readRecentVisits,recentAlbums,recordRecentVisit}=await local("ProjectStart");
+  const {packAlbumBackup}=await local("albumBackup");
+  localStorage.clear();localStorage.setItem("comicbook-ai.locale","sv");
+  const user=userEvent.setup({document});render(React.createElement(App));
+  const stored=()=>JSON.parse(localStorage.getItem("comicbook-ai.projects")??"[]");
+  const home=()=>screen.getByRole("region",{name:"Var vill du börja?"});
+  const start=async route=>user.click(within(home()).getByRole("button",{name:route}));
+  const goHome=async()=>user.click(screen.getByRole("button",{name:"Gå till startsidan"}));
+  const dialog=()=>screen.getByRole("dialog",{name:"Nytt seriealbum"});
+  const create=async name=>{fireEvent.change(within(dialog()).getByLabelText("Projektnamn"),{target:{value:name}});await user.click(within(dialog()).getByRole("button",{name:"Skapa projekt",exact:true}));};
+  const paint=BUILTIN_STYLES.find(s=>s.genre==="Painting"&&s.previewImage);
+  assert.equal(document.querySelectorAll(".project-start-card").length,4);
+  assert.equal(screen.queryByRole("group",{name:"Projektinnehåll"}),null);
+  assert.ok(screen.getByRole("button",{name:"Stilmallar",exact:true}));assert.ok(screen.getByRole("button",{name:"Inställningar",exact:true}));
+  assert.equal(stored().length,0);
+  await start(/Skapa dina sidor direkt/);
+  assert.ok(within(dialog()).getByRole("button",{name:"Skapa projekt",exact:true}).disabled);
+  const initialGroup=BUILTIN_STYLES[0].genre;
+  const initialHeader=within(dialog()).getByRole("button",{name:new RegExp(styleGroupLabel(initialGroup,"sv"))});
+  assert.equal(initialHeader.getAttribute("aria-expanded"),"true");
+  await user.click(within(dialog()).getByRole("button",{name:new RegExp(styleGroupLabel(paint.genre,"sv"))}));
+  assert.equal(initialHeader.getAttribute("aria-expanded"),"false");
+  assert.equal(document.querySelectorAll(".new-style-group button[aria-expanded=true]").length,1);
+  const painting=within(dialog()).getByRole("region",{name:new RegExp(styleGroupLabel(paint.genre,"sv"))});
+  const paintRadio=Array.from(painting.querySelectorAll('input[type=radio]')).find(input=>input.value===paint.id);
+  assert.ok(paintRadio.closest("label").querySelector("img"),"actual style preview is used");
+  await user.click(paintRadio);
+  assert.equal(paintRadio.checked,true);
+  assert.ok(within(dialog()).getByRole("status").textContent.includes(paint.name));
+  await user.click(initialHeader);
+  assert.ok(within(dialog()).getByRole("status").textContent.includes(paint.name),"selected style remains visible when another group opens");
+  await create("Pages start fixture");
+  let pageProject=stored()[0];
+  assert.equal(pageProject.source.type,"blank");assert.equal(pageProject.pages.length,1);assert.equal(pageProject.pages[0].placements.length,0);
+  assert.equal(pageProject.style.id,paint.id);assert.deepEqual(pageProject.style.promptModules,paint.promptModules);
+  assert.ok(document.querySelector(".page-workspace"));
+  const savedPage=structuredClone(pageProject);
+  await user.click(screen.getByRole("button",{name:"Bilder",exact:true}));
+  await goHome();
+  const recent=screen.getByRole("region",{name:"Senast öppnade"});
+  await user.click(within(recent).getByRole("button",{name:/Pages start fixture/}));
+  assert.ok(document.querySelector(".story-workflow"));
+  assert.equal(screen.getByRole("button",{name:"Bilder",exact:true}).getAttribute("aria-current"),"step");
+  assert.deepEqual(stored()[0],savedPage,"opening and navigation do not alter the stored project");
+  assert.equal(readRecentVisits()[0].section,"images");
+  await goHome();
+  await start(/Starta med ett manus/);
+  assert.equal(within(dialog()).getByRole("textbox",{name:"Projektnamn"}).value,"");
+  assert.ok(within(dialog()).getByRole("status").textContent.includes(BUILTIN_STYLES[0].name),"a new project starts with a fresh style choice");
+  await user.keyboard("{Escape}");
+  assert.equal(screen.queryByRole("dialog",{name:"Nytt seriealbum"}),null);
+  assert.ok(document.activeElement.textContent.includes("Starta med ett manus"),"closing setup returns focus to its start card");
+  assert.equal(stored().length,1,"cancelling does not create an album");
+  await start(/Starta med ett manus/);await create("Manuscript start fixture");
+  assert.equal(stored()[0].source.type,"text");assert.equal(stored()[0].pages.length,0);assert.ok(screen.getByRole("textbox",{name:"Manus"}));
+  await goHome();
+  console.log("PASS: four start routes, fresh setup/cancel, exclusive style groups, actual large preview assets, persistent selection, style snapshot, ready first page, manuscript destination, last-opened order and stage resumption");
+
+  const exportObject={kind:"storycore.manuscript-export",format:1,sourceApp:"storybook-ai",exportedAt:"2026-10-19T09:00:00Z",sourceBookId:"source-fixture",title:"Imported start fixture",illustrationStyle:"",bible:[],chapters:[{id:"chapter-fixture",sequence_index:0,title:"Arrival",prose:"A traveller enters the room."}]};
+  const raw=JSON.stringify(exportObject);
+  await start(/Importera från StoryBook AI/);
+  assert.equal(within(dialog()).getByRole("radio",{name:"Importera från StoryBook"}).checked,true);
+  let finishReading;
+  const lateFile=new File([raw],"late-export.json",{type:"application/json"});lateFile.text=()=>new Promise(resolve=>{finishReading=resolve;});
+  await user.upload(within(dialog()).getByLabelText("StoryBook-export för andra appar (.json)"),lateFile);
+  await user.click(within(dialog()).getByRole("button",{name:"Avbryt",exact:true}));
+  await start(/Skapa dina sidor direkt/);
+  await act(async()=>finishReading(raw));
+  assert.equal(within(dialog()).getByRole("textbox",{name:"Projektnamn"}).value,"","a cancelled import cannot populate another new album");
+  await user.click(within(dialog()).getByRole("button",{name:"Avbryt",exact:true}));
+  await start(/Importera från StoryBook AI/);
+  const file=new File([raw],"synthetic-export.json",{type:"application/json"});file.text=async()=>raw;
+  await user.upload(within(dialog()).getByLabelText("StoryBook-export för andra appar (.json)"),file);
+  await waitFor(()=>assert.equal(within(dialog()).getByRole("textbox",{name:"Projektnamn"}).value,exportObject.title));
+  await user.click(within(dialog()).getByRole("button",{name:"Importera och skapa projekt",exact:true}));
+  assert.equal(stored()[0].source.type,"storybook");assert.equal(stored()[0].source.chapters.length,1);
+  assert.equal(stored()[0].source.chapters[0].originalText,exportObject.chapters[0].prose);
+  assert.equal(screen.getByRole("textbox",{name:"Manus"}).textContent,exportObject.chapters[0].prose);
+  assert.equal(await file.text(),raw,"original export file is unchanged");
+  const imported=structuredClone(stored()[0]);
+  await goHome();
+  await start(/Öppna ett projekt/);
+  const chooser=screen.getByRole("dialog",{name:"Öppna ett projekt"});
+  assert.equal(within(chooser).getAllByRole("button",{name:/→/}).length,3);
+  await user.click(within(chooser).getByRole("button",{name:"Välj albumbackup",exact:true}));
+  const backup=packAlbumBackup(imported),backupFile=new File([JSON.stringify(backup)],"synthetic-backup.json",{type:"application/json"});
+  await user.upload(screen.getByLabelText("Välj albumbackup"),backupFile);
+  await user.click(await screen.findByRole("button",{name:"Öppna som nytt album",exact:true}));
+  await waitFor(()=>assert.equal(stored().length,4));
+  const restored=stored().find(p=>p.id!==imported.id&&p.source.storyBookId===imported.source.storyBookId);
+  assert.ok(restored);assert.deepEqual(stored().find(p=>p.id===imported.id),imported,"restore never replaces the original album");
+  assert.equal(networkRequests,0,"home, style selection, import and opening never invoke AI");
+  cleanup();
+  console.log("PASS: direct StoryBook entry, unchanged source, cancelled late-read guard, all-project chooser, backup restoration as independent album, no automatic AI");
+
+  const custom={id:"custom-preview-test",name:"Personal style",genre:"My styles",promptText:"A synthetic style fixture."};
+  let selected=custom.id;
+  function Picker(){const [value,setValue]=React.useState(selected);return React.createElement(NewAlbumStylePicker,{styles:[...BUILTIN_STYLES,custom],value,locale:"en",onChange:id=>{selected=id;setValue(id);}});}
+  render(React.createElement(Picker));
+  assert.ok(screen.getByRole("radio",{name:/Personal style/}).checked);
+  assert.ok(screen.getAllByText("No example image yet").length>0,"styles without preview never borrow another style's image");
+  await user.click(screen.getByRole("button",{name:/My styles/}));
+  assert.equal(screen.queryByRole("radio",{name:/Personal style/}),null);
+  assert.ok(screen.getByRole("status").textContent.includes("Personal style"));
+  cleanup();
+  localStorage.setItem("comicbook-ai.recent-albums","{bad-json");assert.deepEqual(readRecentVisits(),[]);
+  const visits=recordRecentVisit([],"missing","pages");assert.deepEqual(recentAlbums([imported],visits),[imported]);
+  console.log("PASS: custom style groups, honest missing-image state, collapse without selection loss, corrupt or removed recent entries recover safely");
+} finally {rmSync(temporary,{recursive:true,force:true});dom.window.close();}

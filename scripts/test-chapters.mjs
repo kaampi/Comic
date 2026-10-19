@@ -114,7 +114,7 @@ try {
 
   localStorage.clear();localStorage.setItem('comicbook-ai.locale','en');
   const user=userEvent.setup({document});render(React.createElement(App));
-  await user.click(screen.getByRole('button',{name:'New comic album',exact:true}));
+  await user.click(screen.getByRole('button',{name:/Start with a manuscript/}));
   await user.click(screen.getByRole('radio',{name:'Import from StoryBook'}));
   const file=new window.File([originalRaw],'synthetic-export.json',{type:'application/json'});
   file.text=()=>new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.readAsText(file);});

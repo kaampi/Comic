@@ -43,7 +43,7 @@ try {
   const user = userEvent.setup({ document });
   render(React.createElement(App));
   await screen.findByRole("button", { name: "Guide", exact: true });
-  const trigger = within(screen.getByRole("main")).getByRole("button", { name: "New here? Read the getting started guide →" });
+  const trigger = screen.getByRole("button", { name: "Guide", exact: true });
   await user.click(trigger);
   const dialog = screen.getByRole("dialog", { name: GUIDE.title });
   assert.equal(dialog.lang, "en");

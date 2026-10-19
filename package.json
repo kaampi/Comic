@@ -28,7 +28,8 @@
     "test:style-organization": "node scripts/test-style-organization.mjs",
     "docs:guide": "node scripts/build-guide.mjs",
     "test:guide": "node scripts/build-guide.mjs --check && node scripts/test-guide.mjs",
-    "test:story-workflow": "node scripts/test-story-workflow.mjs"
+    "test:story-workflow": "node scripts/test-story-workflow.mjs",
+    "test:project-start": "node scripts/test-project-start.mjs"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#main",

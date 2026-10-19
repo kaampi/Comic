@@ -82,7 +82,7 @@ try {
   const { App } = await import(pathToFileURL(join(temporary, "App.mjs")));
   render(React.createElement(App));
   await user.selectOptions(screen.getByRole("combobox", { name: "Language" }), "sv");
-  await user.click(screen.getByRole("button", { name: "Stillmallar", exact: true }));
+  await user.click(screen.getByRole("button", { name: "Stilmallar", exact: true }));
   const count = () => document.querySelectorAll(".style-grid .style-card").length;
   assert.equal(count(), BUILTIN_STYLES.length);
   await user.click(screen.getByRole("checkbox", { name: "Bara favoriter" }));
@@ -92,9 +92,9 @@ try {
   await user.click(screen.getByRole("checkbox", { name: "Bara favoriter" }));
   assert.ok(count() > 0 && count() < BUILTIN_STYLES.length);
   await user.selectOptions(screen.getByRole("combobox", { name: "Filtrera på tagg" }), "");
-  await user.type(screen.getByRole("textbox", { name: "Sök stillmall…" }), "Barnbok");
+  await user.type(screen.getByRole("textbox", { name: "Sök stilmall…" }), "Barnbok");
   assert.ok(count() > 0 && count() < BUILTIN_STYLES.length);
-  await user.clear(screen.getByRole('textbox',{name:'Sök stillmall…'}));
+  await user.clear(screen.getByRole('textbox',{name:'Sök stilmall…'}));
   const source=BUILTIN_STYLES.find(s=>s.id==='er-1');
   const card=screen.getByRole('heading',{name:source.name,exact:true}).closest('article');
   await user.click(within(card).getByTitle('Duplicera'));

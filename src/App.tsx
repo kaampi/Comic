@@ -1,3 +1,5 @@
+import { ProjectStart, ProjectChooser, readRecentVisits, recordRecentVisit, recentAlbums, type StartRoute } from "./ProjectStart";
+import { NewAlbumStylePicker } from "./NewAlbumStylePicker";
 import { importManuscriptChapters } from "./manuscriptChapters";
 import { PanelMoveTarget } from "./PanelMoveTarget";
 import { usePanelMove } from "./usePanelMove";
@@ -73,7 +75,7 @@ import { readLocalAiSettings, saveLocalAiSettings } from "./localAi";
 import { LocalAiSettings } from "./LocalAiSettings";
 import { localAiText } from "./localAiText";
 
-type Panel = "styles" | "guide" | "settings" | "new-project" | "about" | null;
+type Panel = "styles" | "guide" | "settings" | "new-project" | "open-project" | "about" | null;
 type StyleDraft = Omit<IllustrationStyle, "id"> & { id?: string };
 type ProjectTab = AlbumSection;
 
@@ -100,11 +102,14 @@ export function App() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newSource, setNewSource] = useState<ProjectSource>("blank");
+  const [newDestination, setNewDestination] = useState<"manus"|"pages">("manus");
+  const [recentVisits,setRecentVisits] = useState(readRecentVisits);
   const [newStyleId, setNewStyleId] = useState(BUILTIN_STYLES[0].id);
   const [sceneTitle, setSceneTitle] = useState("");
   const [projectTab, setProjectTab] = useState<ProjectTab>("manus");
   const [workflowChapterId, setWorkflowChapterId] = useState<string|null>(null);
   useEffect(()=>{setWorkflowChapterId(null);},[activeProjectId]);
+  useEffect(()=>{if(activeProjectId)setRecentVisits(previous=>recordRecentVisit(previous,activeProjectId,projectTab));},[activeProjectId,projectTab]);
   const [adaptationStep, setAdaptationStep] = useState<3|4>(3);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [newCharacterName, setNewCharacterName] = useState("");
@@ -152,6 +157,25 @@ export function App() {
   const [importCharacters, setImportCharacters] = useState(true);
   const [importLocations, setImportLocations] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
+  const projectDialogTrigger = useRef<HTMLElement|null>(null);
+  const importReadRevision = useRef(0);
+  useEffect(()=>{
+    if(panel!=="new-project" && panel!=="open-project")return;
+    const dialog=document.querySelector<HTMLElement>(".overlay > .guide-card");
+    const previous=projectDialogTrigger.current,overflow=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    if(panel==="open-project")dialog?.querySelector<HTMLButtonElement>("button")?.focus();
+    const key=(event:KeyboardEvent)=>{
+      if(event.key==="Escape"){event.preventDefault();importReadRevision.current++;setPanel(null);}
+      if(event.key!=="Tab")return;
+      const controls=Array.from(dialog?.querySelectorAll<HTMLElement>("button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)")??[]).filter(el=>!el.closest("[hidden]"));
+      const first=controls[0],last=controls.at(-1);
+      if(event.shiftKey && document.activeElement===first){event.preventDefault();last?.focus();}
+      else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first?.focus();}
+    };
+    document.addEventListener("keydown",key);
+    return()=>{document.body.style.overflow=overflow;document.removeEventListener("keydown",key);if(previous?.isConnected)previous.focus();};
+  },[panel]);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
   useEffect(() => { applyTheme(theme); }, [theme]);
@@ -187,7 +211,20 @@ export function App() {
     const rect = layerRect(page, placement, format);
     return Math.max(1, rect.width - 2 * PANEL_BORDER) / Math.max(1, rect.height - 2 * PANEL_BORDER);
   };
-  const closePanel = () => setPanel(null);
+  const closePanel = () => {importReadRevision.current++;setPanel(null);};
+  const startNewProject = (route: StartRoute) => {
+    importReadRevision.current++;projectDialogTrigger.current=document.activeElement as HTMLElement;
+    setNewTitle(""); setNewSource(route === "storybook" ? "storybook" : route === "manus" ? "text" : "blank");
+    setNewDestination(route === "pages" ? "pages" : "manus");
+    setNewStyleId(BUILTIN_STYLES[0].id);setStoryBookImport(null);setStoryBookCards(null);setImportError("");
+    setImportCharacters(true);setImportLocations(true);setProjectMenuOpen(false);setPanel("new-project");
+  };
+  const openProject = (id: string) => {
+    setActiveProjectId(id);setProjectTab(recentVisits.find(v=>v.id===id)?.section ?? "manus");
+    setSelectedPageId(null);setSelectedSceneId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setAlbumTool(null);setPanel(null);setProjectMenuOpen(false);
+  };
+  const showProjectChooser = () => {projectDialogTrigger.current=document.activeElement as HTMLElement;setPanel("open-project");setProjectMenuOpen(false);};
+  const goHome = () => {importReadRevision.current++;setActiveProjectId(null);setPanel(null);setAlbumTool(null);setPanelEditor(null);setProjectMenuOpen(false);};
   const allStyles = [...BUILTIN_STYLES, ...customStyles];
   const styleCategories = Array.from(new Set(allStyles.map((style) => style.genre))).sort((a,b) => a.localeCompare(b));
   const visibleStyles = allStyles.filter((style) => {
@@ -662,17 +699,20 @@ export function App() {
   };
 
   const readStoryBookFile = async (file: File) => {
-    setImportError("");
-    try { const parsed=parseStoryBookExport(await file.text()); setStoryBookImport(parsed); setNewTitle(parsed.title); }
-    catch (error) { setStoryBookImport(null); setImportError(error instanceof Error ? error.message : "Filen kunde inte läsas."); }
+    const revision=++importReadRevision.current;
+    setImportError("");setStoryBookImport(null);setStoryBookCards(null);
+    try { const parsed=parseStoryBookExport(await file.text()); if(revision!==importReadRevision.current)return;setStoryBookImport(parsed); setNewTitle(parsed.title); }
+    catch (error) { if(revision!==importReadRevision.current)return;setStoryBookImport(null); setImportError(error instanceof Error ? error.message : "Filen kunde inte läsas."); }
   };
   const readStoryBookCardsFile = async (file: File) => {
+    const revision=++importReadRevision.current;
     setImportError("");
-    try { setStoryBookCards(parseStoryBookCards(await file.text())); }
-    catch (error) { setStoryBookCards(null); setImportError(error instanceof Error ? error.message : "Cards-filen kunde inte läsas."); }
+    try { const cards=parseStoryBookCards(await file.text());if(revision===importReadRevision.current)setStoryBookCards(cards); }
+    catch (error) { if(revision!==importReadRevision.current)return;setStoryBookCards(null); setImportError(error instanceof Error ? error.message : "Cards-filen kunde inte läsas."); }
   };
   const createFromStoryBook = () => {
     if (!storyBookImport || !newTitle.trim()) return;
+    importReadRevision.current++;
     const style=allStyles.find((item)=>item.id===newStyleId) ?? BUILTIN_STYLES[0];
     const base=createProject(newTitle,"storybook",style);
     const importedCharacters=importCharacters?storyBookImport.characters.map((item)=>({id:"character-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:"",pronoun:item.pronoun,approximateAge:item.approximateAge})):[];
@@ -688,7 +728,7 @@ export function App() {
       locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:""})):[],
       scenes:storyBookImport.chapters.filter((chapter)=>chapter.text).map((chapter)=>({id:"scene-"+crypto.randomUUID(),title:chapter.title,sourceText:chapter.text,panelIds:[]}))
     };
-    const next=[project,...projects];projectsRef.current=next;setProjects(next);persistProjects(next);setActiveProjectId(project.id);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
+    const next=[project,...projects];projectsRef.current=next;setProjects(next);persistProjects(next);setActiveProjectId(project.id);setProjectTab("manus");setSelectedPageId(null);setSelectedSceneId(null);setPanelEditor(null);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
   };
   const deleteProject = (projectId:string) => {
     const project=projects.find((item)=>item.id===projectId);
@@ -701,8 +741,9 @@ export function App() {
   const createNewProject = () => {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
-    const project = createProject(newTitle, newSource, style);
-    const next = [project, ...projects]; projectsRef.current=next;setProjects(next); persistProjects(next); setActiveProjectId(project.id);
+    const base = createProject(newTitle, newSource, style);
+    const project: ComicProject = {...base,pageDefaults:{...appPageGrid},pages:newDestination === "pages" ? [{id:"page-"+crypto.randomUUID(),number:1,gridColumns:appPageGrid.gridColumns,gridRows:appPageGrid.gridRows,gridMode:"preset",placements:[]}] : []};
+    const next = [project, ...projects]; projectsRef.current=next;setProjects(next); persistProjects(next); setActiveProjectId(project.id);setProjectTab(newDestination);setSelectedPageId(project.pages[0]?.id??null);setSelectedSceneId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);
     setNewTitle(""); setNewSource("blank"); setPanel(null); setProjectMenuOpen(false);
   };
 
@@ -710,17 +751,17 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <button className="brand" type="button" onClick={closePanel} aria-label={tr("goHome")}>
+        <button className="brand" type="button" onClick={goHome} aria-label={tr("goHome")}>
           <img className="brand-logo brand-logo-light" src="/logo.png" alt="ComicBook AI" />
           <img className="brand-logo brand-logo-dark" src="/logo-dark.png" alt="ComicBook AI" />
         </button>
         <div className="top-menu" ref={menuRef}>
           <button className="text-button" type="button" aria-expanded={projectMenuOpen} onClick={() => setProjectMenuOpen((open) => !open)}>{tr("project")}</button>
           {projectMenuOpen ? <div className="menu-panel" role="menu">
-            <button role="menuitem" type="button" className="menu-item" onClick={() => { setPanel("new-project"); setProjectMenuOpen(false); }}>{tr("newAlbum")}</button>
+            <button role="menuitem" type="button" className="menu-item" onClick={() => startNewProject("manus")}>{tr("newAlbum")}</button>
             <button role="menuitem" type="button" className="menu-item" onClick={()=>{setAlbumTool("backup");setProjectMenuOpen(false);}}>{locale==="sv"?"Återställ albumbackup":"Restore album backup"}</button>
-            {projects.length ? <><div className="menu-divider" />{projects.slice(0, 5).map((project) => <div className="menu-project-row" key={project.id}><button role="menuitem" type="button" className="menu-item" onClick={() => { setActiveProjectId(project.id); setProjectMenuOpen(false); }}>{project.title}</button><button type="button" className="menu-delete-project" aria-label={`Radera ${project.title}`} title={tr("deleteProject")} onClick={() => deleteProject(project.id)}>×</button></div>)}</> : <><div className="menu-divider" /><span className="menu-empty">{tr("noRecent")}</span></>}
-            <div className="menu-divider" /><button role="menuitem" type="button" className="menu-item" onClick={() => { setActiveProjectId(null); setProjectMenuOpen(false); }}>{tr("showAll")}</button>
+            {projects.length ? <><div className="menu-divider" />{recentAlbums(projects,recentVisits).slice(0, 5).map((project) => <div className="menu-project-row" key={project.id}><button role="menuitem" type="button" className="menu-item" onClick={() => openProject(project.id)}>{project.title}</button><button type="button" className="menu-delete-project" aria-label={`Radera ${project.title}`} title={tr("deleteProject")} onClick={() => deleteProject(project.id)}>×</button></div>)}</> : <><div className="menu-divider" /><span className="menu-empty">{tr("noRecent")}</span></>}
+            <div className="menu-divider" /><button role="menuitem" type="button" className="menu-item" onClick={() => { showProjectChooser(); }}>{tr("showAll")}</button>
             <div className="menu-divider" /><button role="menuitem" type="button" className="menu-item" onClick={() => { setPanel("about"); setProjectMenuOpen(false); }}>{aboutLabel(locale)}</button>
           </div> : null}
         </div>
@@ -850,15 +891,8 @@ export function App() {
               </div>; })()}
           </section> : null}
           </section>
-        </section> : <>
-          <header className="home-brand"><p className="eyebrow">{tr("comicWorkspace")}</p><h1>{tr("fromStory")}<br />{tr("toComic")}</h1>
-            <p className="lede">Planera bildrutor, bygg konsekventa bildprompter och skapa din serie utan att låsa projektet till en viss AI-tjänst.</p>
-            <p><button className="text-button" type="button" onClick={() => setPanel("guide")}>New here? Read the getting started guide →</button></p></header>
-          <section className="workspace-card"><div className="card-heading"><div><p className="eyebrow">{tr("yourProjects")}</p><h2>{projects.length ? tr("continueWhere") : tr("createFirst")}</h2></div>
-            <button className="primary-button" type="button" onClick={() => setPanel("new-project")}>{tr("newAlbum")}</button></div>
-            {projects.length ? <div className="project-list">{projects.map((project) => <button key={project.id} type="button" onClick={() => setActiveProjectId(project.id)}><strong>{project.title}</strong><span>{project.style.name}</span></button>)}</div> : <p className="quiet">{tr("localIndependent")}</p>}
-          </section>
-        </>}
+        </section> : <ProjectStart projects={recentAlbums(projects,recentVisits)} locale={locale} onStart={startNewProject} onOpen={openProject} onBrowse={showProjectChooser} />}
+
       </main>
 
       {panelEditor && activeProject ? (()=>{const pg=activeProject.pages.find(x=>x.id===panelEditor.pageId),storedLayer=pg?.background?.id===panelEditor.placementId?pg.background:pg?.foregrounds?.find(x=>x.id===panelEditor.placementId)??pg?.placements.find(x=>x.id===panelEditor.placementId);if(!pg||!storedLayer)return null;const pl=foregroundImageDraft?.pageId===pg.id&&foregroundImageDraft.placementId===storedLayer.id&&storedLayer.image?changeForegroundImage(storedLayer,{...storedLayer.image,offsetX:foregroundImageDraft.offsetX,offsetY:foregroundImageDraft.offsetY,positionMode:"frame"}):storedLayer;const isForeground=!!pg.foregrounds?.some(l=>l.id===pl.id);const o=(pl.overlays??[]).find(item=>item.id===selectedOverlayId)??null;const selectedText=o&&textSelection?.overlayId===o.id&&textSelection.end>textSelection.start?textSelection:null;const typeValues=o&&selectedText?{...o,...Object.fromEntries(Object.entries(textStyleAt(o,selectedText.start)).filter(([,v])=>v!==undefined))}:o;const projectPanel=pl.panelId?activeProject.panels.find((item)=>item.id===pl.panelId):undefined;const panelPlan=projectPanel?.adaptationPanelPlanId?activeAdaptation?.panelPlans.find((item)=>item.id===projectPanel.adaptationPanelPlanId):undefined;return <div className="panel-editor-backdrop" onPointerDown={(e)=>{if(e.target===e.currentTarget){setPanelEditor(null);setImageEditPlacementId(null);}}}>
@@ -1058,19 +1092,19 @@ export function App() {
       {panel === "about" ? <AboutDialog locale={locale} onClose={closePanel} returnFocus={menuRef.current?.querySelector("button")} /> : null}
       {panel === "guide" ? <GuideDialog onClose={closePanel} /> : null}
       {panel && panel !== "about" && panel !== "guide" ? <div className="overlay" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && closePanel()}>
-        <article className="guide-card" role="dialog" aria-modal="true">
+        <article className={`guide-card${panel==="new-project"?" new-album-dialog":""}`} role="dialog" aria-modal="true" aria-labelledby={panel==="new-project"?"new-project-title":panel==="open-project"?"project-chooser-title":undefined}>
           <div className="guide-actions"><button className="text-button" type="button" onClick={closePanel}>{tr("close")}</button></div>
-          {panel === "new-project" ? <><p className="eyebrow">{tr("newProject")}</p><h1>{tr("newAlbum")}</h1>
+          {panel === "open-project" ? <ProjectChooser projects={recentAlbums(projects,recentVisits)} locale={locale} onOpen={openProject} onRestore={()=>{setPanel(null);setAlbumTool("backup");}} /> : null}
+          {panel === "new-project" ? <><p className="eyebrow">{tr("newProject")}</p><h1 id="new-project-title">{tr("newAlbum")}</h1><p className="new-project-destination">{locale==="sv"?(newSource==="storybook"?"Importera din berättelse och börja i Manus.":newDestination==="pages"?"Börja direkt med en tom sida för dina bilder och texter.":"Börja i Manus med din egen text."):(newSource==="storybook"?"Import your story and start in Manuscript.":newDestination==="pages"?"Start with an empty page for your images and text.":"Start in Manuscript with your own text.")}</p>
             <div className="new-project-form"><label>{tr("projectName")}<input autoFocus value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="T.ex. Mysteriet på Svartön" /></label>
               <fieldset><legend>{tr("sourceMaterial")}</legend>
-                <label><input type="radio" checked={newSource === "blank"} onChange={() => setNewSource("blank")} /> {tr("blankProject")}</label>
-                <label className="disabled-choice"><input type="radio" disabled /> {tr("importText")} <small>{tr("nextStep")}</small></label>
-                <label><input type="radio" checked={newSource === "storybook"} onChange={() => { setNewSource("storybook"); setStoryBookImport(null); setImportError(""); }} /> {tr("importStoryBook")}</label>
+                <label><input type="radio" checked={newSource === "blank"} onChange={() => {importReadRevision.current++;setNewSource("blank");setNewDestination("pages");}} /> {tr("blankProject")}</label>
+                <label><input type="radio" checked={newSource === "text"} onChange={()=>{importReadRevision.current++;setNewSource("text");setNewDestination("manus");}} />{locale==="sv"?"Skriv eller klistra in manus":locale==="nb"?"Skriv eller lim inn manus":"Write or paste a manuscript"}</label>
+                <label><input type="radio" checked={newSource === "storybook"} onChange={() => { importReadRevision.current++;setNewSource("storybook"); setNewDestination("manus"); setStoryBookImport(null); setImportError(""); }} /> {tr("importStoryBook")}</label>
               </fieldset>
               {newSource === "storybook" ? <div className="storybook-import"><div className="storybook-export-picker"><p className="quiet">{tr("storybookExportHelp")}</p><label className="file-picker">{tr("storybookExportFile")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookFile(file);}} /></label></div>{storyBookImport ? <label className="file-picker">{tr("storybookCardsOptional")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookCardsFile(file);}} /></label> : null}{importError ? <p className="import-error">{importError}</p> : null}{storyBookImport ? <div className="import-review"><p className="eyebrow">{tr("reviewImport")}</p><strong>{storyBookImport.title}</strong><span>{storyBookImport.text.length} tecken · {storyBookImport.chapters.length} kapitel · {storyBookImport.characters.length} karaktärer · {storyBookImport.locations.length} platser</span>{storyBookCards ? <span>{storyBookCards.characters.filter((card)=>!storyBookImport.sourceBookId||cardMatchesBook(card,storyBookImport.sourceBookId)).length} Cards-karaktärer hittade · porträtt kopieras lokalt</span> : <span className="quiet">{tr("storybookCardsHelp")}</span>}<label><input type="checkbox" checked={importCharacters} onChange={(e)=>setImportCharacters(e.target.checked)} /> {tr("copyCharacters")}</label><label><input type="checkbox" checked={importLocations} onChange={(e)=>setImportLocations(e.target.checked)} /> {tr("copyLocations")}</label><p className="quiet">{tr("importIndependent")}</p></div> : null}</div> : null}
-              <label>{tr("styleTemplate")}<select value={newStyleId} onChange={(e) => setNewStyleId(e.target.value)}>{allStyles.map((style) => <option key={style.id} value={style.id}>{styleGroupLabel(style.genre, locale)} — {style.name}</option>)}</select></label>
-              <div className="style-preview"><span className="style-genre">{tr("projectSnapshot")}</span><p>{allStyles.find((style) => style.id === newStyleId)?.promptText}</p></div>
-              <div className="style-editor-actions"><button className="text-button" type="button" onClick={closePanel}>{tr("cancel")}</button><button className="primary-button" type="button" disabled={!newTitle.trim() || (newSource==="storybook" && !storyBookImport)} onClick={newSource==="storybook" ? createFromStoryBook : createNewProject}>{newSource==="storybook" ? tr("importCreate") : tr("createProject")}</button></div>
+              <NewAlbumStylePicker styles={allStyles} value={newStyleId} locale={locale} onChange={setNewStyleId} />
+              <div className="style-editor-actions"><span>{locale==="sv"?"Vald stil":"Selected style"}: {allStyles.find(style=>style.id===newStyleId)?.name}</span><button className="text-button" type="button" onClick={closePanel}>{tr("cancel")}</button><button className="primary-button" type="button" disabled={!newTitle.trim() || (newSource==="storybook" && !storyBookImport)} onClick={newSource==="storybook" ? createFromStoryBook : createNewProject}>{newSource==="storybook" ? tr("importCreate") : tr("createProject")}</button></div>
             </div></> : null}
           {panel === "styles" ? <div className="style-library">
             <div className="style-library-toolbar">

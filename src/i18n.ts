@@ -3,7 +3,7 @@ import type { Locale } from "./settings";
 export const UI = {
   sv: {
     project:"Projekt", newAlbum:"Nytt seriealbum", noRecent:"Inga senaste projekt ännu", showAll:"Visa alla projekt",
-    styleTemplates:"Stillmallar", guide:"Guide", settings:"Inställningar", language:"Språk",
+    styleTemplates:"Stilmallar", guide:"Guide", settings:"Inställningar", language:"Språk",
     dark:"Mörkt", light:"Ljust", manuscript:"Manus", characters:"Karaktärer", locations:"Platser",
     panels:"Bildrutor", pages:"Sidor", imageStyles:"Bildstilar", comicProject:"SERIEPROJEKT", style:"Stil",
     sourceText:"KÄLLTEXT", savedLocally:"Sparas lokalt", scenes:"SCENER", sceneDivision:"Scenindelning",
@@ -30,10 +30,10 @@ export const UI = {
     importText:"Importera text/manus", nextStep:"nästa steg", importStoryBook:"Importera från StoryBook", reviewImport:"GRANSKA IMPORT",
     storybookExportFile:"StoryBook-export för andra appar (.json)", storybookExportHelp:"I StoryBook AI: välj “Exportera för andra appar” bredvid Backup och importera den JSON-filen här.", storybookCardsOptional:"Cards-export – valfri (.json)", storybookCardsHelp:"Du kan även välja en Cards-export för karaktärsporträtt.",
     copyCharacters:"Kopiera karaktärer", copyLocations:"Kopiera platser", importIndependent:"Importen skapar en fristående kopia i ComicBook AI. StoryBook-filen ändras inte.",
-    styleTemplate:"Stillmall", projectSnapshot:"SNAPSHOT I PROJEKTET", cancel:"Avbryt", importCreate:"Importera och skapa projekt", createProject:"Skapa projekt",
+    styleTemplate:"Stilmall", projectSnapshot:"SNAPSHOT I PROJEKTET", cancel:"Avbryt", importCreate:"Importera och skapa projekt", createProject:"Skapa projekt",
     guidePlaceholder:"Guiden skriver vi senare. Den här platsen är förberedd för den.", system:"SYSTEM",
-    styleTemplatesLead:"Globala visuella stilar som kan användas när ComicBook AI bygger bildprompter.", searchStyle:"Sök stillmall…",
-    all:"Alla", newStyle:"Ny stillmall", name:"Namn", genre:"Stilgrupp", prompt:"Prompt", save:"Spara", custom:"Egen", builtin:"Inbyggd", useForProject:"Använd i projektet", activeStyle:"Aktiv stil", saveCurrentStyleAsNew:"Spara aktiv stil som ny", noStylesFound:"Inga stilar matchar sökningen.",
+    styleTemplatesLead:"Globala visuella stilar som kan användas när ComicBook AI bygger bildprompter.", searchStyle:"Sök stilmall…",
+    all:"Alla", newStyle:"Ny stilmall", name:"Namn", genre:"Stilgrupp", prompt:"Prompt", save:"Spara", custom:"Egen", builtin:"Inbyggd", useForProject:"Använd i projektet", activeStyle:"Aktiv stil", saveCurrentStyleAsNew:"Spara aktiv stil som ny", noStylesFound:"Inga stilar matchar sökningen.",
     duplicate:"Duplicera", edit:"Redigera", delete:"Radera", settingsLead:"Välj hur ComicBook AI ska arbeta med bildgenerering.",
     defaultGrid:"Standardrutnät för nya projekt", aiMode:"AI-läge", comingLater:"Kommer senare",
     promptMode:"Skapa prompter", promptModeDesc:"ComicBook AI skapar färdiga bildprompter som du kan kopiera till valfri bild-AI.",
