@@ -245,6 +245,10 @@ export function parseAlbumBackup(input: unknown): ComicProject {
         if (value[key] !== undefined) number(value[key]);
       if (value.roundness !== undefined && (value.roundness < (type === "caption" ? -100 : 0) || value.roundness > 100)) throw new Error("invalid-backup");
       if (value.fontFamily !== undefined) string(value.fontFamily);
+      for(const key of ["textColor","fillColor","strokeColor"])if(value[key]!==undefined)string(value[key]);
+      if(value.strokeWidth!==undefined){number(value.strokeWidth);if(value.strokeWidth<0||value.strokeWidth>20)throw new Error("invalid-backup");}
+      if(value.fillOpacity!==undefined){number(value.fillOpacity);if(value.fillOpacity<0||value.fillOpacity>1)throw new Error("invalid-backup");}
+      if(value.bubbleStyle!==undefined && !["organic","wide","tall","oval","rounded","shout","whisper"].includes(value.bubbleStyle))throw new Error("invalid-backup");
       if (
         value.textAlign !== undefined &&
         !["left", "center", "right"].includes(value.textAlign)

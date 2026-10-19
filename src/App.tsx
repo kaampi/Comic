@@ -1,6 +1,6 @@
 import { StyleImageZoom } from "./StyleImageZoom";
 import { ProjectStart, ProjectChooser, readRecentVisits, recordRecentVisit, recentAlbums, type StartRoute } from "./ProjectStart";
-import { NewAlbumStylePicker } from "./NewAlbumStylePicker";
+import { NewAlbumWizard } from "./NewAlbumWizard";
 import { importManuscriptChapters } from "./manuscriptChapters";
 import { PanelMoveTarget } from "./PanelMoveTarget";
 import { usePanelMove } from "./usePanelMove";
@@ -103,6 +103,8 @@ export function App() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newSource, setNewSource] = useState<ProjectSource>("blank");
+  const [newTextDefaults,setNewTextDefaults] = useState<ComicProject["overlayDefaults"]>({});
+  const storyBookShortcutInput = useRef<HTMLInputElement>(null);
   const [newDestination, setNewDestination] = useState<"manus"|"pages">("manus");
   const [recentVisits,setRecentVisits] = useState(readRecentVisits);
   const [newStyleId, setNewStyleId] = useState(BUILTIN_STYLES[0].id);
@@ -171,6 +173,7 @@ export function App() {
       if(event.key!=="Tab")return;
       const controls=Array.from(dialog?.querySelectorAll<HTMLElement>("button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)")??[]).filter(el=>!el.closest("[hidden]"));
       const first=controls[0],last=controls.at(-1);
+      if(!dialog?.contains(document.activeElement)){event.preventDefault();(event.shiftKey?last:first)?.focus();return;}
       if(event.shiftKey && document.activeElement===first){event.preventDefault();last?.focus();}
       else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first?.focus();}
     };
@@ -215,10 +218,11 @@ export function App() {
   const closePanel = () => {importReadRevision.current++;setPanel(null);};
   const startNewProject = (route: StartRoute) => {
     importReadRevision.current++;projectDialogTrigger.current=document.activeElement as HTMLElement;
-    setNewTitle(""); setNewSource(route === "storybook" ? "storybook" : route === "manus" ? "text" : "blank");
+    setNewTextDefaults({});setNewTitle(""); setNewSource(route === "storybook" ? "storybook" : route === "manus" ? "text" : "blank");
     setNewDestination(route === "pages" ? "pages" : "manus");
     setNewStyleId(BUILTIN_STYLES[0].id);setStoryBookImport(null);setStoryBookCards(null);setImportError("");
     setImportCharacters(true);setImportLocations(true);setProjectMenuOpen(false);setPanel("new-project");
+    if(route === "storybook")storyBookShortcutInput.current?.click();
   };
   const openProject = (id: string) => {
     setActiveProjectId(id);setProjectTab(recentVisits.find(v=>v.id===id)?.section ?? "manus");
@@ -634,8 +638,9 @@ export function App() {
     const x=previous?Math.max(0,Math.min(100-width,previous.x+4)):10;
     const y=previous?Math.max(0,Math.min(100-height,previous.y+4)):10;
     const dx=x-(previous?.x??x),dy=y-(previous?.y??y);
+    const defaults=overlayDefaults(project,type);
     const characterSwatch=speakerId?(project.bubbleSwatches??[]).find((swatch)=>swatch.characterId===speakerId):undefined;
-    const overlay={id:newOverlayId,type,text:initialText??(type==="sfx"?"BOOM!":"Text"),x,y,width,height,rotation:0,bubbleStyle:"organic" as const,tailEnabled:type==="speech"?(previous?.tailEnabled??true):false,tailCurve:previous?.tailCurve??0,tailRootWidth:previous?.tailRootWidth??50,...overlayDefaults(project,type),strokeColor:characterSwatch?.strokeColor??previous?.strokeColor??"#171411",strokeWidth:characterSwatch?.strokeWidth??previous?.strokeWidth??2,fillColor:characterSwatch?.fillColor??previous?.fillColor??"#fffdf7",fillOpacity:characterSwatch?.fillOpacity??previous?.fillOpacity??1,swatchId:characterSwatch?.id??previous?.swatchId,tailX:(type==="speech"||type==="thought")?(previous?.tailX!==undefined?previous.tailX+dx:x+width*.65):undefined,tailY:(type==="speech"||type==="thought")?(previous?.tailY!==undefined?previous.tailY+dy:y+height*(type==="thought"?1.55:1.15)):undefined};
+    const overlay={id:newOverlayId,type,text:initialText??(type==="sfx"?"BOOM!":"Text"),x,y,width,height,rotation:0,bubbleStyle:"organic" as const,tailEnabled:type==="speech"?(previous?.tailEnabled??true):false,tailCurve:previous?.tailCurve??0,tailRootWidth:previous?.tailRootWidth??50,...defaults,strokeColor:characterSwatch?.strokeColor??previous?.strokeColor??defaults.strokeColor??"#171411",strokeWidth:characterSwatch?.strokeWidth??previous?.strokeWidth??defaults.strokeWidth??2,fillColor:characterSwatch?.fillColor??previous?.fillColor??defaults.fillColor??"#fffdf7",fillOpacity:characterSwatch?.fillOpacity??previous?.fillOpacity??defaults.fillOpacity??1,swatchId:characterSwatch?.id??previous?.swatchId,tailX:(type==="speech"||type==="thought")?(previous?.tailX!==undefined?previous.tailX+dx:x+width*.65):undefined,tailY:(type==="speech"||type==="thought")?(previous?.tailY!==undefined?previous.tailY+dy:y+height*(type==="thought"?1.55:1.15)):undefined};
     return {...placement,overlays:[...overlays,overlay]};
   })})}));
     setSelectedOverlayId(newOverlayId);
@@ -724,7 +729,7 @@ export function App() {
       if(card){character.description=card.personality||character.description;character.visualIdentity=card.appearance||"";character.pronoun=card.pronoun??character.pronoun;character.approximateAge=card.approximateAge??character.approximateAge;}
     }
     const importedManuscript=importManuscriptChapters(storyBookImport.chapters);
-    const project: ComicProject={...base,pageDefaults:{...appPageGrid},source:{type:"storybook",textSnapshot:importedManuscript.text,chapters:importedManuscript.chapters,storyBookId:storyBookImport.sourceBookId||undefined},references:{characterPortraits:portraits},
+    const project: ComicProject={...base,overlayDefaults:structuredClone(newTextDefaults),pageDefaults:{...appPageGrid},source:{type:"storybook",textSnapshot:importedManuscript.text,chapters:importedManuscript.chapters,storyBookId:storyBookImport.sourceBookId||undefined},references:{characterPortraits:portraits},
       characters:importedCharacters,
       locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:""})):[],
       scenes:storyBookImport.chapters.filter((chapter)=>chapter.text).map((chapter)=>({id:"scene-"+crypto.randomUUID(),title:chapter.title,sourceText:chapter.text,panelIds:[]}))
@@ -743,7 +748,7 @@ export function App() {
     if (!newTitle.trim()) return;
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
     const base = createProject(newTitle, newSource, style);
-    const project: ComicProject = {...base,pageDefaults:{...appPageGrid},pages:newDestination === "pages" ? [{id:"page-"+crypto.randomUUID(),number:1,gridColumns:appPageGrid.gridColumns,gridRows:appPageGrid.gridRows,gridMode:"preset",placements:[]}] : []};
+    const project: ComicProject = {...base,overlayDefaults:structuredClone(newTextDefaults),pageDefaults:{...appPageGrid},pages:newDestination === "pages" ? [{id:"page-"+crypto.randomUUID(),number:1,gridColumns:appPageGrid.gridColumns,gridRows:appPageGrid.gridRows,gridMode:"preset",placements:[]}] : []};
     const next = [project, ...projects]; projectsRef.current=next;setProjects(next); persistProjects(next); setActiveProjectId(project.id);setProjectTab(newDestination);setSelectedPageId(project.pages[0]?.id??null);setSelectedSceneId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);
     setNewTitle(""); setNewSource("blank"); setPanel(null); setProjectMenuOpen(false);
   };
@@ -751,6 +756,7 @@ export function App() {
   if (!projectsReady) return <div className="app-shell"><main className="home"><section className="workspace-card">{loadFailure ? <><p role="alert">{locale === "sv" ? "Albumen kunde inte läsas. Inga sparade album har skrivits över." : locale === "nb" ? "Albumene kunne ikke leses. Ingen lagrede album er overskrevet." : "Albums could not be loaded. No saved albums have been overwritten."} ({loadFailure.errorName})</p><button type="button" onClick={() => void loadStoredProjects()}>{locale === "sv" ? "Försök igen" : locale === "nb" ? "Prøv igjen" : "Retry"}</button></> : <p role="status">{locale === "sv" ? "Läser sparade album…" : locale === "nb" ? "Leser lagrede album…" : "Loading saved albums…"}</p>}</section></main></div>;
   return (
     <div className="app-shell">
+      <input ref={storyBookShortcutInput} type="file" hidden accept=".json,application/json" aria-label="StoryBook export shortcut" onChange={event=>{const file=event.target.files?.[0];if(file)void readStoryBookFile(file);event.currentTarget.value="";}} />
       <header className="topbar">
         <button className="brand" type="button" onClick={goHome} aria-label={tr("goHome")}>
           <img className="brand-logo brand-logo-light" src="/logo.png" alt="ComicBook AI" />
@@ -1096,17 +1102,7 @@ export function App() {
         <article className={`guide-card${panel==="new-project"?" new-album-dialog":""}`} role="dialog" aria-modal="true" aria-labelledby={panel==="new-project"?"new-project-title":panel==="open-project"?"project-chooser-title":undefined}>
           <div className="guide-actions"><button className="text-button" type="button" onClick={closePanel}>{tr("close")}</button></div>
           {panel === "open-project" ? <ProjectChooser projects={recentAlbums(projects,recentVisits)} locale={locale} onOpen={openProject} onRestore={()=>{setPanel(null);setAlbumTool("backup");}} /> : null}
-          {panel === "new-project" ? <><p className="eyebrow">{tr("newProject")}</p><h1 id="new-project-title">{tr("newAlbum")}</h1><p className="new-project-destination">{locale==="sv"?(newSource==="storybook"?"Importera din berättelse och börja i Manus.":newDestination==="pages"?"Börja direkt med en tom sida för dina bilder och texter.":"Börja i Manus med din egen text."):(newSource==="storybook"?"Import your story and start in Manuscript.":newDestination==="pages"?"Start with an empty page for your images and text.":"Start in Manuscript with your own text.")}</p>
-            <div className="new-project-form"><label>{tr("projectName")}<input autoFocus value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="T.ex. Mysteriet på Svartön" /></label>
-              <fieldset><legend>{tr("sourceMaterial")}</legend>
-                <label><input type="radio" checked={newSource === "blank"} onChange={() => {importReadRevision.current++;setNewSource("blank");setNewDestination("pages");}} /> {tr("blankProject")}</label>
-                <label><input type="radio" checked={newSource === "text"} onChange={()=>{importReadRevision.current++;setNewSource("text");setNewDestination("manus");}} />{locale==="sv"?"Skriv eller klistra in manus":locale==="nb"?"Skriv eller lim inn manus":"Write or paste a manuscript"}</label>
-                <label><input type="radio" checked={newSource === "storybook"} onChange={() => { importReadRevision.current++;setNewSource("storybook"); setNewDestination("manus"); setStoryBookImport(null); setImportError(""); }} /> {tr("importStoryBook")}</label>
-              </fieldset>
-              {newSource === "storybook" ? <div className="storybook-import"><div className="storybook-export-picker"><p className="quiet">{tr("storybookExportHelp")}</p><label className="file-picker">{tr("storybookExportFile")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookFile(file);}} /></label></div>{storyBookImport ? <label className="file-picker">{tr("storybookCardsOptional")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookCardsFile(file);}} /></label> : null}{importError ? <p className="import-error">{importError}</p> : null}{storyBookImport ? <div className="import-review"><p className="eyebrow">{tr("reviewImport")}</p><strong>{storyBookImport.title}</strong><span>{storyBookImport.text.length} tecken · {storyBookImport.chapters.length} kapitel · {storyBookImport.characters.length} karaktärer · {storyBookImport.locations.length} platser</span>{storyBookCards ? <span>{storyBookCards.characters.filter((card)=>!storyBookImport.sourceBookId||cardMatchesBook(card,storyBookImport.sourceBookId)).length} Cards-karaktärer hittade · porträtt kopieras lokalt</span> : <span className="quiet">{tr("storybookCardsHelp")}</span>}<label><input type="checkbox" checked={importCharacters} onChange={(e)=>setImportCharacters(e.target.checked)} /> {tr("copyCharacters")}</label><label><input type="checkbox" checked={importLocations} onChange={(e)=>setImportLocations(e.target.checked)} /> {tr("copyLocations")}</label><p className="quiet">{tr("importIndependent")}</p></div> : null}</div> : null}
-              <NewAlbumStylePicker styles={allStyles} value={newStyleId} locale={locale} onChange={setNewStyleId} />
-              <div className="style-editor-actions"><span>{locale==="sv"?"Vald stil":"Selected style"}: {allStyles.find(style=>style.id===newStyleId)?.name}</span><button className="text-button" type="button" onClick={closePanel}>{tr("cancel")}</button><button className="primary-button" type="button" disabled={!newTitle.trim() || (newSource==="storybook" && !storyBookImport)} onClick={newSource==="storybook" ? createFromStoryBook : createNewProject}>{newSource==="storybook" ? tr("importCreate") : tr("createProject")}</button></div>
-            </div></> : null}
+          {panel === "new-project" ? <NewAlbumWizard locale={locale} source={newSource} name={newTitle} onName={setNewTitle} styles={allStyles} styleId={newStyleId} onStyle={setNewStyleId} defaults={newTextDefaults} onDefaults={setNewTextDefaults} importReady={Boolean(storyBookImport)} importReview={<div className="storybook-import"><div className="storybook-export-picker"><p className="quiet">{tr("storybookExportHelp")}</p><label className="file-picker">{tr("storybookExportFile")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookFile(file);}} /></label></div>{storyBookImport ? <label className="file-picker">{tr("storybookCardsOptional")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookCardsFile(file);}} /></label> : null}{importError ? <p className="import-error">{importError}</p> : null}{storyBookImport ? <div className="import-review"><p className="eyebrow">{tr("reviewImport")}</p><strong>{storyBookImport.title}</strong><span>{storyBookImport.text.length} tecken · {storyBookImport.chapters.length} kapitel · {storyBookImport.characters.length} karaktärer · {storyBookImport.locations.length} platser</span>{storyBookCards ? <span>{storyBookCards.characters.filter((card)=>!storyBookImport.sourceBookId||cardMatchesBook(card,storyBookImport.sourceBookId)).length} Cards-karaktärer hittade · porträtt kopieras lokalt</span> : <span className="quiet">{tr("storybookCardsHelp")}</span>}<label><input type="checkbox" checked={importCharacters} onChange={(e)=>setImportCharacters(e.target.checked)} /> {tr("copyCharacters")}</label><label><input type="checkbox" checked={importLocations} onChange={(e)=>setImportLocations(e.target.checked)} /> {tr("copyLocations")}</label><p className="quiet">{tr("importIndependent")}</p></div> : null}</div>} onCancel={closePanel} onCreate={newSource==="storybook"?createFromStoryBook:createNewProject} /> : null}
           {panel === "styles" ? <div className="style-library">
             <div className="style-library-toolbar">
               <div className="style-library-head">

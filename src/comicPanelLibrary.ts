@@ -106,6 +106,7 @@ export function assignLibraryPanel(
     const swatch =
       character &&
       project.bubbleSwatches.find((s) => s.characterId === character.id);
+    const defaults=overlayDefaults(project,text.type);
     const overlay: TextOverlay = {
       id: `overlay-${crypto.randomUUID()}`,
       sourcePanelId: panelId,
@@ -121,12 +122,12 @@ export function assignLibraryPanel(
       tailEnabled: text.type === "speech",
       tailX: x + 26,
       tailY: y + (text.type === "thought" ? 24*1.55 : 28),
-      strokeColor: swatch?.strokeColor ?? "#171411",
-      strokeWidth: swatch?.strokeWidth ?? 2,
-      fillColor: swatch?.fillColor ?? "#fffdf7",
-      fillOpacity: swatch?.fillOpacity ?? 1,
+      ...defaults,
+      strokeColor: swatch?.strokeColor ?? defaults.strokeColor ?? "#171411",
+      strokeWidth: swatch?.strokeWidth ?? defaults.strokeWidth ?? 2,
+      fillColor: swatch?.fillColor ?? defaults.fillColor ?? "#fffdf7",
+      fillOpacity: swatch?.fillOpacity ?? defaults.fillOpacity ?? 1,
       swatchId: swatch?.id,
-      ...overlayDefaults(project,text.type),
     };
     overlays.push(overlay);
   }

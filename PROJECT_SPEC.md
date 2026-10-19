@@ -165,6 +165,14 @@ Manusvyn visar ett kapitel åt gången med kapitelval och föregående/nästa. B
 
 Kapiteldata följer lokal lagring och albumbackup; ogiltiga eller överlappande intervall och okända kapitelreferenser avvisas vid återställning. Äldre album fungerar utan kapitel. Tidigare StoryBook-importer får återställda kapitel endast om de bevarade scenkopiorna exakt motsvarar hela texten; gränser eller förlorade ursprungliga kapitel-ID:n gissas aldrig. Inläsning och jämförelse av en ny StoryBook-export mot pågående adaption ingår inte i detta steg.
 
+### 7.3 Startguide för nya album
+
+Startsidan erbjuder direkt sidbygge, eget manus, StoryBook-import och öppning av sparade projekt. Nya album skapas genom tre steg: namn, bildstil och textutseende. Bakåt/framåt bevarar utkastets val. Avbryt sparar inget nytt album; först Skapa album skapar och sparar det färdiga projektet. Direkt sidbygge öppnar Sidor med en första tom sida, medan eget manus och StoryBook-import öppnar Manus.
+
+StoryBook-valet öppnar först filväljaren och en importgranskning med befintliga val för karaktärer, platser och Cards. Därefter följer samma guide med bokens namn förifyllt. Originalfilen förblir oförändrad och sena svar från avbrutna filinläsningar får inte ändra ett annat utkast. Ingen AI startas av guiden.
+
+Bildstilen väljs i grupper med stora förhandsbilder och lightbox. Textsteget visar separata levande exempel för pratbubblor, tankebubblor och berättarrutor med samma renderer som sidbyggaren. Typsnitt, storlek, vikt, justering, marginal, rundning, bubbelform, text- och bakgrundsfärg, ram och opacitet sparas som albumets standard för nya textlager. Inställningarna kan ändras i albuminställningarna och följer lokal lagring och backup. Befintliga textlager behåller sina värden; tidigare pratbubblors utseende och uttryckligt valda karaktärsswatcher behåller företräde vid relevant nyskapande.
+
 ## 8. Sidplanerare
 
 Första versionen använder sidmallar. Fri drag-and-drop och rutnät är en senare utbyggnad.

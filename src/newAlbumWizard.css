@@ -1,0 +1,22 @@
+.album-wizard>header h1{margin:6px 0 20px;font-size:clamp(1.7rem,3vw,2.25rem);font-weight:500}
+.album-wizard-steps{display:flex;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:18px;margin-bottom:26px}
+.album-wizard-steps button{display:flex;align-items:center;gap:9px;padding:8px 13px;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--text-dim);font-size:.85rem;cursor:pointer}
+.album-wizard-steps button>span{display:grid;place-items:center;width:25px;height:25px;border:1px solid var(--border);border-radius:50%;font-size:.75rem}
+.album-wizard-steps button[aria-current=step]{border-color:var(--ink);color:var(--ink);background:var(--raised)}
+.album-wizard-steps button:disabled{opacity:.45;cursor:default}
+.album-wizard-content{padding-bottom:26px}.album-wizard-content>h2{font-size:1.5rem;font-weight:500;margin:0 0 8px}
+.album-wizard-help{color:var(--text-dim);line-height:1.6;font-size:.9rem;margin:0 0 22px}
+.album-wizard-name{display:grid;gap:10px;font-size:.9rem;max-width:700px;margin:30px 0 44px}
+.album-wizard-name input{width:100%;padding:14px;border:1px solid var(--border);border-radius:5px;background:var(--panel);color:var(--text);font:inherit;font-size:1.05rem}
+.album-wizard-footer{position:sticky;bottom:0;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:18px;background:var(--paper);border-top:1px solid var(--border);padding:18px 0}
+.album-wizard-footer>div{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap}
+.album-wizard-footer>div>span{color:var(--text-dim);font-size:.8rem}
+.album-wizard .new-style-heading{display:none}
+.album-wizard .storybook-import{display:grid;gap:18px}
+.album-wizard .storybook-import label.file-picker{display:grid;gap:10px;padding:18px;background:var(--panel);border:1px solid var(--border);border-radius:6px}
+.album-wizard .storybook-import input[type=file]{max-width:100%}
+.album-wizard .import-review{display:grid;gap:12px}
+.guide-card.new-album-dialog:has(.album-wizard[data-stage=name]),.guide-card.new-album-dialog:has(.album-wizard[data-stage=import]){width:min(850px,94vw)}
+@media(max-width:650px){.album-wizard-steps{gap:4px}.album-wizard-steps button{padding:7px;font-size:.78rem}.album-wizard-steps button>span{width:21px;height:21px}.album-wizard-footer{gap:10px}.album-wizard-footer>div{gap:10px}.album-wizard-footer>div>span{flex-basis:100%;text-align:right}.album-wizard-content>h2{font-size:1.25rem}}
+
+.album-wizard-name-summary{margin:-12px 0 18px;color:var(--text-dim);font-size:.9rem;overflow-wrap:anywhere}

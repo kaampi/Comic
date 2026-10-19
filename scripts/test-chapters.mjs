@@ -114,14 +114,16 @@ try {
 
   localStorage.clear();localStorage.setItem('comicbook-ai.locale','en');
   const user=userEvent.setup({document});render(React.createElement(App));
-  await user.click(screen.getByRole('button',{name:/Start with a manuscript/}));
-  await user.click(screen.getByRole('radio',{name:'Import from StoryBook'}));
+  await user.click(screen.getByRole('button',{name:/Import from StoryBook AI/}));
   const file=new window.File([originalRaw],'synthetic-export.json',{type:'application/json'});
   file.text=()=>new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.readAsText(file);});
   await user.upload(screen.getByLabelText('StoryBook export for other apps (.json)'),file);
-  const importButton=screen.getByRole('button',{name:'Import and create project'});
+  const importButton=screen.getByRole('button',{name:/^Next/});
   await waitFor(()=>assert.equal(importButton.disabled,false));
   await user.click(importButton);
+  await user.click(screen.getByRole('button',{name:/^Next/}));
+  await user.click(screen.getByRole('button',{name:/^Next/}));
+  await user.click(screen.getByRole('button',{name:/^Create album/}));
   const current=()=>JSON.parse(localStorage.getItem('comicbook-ai.projects'))[0];
   await waitFor(()=>assert.equal(current().source.chapters.length,3));
   const choose=screen.getByRole('combobox',{name:'Chapter'}),editor=screen.getByRole('textbox',{name:'Manus'});

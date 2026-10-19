@@ -9,7 +9,7 @@ export type OverlayTypography = Required<
     | "textAlign"
     | "textPadding"
   >
->;
+> & Partial<Pick<TextOverlay, "textColor" | "fillColor" | "fillOpacity" | "strokeColor" | "strokeWidth" | "bubbleStyle">>;
 export const OVERLAY_FONTS = [
   "Comic Neue, sans-serif",
   "Action Man, sans-serif",
@@ -28,7 +28,7 @@ export const OVERLAY_FONTS = [
   "Rubik Bubbles, cursive",
 ];
 export function overlayDefaults(
-  project: ComicProject,
+  project: Pick<ComicProject, "overlayDefaults">,
   type: OverlayType,
 ): OverlayTypography {
   return {
@@ -100,3 +100,4 @@ export function overlayTextMeasure(overlay: TextOverlay, pixelSize: number): Mea
   }
   return text => Array.from(text).length * pixelSize * .5;
 }
+

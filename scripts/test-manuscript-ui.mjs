@@ -1894,7 +1894,7 @@ try {
     fireEvent.change(within(borderDialog).getByLabelText('Ramstil'),{target:{value:'straight'}});
     await React.act(async()=>{await new Promise(resolve=>setTimeout(resolve,180));});
     assert.equal(saved().panelBorderDefaults.style,'straight','removing the strength slider cancels its draft rather than restoring the old style');
-    const albumColorPicker=within(borderDialog).getByLabelText('Ramfärg',{exact:true});
+    const albumColorPicker=within(borderDialog.querySelector('.panel-border-controls')).getByLabelText('Ramfärg',{exact:true});
     const beforeColorDrag=saved().panelBorderDefaults?.color;
     for(let i=1;i<=100;i++)fireEvent.change(albumColorPicker,{target:{value:`#${i.toString(16).padStart(6,'0')}`}});
     assert.equal(saved().panelBorderDefaults?.color,beforeColorDrag,'native color drag does not save every intermediate step');
