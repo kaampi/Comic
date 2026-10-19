@@ -4,6 +4,7 @@ import { ColorInput } from "./ColorInput";
 import { SvgOverlay } from "./SvgOverlay";
 import { overlayDefaults, type OverlayTypography } from "./overlayTypography";
 import type { ComicProject, OverlayType, TextOverlay } from "./project";
+import { DEFAULT_PAGE_FORMAT, pageGridMetrics, PANEL_BORDER, type PageGrid } from "./pageFormat";
 import type { Locale } from "./settings";
 import "./textBoxStyles.css";
 
@@ -26,17 +27,22 @@ export function OverlayStyleFields({ type, value, locale, onChange }: { type: Ov
   </div>;
 }
 
-export function TextBoxStyles({ defaults, locale, onChange }: { defaults: ComicProject["overlayDefaults"]; locale: Locale; onChange: (defaults: ComicProject["overlayDefaults"]) => void }) {
+export function TextBoxStyles({ defaults, locale, onChange, pageGrid = { gridColumns: 3, gridRows: 5 } }: { pageGrid?: PageGrid; defaults: ComicProject["overlayDefaults"]; locale: Locale; onChange: (defaults: ComicProject["overlayDefaults"]) => void }) {
   const [active, setActive] = useState<"speech"|"thought"|"caption">("speech"), sv = locale === "sv";
   const types = ["speech","thought","caption"] as const;
   const labels = sv ? ["Pratbubbla","Tankebubbla","Berättarruta"] : ["Speech bubble","Thought bubble","Caption box"];
   const samples = sv ? ["Vi har en berättelse att berätta.","Undrar vad som väntar runt hörnet…","En ny berättelse tar sin början."] : ["We have a story to tell.","I wonder what is around the corner…","A new story is about to begin."];
+  // A normal new bubble in one grid cell, enlarged as a whole for inspection.
+  // Physical point sizes and wrapping match the page editor.
+  const cell = pageGridMetrics(pageGrid, DEFAULT_PAGE_FORMAT);
+  const metrics = { width: cell.cellWidth - 2 * PANEL_BORDER, height: cell.cellHeight - 2 * PANEL_BORDER, pageWidthMm: 210 };
   const typography = overlayDefaults({ overlayDefaults: defaults }, active);
   return <section className="text-box-styles" aria-label={sv ? "Albumets textutseende" : "Album text styles"}>
+    <p className="quiet">{sv ? "Förstorade exempel från en panel. Textstorleken anges i tryckpunkter (pt); på sidan beror visningsstorleken på zoomnivån." : "Enlarged examples from a panel. Text size is in print points (pt); its on-screen size on the page depends on zoom."}</p>
     <div className="text-box-examples">{types.map((type,index) => {
       const value = overlayDefaults({ overlayDefaults: defaults }, type);
-      const overlay: TextOverlay = { id: `example-${type}`, type, text: samples[index], x:8, y:10, width:84, height:43, rotation:0, tailEnabled:type === "speech", tailX:72, tailY:65, bubbleStyle:"organic", fillColor:"#fffdf7", fillOpacity:1, strokeColor:"#171411", strokeWidth:2, textColor:"#171411", ...value };
-      return <button className={`text-box-example${active === type ? " is-active" : ""}`} type="button" key={type} aria-pressed={active === type} onClick={() => setActive(type)}><strong>{labels[index]}</strong><svg viewBox="0 0 100 74" role="img" aria-label={labels[index]}><SvgOverlay overlay={overlay} textMetrics={{width:350,height:259,pageWidthMm:210}} /></svg><span>{sv ? "Anpassa" : "Customize"} →</span></button>;
+      const overlay: TextOverlay = { id: `example-${type}`, type, text: samples[index], x:8, y:8, width:42, height:24, rotation:0, tailEnabled:type === "speech", tailX:42, tailY:40, bubbleStyle:"organic", fillColor:"#fffdf7", fillOpacity:1, strokeColor:"#171411", strokeWidth:2, textColor:"#171411", ...value };
+      return <button className={`text-box-example${active === type ? " is-active" : ""}`} type="button" key={type} aria-pressed={active === type} onClick={() => setActive(type)}><strong>{labels[index]}</strong><svg viewBox={`0 0 ${metrics.width * .6} ${metrics.height * .45}`} role="img" aria-label={labels[index]}><g transform={`scale(${metrics.width / 100} ${metrics.height / 100})`}><SvgOverlay overlay={overlay} textMetrics={metrics} /></g></svg><span>{sv ? "Anpassa" : "Customize"} →</span></button>;
     })}</div>
     <div className="text-box-style-editor"><h3>{labels[types.indexOf(active)]}</h3><OverlayStyleFields key={active} type={active} value={typography} locale={locale} onChange={value => onChange({ ...defaults, [active]: value })} /></div>
     <p className="quiet">{sv ? "Det här blir albumets standard för nya textlager. Du kan ändra allt senare i albuminställningarna." : "These are the album defaults for new text layers. You can change everything later in album settings."}</p>

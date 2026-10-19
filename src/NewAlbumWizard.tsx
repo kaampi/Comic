@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ComicProject, ProjectSource } from "./project";
+import type { PageGrid } from "./pageFormat";
 import type { Locale } from "./settings";
 import type { IllustrationStyle } from "./stylesLibrary";
 import { NewAlbumStylePicker } from "./NewAlbumStylePicker";
 import { TextBoxStyles } from "./TextBoxStyles";
 import "./newAlbumWizard.css";
 
-export function NewAlbumWizard({ locale, source, name, onName, styles, styleId, onStyle, defaults, onDefaults, importReady, importReview, onCreate, onCancel }: {
+export function NewAlbumWizard({ locale, source, name, onName, styles, styleId, onStyle, defaults, onDefaults, pageGrid, importReady, importReview, onCreate, onCancel }: {
   locale: Locale; source: ProjectSource; name: string; onName: (name: string) => void;
   styles: IllustrationStyle[]; styleId: string; onStyle: (id: string) => void;
+  pageGrid?: PageGrid;
   defaults: ComicProject["overlayDefaults"]; onDefaults: (defaults: ComicProject["overlayDefaults"]) => void;
   importReady: boolean; importReview: ReactNode; onCreate: () => void; onCancel: () => void;
 }) {
@@ -31,7 +33,7 @@ export function NewAlbumWizard({ locale, source, name, onName, styles, styleId, 
       {navigation.map(item => <button key={item.index} type="button" aria-current={step === item.index ? "step" : undefined} disabled={item.index > step && (!name.trim() || (importing && !importReady) || (item.index === 2 && !selectedStyle))} onClick={() => setStep(item.index)}><span aria-hidden="true">{item.index + (importing ? 2 : 1)}</span>{item.label}</button>)}
     </nav>
     <div className="album-wizard-content" ref={content}><h2 tabIndex={-1}>{heading}</h2><p className="album-wizard-help">{help}</p>
-      {step === -1 ? importReview : step === 0 ? <label className="album-wizard-name">{tr("Projektnamn", "Project name")}<input data-album-name value={name} onChange={event => onName(event.target.value)} onKeyDown={event => { if(event.key === "Enter" && name.trim()){event.preventDefault();setStep(1);} }} placeholder={tr("T.ex. Mysteriet på Svartön", "For example, The mystery of the island")} /></label> : step === 1 ? <NewAlbumStylePicker styles={styles} value={styleId} locale={locale} onChange={onStyle} /> : <TextBoxStyles defaults={defaults} locale={locale} onChange={onDefaults} />}
+      {step === -1 ? importReview : step === 0 ? <label className="album-wizard-name">{tr("Projektnamn", "Project name")}<input data-album-name value={name} onChange={event => onName(event.target.value)} onKeyDown={event => { if(event.key === "Enter" && name.trim()){event.preventDefault();setStep(1);} }} placeholder={tr("T.ex. Mysteriet på Svartön", "For example, The mystery of the island")} /></label> : step === 1 ? <NewAlbumStylePicker styles={styles} value={styleId} locale={locale} onChange={onStyle} /> : <TextBoxStyles pageGrid={pageGrid} defaults={defaults} locale={locale} onChange={onDefaults} />}
     </div>
     <footer className="album-wizard-footer"><button className="text-button" type="button" onClick={onCancel}>{tr("Avbryt", "Cancel")}</button><div>{step === 1 && selectedStyle ? <span>{tr("Vald stil", "Selected style")}: {selectedStyle.name}</span> : null}<button className="text-button" type="button" disabled={step === (importing ? -1 : 0)} onClick={() => setStep(value => value - 1)}>← {tr("Tillbaka", "Back")}</button>
       {step < 2 ? <button className="primary-button" type="button" disabled={!canContinue} onClick={() => setStep(value => value + 1)}>{tr("Nästa", "Next")} →</button> : <button className="primary-button" type="button" disabled={!canContinue} onClick={onCreate}>{tr("Skapa album", "Create album")} →</button>}

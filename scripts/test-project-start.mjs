@@ -120,6 +120,11 @@ try {
   await next();
   assert.equal(document.querySelectorAll(".text-box-example svg").length,3,"wizard displays real speech, thought and caption previews");
   const textEditor=()=>document.querySelector(".text-box-style-editor");
+  fireEvent.change(within(textEditor()).getByLabelText("Textstorlek (pt)"),{target:{value:"6"}});
+  const sixPointPreview=document.querySelector(".text-box-example.is-active svg");
+  const sixPointText=sixPointPreview.querySelector("text");
+  assert.ok(Math.abs(Number(sixPointText.getAttribute("font-size"))-6*25.4/72*700/210)<.001,"preview uses the editor's physical six-point font size");
+  assert.ok(sixPointPreview.querySelector("g[transform^='scale(']"),"whole panel example is magnified together, preserving font and bubble proportions");
   fireEvent.change(within(textEditor()).getByLabelText("Textstorlek (pt)"),{target:{value:"12"}});
   fireEvent.change(within(textEditor()).getByLabelText("Ramtjocklek"),{target:{value:"3"}});
   const fill=within(textEditor()).getByLabelText("Bakgrundsfärg");fireEvent.change(fill,{target:{value:"#ffeecc"}});fireEvent.blur(fill);
