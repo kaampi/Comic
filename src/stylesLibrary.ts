@@ -66,8 +66,7 @@ const retainedPreviewAssets: Record<string, { previewImage?: string; linePreview
   "am-3": { previewImage: "/Styles/Verified/am-3-color.svg" },
   "manga-1": { previewImage: "/Styles/Verified/manga-1-color.svg" },
   "manga-5": {
-    "previewImage": "/Styles/Manga/thumb_historical_samurai_manga.jpg",
-    "linePreviewImage": "/Styles/Manga/thumb_historical_samurai_manga_lines.jpg"
+    "previewImage": "/Styles/Verified/manga-5-color.svg"
   },
   "manga-6": {
     "previewImage": "/Styles/Verified/manga-6-color.svg"
