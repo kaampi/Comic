@@ -523,12 +523,12 @@ export function removeManuscriptBeat(
 }
 
 /** Supply one initial panel per active beat, without changing any existing panel. */
-export function ensureBeatPanels(project: ComicProject): ComicProject {
+export function ensureBeatPanels(project: ComicProject, chapterId?: string | null): ComicProject {
   const existing = project.adaptations[0];
   if (!existing) return project;
   const missing = existing.beats.filter(
     (beat) =>
-      beat.status !== "discarded" &&
+      beat.status !== "discarded" && (!chapterId || beat.chapterId === chapterId) &&
       !existing.panelPlans.some((panel) =>
         panel.sourceBeatIds.includes(beat.id),
       ),

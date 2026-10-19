@@ -20,7 +20,7 @@ import {
 import "./AlbumMenu.css";
 import { uiText } from "./i18n";
 export type AlbumTool = "settings" | "backup" | "export" | null;
-export type AlbumSection = "manus" | "adaptation" | "characters" | "locations" | "scenes" | "pages";
+export type AlbumSection = "manus" | "beats" | "storyboard" | "images" | "adaptation" | "characters" | "locations" | "scenes" | "pages";
 export function AlbumMenu({
   project,
   locale,
@@ -180,9 +180,12 @@ export function AlbumMenu({
             {project.panels.length} {sv ? "rutor" : "panels"}
           </span>
           <div className="album-section-nav" role="group" aria-label={uiText(locale,"projectContent")}>
-            {([ ["manus","manuscript"], ["adaptation","adaptation"], ["characters","characters"], ["locations","locations"], ["scenes","panels"], ["pages","pages"] ] as const).map(([value,label]) =>
-              <button key={value} type="button" className={section===value?"is-active":""} aria-current={section===value?"page":undefined} onClick={()=>onSection(value)}>{uiText(locale,label)}</button>
+            {([ ["manus", sv ? "Manus" : "Manuscript"], ["beats", "Beats"], ["storyboard", sv ? "Bildmanus" : "Storyboard"], ["images", sv ? "Bilder" : "Images"], ["pages", sv ? "Sidor" : "Pages"] ] as const).map(([value,label], index) =>
+              <button key={value} type="button" className={section===value?"is-active":""} aria-current={section===value?"step":undefined} onClick={()=>onSection(value)}><span className="workflow-step-number" aria-hidden="true">{index+1}</span>{label}</button>
             )}
+            <details className="album-support-tools"><summary>{sv ? "Verktyg" : "Tools"}</summary><div>
+              {([["characters","characters"],["locations","locations"],["adaptation","adaptation"],["scenes","panels"]] as const).map(([value,label])=><button key={value} type="button" className={section===value?"is-active":""} aria-current={section===value?"page":undefined} onClick={()=>onSection(value)}>{uiText(locale,label)}</button>)}
+            </div></details>
           </div>
           <span className="project-topbar-spacer" />
           <button onClick={() => onMode("settings")}>
@@ -400,6 +403,7 @@ export function AlbumMenu({
     </>
   );
 }
+
 
 
 

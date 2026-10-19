@@ -688,6 +688,7 @@ try {
     clipboardData: { getData: () => "New paragraph." },
   });
   assert.ok(saved().source.textSnapshot.endsWith("\nNew paragraph."));
+  await user.click(screen.getByText("Verktyg", {selector:"summary"}));
   await user.click(
     screen.getByRole("button", { name: "Adaptering", exact: true }),
   );
@@ -1702,7 +1703,8 @@ try {
   assert.equal(window.getComputedStyle(visibleAlbumMenu).display,"flex");
   assert.ok(within(visibleAlbumMenu).getByRole("button",{name:"Backup",exact:true}));
   const albumSections=within(visibleAlbumMenu).getByRole("group",{name:"Projektinnehåll",exact:true});
-  assert.deepEqual(within(albumSections).getAllByRole("button").map(button=>button.textContent),["Manus","Adaptering","Karaktärer","Platser","Bildrutor","Sidor"]);
+  assert.deepEqual(Array.from(albumSections.querySelectorAll(":scope > button")).map(button=>button.textContent),["1Manus","2Beats","3Bildmanus","4Bilder","5Sidor"]);
+  if(!albumSections.querySelector("details").open)await user.click(within(albumSections).getByText("Verktyg",{selector:"summary"}));
   assert.equal(document.querySelector('.project-side-nav'),null);
   const leftSettings=screen.getByRole("complementary",{name:"Arbetsinställningar",exact:true});
   assert.ok(within(leftSettings).getByRole("region",{name:"Sidinställningar",exact:true}));
@@ -1711,7 +1713,7 @@ try {
   for(const [label,selector] of [["Karaktärer",".library-workspace"],["Platser",".library-workspace"],["Bildrutor",".scene-workspace"],["Sidor",".page-workspace"]]){
     await user.click(within(albumSections).getByRole("button",{name:label,exact:true}));
     assert.ok(document.querySelector(selector));
-    assert.equal(within(albumSections).getByRole("button",{name:label,exact:true}).getAttribute('aria-current'),'page');
+    assert.equal(within(albumSections).getByRole("button",{name:label,exact:true}).getAttribute('aria-current'),label==='Sidor'?'step':'page');
   }
   albumMenuStyles.remove();
   await user.click(

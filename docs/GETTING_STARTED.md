@@ -123,11 +123,11 @@ Use foreground images for a character, object or decoration that crosses panel b
 
 ## From manuscript to panel plans
 
-Once you are comfortable with the editor, use Manuscript to plan a longer story. A manuscript is the source text; a beat is a meaningful story moment; a panel plan describes one illustration. A page frame is where that panel is placed in the layout.
+Follow the five steps in the album menu: Manuscript → Beats → Storyboard → Images → Pages. You can return between steps without losing your work. Characters, Locations and the older editing workspaces are available under Tools. Use Manuscript to plan a longer story. A manuscript is the source text; a beat is a meaningful story moment; a panel plan describes one illustration. A page frame is where that panel is placed in the layout.
 
 1. Enter your source text in Manuscript, or create an album from a StoryBook export. Importing copies the content into ComicBook AI and does not change StoryBook. Imported books keep their chapters: choose a chapter above the manuscript or use Previous chapter and Next chapter. The original imported text remains available as a read-only reference; edits affect only the ComicBook working copy.
 2. Select a short passage in the manuscript and use the selection menu to create a beat. Choose a moment that can be shown clearly.
-3. Give the beat one or more panel plans. Describe the visible action and prepare dialogue or captions separately from the illustration.
+3. In Beats, review the current chapter and include the story moments you need. To storyboard creates only missing panel plans; existing panels, prompts and images are retained. In Storyboard, drag the grip or use the up/down buttons to order panels. Insert a panel or use Split panel to add an empty reaction panel after the original, keeping the original content intact. Describe the visible action, framing, dialogue and captions separately. Read sequence previews the chapter one panel at a time. Remove panel keeps the authored assets and existing page placements; use Undo removal or Removed panels to restore it, including after reopening the album.
 4. If you want help suggesting beats, configure a local text model in Settings first. The model proposes visual moments with separate event summaries and drawable scene descriptions. Review and edit them before adding them to your plan. For imported books, Suggest beats for chapter analyses only the current chapter, while selection analysis uses only your marked passage.
 
 > One sentence does not have to equal one panel. An action may need several images; a long description may need only one establishing shot.
@@ -138,9 +138,9 @@ Once you are comfortable with the editor, use Manuscript to plan a longer story.
 
 In the prompt workflow, ComicBook AI prepares the text instructions for an image tool. Creating a prompt does not create a picture. Keep dialogue out of the illustration so that it stays editable in the comic editor.
 
-1. Open a panel plan in Manuscript. Generate its image prompt, or open Adjust image prompt to refine characters, action, setting and camera choices. With a local model configured, choose Rewrite as visual scene with local AI to turn prose into one drawable moment. Review the separate proposal and choose Use visual scene before saving; camera choices and other direction are retained.
+1. Open Images and select a panel. Build its image prompt, or open Adjust image prompt to refine characters, action, setting and camera choices. With a local model configured, choose Rewrite as visual scene with local AI to turn prose into one drawable moment. Review the separate proposal and choose Use visual scene before saving; camera choices and other direction are retained.
 2. Copy the prompt to the image-generation tool you use. Review the result for character identity, clothing, staging and space for text.
-3. Upload the finished picture to its panel plan. In Pages, find it in the Image library and drag an unplaced image into an existing frame or an empty area of the page.
+3. Upload the finished picture in Images. Replacing or deselecting an image retains previous image versions. Continue to Pages and find it in the Image library, in storyboard order, and drag an unplaced image into an existing frame or an empty area of the page.
 
 > Use Characters and Locations to record recurring visual details. Consistent descriptions and reference images help you keep the same people and places recognizable.
 

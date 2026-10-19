@@ -98,6 +98,7 @@ export type PanelCaption = {
 };
 
 export type PanelPlan = {
+  archived?: boolean; // Reversible removal from the storyboard; preserve all authored assets.
   chapterId?: string;
   id: string;
   sequenceId?: string; // Read older projects; new panels are linked directly to beats.

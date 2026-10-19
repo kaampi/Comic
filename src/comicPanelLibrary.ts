@@ -24,7 +24,8 @@ export function libraryEntries(project: ComicProject) {
       image: plan?.image ?? panel.image,
       pages,
     };
-  });
+  }).filter(entry => !entry.plan?.archived || entry.pages.length > 0)
+    .sort((a,b)=>(a.plan?.order ?? a.panel.order)-(b.plan?.order ?? b.panel.order));
 }
 
 export function assignLibraryPanel(
@@ -153,3 +154,4 @@ export function assignLibraryPanel(
     ),
   };
 }
+

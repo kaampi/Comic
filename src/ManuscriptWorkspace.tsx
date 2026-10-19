@@ -90,7 +90,11 @@ export function ManuscriptWorkspace({
   settings,
   onUpdate: updateProject,
   onSettings,
+  selectedChapterId,
+  onChapterChange,
 }: {
+  selectedChapterId?: string | null;
+  onChapterChange?: (id: string | null) => void;
   project: ComicProject;
   locale: Locale;
   settings: LocalAiSettings;
@@ -101,7 +105,9 @@ export function ManuscriptWorkspace({
     source = project.source.textSnapshot ?? "",
     adaptation = activeManuscriptAdaptation(project);
   const chapters=manuscriptChapters(project);
-  const [chapterId,setChapterId]=useState<string|null>(chapters[0]?.id??null);
+  const [localChapterId,setLocalChapterId]=useState<string|null>(chapters[0]?.id??null);
+  const chapterId=selectedChapterId===undefined?localChapterId:selectedChapterId;
+  const setChapterId=(id:string|null)=>{setLocalChapterId(id);onChapterChange?.(id);};
   const chapter=chapters.find(c=>c.id===chapterId)??chapters[0];
   const viewStart=chapter?.start??0,viewEnd=chapter?.end??source.length;
   const scopedBeats=chapter?adaptation.beats.filter(b=>b.chapterId===chapter.id||(b.sourceStart!==undefined&&b.sourceEnd!==undefined&&b.sourceStart<viewEnd&&b.sourceEnd>viewStart)):adaptation.beats;
@@ -297,7 +303,7 @@ export function ManuscriptWorkspace({
   const beat = scopedBeats.find((b) => b.id === selected),
     index = scopedBeats.findIndex((b) => b.id === selected);
   const beatPanels = adaptation.panelPlans.filter((plan) =>
-    plan.sourceBeatIds.includes(beat?.id ?? ""),
+    !plan.archived && plan.sourceBeatIds.includes(beat?.id ?? ""),
   );
   const multiplePanels = beatPanels.length > 1;
   const patch = (change: Partial<AdaptationBeat>) => {

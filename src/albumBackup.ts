@@ -210,6 +210,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
     objects(a.sequences);
     objects(a.imagePrompts);
     for (const plan of objects(a.panelPlans)) {
+      if (plan.archived !== undefined && typeof plan.archived !== "boolean") throw new Error("invalid-backup");
       string(plan.title);
       string(plan.visualDescription);
       if (plan.promptDirection !== undefined) {

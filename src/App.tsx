@@ -42,6 +42,7 @@ import { LIBRARY_DRAG_TYPE, libraryDropTarget, dropLibraryPanel, canUndoLibraryD
 import "./libraryDrop.css";
 import { PANEL_CORNERS, resizeFromCorner, layoutControlsText, type PanelCorner } from "./pageLayout";
 import "./pageLayout.css";
+import { StoryWorkflow } from "./StoryWorkflow";
 import { ManuscriptWorkspace } from "./ManuscriptWorkspace";
 import { withAdaptation } from "./manuscriptModel";
 import { manuscriptText } from "./manuscriptText";
@@ -102,6 +103,8 @@ export function App() {
   const [newStyleId, setNewStyleId] = useState(BUILTIN_STYLES[0].id);
   const [sceneTitle, setSceneTitle] = useState("");
   const [projectTab, setProjectTab] = useState<ProjectTab>("manus");
+  const [workflowChapterId, setWorkflowChapterId] = useState<string|null>(null);
+  useEffect(()=>{setWorkflowChapterId(null);},[activeProjectId]);
   const [adaptationStep, setAdaptationStep] = useState<3|4>(3);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [newCharacterName, setNewCharacterName] = useState("");
@@ -738,7 +741,7 @@ export function App() {
 
       <AlbumMenu section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} saving={saving} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={async (project, importedOrganization)=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];const error=await persistProjects(next);if(error)throw new Error(projectSaveErrorText(error,locale));if(importedOrganization)updateOrganization(mergeOrganization(organization, importedOrganization));projectsRef.current=next;setProjects(next);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
       <main className="home">
-        {activeProject ? <section className="project-shell album-workspace-shell">
+        {activeProject ? <section className={`project-shell album-workspace-shell ${["manus","beats","storyboard","images"].includes(projectTab)?"workflow-shell":""}`}>
           <aside className="project-sidebar" aria-label={locale==="sv"?"Arbetsinställningar":"Workspace settings"}>
 
 
@@ -757,14 +760,16 @@ export function App() {
           </aside>
           <section className="project-workspace">
 
-          {projectTab === "manus" ? <ManuscriptWorkspace key={activeProject.id} project={activeProject} locale={locale} settings={localAiSettings} onUpdate={updateActiveProject} onSettings={()=>setPanel("settings")} /> : null}
+          {projectTab === "manus" ? <ManuscriptWorkspace key={activeProject.id} project={activeProject} locale={locale} settings={localAiSettings} selectedChapterId={workflowChapterId} onChapterChange={setWorkflowChapterId} onUpdate={updateActiveProject} onSettings={()=>setPanel("settings")} /> : null}
+          {projectTab === "manus" ? <div className="workflow-manus-next"><button className="primary-button" onClick={()=>setProjectTab("beats")}>{locale==="sv"?"Till beats":"To beats"} →</button></div> : null}
+          {projectTab === "beats" || projectTab === "storyboard" || projectTab === "images" ? <StoryWorkflow key={activeProject.id} project={activeProject} locale={locale} settings={localAiSettings} stage={projectTab} chapterId={workflowChapterId} onChapterChange={setWorkflowChapterId} onUpdate={updateActiveProject} onStage={setProjectTab} /> : null}
           {projectTab === "adaptation" ? <section className="adaptation-workspace">
             <div className="section-heading adaptation-heading"><h2>{tr("adaptationTitle")}</h2><button className="text-button" type="button" onClick={()=>setProjectTab("manus")}>{tr("manuscript")}</button></div>
             {activeAdaptation ? <>
               <div className="adaptation-summary"><span>{activeAdaptation.beats.length} {tr("beatsFound")}</span><span>{activeAdaptation.panelPlans.length} {tr("panelsWanted")}</span><span>{activeAdaptation.imagePrompts.length} {tr("promptReady")}</span></div>
               {adaptationStep===3?<section className="adaptation-step">
                 <div className="adaptation-step-head"><div><span className="adaptation-step-number">1</span><h3>{tr("step3").replace(/^3 · /,"")}</h3></div><div className="adaptation-step-actions"><button className="text-button" type="button" disabled={!activeAdaptation.panelPlans.length} onClick={materializeAdaptationPlan}>{tr("createPanelSources")}</button><button className="primary-button" type="button" disabled={!activeAdaptation.beats.some(beat=>beat.status!=="discarded"&&!activeAdaptation.panelPlans.some(plan=>plan.sourceBeatIds.includes(beat.id)))} onClick={runPanelization}>{activeAdaptation.beats.some(beat=>beat.status!=="discarded"&&!activeAdaptation.panelPlans.some(plan=>plan.sourceBeatIds.includes(beat.id))) ? manuscriptText(locale).remaining : manuscriptText(locale).ready}</button></div></div>
-                {activeAdaptation.panelPlans.length ? <div className="panel-plan-grid">{activeAdaptation.panelPlans.map((panel) => {
+                {activeAdaptation.panelPlans.length ? <div className="panel-plan-grid">{activeAdaptation.panelPlans.filter(panel=>!panel.archived).map((panel) => {
                   const materializedPanel = activeProject.panels.find((item)=>item.adaptationPanelPlanId===panel.id);
                   const placement = activeProject.pages.flatMap((page)=>page.placements.map((placement)=>({page,placement}))).find(({placement}) =>
                     placement.adaptationPanelPlanId===panel.id ||

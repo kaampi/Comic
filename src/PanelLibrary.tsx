@@ -34,11 +34,12 @@ export function PanelLibrary({
   const groups: Array<{id:string;label:string;order:number;entries:typeof entries}>=[];
   for(const entry of entries.filter(e=>!unplacedOnly||!e.pages.length)){
     const id=entry.beat?.id??entry.panel.id;
-    let group=groups.find(g=>g.id===id);
-    if(!group){group={id,label:entry.beat?`Beat ${entry.beat.order}`:`${sv?"Bildruta":"Panel"} ${entry.panel.order}`,order:entry.beat?.order??Number.MAX_SAFE_INTEGER,entries:[]};groups.push(group);}
+    let group=groups.at(-1);
+    if(group?.id.split("::")[0]!==id)group=undefined;
+    if(!group){group={id:`${id}::${entry.panel.id}`,label:entry.beat?`Beat ${entry.beat.order}`:`${sv?"Bildruta":"Panel"} ${entry.panel.order}`,order:entry.beat?.order??Number.MAX_SAFE_INTEGER,entries:[]};groups.push(group);}
     group.entries.push(entry);
   }
-  groups.sort((a,b)=>a.order-b.order);
+
 
   return (
     <section
@@ -121,4 +122,5 @@ export function PageFramePicker({project,pageId,placementId,locale,onSelect}:{pr
       )}
   </div>;
 }
+
 
