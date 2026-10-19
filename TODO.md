@@ -15,6 +15,8 @@ Uppdaterad 2026-10-19. Exportkontroller, albumkort och den nya startguiden finns
 - [x] Flytt av paneler inom sidan med långtryck, fri dragning och geléeffekt.
 - [x] Sidövergripande förgrundsbilder med egna textlager.
 
+- [x] IndexedDB-skydd mot överskrivning från gamla flikar/appinstanser och upp till tre atomiska återställningspunkter med nedladdning som albumbackup. Orsaken till tidigare rapporterad projektförlust är ännu inte fastställd.
+
 ## Pågående
 
 - [ ] Importtesta IDML i InDesign och Affinity och jämför med samma album som PDF.

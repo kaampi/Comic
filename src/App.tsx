@@ -1,3 +1,4 @@
+import { LocalRecovery } from "./LocalRecovery";
 import { PanelPool, PanelTransferDialog } from "./PanelPoolSidebar";
 import { parkPanels, retargetPooledPanel, placePooledPanel, pooledCandidate, removePooledPanel, deletePageToPool, poolUndo, canUndoPool, undoPool, POOL_DRAG_TYPE, type PoolUndo, type PanelSelection } from "./panelPool";
 import { AlbumCard, type AlbumInfo } from "./AlbumCard";
@@ -79,7 +80,7 @@ import { readLocalAiSettings, saveLocalAiSettings } from "./localAi";
 import { LocalAiSettings } from "./LocalAiSettings";
 import { localAiText } from "./localAiText";
 
-type Panel = "styles" | "guide" | "settings" | "new-project" | "open-project" | "album-details" | "about" | null;
+type Panel = "styles" | "guide" | "settings" | "new-project" | "open-project" | "album-details" | "storage-recovery" | "about" | null;
 type StyleDraft = Omit<IllustrationStyle, "id"> & { id?: string };
 type ProjectTab = AlbumSection;
 
@@ -172,7 +173,7 @@ export function App() {
   const projectDialogTrigger = useRef<HTMLElement|null>(null);
   const importReadRevision = useRef(0);
   useEffect(()=>{
-    if(panel!=="new-project" && panel!=="open-project" && panel!=="album-details")return;
+    if(panel!=="new-project" && panel!=="open-project" && panel!=="album-details" && panel!=="storage-recovery")return;
     const dialog=document.querySelector<HTMLElement>(".overlay > .guide-card");
     const previous=projectDialogTrigger.current,overflow=document.body.style.overflow;
     document.body.style.overflow="hidden";
@@ -244,6 +245,7 @@ export function App() {
     projectsRef.current=next;setProjects(next);
     return !(await persistProjects(next));
   };
+  const showRecovery = () => {projectDialogTrigger.current=document.activeElement as HTMLElement;setPanel("storage-recovery");setProjectMenuOpen(false);};
   const showProjectChooser = () => {projectDialogTrigger.current=document.activeElement as HTMLElement;setPanel("open-project");setProjectMenuOpen(false);};
   const goHome = () => {importReadRevision.current++;setActiveProjectId(null);setPanel(null);setAlbumTool(null);setPanelEditor(null);setProjectMenuOpen(false);};
   const allStyles = [...BUILTIN_STYLES, ...customStyles];
@@ -774,7 +776,7 @@ export function App() {
   };
   const deleteProject = (projectId:string) => {
     const project=projects.find((item)=>item.id===projectId);
-    if(!project || !window.confirm(`Radera projektet "${project.title}"? Detta tar bort ComicBook AI:s lokala kopia och kan inte ångras. StoryBook-filer påverkas inte.`)) return;
+    if(!project || !window.confirm(locale==="sv"?`Radera projektet "${project.title}" från projektlistan? En tidigare version kan finnas i lokala återställningspunkter. StoryBook-filer påverkas inte.`:`Delete "${project.title}" from the project list? An earlier version may remain in local recovery points. StoryBook files are not affected.`)) return;
     const next=projects.filter((item)=>item.id!==projectId);
     projectsRef.current=next;setProjects(next); persistProjects(next);
     if(activeProjectId===projectId){setActiveProjectId(null);setSelectedSceneId(null);setSelectedPageId(null);setLayoutStart(null);setProjectTab("manus");}
@@ -789,7 +791,7 @@ export function App() {
     setNewTitle(""); setNewSource("blank"); setPanel(null); setProjectMenuOpen(false);
   };
 
-  if (!projectsReady) return <div className="app-shell"><main className="home"><section className="workspace-card">{loadFailure ? <><p role="alert">{locale === "sv" ? "Albumen kunde inte läsas. Inga sparade album har skrivits över." : locale === "nb" ? "Albumene kunne ikke leses. Ingen lagrede album er overskrevet." : "Albums could not be loaded. No saved albums have been overwritten."} ({loadFailure.errorName})</p><button type="button" onClick={() => void loadStoredProjects()}>{locale === "sv" ? "Försök igen" : locale === "nb" ? "Prøv igjen" : "Retry"}</button></> : <p role="status">{locale === "sv" ? "Läser sparade album…" : locale === "nb" ? "Leser lagrede album…" : "Loading saved albums…"}</p>}</section></main></div>;
+  if (!projectsReady) return <div className="app-shell"><main className="home"><section className="workspace-card">{loadFailure ? <><p role="alert">{locale === "sv" ? "Albumen kunde inte läsas. Inga sparade album har skrivits över." : locale === "nb" ? "Albumene kunne ikke leses. Ingen lagrede album er overskrevet." : "Albums could not be loaded. No saved albums have been overwritten."} ({loadFailure.errorName})</p><button type="button" onClick={() => void loadStoredProjects()}>{locale === "sv" ? "Försök igen" : locale === "nb" ? "Prøv igjen" : "Retry"}</button><LocalRecovery locale={locale}/></> : <p role="status">{locale === "sv" ? "Läser sparade album…" : locale === "nb" ? "Leser lagrede album…" : "Loading saved albums…"}</p>}</section></main></div>;
   return (
     <div className="app-shell">
       <input ref={storyBookShortcutInput} type="file" hidden accept=".json,application/json" aria-label="StoryBook export shortcut" onChange={event=>{const file=event.target.files?.[0];if(file)void readStoryBookFile(file);event.currentTarget.value="";}} />
@@ -937,7 +939,7 @@ export function App() {
               </div>; })()}
           </section> : null}
           </section>
-        </section> : <ProjectStart projects={recentAlbums(projects,recentVisits)} locale={locale} onStart={startNewProject} onOpen={showAlbumCard} onBrowse={showProjectChooser} />}
+        </section> : <ProjectStart onRecovery={showRecovery} projects={recentAlbums(projects,recentVisits)} locale={locale} onStart={startNewProject} onOpen={showAlbumCard} onBrowse={showProjectChooser} />}
 
       </main>
 
@@ -1139,10 +1141,11 @@ export function App() {
       {panel === "about" ? <AboutDialog locale={locale} onClose={closePanel} returnFocus={menuRef.current?.querySelector("button")} /> : null}
       {panel === "guide" ? <GuideDialog onClose={closePanel} /> : null}
       {panel && panel !== "about" && panel !== "guide" ? <div className="overlay" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && closePanel()}>
-        <article className={`guide-card${panel==="new-project"?" new-album-dialog":panel==="album-details"?" album-details-dialog":""}`} role="dialog" aria-modal="true" aria-labelledby={panel==="new-project"?"new-project-title":panel==="open-project"?"project-chooser-title":panel==="album-details"?"album-card-title":undefined}>
+        <article className={`guide-card${panel==="new-project"?" new-album-dialog":panel==="album-details"?" album-details-dialog":""}`} role="dialog" aria-modal="true" aria-labelledby={panel==="new-project"?"new-project-title":panel==="open-project"?"project-chooser-title":panel==="album-details"?"album-card-title":panel==="storage-recovery"?"local-recovery-title":undefined}>
           <div className="guide-actions"><button className="text-button" type="button" onClick={closePanel}>{tr("close")}</button></div>
+          {panel === "storage-recovery"?<LocalRecovery locale={locale}/>:null}
           {panel === "album-details" && (()=>{const project=projects.find(p=>p.id===albumCardId);return project ? <AlbumCard key={project.id} project={project} locale={locale} onSave={info=>saveAlbumInfo(project.id,info)} onOpen={()=>openProject(project.id)} onDelete={()=>deleteProject(project.id)} /> : null;})()}
-          {panel === "open-project" ? <ProjectChooser projects={recentAlbums(projects,recentVisits)} locale={locale} onOpen={showAlbumCard} onRestore={()=>{setPanel(null);setAlbumTool("backup");}} /> : null}
+          {panel === "open-project" ? <ProjectChooser onRecovery={showRecovery} projects={recentAlbums(projects,recentVisits)} locale={locale} onOpen={showAlbumCard} onRestore={()=>{setPanel(null);setAlbumTool("backup");}} /> : null}
           {panel === "new-project" ? <NewAlbumWizard pageGrid={appPageGrid} locale={locale} source={newSource} name={newTitle} onName={setNewTitle} styles={allStyles} styleId={newStyleId} onStyle={setNewStyleId} defaults={newTextDefaults} onDefaults={setNewTextDefaults} importReady={Boolean(storyBookImport)} importReview={<div className="storybook-import"><div className="storybook-export-picker"><p className="quiet">{tr("storybookExportHelp")}</p><label className="file-picker">{tr("storybookExportFile")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookFile(file);}} /></label></div>{storyBookImport ? <label className="file-picker">{tr("storybookCardsOptional")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookCardsFile(file);}} /></label> : null}{importError ? <p className="import-error">{importError}</p> : null}{storyBookImport ? <div className="import-review"><p className="eyebrow">{tr("reviewImport")}</p><strong>{storyBookImport.title}</strong><span>{storyBookImport.text.length} tecken · {storyBookImport.chapters.length} kapitel · {storyBookImport.characters.length} karaktärer · {storyBookImport.locations.length} platser</span>{storyBookCards ? <span>{storyBookCards.characters.filter((card)=>!storyBookImport.sourceBookId||cardMatchesBook(card,storyBookImport.sourceBookId)).length} Cards-karaktärer hittade · porträtt kopieras lokalt</span> : <span className="quiet">{tr("storybookCardsHelp")}</span>}<label><input type="checkbox" checked={importCharacters} onChange={(e)=>setImportCharacters(e.target.checked)} /> {tr("copyCharacters")}</label><label><input type="checkbox" checked={importLocations} onChange={(e)=>setImportLocations(e.target.checked)} /> {tr("copyLocations")}</label><p className="quiet">{tr("importIndependent")}</p></div> : null}</div>} onCancel={closePanel} onCreate={newSource==="storybook"?createFromStoryBook:createNewProject} /> : null}
           {panel === "styles" ? <div className="style-library">
             <div className="style-library-toolbar">

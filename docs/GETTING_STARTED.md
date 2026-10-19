@@ -197,7 +197,7 @@ Add a speech bubble, thought bubble, caption or sound effect. Double-click its t
 
 ### Save a backup you can restore
 
-Automatic saving keeps the album in this browser. Download an album backup to keep an editable copy with images. A PDF or PNG export is not an album backup.
+Automatic saving keeps the album in this browser. If another tab has changed the saved collection, saving stops rather than overwriting it: download your unsaved album backup before reloading. Local recovery points on the home screen offer up to three earlier collection snapshots as individual album backups. They share the browser storage and do not replace downloaded backups. Download an album backup to keep an editable copy with images. A PDF or PNG export is not an album backup.
 
 ### Export and read your first page
 

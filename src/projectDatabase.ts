@@ -6,6 +6,22 @@ const DATABASE = 'comicbook-ai.albums';
 const STORE = 'snapshots';
 const KEY = 'collection';
 const LEGACY_KEY = 'comicbook-ai.projects';
+const RECOVERY_KEY = 'recovery-snapshots';
+export type RecoveryPoint = { id: string; savedAt: string; albums: number };
+type RecoverySnapshot = RecoveryPoint & { serialized: string };
+type Session = { known: boolean; snapshot?: string; ids: string[]; checkpointAt: number };
+const sessions = new WeakMap<object, Session>();
+function session(): Session {
+  let value=sessions.get(indexedDB);
+  if(!value){value={known:false,ids:[],checkpointAt:0};sessions.set(indexedDB,value);}
+  return value;
+}
+function remember(snapshot: string | undefined, projects: ComicProject[]) {
+  Object.assign(session(),{known:true,snapshot,ids:projects.map(project=>project.id)});
+}
+function recoveryList(value: unknown): RecoverySnapshot[] {
+  return Array.isArray(value)?value.filter(item=>item&&typeof item.id==='string'&&typeof item.savedAt==='string'&&typeof item.serialized==='string'&&typeof item.albums==='number').slice(0,3):[];
+}
 let writes: Promise<unknown> = Promise.resolve();
 export function hasProjectDatabase(): boolean { return typeof indexedDB !== 'undefined'; }
 export class ProjectStorageError extends Error {
@@ -37,24 +53,55 @@ async function read(): Promise<string | undefined> {
     tx.onabort = () => { db.close(); reject(tx.error ?? request.error ?? new DOMException('Read aborted', 'AbortError')); };
   });
 }
-async function write(serialized: string, onlyIfMissing = false): Promise<string> {
-  const db = await open();
+async function write(serialized: string, onlyIfMissing = false, ids: string[] = []): Promise<string> {
+  const state=session(),db = await open();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    const store = tx.objectStore(STORE);
-    let chosen = serialized;
-    if (onlyIfMissing) {
-      const request = store.get(KEY);
-      request.onsuccess = () => {
-        if (request.result === undefined) store.put(serialized, KEY);
-        else if (typeof request.result === 'string') chosen = request.result;
-        else tx.abort();
-      };
-    } else store.put(serialized, KEY);
-    // Request success is not sufficient: wait for the atomic transaction to commit.
-    tx.oncomplete = () => { db.close(); resolve(chosen); };
-    tx.onabort = () => { db.close(); reject(tx.error ?? new DOMException('Save aborted', 'AbortError')); };
+    const tx = db.transaction(STORE, 'readwrite'),store=tx.objectStore(STORE);
+    let chosen=serialized, failure: Error | undefined, checkpointAt=state.checkpointAt;
+    const request=store.get(KEY);
+    request.onsuccess=()=>{
+      const current=request.result;
+      if(current!==undefined&&typeof current!=='string'){failure=new TypeError('Invalid saved collection');tx.abort();return;}
+      if(onlyIfMissing&&current!==undefined){chosen=current;return;}
+      if(!onlyIfMissing&&((state.known&&current!==state.snapshot)||(!state.known&&current!==undefined))){
+        failure=new DOMException('Saved collection changed; reload before writing','CollectionConflictError');tx.abort();return;
+      }
+      const removed=state.ids.some(id=>!ids.includes(id));
+      const shouldCheckpoint=onlyIfMissing||!!current&&(removed||Date.now()-state.checkpointAt>=120_000);
+      if(shouldCheckpoint){
+        const previous=onlyIfMissing?serialized:current;
+        let albums=onlyIfMissing?JSON.parse(serialized).length:state.ids.length;
+        if(previous&&albums){
+          const history=store.get(RECOVERY_KEY);
+          history.onsuccess=()=>{
+            const old=recoveryList(history.result);
+            if(old[0]?.serialized!==previous)store.put([{id:crypto.randomUUID(),savedAt:new Date().toISOString(),albums,serialized:previous},...old].slice(0,3),RECOVERY_KEY);
+          };
+          checkpointAt=Date.now();
+        }
+      }
+      store.put(serialized,KEY);
+    };
+    // Compare, checkpoint and replace within one transaction, including across tabs.
+    tx.oncomplete=()=>{db.close();state.known=true;state.snapshot=chosen;state.checkpointAt=checkpointAt;if(!onlyIfMissing)state.ids=ids;resolve(chosen);};
+    tx.onabort=()=>{db.close();reject(failure??tx.error??new DOMException('Save aborted','AbortError'));};
   });
+}
+export async function listRecoveryPoints(): Promise<RecoveryPoint[]> {
+  let snapshots:RecoverySnapshot[]=[], readFailure:unknown;
+  if(hasProjectDatabase())try{
+    const db=await open();
+    snapshots=await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),request=tx.objectStore(STORE).get(RECOVERY_KEY);tx.oncomplete=()=>{db.close();resolve(recoveryList(request.result));};tx.onabort=()=>{db.close();reject(tx.error);};});
+  }catch(error){readFailure=error;}
+  try{const raw=localStorage.getItem(LEGACY_KEY);if(raw){const projects=decode(raw);if(projects.length)snapshots.push({id:'legacy-localStorage',savedAt:'',albums:projects.length,serialized:raw});}}catch{/* Malformed legacy data is retained, never overwritten. */}
+  if(!snapshots.length&&readFailure)throw readFailure;
+  return snapshots.map(({serialized,...point})=>point);
+}
+export async function readRecoveryPoint(id:string): Promise<ComicProject[]> {
+  if(id==='legacy-localStorage'){const raw=localStorage.getItem(LEGACY_KEY);if(!raw)throw new Error('recovery-missing');return decode(raw);}
+  const db=await open();
+  const snapshots:RecoverySnapshot[]=await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),request=tx.objectStore(STORE).get(RECOVERY_KEY);tx.oncomplete=()=>{db.close();resolve(recoveryList(request.result));};tx.onabort=()=>{db.close();reject(tx.error);};});
+  const snapshot=snapshots.find(item=>item.id===id);if(!snapshot)throw new Error('recovery-missing');return decode(snapshot.serialized);
 }
 function decode(serialized: string): ComicProject[] {
   const data: unknown = JSON.parse(serialized);
@@ -67,13 +114,13 @@ export async function loadProjectCollection(): Promise<ComicProject[]> {
   try {
     await writes;
     const existing = await read();
-    if (existing !== undefined) return decode(existing);
+    if (existing !== undefined) {const projects=decode(existing);remember(existing,projects);recordDiagnostic('storage-loaded',{albums:projects.length,bytes:existing.length*2,backend:'indexedDB'});return projects;}
     const legacy = localStorage.getItem(LEGACY_KEY);
-    if (legacy === null) return [];
+    if (legacy === null) {remember(undefined,[]);recordDiagnostic("storage-empty",{backend:"indexedDB"});return [];}
     // Validate before migration; malformed data must never become an empty collection.
     decode(legacy);
     const migrated = await queue(() => write(legacy, true));
-    const projects = decode(migrated);
+    const projects = decode(migrated);remember(migrated,projects);
     // Release the small text quota only after a committed copy has been read back.
     if (migrated === legacy && await read() === legacy) {
       try { if (localStorage.getItem(LEGACY_KEY) === legacy) localStorage.removeItem(LEGACY_KEY); } catch { /* The durable copy is still valid. */ }
@@ -82,7 +129,7 @@ export async function loadProjectCollection(): Promise<ComicProject[]> {
   } catch (error) { throw new ProjectStorageError(classifyProjectSaveError(error, 'storage', 'indexedDB')); }
 }
 
-type PendingSave = { serialized: string; promise: Promise<void>; superseded: number };
+type PendingSave = { serialized: string; ids: string[]; promise: Promise<void>; superseded: number };
 let pendingSave: PendingSave | undefined;
 
 export function saveProjectCollection(projects: ComicProject[]): Promise<void> {
@@ -98,11 +145,11 @@ export function saveProjectCollection(projects: ComicProject[]): Promise<void> {
   // pending batch settle only when its newest revision has atomically committed.
   // Capture as text now so later in-memory mutation cannot change the snapshot.
   if (pendingSave) {
-    pendingSave.serialized = serialized;
+    pendingSave.serialized = serialized;pendingSave.ids=projects.map(project=>project.id);
     pendingSave.superseded++;
     return pendingSave.promise;
   }
-  const batch: PendingSave = { serialized, superseded: 0, promise: Promise.resolve() };
+  const batch: PendingSave = { serialized, ids:projects.map(project=>project.id), superseded: 0, promise: Promise.resolve() };
   pendingSave = batch;
   batch.promise = queue(async () => {
     pendingSave = undefined;
@@ -112,7 +159,7 @@ export function saveProjectCollection(projects: ComicProject[]): Promise<void> {
     const start = performance.now();
     recordDiagnostic('save-start', { bytes, superseded: batch.superseded });
     try {
-      await write(snapshot);
+      await write(snapshot,false,batch.ids);
       recordDiagnostic('save-complete', { bytes, durationMs: Math.round(performance.now() - start) });
     } catch (error) {
       recordDiagnostic('save-error', { name: diagnosticErrorName(error), bytes, durationMs: Math.round(performance.now() - start) });

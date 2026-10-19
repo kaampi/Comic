@@ -1,5 +1,5 @@
 export type ProjectSaveFailure = {
-  reason: 'quota' | 'blocked' | 'serialization' | 'unknown';
+  reason: 'quota' | 'blocked' | 'serialization' | 'conflict' | 'unknown';
   errorName: string;
   backend?: 'localStorage' | 'indexedDB';
   textBytes?: number;
@@ -34,12 +34,12 @@ export function classifyProjectSaveError(error: unknown, stage: 'storage' | 'ser
   const name = errorName(error);
   const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
   const quota = name === 'QuotaExceededError' || name === 'NS_ERROR_DOM_QUOTA_REACHED' || code === 22 || code === 1014;
-  return { reason: stage === 'serialization' ? 'serialization' : quota ? 'quota' : name === 'SecurityError' ? 'blocked' : 'unknown', errorName: name, backend, textBytes };
+  return { reason: name === 'CollectionConflictError' ? 'conflict' : stage === 'serialization' ? 'serialization' : quota ? 'quota' : name === 'SecurityError' ? 'blocked' : 'unknown', errorName: name, backend, textBytes };
 }
 
 export function projectSaveErrorText(error: ProjectSaveFailure, locale: string): string {
   const sv = locale === 'sv', nb = locale === 'nb';
-  const cause = error.reason === 'quota'
+  const cause = error.reason === 'conflict' ? (sv ? 'Den sparade projektlistan har ändrats sedan den lästes in, till exempel i en annan flik. Din version har inte skrivit över den sparade versionen.' : nb ? 'Den lagrede prosjektlisten er endret siden innlasting. Din versjon har ikke overskrevet den lagrede versjonen.' : 'The saved project collection changed since it was loaded, for example in another tab. Your version has not overwritten the saved version.') : error.reason === 'quota'
     ? error.backend === 'indexedDB' ? (sv ? 'Appens lokala databas har nått sin lagringsgräns.' : nb ? 'Appens lokale database har nådd lagringsgrensen.' : 'The app’s local database reached its storage limit.') : sv ? 'Appens textlagring (localStorage) har nått sin lagringsgräns. Det är en separat gräns från ledigt diskutrymme och webbläsarens övriga lagring.' : nb ? 'Appens tekstlagring (localStorage) har nådd lagringsgrensen. Dette er en egen grense, uavhengig av ledig diskplass og nettleserens øvrige lagring.' : 'The app’s text storage (localStorage) reached its storage limit. This is separate from free disk space and other browser storage.'
     : error.reason === 'blocked'
       ? sv ? 'Webbläsaren blockerar åtkomst till appens lokala lagring.' : nb ? 'Nettleseren blokkerer tilgang til appens lokale lagring.' : 'The browser is blocking access to the app’s local storage.'
@@ -49,3 +49,4 @@ export function projectSaveErrorText(error: ProjectSaveFailure, locale: string):
   const size = error.textBytes === undefined ? '' : ` ${sv ? 'Projektdata' : nb ? 'Prosjektdata' : 'Project data'}: ~${(error.textBytes / 1048576).toFixed(2)} MiB ${sv ? 'text' : nb ? 'tekst' : 'of text'}.`;
   return (sv ? 'Projektet kunde inte sparas. ' : nb ? 'Prosjektet kunne ikke lagres. ' : 'The project could not be saved. ') + cause + ` (${error.errorName}).` + size + ' ' + (sv ? 'Ändringarna finns kvar i den öppna appen. Exportera en albumbackup innan du laddar om eller stänger.' : nb ? 'Endringene finnes fortsatt i den åpne appen. Eksporter en albumbackup før du laster på nytt eller lukker.' : 'Your edits remain in the open app. Export an album backup before reloading or closing.');
 }
+

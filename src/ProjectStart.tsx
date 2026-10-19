@@ -29,8 +29,8 @@ export function StartIcon({ kind }: { kind: "pages" | "manus" | "storybook" | "o
     {kind === "pages" ? <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 11h18M12 11v10M15 3v8" /></> : kind === "manus" ? <><path d="M14 3H5v18h14v-9M8 8h3M8 12h3M8 16h7M15 5l3-3 3 3-8 8-4 1 1-4z" /></> : kind === "storybook" ? <><path d="M12 6C9 3 5 3 2 4v15c4-1 7-1 10 2 3-3 6-3 10-2V4c-3-1-7-1-10 2v15" /></> : kind === "open" ? <path d="M3 8V5h6l3 3h9v3M3 8h19l-3 12H2L3 8z" /> : kind === "arrow" ? <path d="M4 12h16m-6-6 6 6-6 6" /> : <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 14h18M16 16h2" /></>}
   </svg>;
 }
-export function ProjectStart({ projects, locale, onStart, onOpen, onBrowse }: {
-  projects: ComicProject[]; locale: Locale; onStart: (route: StartRoute) => void; onOpen: (id: string) => void; onBrowse: () => void;
+export function ProjectStart({ projects, locale, onStart, onOpen, onBrowse, onRecovery }: {
+  projects: ComicProject[]; locale: Locale; onStart: (route: StartRoute) => void; onOpen: (id: string) => void; onBrowse: () => void; onRecovery?: () => void;
 }) {
   const sv = locale === "sv", nb = locale === "nb", tr = (s: string, e: string, n = e) => sv ? s : nb ? n : e;
   const cards: { kind: StartRoute | "open"; title: string; text: string; action: string }[] = [
@@ -46,14 +46,15 @@ export function ProjectStart({ projects, locale, onStart, onOpen, onBrowse }: {
     </button>)}</div>
     <section className="project-start-recent" aria-labelledby="project-start-recent-title"><header><h2 id="project-start-recent-title">{tr("Senast öppnade", "Recently opened", "Sist åpnet")}</h2><button type="button" className="text-button" onClick={onBrowse}>{tr("Visa alla projekt", "Show all projects", "Vis alle prosjekter")} →</button></header>
       {projects.length ? <div className="project-start-recent-list">{projects.slice(0,4).map(project => <button type="button" key={project.id} onClick={() => onOpen(project.id)}><AlbumCover project={project} /><span className="project-start-recent-title"><strong>{project.title}</strong>{project.introduction && <span className="album-intro">{project.introduction}</span>}{project.source.type === "storybook" && <span className="album-source-tag">StoryBook AI</span>}<small>{project.style.name} · {project.pages.length} {tr("sidor", "pages", "sider")}</small></span><StartIcon kind="arrow" /></button>)}</div> : <p className="quiet">{tr("Dina album visas här när du har skapat eller öppnat dem.", "Your albums appear here after you create or open them.", "Albumene vises her når du har opprettet eller åpnet dem.")}</p>}
-    </section><footer className="project-start-footer"><span><StartIcon kind="local" />{tr("Dina projekt sparas lokalt på din dator.", "Your projects are saved locally on your computer.", "Prosjektene lagres lokalt på datamaskinen din.")}</span><span>ComicBook AI</span></footer>
+    </section>{onRecovery?<button type="button" className="text-button" onClick={onRecovery}>{tr("Lokala återställningspunkter", "Local recovery points")}</button>:null}<footer className="project-start-footer"><span><StartIcon kind="local" />{tr("Dina projekt sparas lokalt på din dator.", "Your projects are saved locally on your computer.", "Prosjektene lagres lokalt på datamaskinen din.")}</span><span>ComicBook AI</span></footer>
   </section>;
 }
 
-export function ProjectChooser({ projects, locale, onOpen, onRestore }: { projects: ComicProject[]; locale: Locale; onOpen: (id: string) => void; onRestore: () => void }) {
+export function ProjectChooser({ projects, locale, onOpen, onRestore, onRecovery }: { projects: ComicProject[]; locale: Locale; onOpen: (id: string) => void; onRestore: () => void; onRecovery?: () => void }) {
   const sv = locale === "sv", tr = (s: string, e: string) => sv ? s : e;
   return <div className="project-chooser"><p className="eyebrow">{tr("Dina projekt", "Your projects")}</p><h1 id="project-chooser-title">{tr("Öppna ett projekt", "Open a project")}</h1>
     {projects.length ? <div className="project-chooser-list">{projects.map(project => <button type="button" key={project.id} onClick={() => onOpen(project.id)}><AlbumCover project={project} /><span className="project-chooser-copy"><strong>{project.title}</strong><small>{project.style.name} · {project.pages.length} {tr("sidor", "pages")}</small></span><span>{tr("Öppna", "Open")} →</span></button>)}</div> : <p className="quiet">{tr("Inga sparade album ännu. Skapa ett album eller återställ en backup.", "No saved albums yet. Create an album or restore a backup.")}</p>}
+    {onRecovery?<button className="text-button" type="button" onClick={onRecovery}>{tr("Lokala återställningspunkter", "Local recovery points")}</button>:null}
     <section className="project-chooser-backup"><h2>{tr("Har du en albumbackup?", "Have an album backup?")}</h2><p className="quiet">{tr("Återställ backupen som ett nytt album. Dina befintliga projekt finns kvar.", "Restore the backup as a new album. Your existing projects are retained.")}</p><button type="button" className="primary-button" onClick={onRestore}>{tr("Välj albumbackup", "Choose album backup")}</button></section>
   </div>;
 }

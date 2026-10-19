@@ -1,0 +1,21 @@
+import "./localRecovery.css";
+import { useEffect, useRef, useState } from "react";
+import { listRecoveryPoints, readRecoveryPoint, type RecoveryPoint } from "./projectDatabase";
+import { packAlbumBackup, albumBackupFilename } from "./albumBackup";
+import type { ComicProject } from "./project";
+import type { Locale } from "./settings";
+export function LocalRecovery({locale}:{locale:Locale}){
+  const sv=locale==="sv",[points,setPoints]=useState<RecoveryPoint[]>([]),[albums,setAlbums]=useState<ComicProject[]>([]),[busy,setBusy]=useState(true),[error,setError]=useState(""),[downloaded,setDownloaded]=useState(false);
+  const revision=useRef(0);
+  useEffect(()=>{let alive=true;listRecoveryPoints().then(points=>{if(alive){setPoints(points);setBusy(false);}},()=>{if(alive){setError(sv?"Återställningspunkterna kunde inte läsas.":"Recovery points could not be read.");setBusy(false);}});return()=>{alive=false;revision.current++;};},[sv]);
+  async function inspect(id:string){const request=++revision.current;setBusy(true);setError("");setAlbums([]);try{const projects=await readRecoveryPoint(id);if(request===revision.current)setAlbums(projects);}catch{if(request===revision.current)setError(sv?"Den här återställningspunkten kunde inte läsas.":"This recovery point could not be read.");}finally{if(request===revision.current)setBusy(false);}}
+  function download(project:ComicProject){const blob=new Blob([JSON.stringify(packAlbumBackup(project))],{type:"application/json"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=albumBackupFilename(project);document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);setDownloaded(true);}
+  return <section className="local-recovery" aria-labelledby="local-recovery-title"><h1 id="local-recovery-title">{sv?"Lokala återställningspunkter":"Local recovery points"}</h1><p>{sv?"Tidigare sparade versioner av projektlistan. Hämta ett album som backup och återställ det via Öppna ett projekt → Välj albumbackup. Dina nuvarande album ändras inte här.":"Previously saved versions of the project collection. Download an album backup, then restore it via Open a project → Choose album backup. Your current albums are not changed here."}</p>
+    {busy?<p role="status">{sv?"Läser lokala versioner…":"Reading local versions…"}</p>:null}{error?<p role="alert">{error}</p>:null}
+    {!busy&&!error&&!points.length?<p>{sv?"Inga återställningspunkter finns ännu. De skapas automatiskt vid sparning och före borttagning av album. Äldre raderade projekt kan bara återställas om en tidigare kopia finns kvar.":"No recovery points yet. They are created automatically when saving and before albums are removed. Previously lost projects can only be recovered if an earlier copy still exists."}</p>:null}
+    <div className="project-chooser-list">{points.map(point=><button type="button" key={point.id} disabled={busy} onClick={()=>void inspect(point.id)}><span><strong>{point.id==="legacy-localStorage"?(sv?"Äldre localStorage-lagring":"Older localStorage data"):new Date(point.savedAt).toLocaleString(sv?"sv-SE":"en-GB")}</strong><small>{point.albums} {sv?"album":"albums"}</small></span><span>{sv?"Visa album":"View albums"}</span></button>)}</div>
+    {albums.length?<div className="project-chooser-list">{albums.map(project=><div key={project.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,padding:"12px 0"}}><strong>{project.title}</strong><button className="text-button" type="button" onClick={()=>download(project)}>{sv?"Hämta albumbackup":"Download album backup"}</button></div>)}</div>:null}
+    {downloaded?<p role="status">{sv?"Backupen är hämtad. Återställ den via Öppna ett projekt → Välj albumbackup.":"Backup downloaded. Restore it via Open a project → Choose album backup."}</p>:null}
+    <p className="quiet">{sv?"Här sparas upp till tre återställningspunkter i samma webbläsarlagring som albumen. De ersätter inte nedladdade backupfiler och överlever inte att all webbplatsdata rensas.":"Up to three recovery points are stored in the same browser storage as your albums. They do not replace downloaded backup files and cannot survive clearing all site data."}</p>
+  </section>;
+}

@@ -155,6 +155,12 @@ Textändringar före ett beat flyttar dess källkoppling. Ändringar i ett länk
 
 Prototypen sparar album och bilder i webbläsarens lokala IndexedDB med atomiska transaktioner. Befintliga localStorage-album flyttas först efter validering; textkopian tas bort först när databaskopian är sparad och verifierad. I äldre miljöer utan IndexedDB används localStorage som reserv. Projektmappar, separata bildfiler och atomisk sparning enligt avsnitt 3.2 kvarstår som mål för desktoplagringen.
 
+### 7.1.1 Lagringskonflikter och återställningspunkter
+
+IndexedDB-sparning jämför den aktuella databaskopian med den som appinstansen senast läste eller skrev, i samma transaktion som uppdateringen. Om en annan flik eller appinstans ändrat projektlistan stoppas skrivningen med ett tydligt konfliktmeddelande. Osparade ändringar stannar i den öppna appen och kan hämtas som albumbackup. Ny inläsning krävs innan appinstansen kan skriva över den nya basversionen. Vid modulomladdning tillåts inte en okänd appinstans ersätta en redan befintlig samling utan föregående inläsning.
+
+Upp till tre återställningspunkter sparas i samma databas, atomiskt tillsammans med huvudkopian. Föregående projektlista bevaras före första ändringen efter inläsning, därefter högst vartannat minut vid vanliga sparningar, samt före borttagning av album. Migration från localStorage sparar också en återställningskopia innan den gamla nyckeln tas bort. Avbrutna transaktioner ändrar varken huvudkopian eller historiken. Lokal återställning från startsidan och projektväljaren visar historiska album och låter användaren hämta vanliga albumbackupfiler utan att skriva över aktuella album. Kvarvarande äldre localStorage-album visas också. Funktionen kan läsa återställningspunkter vid korrupt huvudsnapshot; den kan inte återskapa data som redan raderats ur all webbläsarlagring. Diagnostik registrerar endast antal album, datastorlek och teknisk lagringsstatus, aldrig manus eller bilder.
+
 ### 7.2 Kapitel från StoryBook
 
 StoryBook är sanningskällan. Import av dess export för andra appar är enkelriktad och skapar en självständig arbetskopia i ComicBook. Endast ComicBooks repository och lagring ändras. Ingen anslutning till StoryBooks repository, databas eller originalfil införs och ingen återexport till StoryBook görs.

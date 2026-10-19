@@ -1,0 +1,2 @@
+.guide-card:has(.local-recovery){width:min(900px,94vw);box-sizing:border-box;max-height:90dvh;overflow:auto}
+.guide-card .local-recovery h1{font-size:clamp(1.5rem,3vw,2.3rem);font-weight:400;line-height:1.2;margin:8px 0 20px}.local-recovery>p{font-size:.9rem;line-height:1.6}.local-recovery .quiet{font-size:.8rem;color:var(--text-dim)}

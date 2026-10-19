@@ -37,7 +37,7 @@ export const GUIDE = {
     },
     {
       id: "backup", title: "5. Save a backup you can restore", group: "start",
-      shortHelp: "Automatic saving keeps the album in this browser. Download an album backup to keep an editable copy with images. A PDF or PNG export is not an album backup.",
+      shortHelp: "Automatic saving keeps the album in this browser. If another tab has changed the saved collection, saving stops rather than overwriting it: download your unsaved album backup before reloading. Local recovery points on the home screen offer up to three earlier collection snapshots as individual album backups. They share the browser storage and do not replace downloaded backups. Download an album backup to keep an editable copy with images. A PDF or PNG export is not an album backup.",
       paragraphs: ["Albums are saved automatically in this browser on this device. There is no cloud sync. Another browser, browser profile or app address has separate storage; clearing site data can remove locally saved albums."],
       steps: ["Open the album menu and choose the backup option. Download an album backup and keep the file somewhere you can find it.", "To recover it, open Project → Restore album backup, choose the file and review the import. Restoring creates a separate album.", "Make another backup before updating the beta or moving to a different computer or browser."],
       tip: "If the app reports a saving error, download a backup of the open album before reloading or closing the tab. Unsaved changes may still exist only in the open app."
