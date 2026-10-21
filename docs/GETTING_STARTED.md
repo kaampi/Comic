@@ -77,7 +77,7 @@ The picture fills the panel by default, so some edges may be cropped. Adjust the
 Use speech bubbles for spoken dialogue, thought bubbles for thoughts, captions for narration and SFX for sound effects. Keep the first page short enough to read at a glance.
 
 1. Add a text layer in the panel editor and choose its type. Move and resize it to fit the available space.
-2. Double-click the text to type directly in the bubble. Enter inserts a new line; click outside to finish. Escape cancels the current inline text edit.
+2. Double-click the text to type directly in the bubble. Enter inserts a new line; click outside to finish. Escape finishes the current inline text edit and keeps your changes. Right-click a bubble to edit text or shape, copy, duplicate, paste or delete it. While typing, right-click to finish, use Bold, Italic or Underline on the selection, or cut/copy/paste text. In shape mode, right-click a node to delete it or make it sharp/smooth; right-click the outline to add a node. Escape closes a menu first, then finishes the active mode.
 3. Select the text layer to adjust its font, size, alignment and Text color. Text size is measured in points (pt). Adjust the fill and its opacity separately.
 4. Position the tail so it clearly points to the speaker. Read the whole panel and check that text does not cover an important face or action.
 5. For captions, Roundness 0 gives square corners. Negative values down to -100 bow the sides inward for pointed corners. Positive values keep rounded shapes.

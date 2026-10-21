@@ -84,7 +84,7 @@ export function wrapOverlayTextToWidth(text: string, width: number, measure: Mea
 export function overlayFont(overlay: TextOverlay, pixelSize: number): string {
   const weight = overlay.fontWeight ?? (overlay.type === "sfx" ? 800 : 600);
   const family = overlay.fontFamily ?? (overlay.type === "sfx" ? "Impact, sans-serif" : "Comic Neue, sans-serif");
-  return `${weight} ${pixelSize}px ${family}`;
+  return `${overlay.fontStyle==="italic"?"italic ":""}${weight} ${pixelSize}px ${family}`;
 }
 
 let measuringContext: CanvasRenderingContext2D | null | undefined;

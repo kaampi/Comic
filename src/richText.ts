@@ -6,9 +6,9 @@ import { PAGE_RENDER_WIDTH } from "./pageFormat";
 
 export function textStyleAt(o: TextOverlay, index: number): TextStyle {
   const r=o.textStyles?.find(r=>index>=r.start&&index<r.end);
-  return r?{fontFamily:r.fontFamily,fontSize:r.fontSize,fontWeight:r.fontWeight,...(r.textColor!==undefined?{textColor:r.textColor}:{})}:{};
+  return r?{fontFamily:r.fontFamily,fontSize:r.fontSize,fontWeight:r.fontWeight,...(r.fontStyle!==undefined?{fontStyle:r.fontStyle}:{}),...(r.underline!==undefined?{underline:r.underline}:{}),...(r.textColor!==undefined?{textColor:r.textColor}:{})}:{};
 }
-const signature=(s:TextStyle)=>JSON.stringify([s.fontFamily,s.fontSize,s.fontWeight,s.textColor]);
+const signature=(s:TextStyle)=>JSON.stringify([s.fontFamily,s.fontSize,s.fontWeight,s.fontStyle,s.underline,s.textColor]);
 function ranges(styles:TextStyle[]):TextStyleRange[]{
   const result:TextStyleRange[]=[];
   styles.forEach((style,i)=>{if(!Object.values(style).some(v=>v!==undefined))return;const last=result.at(-1);if(last&&last.end===i&&signature(last)===signature(style))last.end++;else result.push({...style,start:i,end:i+1});});

@@ -19,6 +19,7 @@
     "test:panel-move": "node scripts/test-panel-move.mjs",
     "test:panel-pool": "node scripts/test-panel-pool.mjs",
     "test:foreground": "node scripts/test-foreground.mjs",
+    "test:bubble-menu": "node scripts/test-bubble-menu.mjs",
     "test:contour-text": "node scripts/test-contour-text.mjs",
     "test:bubble-shape": "node scripts/test-bubble-shape.mjs",
     "test:free-form": "node scripts/test-free-form.mjs",

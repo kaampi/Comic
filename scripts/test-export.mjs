@@ -50,6 +50,12 @@ try {
     assert.ok(svg.includes(customBubblePath(free)),'custom '+type+' contour exports without editor controls');
     assert.ok(!svg.includes('bubble-shape-node'));
   }
+  const emphasized={...a,text:'Bold italic underlined',fontWeight:700,fontStyle:'italic',underline:true};
+  for(const rich of [false,true]){
+    const formatted=rich?{...emphasized,fontStyle:'normal',underline:false,textStyles:[{start:0,end:4,fontStyle:'italic',underline:true}]}:emphasized;
+    const svg=await pageSvg(project,{...page,placements:[{...layer,overlays:[formatted]}]},'',1);
+    assert.match(svg,/font-style="italic"/);assert.match(svg,/text-decoration="underline"/);
+  }
   const {captionPath,bodyPath}=await import(pathToFileURL(path.join(dir,'SvgOverlay.mjs')));
   const {svgGeometry}=await import(pathToFileURL(path.join(dir,'idmlGeometry.mjs')));
   const caption={...a,type:'caption',roundness:0};

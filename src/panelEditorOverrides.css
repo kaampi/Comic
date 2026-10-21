@@ -455,3 +455,9 @@
 .panel-editor-header-actions { flex-wrap:wrap; }
 
 .text-contour-overflow { margin:8px 0; padding:10px; border:1px solid #c55b35; border-radius:5px; color:var(--text); background:var(--panel); font-size:.82rem; }
+.editor-context-menu { z-index:3000; min-width:210px; max-width:calc(100vw - 16px); max-height:calc(100vh - 16px); overflow:auto; padding:5px; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:7px; box-shadow:0 8px 30px #0007; }
+.editor-context-menu button { display:block; width:100%; text-align:left; border:0; background:transparent; color:inherit; border-radius:4px; padding:9px 12px; cursor:pointer; }
+.editor-context-menu button:hover,.editor-context-menu button:focus-visible { background:var(--paper); outline:2px solid var(--form-focus,#2473a6); outline-offset:-2px; }
+.editor-context-menu button:disabled { opacity:.4; cursor:default; }
+.editor-context-menu .is-danger { color:#c45a39; }
+.editor-context-menu p { margin:8px; max-width:270px; }

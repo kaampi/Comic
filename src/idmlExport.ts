@@ -32,7 +32,8 @@ export function idmlPathGeometry(paths:GeometryPath[]) {
 export function idmlFont(o:TextOverlay) {
   const family=(o.fontFamily??(o.type==="sfx"?"Impact":"Comic Neue")).split(",")[0].replace(/["']/g,"").trim();
   const hasBold=["Comic Neue","Comic Relief","Action Man","Fuzzy Bubbles"].includes(family);
-  return {family,style:hasBold&&(o.fontWeight??(o.type==="sfx"?800:600))>=600?"Bold":"Regular"};
+  const bold=hasBold&&(o.fontWeight??(o.type==="sfx"?800:600))>=600;
+  return {family,style:o.fontStyle==="italic"?(bold?"Bold Italic":"Italic"):(bold?"Bold":"Regular")};
 }
 function artwork(o:TextOverlay):{paths:GeometryPath[];fill:boolean}[] {
   const style=o.bubbleStyle??"organic";
@@ -128,7 +129,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
               const styled={...o,...Object.fromEntries(Object.entries(piece.style).filter(([,v])=>v!==undefined))},font=idmlFont(styled);
               fonts.set(`${font.family}/${font.style}`,font);
               const fontSize=(styled.fontSize??8)*25.4/72*700/pageDimensions(sourceFormat).widthMm*scale;
-              return `<CharacterStyleRange AppliedCharacterStyle="CharacterStyle/$ID/[No character style]" PointSize="${num(fontSize)}" FontStyle="${xml(font.style)}" FillColor="${color(styled.textColor??"#171411")}"><Properties><AppliedFont type="string">${xml(font.family)}</AppliedFont><Leading type="unit">${num(frameHeight*scale)}</Leading></Properties><Content>${xml(piece.text)}</Content></CharacterStyleRange>`;
+              return `<CharacterStyleRange AppliedCharacterStyle="CharacterStyle/$ID/[No character style]" PointSize="${num(fontSize)}" FontStyle="${xml(font.style)}" Underline="${!!styled.underline}" FillColor="${color(styled.textColor??"#171411")}"><Properties><AppliedFont type="string">${xml(font.family)}</AppliedFont><Leading type="unit">${num(frameHeight*scale)}</Leading></Properties><Content>${xml(piece.text)}</Content></CharacterStyleRange>`;
             }).join("");
             add(storyPath,part("Story",`<Story Self="${story}"><StoryPreference StoryOrientation="Horizontal" StoryDirection="LeftToRightDirection"/><ParagraphStyleRange AppliedParagraphStyle="ParagraphStyle/ComicBook" Justification="LeftAlign" Hyphenation="false" SpaceBefore="0" SpaceAfter="0">${content}</ParagraphStyleRange></Story>`));stories.push(storyPath);
             const cx=layout.width/2,cy=layout.height/2,px=left-cx,py=top-cy,pos=map({x:x+o.x*lw/100+cx+c*px-s*py,y:y+o.y*lh/100+cy+s*px+c*py});
@@ -145,7 +146,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
         // Text rotates in physical page coordinates, matching pageTypography's un-stretched text.
         const matrix=`${num(c)} ${num(s)} ${num(-s)} ${num(c)} ${num(pos.x+cx-c*cx+s*cy)} ${num(pos.y+cy-s*cx-c*cy)}`;
         const justification=o.textAlign==="left"?"LeftAlign":o.textAlign==="right"?"RightAlign":"CenterAlign";
-        const plainParagraphs=o.text.replace(/\r\n?/g,"\n").split("\n").map(line=>`<ParagraphStyleRange AppliedParagraphStyle="ParagraphStyle/ComicBook" Justification="${justification}" Hyphenation="false" SpaceBefore="0" SpaceAfter="0"><CharacterStyleRange AppliedCharacterStyle="CharacterStyle/$ID/[No character style]" PointSize="${num(size)}" FontStyle="${xml(font.style)}" FillColor="${color(o.textColor??o.sfxTextColor??"#171411")}"${o.type==="sfx"?` StrokeColor="${color("#fffdf7")}" StrokeWeight="${num(3*scale)}"`:""}><Properties><AppliedFont type="string">${xml(font.family)}</AppliedFont><Leading type="unit">${num(size*1.15)}</Leading></Properties><Content>${xml(line)}</Content><Br/></CharacterStyleRange></ParagraphStyleRange>`).join("");
+        const plainParagraphs=o.text.replace(/\r\n?/g,"\n").split("\n").map(line=>`<ParagraphStyleRange AppliedParagraphStyle="ParagraphStyle/ComicBook" Justification="${justification}" Hyphenation="false" SpaceBefore="0" SpaceAfter="0"><CharacterStyleRange AppliedCharacterStyle="CharacterStyle/$ID/[No character style]" PointSize="${num(size)}" FontStyle="${xml(font.style)}" Underline="${!!o.underline}" FillColor="${color(o.textColor??o.sfxTextColor??"#171411")}"${o.type==="sfx"?` StrokeColor="${color("#fffdf7")}" StrokeWeight="${num(3*scale)}"`:""}><Properties><AppliedFont type="string">${xml(font.family)}</AppliedFont><Leading type="unit">${num(size*1.15)}</Leading></Properties><Content>${xml(line)}</Content><Br/></CharacterStyleRange></ParagraphStyleRange>`).join("");
         let textOffset=0;
         const richParagraphs=o.textStyles?.length?o.text.split("\n").map(line=>{
           const parts=textPieces(o,textOffset,textOffset+line.length);textOffset+=line.length+1;
@@ -154,7 +155,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
             const styled={...o,...Object.fromEntries(Object.entries(piece.style).filter(([,v])=>v!==undefined))},partFont=idmlFont(styled);
             fonts.set(`${partFont.family}/${partFont.style}`,partFont);
             const partSize=(styled.fontSize??(o.type==="sfx"?28:8))*scale/(pageDimensions(sourceFormat).widthMm*72/25.4/700);
-            return `<CharacterStyleRange AppliedCharacterStyle="CharacterStyle/$ID/[No character style]" PointSize="${num(partSize)}" FontStyle="${xml(partFont.style)}" FillColor="${color(styled.textColor??o.sfxTextColor??"#171411")}"${o.type==="sfx"?` StrokeColor="${color("#fffdf7")}" StrokeWeight="${num(3*scale)}"`:""}><Properties><AppliedFont type="string">${xml(partFont.family)}</AppliedFont><Leading type="unit">${num(partSize*1.15)}</Leading></Properties><Content>${xml(piece.text.replace(/\r/g,""))}</Content>${i===parts.length-1?"<Br/>":""}</CharacterStyleRange>`;
+            return `<CharacterStyleRange AppliedCharacterStyle="CharacterStyle/$ID/[No character style]" PointSize="${num(partSize)}" FontStyle="${xml(partFont.style)}" Underline="${!!styled.underline}" FillColor="${color(styled.textColor??o.sfxTextColor??"#171411")}"${o.type==="sfx"?` StrokeColor="${color("#fffdf7")}" StrokeWeight="${num(3*scale)}"`:""}><Properties><AppliedFont type="string">${xml(partFont.family)}</AppliedFont><Leading type="unit">${num(partSize*1.15)}</Leading></Properties><Content>${xml(piece.text.replace(/\r/g,""))}</Content>${i===parts.length-1?"<Br/>":""}</CharacterStyleRange>`;
           }).join("");
           return `<ParagraphStyleRange AppliedParagraphStyle="ParagraphStyle/ComicBook" Justification="${justification}" Hyphenation="false" SpaceBefore="0" SpaceAfter="0">${content}</ParagraphStyleRange>`;
         }).join(""):undefined;

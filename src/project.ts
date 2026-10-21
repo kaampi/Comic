@@ -2,6 +2,7 @@ import type { ManuscriptChapter } from "./manuscriptChapters";
 import { saveProjectData } from "./projectSaveStatus";
 import { renderOptionsForStyle, type RenderOptions } from "./styleColorMode";
 import type { PanelBorderStyle } from "./panelBorder";
+import type { BubblePoint } from "./bubbleShape";
 import type { ShapePoint } from "./panelShape";
 import { normalizeProjectTypography } from "./pageTypography";
 import { DEFAULT_PAGE_FORMAT, albumPageFormat, type PageFormat } from "./pageFormat";
@@ -25,7 +26,7 @@ export type BubbleLink = {
   endControl?: { along: number; across: number };
 };
 export type TextOverlay = {
-  bubbleShapePoints?: ShapePoint[];
+  bubbleShapePoints?: BubblePoint[];
   bubbleShapeSmooth?: boolean;
   textStyles?: TextStyleRange[];
   bubbleLinks?: BubbleLink[];
@@ -33,13 +34,13 @@ export type TextOverlay = {
   sfxShapeId?: string; sfxTextHidden?: boolean; sfxTextColor?: string;
   sourcePanelId?: string; sourceTextId?: string;
   textAlign?: "left" | "center" | "right"; textPadding?: number;
-  textColor?: string; fontSize?: number; fontFamily?: string; fontWeight?: number; bubbleStyle?: BubbleStyle;
+  textColor?: string; fontSize?: number; fontFamily?: string; fontWeight?: number; fontStyle?: "normal"|"italic"; underline?: boolean; bubbleStyle?: BubbleStyle;
   tailStartAngle?: number;
   thoughtTailWidth?: number; thoughtTailCurve?: number;
   tailEnabled?: boolean; tailCurve?: number; tailRootWidth?: number; roundness?: number; tailX?: number; tailY?: number;
   strokeColor?: string; strokeWidth?: number; fillColor?: string; fillOpacity?: number; swatchId?: string;
 };
-export type TextStyle = { textColor?: string; fontFamily?: string; fontSize?: number; fontWeight?: number };
+export type TextStyle = { textColor?: string; fontFamily?: string; fontSize?: number; fontWeight?: number; fontStyle?: "normal"|"italic"; underline?: boolean };
 export type TextStyleRange = TextStyle & { start: number; end: number };
 export type BubbleSwatch = {
   id: string;

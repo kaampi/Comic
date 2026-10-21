@@ -66,9 +66,10 @@ try {
   const noFrameSpread=parse([...noFrameInner].find(([p])=>p.startsWith('Spreads/'))[1]);
   assert.equal([...noFrameSpread.querySelectorAll('Polygon')].filter(e=>e.getAttribute('Name')==='Panel border layer').length,0,'fully hidden borders create no empty IDML geometry');
   const bubblePoints=[{x:.2,y:.2},{x:3.8,y:.2},{x:3.8,y:3.8},{x:2,y:2.2},{x:.2,y:3.8}];
-  const freeBubbleProject={...project,pages:[{...project.pages[0],placements:[{...layer,overlays:['speech','thought','caption'].map((type,i)=>({...overlay,id:'free-'+i,type,bubbleShapePoints:bubblePoints}))}]}]};
+  const freeBubbleProject={...project,pages:[{...project.pages[0],placements:[{...layer,overlays:['speech','thought','caption'].map((type,i)=>({...overlay,id:'free-'+i,type,bubbleShapePoints:bubblePoints,textStyles:[{start:0,end:2,fontWeight:700,fontStyle:'italic',underline:true}]}))}]}]};
   const freeBubbleResult=await exportAlbum(freeBubbleProject,options,()=>{}),freeOuter=archive(new Uint8Array(await freeBubbleResult.blob.arrayBuffer())),freeInner=archive(freeOuter.get('Test -album-.idml'));
   const freeSpread=parse([...freeInner].find(([p])=>p.startsWith('Spreads/'))[1]);
+  assert.ok([...freeInner].filter(([p])=>p.startsWith('Stories/')).some(([,data])=>parse(data).querySelector('CharacterStyleRange[Underline="true"][FontStyle="Bold Italic"]')),'italic and underline remain editable in IDML');
   for(const type of ['speech','thought','caption']){
     const item=[...freeSpread.querySelectorAll('Polygon')].find(e=>e.getAttribute('Name')===`${type} free-${['speech','thought','caption'].indexOf(type)}`);
     assert.ok(item,`${type} custom shape is an editable IDML vector`);

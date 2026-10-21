@@ -408,3 +408,11 @@ Formredigering för textbubblor kan också aktiveras direkt med **Redigera bubbl
 Bubblor med egen kontur radbryter texten efter kroppens insida, med användarens marginal och utrymme för ramlinjen. Varje rad använder ett sammanhängande intervall som rymmer hela radens höjd; urtag delar aldrig en rad i två delar. Svansen räknas inte som textutrymme. Blandad typografi, Unicode, författarens radbrytningar och punktstorlekar bevaras. Formen och textens fysiska rotation ingår i beräkningen.
 
 Redigerarens visning och direktredigering använder samma radpositioner som SVG, raster och PDF. Om hela texten inte ryms visas **Texten ryms inte** bland textens egenskaper och i exportkontrollen. Överskjutande text behålls i projekt och backup; textstorleken ändras aldrig automatiskt. IDML använder placerade redigerbara textrader för samma radbrytning och behåller eventuell överskjutande källtext i en dold textram märkt Overflow text. Äldre bubblor utan egen kontur behåller sin tidigare textlayout.
+
+### Kontextmenyer för textbubblor (2026-10-21)
+
+I textredigeraren visar högerklick på en bubbla Redigera text, Redigera bubblans form, Kopiera, Duplicera, Klistra in och Ta bort. Tom yta erbjuder Klistra in för en tidigare kopierad bubbla, även från en annan bildruta. Kopior får nya ID:n och egna kopior av form, svans, text och typografi; bubbelförbindelser dupliceras inte.
+
+Vid textredigering bevarar menyn textmarkeringen och erbjuder Avsluta textredigering, Fet, Kursiv, Understruken, Klipp ut, Kopiera och Klistra in. Formatering gäller markeringen, eller hela texten om inget är markerat. Intern textkopiering bevarar typografin; extern text klistras in som vanlig text. Kursiv och understrykning sparas per textrange och används i visning, direktredigering, radmätning, backup och export.
+
+I formredigering erbjuder högerklick på en nod Ta bort nod och Gör skarp/Gör mjuk för just den noden. Högerklick på konturen erbjuder Lägg till nod här. Avsluta formredigering finns i båda menyerna. Minst tre noder och en giltig, ej självkorsande kontur krävs. Escape stänger först en öppen meny, ångrar annars pågående noddrag, eller avslutar aktiv text-/formredigering utan att stänga redigeringsfönstret. Textändringar behålls när textläget avslutas. Menyer stöder piltangenter, Home/End och Escape; synliga knappar finns kvar.

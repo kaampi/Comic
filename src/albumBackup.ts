@@ -171,6 +171,8 @@ export function parseAlbumBackup(input: unknown): ComicProject {
         if (overlay.textColor!==undefined && (typeof overlay.textColor!=="string"||!/^#[0-9a-f]{6}$/i.test(overlay.textColor))) throw new Error("invalid-backup");
         if(overlay.bubbleShapeSmooth!==undefined&&typeof overlay.bubbleShapeSmooth!=="boolean")throw new Error("invalid-backup");
         if(overlay.bubbleShapePoints!==undefined&&!validBubbleShape(overlay.bubbleShapePoints,overlay.bubbleShapeSmooth!==false))throw new Error("invalid-backup");
+        if(overlay.fontStyle!==undefined&&!['normal','italic'].includes(overlay.fontStyle))throw new Error("invalid-backup");
+        if(overlay.underline!==undefined&&typeof overlay.underline!=="boolean")throw new Error("invalid-backup");
         string(overlay.text);
         if (!["speech", "thought", "caption", "sfx"].includes(overlay.type))
           throw new Error("invalid-backup");
@@ -186,6 +188,8 @@ export function parseAlbumBackup(input: unknown): ComicProject {
             record(style);number(style.start);number(style.end);
             if (!Number.isInteger(style.start)||!Number.isInteger(style.end)||style.start<end||style.end<=style.start||style.end>overlay.text.length) throw new Error("invalid-backup");
             end=style.end;
+            if(style.fontStyle!==undefined&&!['normal','italic'].includes(style.fontStyle))throw new Error("invalid-backup");
+            if(style.underline!==undefined&&typeof style.underline!=="boolean")throw new Error("invalid-backup");
             if (style.fontFamily!==undefined) string(style.fontFamily);
             if (style.textColor!==undefined && (typeof style.textColor!=="string"||!/^#[0-9a-f]{6}$/i.test(style.textColor))) throw new Error("invalid-backup");
             if (style.fontSize!==undefined) {number(style.fontSize);if(style.fontSize<.1||style.fontSize>600)throw new Error("invalid-backup");}

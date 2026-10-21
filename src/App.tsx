@@ -1,3 +1,6 @@
+import { EditorContextMenu, type EditorMenuItem } from "./EditorContextMenu";
+import { copiedStyledText, pastedStyledText, cloneOverlay, styleIsActive, toggledTextStyle, replaceOverlayText, type OverlayMenuState } from "./overlayActions";
+import { bubbleLocalPoint, bubbleNodes, insertBubbleNode, deleteBubbleNode, setBubbleNodeSmooth } from "./bubbleShape";
 import { TextOverflowNotice } from "./TextOverflowNotice";
 import { BubbleShapeControls, BubbleShapeHandles } from "./BubbleShapeEditor";
 import { markBackupCreated } from "./backupReminder";
@@ -23,7 +26,7 @@ import { builtinTags, readOrganization, saveOrganization, mergeOrganization, typ
 import { ColorInput } from "./ColorInput";
 import { editedTextStyles, deletionRange, formatTextRange, clearTextRange, textStyleAt } from "./richText";
 import type { TextOverlay } from "./project";
-import { InlineOverlayEditor } from "./InlineOverlayEditor";
+import { restoreSelection, InlineOverlayEditor } from "./InlineOverlayEditor";
 import { PanelImageControls } from "./PanelImageControls";
 import { AboutDialog, aboutLabel } from "./AboutDialog";
 import { PanelBorderControls } from "./PanelBorderControls";
@@ -163,6 +166,11 @@ export function App() {
   const [panelEditor, setPanelEditor] = useState<{pageId:string;placementId:string}|null>(null);
   const [imageEditPlacementId, setImageEditPlacementId] = useState<string | null>(null);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
+  const [overlayMenu,setOverlayMenu]=useState<OverlayMenuState|null>(null);
+  const [overlayMenuError,setOverlayMenuError]=useState("");
+  const overlayClipboard=useRef<TextOverlay|null>(null),textClipboard=useRef<string|null>(null),styledTextClipboard=useRef<ReturnType<typeof copiedStyledText>|null>(null);
+  useEffect(()=>{setOverlayMenu(null);setOverlayMenuError("");},[panelEditor,activeProjectId,selectedPageId]);
+
   const [bubbleShapeEditing,setBubbleShapeEditing]=useState(false);
   const [bubbleShapeNode,setBubbleShapeNode]=useState<number|null>(null);
   const [bubbleShapeSnapping,setBubbleShapeSnapping]=useState(false);
@@ -217,10 +225,10 @@ export function App() {
   }, [contextPlacement]);
   useEffect(() => {
     if (!panelEditor) return;
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape" && !event.defaultPrevented && !imagePanCleanup.current && !inspectSourcePanelId) { if(inlineTextEdit) { event.preventDefault(); updateOverlay(inlineTextEdit.pageId,inlineTextEdit.placementId,inlineTextEdit.overlayId,{text:inlineTextEdit.initialText,textStyles:inlineTextEdit.initialTextStyles}); setInlineTextEdit(null); return; } if(imageEditPlacementId) { setImageEditPlacementId(null); } else { setPanelEditor(null); } } };
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape" && !event.defaultPrevented && !imagePanCleanup.current && !inspectSourcePanelId) { if(inlineTextEdit) { event.preventDefault(); setInlineTextEdit(null); return; } if(bubbleShapeEditing){event.preventDefault();setBubbleShapeEditing(false);return;} if(imageEditPlacementId) { setImageEditPlacementId(null); } else { setPanelEditor(null); } } };
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
-  }, [panelEditor, imageEditPlacementId, inspectSourcePanelId, inlineTextEdit]);
+  }, [panelEditor, imageEditPlacementId, inspectSourcePanelId, inlineTextEdit, bubbleShapeEditing]);
 
   useEffect(() => () => { imagePanCleanup.current?.(); }, [panelEditor, imageEditPlacementId]);
 
@@ -696,9 +704,51 @@ export function App() {
   const updateOverlay=(pageId:string,placementId:string,overlayId:string,patch:any)=>updateActiveProject((project)=>({...project,pages:project.pages.map((page)=>page.id!==pageId?page:{...page,placements:page.placements.map((placement)=>placement.id!==placementId?placement:{...placement,overlays:(()=>{let overlays=placement.overlays??[];const original=overlays.find(o=>o.id===overlayId);if(original&&patch.text!==undefined&&!Object.hasOwn(patch,"textStyles"))patch={...patch,textStyles:editedTextStyles(original,patch.text,patch.textEdit)};if(Object.hasOwn(patch,"textEdit")){const {textEdit,...rest}=patch;patch=rest;}if(patch.type&&patch.type!==overlays.find(o=>o.id===overlayId)?.type)overlays=unlinkBubble(overlays,overlayId);const group=bubbleGroups(overlays).find(g=>g.some(o=>o.id===overlayId));const shared=Object.fromEntries(Object.entries(patch).filter(([key])=>["fillColor","fillOpacity","strokeColor","strokeWidth","swatchId"].includes(key)));return overlays.map(overlay=>overlay.id===overlayId?{...overlay,...patch}:group?.some(o=>o.id===overlay.id)?{...overlay,...shared}:overlay);})()})})}));
   const formatSelectedText=(pageId:string,placementId:string,o:TextOverlay,patch:any)=>{if(textSelection?.overlayId===o.id&&textSelection.end>textSelection.start)updateOverlay(pageId,placementId,o.id,{textStyles:formatTextRange(o,textSelection.start,textSelection.end,patch)});else updateOverlay(pageId,placementId,o.id,patch);};
   const changeBubbleLinks=(pageId:string,placementId:string,change:(overlays:TextOverlay[])=>TextOverlay[])=>updateActiveProject(project=>({...project,pages:project.pages.map(page=>page.id!==pageId?page:{...page,placements:page.placements.map(layer=>layer.id!==placementId?layer:{...layer,overlays:change(layer.overlays)})})}));
+  const openOverlayMenu=(event:React.MouseEvent,menu:Omit<OverlayMenuState,"x"|"y">)=>{event.preventDefault();event.stopPropagation();setOverlayMenuError("");if(menu.overlayId)setSelectedOverlayId(menu.overlayId);setOverlayMenu({...menu,x:event.clientX,y:event.clientY});};
+  const closeOverlayMenu=(range?:{start:number;end:number})=>{
+    const menu=overlayMenu;setOverlayMenu(null);setOverlayMenuError("");
+    if(menu?.mode==="text")window.setTimeout(()=>{
+      const input=document.querySelector<HTMLElement>(menu.source==='properties'?'.selected-panel-tool textarea':'.inline-overlay-editor [role="textbox"],.inline-overlay-editor textarea'),r=range??menu.range;
+      input?.focus();if(input&&r){if(input instanceof HTMLTextAreaElement)input.setSelectionRange(r.start,r.end);else restoreSelection(input,r.start,r.end);}
+    },0);
+  };
+  const appendOverlay=(pageId:string,layerId:string,source:TextOverlay,point?:{x:number;y:number})=>{const copy=cloneOverlay(source,point);updateActiveProject(project=>({...project,pages:project.pages.map(page=>page.id!==pageId?page:{...page,placements:page.placements.map(layer=>layer.id!==layerId?layer:{...layer,overlays:[...layer.overlays,copy]})})}));setInlineTextEdit(null);setSelectedOverlayId(copy.id);};
+  const overlayMenuItems=(pageId:string,layer:import("./project").PageLayer):EditorMenuItem[]=>{
+    const m=overlayMenu;if(!m)return [];const o=layer.overlays.find(o=>o.id===m.overlayId),sv=locale==="sv",label=(en:string,se:string)=>sv?se:en;
+    const finish=()=>{setInlineTextEdit(null);setBubbleShapeEditing(false);setOverlayMenu(null);document.querySelector<HTMLElement>('.panel-editor-stage')?.focus();};
+    const pasteBubble:EditorMenuItem={label:label('Paste','Klistra in'),disabled:!overlayClipboard.current,action:()=>{if(overlayClipboard.current)appendOverlay(pageId,layer.id,overlayClipboard.current,m.mode==='blank'?m.point:undefined);setOverlayMenu(null);}};
+    if(m.mode==='blank')return [pasteBubble];if(!o)return [];
+    if(m.mode==='text'){
+      const range=m.range??{start:0,end:0};
+      const clipboard=async(kind:'cut'|'copy'|'paste')=>{
+        try{
+          if(kind==='paste'){
+            let text=textClipboard.current;
+            try{if(navigator.clipboard?.readText)text=await navigator.clipboard.readText();}catch{ /* The in-app text clipboard remains available offline. */ }
+            if(text===null){setOverlayMenuError(label('Clipboard unavailable. Use Ctrl/Cmd+V.','Urklipp är inte tillgängligt. Använd Ctrl/Cmd+V.'));return;}
+            text=text.replace(/\r\n?/g,'\n');updateOverlay(pageId,layer.id,o.id,styledTextClipboard.current?.text===text?pastedStyledText(o,range,styledTextClipboard.current):replaceOverlayText(o,range,text));closeOverlayMenu({start:range.start+text.length,end:range.start+text.length});
+          }else{
+            const text=o.text.slice(range.start,range.end);textClipboard.current=text;styledTextClipboard.current=copiedStyledText(o,range);
+            try{await navigator.clipboard?.writeText(text);}catch{ /* Copied text can still be pasted inside the app. */ }
+            if(kind==='cut')updateOverlay(pageId,layer.id,o.id,replaceOverlayText(o,range,''));closeOverlayMenu(kind==='cut'?{start:range.start,end:range.start}:range);
+          }
+        }catch{setOverlayMenuError(label('Could not access the clipboard.','Kunde inte använda urklipp.'));}
+      };
+      return [{label:label('Finish editing text','Avsluta textredigering'),action:finish},...(['bold','italic','underline'] as const).map(field=>({label:label(field==='bold'?'Bold':field==='italic'?'Italic':'Underline',field==='bold'?'Fet':field==='italic'?'Kursiv':'Understruken'),checked:styleIsActive(o,range,field),action:()=>{updateOverlay(pageId,layer.id,o.id,toggledTextStyle(o,range,field));setTextSelection({overlayId:o.id,...range});closeOverlayMenu();}})),{label:label('Cut','Klipp ut'),disabled:range.start===range.end,action:()=>{void clipboard('cut');}},{label:label('Copy','Kopiera'),disabled:range.start===range.end,action:()=>{void clipboard('copy');}},{label:label('Paste','Klistra in'),action:()=>{void clipboard('paste');}}];
+    }
+    if(m.mode==='shape'){
+      const items:EditorMenuItem[]=[];
+      if(m.node!==undefined){const node=m.node,points=bubbleNodes(o),smooth=points[node]?.smooth??o.bubbleShapeSmooth!==false,deleted=deleteBubbleNode(o,node),changed=setBubbleNodeSmooth(o,node,!smooth);
+        items.push({label:label('Delete node','Ta bort nod'),disabled:!deleted,action:()=>{if(deleted)updateOverlay(pageId,layer.id,o.id,{bubbleShapePoints:deleted});setBubbleShapeNode(null);setOverlayMenu(null);}},{label:label(smooth?'Make sharp':'Make smooth',smooth?'Gör skarp':'Gör mjuk'),disabled:!changed,action:()=>{if(changed)updateOverlay(pageId,layer.id,o.id,{bubbleShapePoints:changed});setOverlayMenu(null);}});
+      }else if(m.point){const inserted=insertBubbleNode(o,m.point);items.push({label:label('Add node here','Lägg till nod här'),disabled:!inserted,action:()=>{if(inserted){updateOverlay(pageId,layer.id,o.id,{bubbleShapePoints:inserted.points});setBubbleShapeNode(inserted.index);}setOverlayMenu(null);}});}
+      return [...items,{label:label('Finish editing shape','Avsluta formredigering'),action:finish}];
+    }
+    return [{label:label('Edit text','Redigera text'),action:()=>{setBubbleShapeEditing(false);setInlineTextEdit({pageId,placementId:layer.id,overlayId:o.id,initialText:o.text,initialTextStyles:o.textStyles});setOverlayMenu(null);}},{label:label('Edit bubble shape','Redigera bubblans form'),disabled:o.type==='sfx',action:()=>{setInlineTextEdit(null);setBubbleShapeEditing(true);setOverlayMenu(null);}},{label:label('Copy','Kopiera'),action:()=>{overlayClipboard.current=structuredClone(o);setOverlayMenu(null);}},{label:label('Duplicate','Duplicera'),action:()=>{appendOverlay(pageId,layer.id,o);setOverlayMenu(null);}},pasteBubble,{label:label('Delete','Ta bort'),danger:true,action:()=>{deleteOverlay(pageId,layer.id,o.id);setOverlayMenu(null);}}];
+  };
   const deleteOverlay=(pageId:string,placementId:string,overlayId:string)=>{updateActiveProject((project)=>({...project,pages:project.pages.map((page)=>page.id!==pageId?page:{...page,placements:page.placements.map((placement)=>placement.id!==placementId?placement:{...placement,overlays:unlinkBubble(placement.overlays??[],overlayId).filter((overlay)=>overlay.id!==overlayId)})})}));if(selectedOverlayId===overlayId)setSelectedOverlayId(null);};
 
   const beginOverlayDrag=(event:React.PointerEvent<SVGGElement>,pageId:string,placementId:string,overlay:any,mode:"move"|"resize"|"tail"|"tail-start")=>{
+    if(event.button!==0)return;
     event.stopPropagation();event.preventDefault();
     const svg=(event.currentTarget.ownerSVGElement);if(!svg)return;
     const box=svg.getBoundingClientRect(),sx=event.clientX,sy=event.clientY,start={...overlay,...(overlay.type==="thought"?{tailX:thoughtTailEndpoint(overlay).x,tailY:thoughtTailEndpoint(overlay).y}:{})};
@@ -955,6 +1005,7 @@ export function App() {
 
       {transferPanels && activeProject?<PanelTransferDialog project={activeProject} selections={transferPanels} locale={locale} onMove={transferTo} onClose={()=>setTransferPanels(null)}/>:null}
       {panelEditor && activeProject ? (()=>{const pg=activeProject.pages.find(x=>x.id===panelEditor.pageId),storedLayer=pg?.background?.id===panelEditor.placementId?pg.background:pg?.foregrounds?.find(x=>x.id===panelEditor.placementId)??pg?.placements.find(x=>x.id===panelEditor.placementId);if(!pg||!storedLayer)return null;const pl=foregroundImageDraft?.pageId===pg.id&&foregroundImageDraft.placementId===storedLayer.id&&storedLayer.image?changeForegroundImage(storedLayer,{...storedLayer.image,offsetX:foregroundImageDraft.offsetX,offsetY:foregroundImageDraft.offsetY,positionMode:"frame"}):storedLayer;const isForeground=!!pg.foregrounds?.some(l=>l.id===pl.id);const o=(pl.overlays??[]).find(item=>item.id===selectedOverlayId)??null;const selectedText=o&&textSelection?.overlayId===o.id&&textSelection.end>textSelection.start?textSelection:null;const typeValues=o&&selectedText?{...o,...Object.fromEntries(Object.entries(textStyleAt(o,selectedText.start)).filter(([,v])=>v!==undefined))}:o;const projectPanel=pl.panelId?activeProject.panels.find((item)=>item.id===pl.panelId):undefined;const panelPlan=projectPanel?.adaptationPanelPlanId?activeAdaptation?.panelPlans.find((item)=>item.id===projectPanel.adaptationPanelPlanId):undefined;return <div className="panel-editor-backdrop" onPointerDown={(e)=>{if(e.target===e.currentTarget){setPanelEditor(null);setImageEditPlacementId(null);}}}>
+{overlayMenu?<EditorContextMenu x={overlayMenu.x} y={overlayMenu.y} items={overlayMenuItems(pg.id,pl)} error={overlayMenuError} onClose={()=>closeOverlayMenu()}/>:null}
 <section className="panel-editor-modal" role="dialog" aria-modal="true" aria-labelledby="panel-editor-title">
 <header>
 <div>
@@ -970,13 +1021,13 @@ export function App() {
 <div className="panel-editor-image-workspace">
 {bubbleShapeEditing&&o&&o.type!=="sfx"&&imageEditPlacementId!==pl.id?<p className="bubble-shape-mode-notice" role="status">{locale==="sv"?"Formredigering aktiv. Dra de blå noderna. Dubbelklicka på konturen för att lägga till en nod.":"Shape editing is active. Drag the blue nodes. Double-click the outline to add a node."}</p>:null}
 <div className="panel-editor-stage-shell">
-<div className={(!isPageWideLayer(pg,pl.id)&&shapedPanel(pl)?"is-shaped ":"")+(imageEditPlacementId===pl.id?"panel-editor-stage is-image-editing":"panel-editor-stage")+(isForeground?" is-foreground-editor":"")} style={{"--panel-aspect":String(panelAspectRatio(pg,pl))} as React.CSSProperties}>{isForeground?<ForegroundEditorContext project={activeProject} page={pg} id={pl.id} phase="before"/>:null}{pl.image?<div className="panel-editor-image-layer" style={{clipPath:!isPageWideLayer(pg,pl.id)&&shapedPanel(pl)?shapeClipPath(pl):undefined}} onPointerDown={(e)=>beginImagePan(e,pg.id,pl.id,pl.image!)}>
+<div tabIndex={-1} onContextMenu={e=>{const box=e.currentTarget.getBoundingClientRect();openOverlayMenu(e,{mode:bubbleShapeEditing?'shape':'blank',overlayId:bubbleShapeEditing?o?.id:undefined,point:bubbleShapeEditing?undefined:{x:(e.clientX-box.left)/box.width*100,y:(e.clientY-box.top)/box.height*100}});}} className={(!isPageWideLayer(pg,pl.id)&&shapedPanel(pl)?"is-shaped ":"")+(imageEditPlacementId===pl.id?"panel-editor-stage is-image-editing":"panel-editor-stage")+(isForeground?" is-foreground-editor":"")} style={{"--panel-aspect":String(panelAspectRatio(pg,pl))} as React.CSSProperties}>{isForeground?<ForegroundEditorContext project={activeProject} page={pg} id={pl.id} phase="before"/>:null}{pl.image?<div className="panel-editor-image-layer" style={{clipPath:!isPageWideLayer(pg,pl.id)&&shapedPanel(pl)?shapeClipPath(pl):undefined}} onPointerDown={(e)=>beginImagePan(e,pg.id,pl.id,pl.image!)}>
 <PositionedImage image={pl.image} />
 </div>:<label className="panel-editor-dropzone" style={{clipPath:!isPageWideLayer(pg,pl.id)&&shapedPanel(pl)?shapeClipPath(pl):undefined}} onDragOver={(e)=>{e.preventDefault();e.dataTransfer.dropEffect="copy";}} onDrop={(e)=>{e.preventDefault();const file=e.dataTransfer.files?.[0];if(file)loadPlacementImage(pg.id,pl.id,file);}}>
 <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e)=>{const file=e.target.files?.[0];if(file)loadPlacementImage(pg.id,pl.id,file);e.currentTarget.value="";}}/>
 <span>{tr("uploadImage")}</span>
 <small>{tr("dropImageHint")}</small>
-</label>}{isForeground?<ForegroundEditorContext project={activeProject} page={pg} id={pl.id} phase="after"/>:null}<svg aria-hidden={imageEditPlacementId===pl.id} style={{display:imageEditPlacementId===pl.id?"none":undefined,clipPath:!isPageWideLayer(pg,pl.id)&&shapedPanel(pl)?shapeClipPath(pl):undefined}} viewBox="0 0 100 100" preserveAspectRatio="none"><BubbleConnectionEditor key={pg.id+":"+pl.id} overlays={pl.overlays??[]} selectedId={inlineTextEdit?null:selectedOverlayId} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} locale={locale} onChange={(sourceId,link)=>{const source=pl.overlays.find(item=>item.id===sourceId);if(source)updateOverlay(pg.id,pl.id,sourceId,{bubbleLinks:source.bubbleLinks?.map(item=>item.targetId===link.targetId?link:item)});}}> {(pl.overlays??[]).map((item)=>{const selected=item.id===selectedOverlayId;return <g key={item.id} className={selected?"editable-overlay is-selected":"editable-overlay"}>
+</label>}{isForeground?<ForegroundEditorContext project={activeProject} page={pg} id={pl.id} phase="after"/>:null}<svg aria-hidden={imageEditPlacementId===pl.id} style={{display:imageEditPlacementId===pl.id?"none":undefined,clipPath:!isPageWideLayer(pg,pl.id)&&shapedPanel(pl)?shapeClipPath(pl):undefined}} viewBox="0 0 100 100" preserveAspectRatio="none"><BubbleConnectionEditor key={pg.id+":"+pl.id} overlays={pl.overlays??[]} selectedId={inlineTextEdit?null:selectedOverlayId} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} locale={locale} onChange={(sourceId,link)=>{const source=pl.overlays.find(item=>item.id===sourceId);if(source)updateOverlay(pg.id,pl.id,sourceId,{bubbleLinks:source.bubbleLinks?.map(item=>item.targetId===link.targetId?link:item)});}}> {(pl.overlays??[]).map((item)=>{const selected=item.id===selectedOverlayId;return <g key={item.id} onContextMenu={e=>{const target=e.target as Element,node=target.closest('[data-bubble-node]')?.getAttribute('data-bubble-node'),shape=bubbleShapeEditing&&selected,editingText=inlineTextEdit?.overlayId===item.id,box=e.currentTarget.ownerSVGElement!.getBoundingClientRect();if(node!==null&&node!==undefined)setBubbleShapeNode(Number(node));openOverlayMenu(e,{mode:editingText?'text':shape?'shape':'bubble',overlayId:item.id,range:editingText?textSelection?.overlayId===item.id?{start:textSelection.start,end:textSelection.end}:{start:0,end:0}:undefined,source:editingText?'inline':undefined,node:shape&&node!==null&&node!==undefined?Number(node):undefined,point:shape&&target.closest('.bubble-shape-edge')?bubbleLocalPoint(item,{x:(e.clientX-box.left)/box.width*100,y:(e.clientY-box.top)/box.height*100}):undefined});}} className={selected?"editable-overlay is-selected":"editable-overlay"}>
 <g className="overlay-drag-surface" onDoubleClick={e=>{e.preventDefault();e.stopPropagation();if(bubbleShapeEditing&&selected||imageEditPlacementId===pl.id||item.type==="sfx"&&item.sfxTextHidden)return;setSelectedOverlayId(item.id);setInlineTextEdit({pageId:pg.id,placementId:pl.id,overlayId:item.id,initialText:item.text,initialTextStyles:item.textStyles});}} onPointerDown={(e)=>{setSelectedOverlayId(item.id);if(!(selected&&bubbleShapeEditing))beginOverlayDrag(e,pg.id,pl.id,item,"move");}}><title>{tr("editBubbleHint")}</title>
 <SvgOverlay overlay={item} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} hideText={inlineTextEdit?.overlayId===item.id} hideShape={bubbleGroups(pl.overlays??[]).some(g=>g.some(b=>b.id===item.id))}/>
 {bubbleGroups(pl.overlays??[]).some(g=>g.some(b=>b.id===item.id))?<rect x={item.x} y={item.y} width={item.width} height={item.height} fill="transparent" transform={`rotate(${item.rotation} ${item.x+item.width/2} ${item.y+item.height/2})`}/>:null}
@@ -985,7 +1036,7 @@ export function App() {
 <rect className="overlay-resize-grip" x={item.x+item.width-1.5} y={item.y+item.height-1.5} width="3" height="3" rx=".5" onPointerDown={(e)=>beginOverlayDrag(e,pg.id,pl.id,item,"resize")}/>{(!bubbleTailIsConnection(item,pl.overlays)&&(item.type==="thought"||item.type==="speech"&&item.tailEnabled!==false&&item.tailX!==undefined&&item.tailY!==undefined))?<>
 <circle className="overlay-tail-start-grip" aria-label={locale==="sv"?"Svansens start":"Tail start"} cx={bubbleTailStart(item).x} cy={bubbleTailStart(item).y} r="1.6" fill="#fffdf7" stroke="#b06f52" strokeWidth="0.5" style={{cursor:"grab",pointerEvents:"all"}} onPointerDown={e=>beginOverlayDrag(e,pg.id,pl.id,item,"tail-start")}/>
 <circle className="overlay-tail-grip" cx={item.type==="thought"?thoughtTailEndpoint(item).x:item.tailX} cy={item.type==="thought"?thoughtTailEndpoint(item).y:item.tailY} r="1.6" onPointerDown={(e)=>beginOverlayDrag(e,pg.id,pl.id,item,"tail")}/>
-</>:null}{bubbleShapeEditing&&item.type!=="sfx"?<BubbleShapeHandles overlay={item} locale={locale} selected={bubbleShapeNode} onSelected={setBubbleShapeNode} snapping={bubbleShapeSnapping} onChange={patch=>updateOverlay(pg.id,pl.id,item.id,patch)}/>:null}</>:null}</g>})}{inlineTextEdit&&inlineTextEdit.pageId===pg.id&&inlineTextEdit.placementId===pl.id&&o?.id===inlineTextEdit.overlayId&&imageEditPlacementId!==pl.id?<InlineOverlayEditor overlay={o} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} label={tr("inlineBubbleText")} onSelection={(start,end)=>setTextSelection({overlayId:o.id,start,end})} onChange={(text,textEdit)=>updateOverlay(pg.id,pl.id,o.id,{text,textEdit})} onFinish={()=>setInlineTextEdit(null)} onCancel={()=>{updateOverlay(pg.id,pl.id,o.id,{text:inlineTextEdit.initialText,textStyles:inlineTextEdit.initialTextStyles});setInlineTextEdit(null);}}/>:null}</BubbleConnectionEditor></svg>{!isPageWideLayer(pg,pl.id)?<PanelFrameOutline project={activeProject} page={pg} layer={pl}/>:null}</div>
+</>:null}{bubbleShapeEditing&&item.type!=="sfx"?<BubbleShapeHandles overlay={item} locale={locale} selected={bubbleShapeNode} onSelected={setBubbleShapeNode} snapping={bubbleShapeSnapping} onChange={patch=>updateOverlay(pg.id,pl.id,item.id,patch)}/>:null}</>:null}</g>})}{inlineTextEdit&&inlineTextEdit.pageId===pg.id&&inlineTextEdit.placementId===pl.id&&o?.id===inlineTextEdit.overlayId&&imageEditPlacementId!==pl.id?<InlineOverlayEditor overlay={o} textMetrics={pageLayerTextMetrics(activeProject,pg,pl)} label={tr("inlineBubbleText")} onContextMenu={(e,range)=>openOverlayMenu(e,{mode:"text",overlayId:o.id,range,source:"inline"})} onSelection={(start,end)=>setTextSelection({overlayId:o.id,start,end})} onChange={(text,textEdit)=>updateOverlay(pg.id,pl.id,o.id,{text,textEdit})} onFinish={()=>setInlineTextEdit(null)} onCancel={()=>{updateOverlay(pg.id,pl.id,o.id,{text:inlineTextEdit.initialText,textStyles:inlineTextEdit.initialTextStyles});setInlineTextEdit(null);}}/>:null}</BubbleConnectionEditor></svg>{!isPageWideLayer(pg,pl.id)?<PanelFrameOutline project={activeProject} page={pg} layer={pl}/>:null}</div>
 </div>{pl.image?<PanelImageControls image={pl.image} locale={locale} editing={imageEditPlacementId===pl.id} onToggle={()=>{imagePanCleanup.current?.();setImageEditPlacementId(imageEditPlacementId===pl.id?null:pl.id);}} onRemove={()=>removePlacementImage(pg.id,pl.id)} onChange={patch=>updatePlacementImageView(pg.id,pl.id,patch)} onReset={()=>resetPlacementImageView(pg.id,pl.id)}/>:null}{isForeground?<label className="foreground-group-toggle"><input type="checkbox" checked={!!pl.moveWithText} onChange={e=>{const checked=e.target.checked;updateActiveProject(p=>({...p,pages:p.pages.map(page=>page.id===pg.id?{...page,placements:page.placements.map(l=>l.id===pl.id?{...l,moveWithText:checked}:l)}:page)}));}}/>{foregroundText(locale).group}</label>:null}<details className="panel-editor-source" hidden={isForeground}>
 <summary>{tr("panelSource")}</summary>
 <section className="panel-source-picker">
@@ -1020,7 +1071,7 @@ export function App() {
 <option value="sfx">{tr("sfx")}</option>
 </select>
 </label>
-<label>{tr("text")}<textarea rows={4} value={o.text} onBeforeInput={e=>{textEditRange.current??={overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd};}} onKeyDown={e=>{textEditRange.current={overlayId:o.id,...deletionRange(o.text,e.currentTarget.selectionStart,e.currentTarget.selectionEnd,e.key)};}} onPaste={e=>{textEditRange.current={overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd};}} onSelect={e=>setTextSelection({overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd})} onChange={(e)=>{updateOverlay(pg.id,pl.id,o.id,{text:e.target.value,textEdit:textEditRange.current?.overlayId===o.id?textEditRange.current:undefined});textEditRange.current=null;}}/>
+<label>{tr("text")}<textarea rows={4} value={o.text} onContextMenu={e=>openOverlayMenu(e,{mode:"text",overlayId:o.id,range:{start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd},source:"properties"})} onBeforeInput={e=>{textEditRange.current??={overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd};}} onKeyDown={e=>{textEditRange.current={overlayId:o.id,...deletionRange(o.text,e.currentTarget.selectionStart,e.currentTarget.selectionEnd,e.key)};}} onPaste={e=>{textEditRange.current={overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd};}} onSelect={e=>setTextSelection({overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd})} onChange={(e)=>{updateOverlay(pg.id,pl.id,o.id,{text:e.target.value,textEdit:textEditRange.current?.overlayId===o.id?textEditRange.current:undefined});textEditRange.current=null;}}/>
 </label>
 <TextOverflowNotice overlay={o} metrics={pageLayerTextMetrics(activeProject,pg,pl)} locale={locale}/>
 <p className="quiet">{selectedText?`${tr("formatSelection")}: “${o.text.slice(selectedText.start,selectedText.end).slice(0,60)}”`:tr("formatWholeText")}</p>
