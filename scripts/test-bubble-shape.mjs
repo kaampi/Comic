@@ -42,6 +42,13 @@ try{
   assert.equal(shape.validBubbleShape(points.map((p,i)=>i? p:{...p,handleIn:{x:NaN,y:0}})),false);
   assert.equal(shape.validBubbleShape(points.map((p,i)=>i? p:{...p,handleOut:{x:99,y:0}})),false);
   assert.equal(shape.validBubbleShape(points.map((p,i)=>i? p:{...p,handleIn:'bad'})),false);
+  const sharpCorners=[{x:.3,y:.4,smooth:false},{x:3.7,y:.4,smooth:false},{x:3.7,y:3.6,smooth:false},{x:.3,y:3.6,smooth:false}];
+  const withTail={...base,bubbleShapePoints:sharpCorners,tailEnabled:true,tailStartAngle:Math.PI/2};
+  const tailPath=shape.customBubblePath(withTail);
+  for(const p of sharpCorners)assert.ok(tailPath.includes(`L ${p.x*base.width/4} ${p.y*base.height/4}`),'tail insertion retains every sharp corner outside its opening');
+  const mixedCorners=sharpCorners.map((p,i)=>({...p,smooth:i!==0}));
+  const mixedPath=shape.customBubblePath({...withTail,bubbleShapePoints:mixedCorners});
+  assert.ok(mixedPath.includes(`L ${mixedCorners[0].x*base.width/4} ${mixedCorners[0].y*base.height/4}`),'mixed smooth/sharp rim passes through its sharp anchor');
   const originalGroup=linkBubbles([{...base,tailEnabled:false},{...base,id:'other',x:65,width:25,tailEnabled:false}],'bubble','other');
   const first=connectedBubbleGeometry(originalGroup);
   const customGroup=originalGroup.map(o=>o.id==='bubble'?{...o,bubbleShapePoints:points}:o);

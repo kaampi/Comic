@@ -92,8 +92,13 @@ export function customBubblePath(o:TextOverlay) {
   const dx=tip.x-o.width/2,dy=tip.y-o.height/2,len=Math.max(1,Math.hypot(dx,dy)),bend=(o.tailCurve??0)/100*Math.min(o.width,o.height)*.42;
   const control=(p:BubblePoint)=>({x:p.x+(tip.x-p.x)*.34-dy/len*bend,y:p.y+(tip.y-p.y)*.34+dx/len*bend});
   let d=`M ${xy(r1)} Q ${xy(control(r1))} ${xy(tip)} Q ${xy(control(r2))} ${xy(r2)}`;
-  for(let k=1;k<=outline.length;k++)d+=` L ${xy(sample(centre+half+(total-2*half)*k/outline.length))}`;
-  return d+" Z";
+  // Keep the original rim vertices outside the tail opening. Uniformly
+  // resampling the perimeter can skip a sharp anchor and bevel its corner.
+  const start=centre+half,remaining=total-2*half;
+  const rim=outline.map((point,index)=>({point,distance:((lengths[index]-start)%total+total)%total}))
+    .filter(item=>item.distance>1e-8&&item.distance<remaining-1e-8).sort((a,b)=>a.distance-b.distance);
+  for(const {point} of rim)d+=` L ${xy(point)}`;
+  return d+` L ${xy(r1)} Z`;
 }
 
 export function bubbleLocalPoint(o:TextOverlay,point:BubblePoint):BubblePoint {
