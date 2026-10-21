@@ -1480,8 +1480,23 @@ try {
   await waitFor(()=>assert.equal(saved().pages[0].placements[0].image.name,'shape-initial.png'));
   await user.click(within(shapeInitialEditor.querySelector('.panel-editor-add-actions')).getByRole('button',{name:'Lägg till textruta',exact:true}));
   const bubbleBeforeShape=structuredClone(saved().pages[0].placements[0].overlays.at(-1));
-  await user.click(within(shapeInitialEditor).getByText('Fri form',{selector:'summary'}));
-  await user.click(within(shapeInitialEditor).getByRole('button',{name:'Redigera form',exact:true}));
+  const bubbleSurface=shapeInitialEditor.querySelector('.editable-overlay.is-selected .overlay-drag-surface');
+  fireEvent.doubleClick(bubbleSurface);
+  assert.ok(shapeInitialEditor.querySelector('.inline-overlay-editor'),'normal double-click starts text editing');
+  await user.click(within(shapeInitialEditor.querySelector('header')).getByRole('button',{name:'Redigera bubblans form',exact:true}));
+  assert.equal(shapeInitialEditor.querySelector('.inline-overlay-editor'),null,'header action exits text editing');
+  assert.match(within(shapeInitialEditor).getByRole('status').textContent,/Formredigering aktiv/);
+  fireEvent.doubleClick(bubbleSurface);
+  assert.equal(shapeInitialEditor.querySelector('.inline-overlay-editor'),null,'active shape mode never opens text editing');
+  fireEvent.doubleClick(shapeInitialEditor.querySelector('.bubble-shape-edge'));
+  assert.equal(shapeInitialEditor.querySelector('.inline-overlay-editor'),null,'double-click on shape outline stays in shape mode');
+  await user.click(within(shapeInitialEditor.querySelector('header')).getByRole('button',{name:'Avsluta formredigering',exact:true}));
+  assert.equal(shapeInitialEditor.querySelector('.bubble-shape-handles'),null);
+  fireEvent.doubleClick(bubbleSurface);
+  assert.ok(shapeInitialEditor.querySelector('.inline-overlay-editor'),'normal text editing returns after leaving shape mode');
+  await user.click(within(shapeInitialEditor.querySelector('header')).getByRole('button',{name:'Redigera bubblans form',exact:true}));
+  assert.equal(shapeInitialEditor.querySelector('.bubble-free-form').closest('fieldset').querySelector('legend').textContent,'BUBBELSTIL');
+
   assert.equal(shapeInitialEditor.querySelectorAll('.bubble-shape-node').length,16,'text bubbles have their own node editor');
   fireEvent.keyDown(within(shapeInitialEditor).getByRole('button',{name:'Bubbelnod 1',exact:true}),{key:'ArrowLeft'});
   const authoredBubble=saved().pages[0].placements[0].overlays.at(-1);

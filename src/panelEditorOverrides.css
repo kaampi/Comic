@@ -447,3 +447,9 @@
 .bubble-shape-tools input[type=checkbox] { width:auto; }
 .bubble-shape-node:focus-visible { outline:none; stroke:#171411; stroke-width:3; }
 .bubble-shape-edge:hover { stroke:#2473a6; stroke-opacity:.35; }
+
+.bubble-shape-mode-notice {
+  flex-shrink:0; margin:0; padding:10px 14px; border:1px solid #2473a6;
+  border-radius:6px; background:var(--panel); color:var(--text); font-size:.82rem;
+}
+.panel-editor-header-actions { flex-wrap:wrap; }

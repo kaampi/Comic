@@ -961,11 +961,13 @@ export function App() {
 <h2 id="panel-editor-title">{tr("page")} {pg.number} · {isForeground?`${foregroundText(locale).foreground} · ${pl.image?.name??""}`:pl.id===pg.background?.id?(locale==="sv"?"Bakgrund":"Background"):`${tr("row")} ${pl.readingOrder}`}</h2>
 </div>
 <div className="panel-editor-header-actions">
+{o&&o.type!=="sfx"&&imageEditPlacementId!==pl.id?<button className={bubbleShapeEditing?"primary-button compact-button":"secondary-button compact-button"} type="button" aria-pressed={bubbleShapeEditing} onClick={()=>{setInlineTextEdit(null);setBubbleShapeNode(null);setBubbleShapeEditing(!bubbleShapeEditing);}}>{bubbleShapeEditing?(locale==="sv"?"Avsluta formredigering":"Finish shape editing"):(locale==="sv"?"Redigera bubblans form":"Edit bubble shape")}</button>:null}
 <button className="text-button" type="button" onClick={()=>{setPanelEditor(null);setImageEditPlacementId(null);}}>{tr("close")}</button>
 </div>
 </header>
 <div className="panel-editor-layout">
 <div className="panel-editor-image-workspace">
+{bubbleShapeEditing&&o&&o.type!=="sfx"&&imageEditPlacementId!==pl.id?<p className="bubble-shape-mode-notice" role="status">{locale==="sv"?"Formredigering aktiv. Dra de blå noderna. Dubbelklicka på konturen för att lägga till en nod.":"Shape editing is active. Drag the blue nodes. Double-click the outline to add a node."}</p>:null}
 <div className="panel-editor-stage-shell">
 <div className={(!isPageWideLayer(pg,pl.id)&&shapedPanel(pl)?"is-shaped ":"")+(imageEditPlacementId===pl.id?"panel-editor-stage is-image-editing":"panel-editor-stage")+(isForeground?" is-foreground-editor":"")} style={{"--panel-aspect":String(panelAspectRatio(pg,pl))} as React.CSSProperties}>{isForeground?<ForegroundEditorContext project={activeProject} page={pg} id={pl.id} phase="before"/>:null}{pl.image?<div className="panel-editor-image-layer" style={{clipPath:!isPageWideLayer(pg,pl.id)&&shapedPanel(pl)?shapeClipPath(pl):undefined}} onPointerDown={(e)=>beginImagePan(e,pg.id,pl.id,pl.image!)}>
 <PositionedImage image={pl.image} />
@@ -1047,7 +1049,6 @@ export function App() {
 <label>{locale==="sv"?"Sidmarginal (%)":"Side padding (%)"}<input type="number" min="0" max="25" value={o.textPadding??4} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{textPadding:Math.max(0,Math.min(25,Number(e.target.value)))})}/>
 </label>
 </fieldset>
-{o.type!=="sfx"?<BubbleShapeControls key={o.id} overlay={o} locale={locale} editing={bubbleShapeEditing} onEditing={value=>{setInlineTextEdit(null);setBubbleShapeEditing(value);}} selected={bubbleShapeNode} onSelected={setBubbleShapeNode} snapping={bubbleShapeSnapping} onSnapping={setBubbleShapeSnapping} onChange={patch=>updateOverlay(pg.id,pl.id,o.id,patch)}/>:null}
 {isBubble(o)?<fieldset className="overlay-property-group">
 <legend>{tr("connectBubbles")}</legend>
 <label>{tr("connectWith")}<select value="" onChange={e=>{if(e.target.value)changeBubbleLinks(pg.id,pl.id,overlays=>linkBubbles(overlays,o.id,e.target.value));}}>
@@ -1060,7 +1061,7 @@ export function App() {
 {bubbleGroups(pl.overlays).some(g=>g.some(b=>b.id===o.id))?<><p className="quiet">{tr("connectedBubbleHelp")}</p><button type="button" className="secondary-button compact-button" onClick={()=>changeBubbleLinks(pg.id,pl.id,overlays=>unlinkBubble(overlays,o.id))}>{tr("disconnectBubble")}</button></>:null}
 </fieldset>:null}
 <fieldset className="overlay-property-group">
-<legend>{tr("bubbleAppearance")}</legend>{o.type==="sfx"?<>
+<legend>{tr("bubbleAppearance")}</legend>{o.type!=="sfx"?<BubbleShapeControls key={o.id} overlay={o} locale={locale} editing={bubbleShapeEditing} onEditing={value=>{setInlineTextEdit(null);setBubbleShapeEditing(value);}} selected={bubbleShapeNode} onSelected={setBubbleShapeNode} snapping={bubbleShapeSnapping} onSnapping={setBubbleShapeSnapping} onChange={patch=>updateOverlay(pg.id,pl.id,o.id,patch)}/>:null}{o.type==="sfx"?<>
 <SfxPicker value={o.sfxShapeId??"none"} locale={locale} onChange={sfxShapeId=>updateOverlay(pg.id,pl.id,o.id,{sfxShapeId})}/>
 <label>
 <input type="checkbox" checked={!o.sfxTextHidden} onChange={e=>updateOverlay(pg.id,pl.id,o.id,{sfxTextHidden:!e.target.checked})}/>{locale==="sv"?"Visa text":"Show text"}</label>
