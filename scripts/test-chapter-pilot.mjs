@@ -99,6 +99,20 @@ try {
     assert.equal(recovered.sourceTextExcerpt,first.slice(recovered.sourceStart,recovered.sourceEnd));
     assert.throws(()=>parseAiBeats(JSON.stringify(candidate),first,{characters:[],locations:[]},0,true),/Invalid AI beat type/,'ordinary strict parsing remains strict');
   }
+  const sourceOrderFixture={beats:[
+    {...typeFixture.beats[0],from:'2',to:'2',title:'Later',beatType:'action'},
+    {...typeFixture.beats[0],from:1,to:2,title:'Wide',beatType:'action'},
+    {...typeFixture.beats[0],from:1,to:1,title:'Earlier',beatType:'action'},
+    {...typeFixture.beats[0],from:1,to:1,title:'Same passage',beatType:'action'}
+  ]};
+  const sorted=parseAiBeats(JSON.stringify(sourceOrderFixture),first,{characters:[],locations:[]},20,true,true);
+  assert.deepEqual(sorted.map(b=>b.title),['Earlier','Same passage','Wide','Later']);
+  assert.deepEqual(sorted.map(b=>b.order),[1,2,3,4]);
+  for(const b of sorted)assert.equal(b.sourceTextExcerpt,first.slice(b.sourceStart-20,b.sourceEnd-20));
+  assert.throws(()=>parseAiBeats(JSON.stringify(sourceOrderFixture),first,{characters:[],locations:[]},0,true),/out of order/);
+  for(const [from,to] of [[2,1],[0,1],[1,999],['bad',2]]) {
+    assert.throws(()=>parseAiBeats(JSON.stringify({beats:[{...typeFixture.beats[0],from,to}]}),first,{characters:[],locations:[]},0,true,true),/source range|unknown source segment/);
+  }
   const bodies=[];globalThis.fetch=async(_url,init)=>{networkRequests++;bodies.push(JSON.parse(init.body));return new Response(JSON.stringify({message:{content:JSON.stringify(reply)},done_reason:'stop'}));};
   await user.click(runA());await waitFor(()=>assert.equal(working.beatTrials?.length,1));
   assert.equal(bodies.length,1,'one scene trial makes one request');assert.equal(JSON.parse(bodies[0].messages[1].content).narrativeContext,undefined);

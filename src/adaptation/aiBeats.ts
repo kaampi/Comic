@@ -74,11 +74,18 @@ export function parseAiBeats(reply: string, source: string, context: BeatContext
     }
     return parsed;
   };
-  return payload.beats.map((item: any, index: number) => {
+  const referenced=payload.beats.map((item:any,index:number)=>{
+    if(!item||typeof item!=='object')throw new Error('Invalid AI beat.');
+    const from=reference(item.from),to=reference(item.to??item.from);
+    if(to<from)throw new Error(`Invalid source range in beat ${index+1}: end precedes start. The proposals were not applied.`);
+    return {item,from,to,index};
+  });
+  // Pilot proposals are reviewed before use. Sort valid references locally,
+  // preserving every source span and original order for identical spans.
+  if(allowUnknownCharacters)referenced.sort((a:any,b:any)=>a.from-b.from||a.to-b.to||a.index-b.index);
+  return referenced.map(({item,from,to}:any, index:number) => {
     if (!item || typeof item !== "object") throw new Error("Invalid AI beat.");
-    const from = reference(item.from);
-    const to = reference(item.to ?? item.from);
-    if (to < from || from < previousFrom || to < previousTo) {
+    if (!allowUnknownCharacters && (from < previousFrom || to < previousTo)) {
       throw new Error("The model returned source references out of order. The proposals were not applied.");
     }
     previousFrom = from; previousTo = to;
