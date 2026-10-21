@@ -20,6 +20,8 @@ This guide describes the current beta. Some features and labels may change. The 
 
 - [6. Export and read your first page](#export)
 
+- [AI settings and beat instructions](#ai-prompts)
+
 - [Foreground images and page-wide bubbles](#foreground-images)
 
 - [From manuscript to panel plans](#manuscript)
@@ -107,6 +109,19 @@ Finish the exercise by looking at the exported page, where the grid and editing 
 3. Open the downloaded file and check reading order, picture crops, text size, contrast and line wrapping.
 
 > IDML — InDesign / Affinity (beta) is for further editing in a page-layout application. Extract the entire ZIP before opening the IDML file, and check fonts, wrapping and layout after import. Text, bubbles and SFX share an editable layer to preserve their stacking order.
+
+<a id="ai-prompts"></a>
+
+## AI settings and beat instructions
+
+Settings uses two scrolling columns on larger screens and a single scrolling layout on small screens. The heading and Close button remain visible. AI connection settings and Prompts are in the right column.
+
+1. Under Prompts, choose Suggest beats and edit Beat instructions. Describe which narrative changes, discoveries or reactions should matter in the comic adaptation. You can write in your preferred language.
+2. Choose Save prompt. Custom identifies a saved personal instruction; Unsaved changes identifies a draft. Closing without saving discards that draft. Instructions are stored locally for this app, independently of album backups.
+3. Return to Manuscript and explicitly request beat suggestions for a selected passage or chapter. The saved prompt guides those new suggestions; existing beats remain unchanged. Source references, response format and validation are still controlled by the app.
+4. Choose Restore default to remove your customization and use the current built-in instruction. Your saved custom prompt otherwise remains in place across updates and model changes.
+
+> Saving instructions does not contact AI. Test changes on a short passage and review the proposed beats before accepting them.
 
 <a id="foreground-images"></a>
 
@@ -202,6 +217,10 @@ Automatic saving keeps the album in this browser. If another tab has changed the
 ### Export and read your first page
 
 Export creates files for reading or further layout work. Choose PDF, PNG, JPEG or IDML. Keep an album backup as well if you want to continue editing in ComicBook AI.
+
+### AI settings and beat instructions
+
+Open Settings and find Prompts in the AI column to customize Suggest beats. Save prompt applies your instructions to future suggestions; Restore default returns to the built-in prompt.
 
 ### Foreground images and page-wide bubbles
 

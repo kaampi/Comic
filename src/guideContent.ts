@@ -50,6 +50,13 @@ export const GUIDE = {
       tip: "IDML — InDesign / Affinity (beta) is for further editing in a page-layout application. Extract the entire ZIP before opening the IDML file, and check fonts, wrapping and layout after import. Text, bubbles and SFX share an editable layer to preserve their stacking order."
     },
     {
+      id: "ai-prompts", title: "AI settings and beat instructions", group: "more",
+      shortHelp: "Open Settings and find Prompts in the AI column to customize Suggest beats. Save prompt applies your instructions to future suggestions; Restore default returns to the built-in prompt.",
+      paragraphs: ["Settings uses two scrolling columns on larger screens and a single scrolling layout on small screens. The heading and Close button remain visible. AI connection settings and Prompts are in the right column."],
+      steps: ["Under Prompts, choose Suggest beats and edit Beat instructions. Describe which narrative changes, discoveries or reactions should matter in the comic adaptation. You can write in your preferred language.", "Choose Save prompt. Custom identifies a saved personal instruction; Unsaved changes identifies a draft. Closing without saving discards that draft. Instructions are stored locally for this app, independently of album backups.", "Return to Manuscript and explicitly request beat suggestions for a selected passage or chapter. The saved prompt guides those new suggestions; existing beats remain unchanged. Source references, response format and validation are still controlled by the app.", "Choose Restore default to remove your customization and use the current built-in instruction. Your saved custom prompt otherwise remains in place across updates and model changes."],
+      tip: "Saving instructions does not contact AI. Test changes on a short passage and review the proposed beats before accepting them."
+    },
+    {
       id: "foreground-images", title: "Foreground images and page-wide bubbles", group: "more",
       shortHelp: "Add a transparent PNG above the frames, then choose Edit image and bubbles. Its text can span the whole page. Move the image alone or enable Move image and bubbles together. The top image in the list is in front.",
       paragraphs: ["Use foreground images for a character, object or decoration that crosses panel borders. PNG and WebP transparency is preserved. The foreground artwork sits above panel images and borders, with text and bubbles above it."],

@@ -430,3 +430,12 @@ Bubblans högerklicksmeny erbjuder Lägg överst, Flytta framåt, Flytta bakåt 
 Skarpa noder visas som små fyrkanter och mjuka noder som cirklar, med större osynlig träffyta. Nodmarkörer och handtagsändar har fast skärmstorlek oavsett visningszoom, proportioner och rotation. Bara markerad mjuk nod visar sina två kurvhandtag. Handtagen hålls i linje med varandra, med oberoende längd på varje sida. Dragning samt piltangenter (Shift för större steg) ändrar kurvan. Escape, pointercancel och fönstrets fokusförlust återställer pågående drag.
 
 Handtag sparas som vektorer relativt noden i bubblans normaliserade koordinater och följer nodflyttning, bubbelstorlek och rotation. Äldre noder utan sparade handtag behåller tidigare automatiska kurvor exakt tills de justeras. Skarp nod använder inte sina handtag; de finns kvar om noden åter görs mjuk. Grundformsåterställning tar bort egna noder och handtag. Samma geometri används för kontur, svansfäste, förbindelser, textflöde och export. Backup bevarar handtagen och avvisar ogiltiga eller icke ändliga värden.
+
+
+### Inställningar och anpassningsbar beatprompt (2026-10-21)
+
+Inställningsfönstret har två kolumner med oberoende scroll på större skärmar, en gemensam scroll på smala skärmar samt fast rubrik och stängknapp. Dialogen ryms inom fönstret, håller tangentbordsfokus och stängs med Escape.
+
+AI-kolumnens Prompter erbjuder uppgiften Föreslå beats, ett större instruktionsfält, Spara prompt och Återställ standard. Standardprompten prioriterar berättelsens förändringar, orsak–handling–reaktion, viktiga upptäckter och lågmälda reaktioner framför mekanisk meningsindelning. Ett beat kan omfatta flera rutor; en representativ teckningsbar stund anges i bildbeskrivningen. AI:n granskar sammanhang, luckor och upprepningar innan svaret.
+
+Endast berättarinstruktionen är redigerbar. JSON-kontrakt, källsegment, kända entiteter och lokal validering styrs fortsatt av appen. Egna instruktioner sparas separat från albumet i ComicBooks lokala AI-inställningar och bevaras vid appuppdateringar samt modellbyte. Utkast används först vid sparning. Återställning tar bort anpassningen så att kommande standardförbättringar används. Befintliga beats ändras inte. Öppning och redigering startar inga AI-anrop; instruktionen används först när användaren uttryckligen begär beatförslag.

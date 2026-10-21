@@ -1,9 +1,11 @@
+import { normalizeBeatPrompt } from "./aiPrompts";
 // Independent adaptation of StoryBook AI's Ollama and OpenAI-compatible transports.
 export type LocalAiEngine = "ollama" | "openai-compatible";
 export type LocalAiSettings = {
   engine: LocalAiEngine;
   servers: Record<LocalAiEngine, { baseUrl: string; model: string }>;
   contextWindow: number;
+  prompts?: { beats?: string };
 };
 export const LOCAL_AI_KEY = "comicbook-ai.local-text-ai";
 export const DEFAULT_CONTEXT_WINDOW = 8192;
@@ -30,13 +32,15 @@ export function readLocalAiSettings(): LocalAiSettings {
       if (typeof server?.baseUrl === "string") defaults.servers[engine].baseUrl = server.baseUrl;
       if (typeof server?.model === "string") defaults.servers[engine].model = server.model;
     }
+    const prompt = normalizeBeatPrompt(stored.prompts?.beats);
+    if (prompt) defaults.prompts = { beats: prompt };
     defaults.engine = stored.engine === "openai-compatible" ? stored.engine : "ollama";
     defaults.contextWindow = clampContextWindow(stored.contextWindow);
   } catch {}
   return defaults;
 }
-export function saveLocalAiSettings(settings: LocalAiSettings): void {
-  try { localStorage.setItem(LOCAL_AI_KEY, JSON.stringify(settings)); } catch {}
+export function saveLocalAiSettings(settings: LocalAiSettings): boolean {
+  try { localStorage.setItem(LOCAL_AI_KEY, JSON.stringify(settings)); return true; } catch { return false; }
 }
 export function normalizeLocalBaseUrl(value: string): string {
   let url: URL;

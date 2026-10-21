@@ -5,6 +5,7 @@ import type { Locale } from "./settings";
 
 export function LocalAiSettings({ settings, locale, onChange }: { settings: Settings; locale: Locale; onChange: (settings: Settings) => void }) {
   const t = localAiText(locale);
+  const latestSettings = useRef(settings); latestSettings.current = settings;
   const [models, setModels] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
@@ -20,9 +21,10 @@ export function LocalAiSettings({ settings, locale, onChange }: { settings: Sett
     setModels([]); setBusy(false); setStatus(""); setError("");
     return () => { ++requestNumber.current; controller.current?.abort(); };
   }, [settings.engine, server.baseUrl]);
-  const updateServer = (patch: Partial<typeof server>) => onChange({
-    ...settings, servers: { ...settings.servers, [settings.engine]: { ...server, ...patch } }
-  });
+  const updateServer = (patch: Partial<typeof server>) => {
+    const current = latestSettings.current;
+    onChange({...current, servers: {...current.servers, [current.engine]: {...current.servers[current.engine], ...patch}}});
+  };
   const run = async (kind: "models" | "context") => {
     controller.current?.abort();
     const request = ++requestNumber.current;
@@ -42,7 +44,7 @@ export function LocalAiSettings({ settings, locale, onChange }: { settings: Sett
         const size = await getLocalModelContextLength(settings, abort.signal);
         if (request !== requestNumber.current) return;
         if (size) {
-          onChange({ ...settings, contextWindow: clampContextWindow(size) });
+          onChange({ ...latestSettings.current, contextWindow: clampContextWindow(size) });
           setStatus(t.contextLimit + ": " + size);
         } else setStatus(t.unknownContext);
       }

@@ -1,3 +1,4 @@
+import { PromptSettings } from "./PromptSettings";
 import { EditorViewport } from "./EditorViewport";
 import { overlayStack, reorderOverlays, type OverlayStackMove } from "./bubbleConnections";
 import { EditorContextMenu, type EditorMenuItem } from "./EditorContextMenu";
@@ -98,6 +99,7 @@ export function App() {
   const [panel, setPanel] = useState<Panel>(null);
   const [aiMode, setAiMode] = useState<AiMode>("prompt");
   const [localAiSettings, setLocalAiSettings] = useState(readLocalAiSettings);
+  const [localAiSaveError,setLocalAiSaveError] = useState(false);
   const [locale, setLocale] = useState<Locale>(readLocale);
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [organization, setOrganization] = useState(readOrganization);
@@ -193,9 +195,9 @@ export function App() {
   const projectDialogTrigger = useRef<HTMLElement|null>(null);
   const importReadRevision = useRef(0);
   useEffect(()=>{
-    if(panel!=="new-project" && panel!=="open-project" && panel!=="album-details" && panel!=="storage-recovery")return;
+    if(panel!=="new-project" && panel!=="open-project" && panel!=="album-details" && panel!=="storage-recovery" && panel!=="settings")return;
     const dialog=document.querySelector<HTMLElement>(".overlay > .guide-card");
-    const previous=projectDialogTrigger.current,overflow=document.body.style.overflow;
+    const previous=panel==="settings"?document.activeElement as HTMLElement:projectDialogTrigger.current,overflow=document.body.style.overflow;
     document.body.style.overflow="hidden";
     if(panel!=="new-project")dialog?.querySelector<HTMLButtonElement>("button")?.focus();
     const key=(event:KeyboardEvent)=>{
@@ -237,7 +239,8 @@ export function App() {
   const tr = (key: UiKey) => uiText(locale, key);
   const aiText = localAiText(locale);
   const updateLocalAiSettings = (settings: typeof localAiSettings) => {
-    setLocalAiSettings(settings); saveLocalAiSettings(settings);
+    if(!saveLocalAiSettings(settings)){setLocalAiSaveError(true);return false;}
+    setLocalAiSaveError(false);setLocalAiSettings(settings);return true;
   };
   const panelAspectRatio = (page: ComicProject["pages"][number], placement: ComicProject["pages"][number]["placements"][number]) => {
     const format = albumPageFormat(activeProject ?? {});
@@ -1209,7 +1212,7 @@ export function App() {
       {panel === "about" ? <AboutDialog locale={locale} onClose={closePanel} returnFocus={menuRef.current?.querySelector("button")} /> : null}
       {panel === "guide" ? <GuideDialog onClose={closePanel} /> : null}
       {panel && panel !== "about" && panel !== "guide" ? <div className="overlay" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && closePanel()}>
-        <article className={`guide-card${panel==="new-project"?" new-album-dialog":panel==="album-details"?" album-details-dialog":""}`} role="dialog" aria-modal="true" aria-labelledby={panel==="new-project"?"new-project-title":panel==="open-project"?"project-chooser-title":panel==="album-details"?"album-card-title":panel==="storage-recovery"?"local-recovery-title":undefined}>
+        <article className={`guide-card${panel==="new-project"?" new-album-dialog":panel==="album-details"?" album-details-dialog":panel==="settings"?" settings-dialog":""}`} role="dialog" aria-modal="true" aria-labelledby={panel==="new-project"?"new-project-title":panel==="open-project"?"project-chooser-title":panel==="album-details"?"album-card-title":panel==="storage-recovery"?"local-recovery-title":panel==="settings"?"settings-title":undefined}>
           <div className="guide-actions"><button className="text-button" type="button" onClick={closePanel}>{tr("close")}</button></div>
           {panel === "storage-recovery"?<LocalRecovery locale={locale}/>:null}
           {panel === "album-details" && (()=>{const project=projects.find(p=>p.id===albumCardId);return project ? <AlbumCard key={project.id} project={project} locale={locale} onSave={info=>saveAlbumInfo(project.id,info)} onOpen={()=>openProject(project.id)} onDelete={()=>deleteProject(project.id)} /> : null;})()}
@@ -1272,15 +1275,24 @@ export function App() {
                 </div>
               </div>
             </div> : null}
-          {panel === "settings" ? <><p className="eyebrow">{tr("system")}</p><h1>{tr("settings")}</h1><p className="lede">{tr("settingsLead")}</p>
-            <LocalAiSettings settings={localAiSettings} locale={locale} onChange={updateLocalAiSettings} />
-            <h3>{aiText.imageHeading}</h3>
-            <div className="app-grid-setting"><h3>{tr("defaultGrid")}</h3><label>{tr("columns")} <input type="number" min="2" max="6" value={appPageGrid.gridColumns} onChange={(e)=>updateAppGrid(Number(e.target.value),appPageGrid.gridRows)} /></label><label>{tr("rows")} <input type="number" min="2" max="8" value={appPageGrid.gridRows} onChange={(e)=>updateAppGrid(appPageGrid.gridColumns,Number(e.target.value))} /></label></div><div className="ai-options" role="radiogroup" aria-label={tr("aiMode")}>{AI_MODES.map((mode) => (
+          {panel === "settings" ? <>
+            <header className="settings-heading"><p className="eyebrow">{tr("system")}</p><h1 id="settings-title">{tr("settings")}</h1><p className="lede">{tr("settingsLead")}</p>{localAiSaveError?<p role="alert">{locale==="sv"?"Kunde inte spara AI-inställningarna lokalt. Försök igen.":"Could not save AI settings locally. Please try again."}</p>:null}</header>
+            <div className="settings-columns">
+              <div className="settings-column" role="region" aria-label={locale==="sv"?"Allmänt":locale==="nb"?"Generelt":"General"} tabIndex={0}>
+                <section className="settings-section"><h3>{locale==="sv"?"Allmänt":locale==="nb"?"Generelt":"General"}</h3><div className="app-grid-setting"><h3>{tr("defaultGrid")}</h3><label>{tr("columns")} <input type="number" min="2" max="6" value={appPageGrid.gridColumns} onChange={(e)=>updateAppGrid(Number(e.target.value),appPageGrid.gridRows)} /></label><label>{tr("rows")} <input type="number" min="2" max="8" value={appPageGrid.gridRows} onChange={(e)=>updateAppGrid(appPageGrid.gridColumns,Number(e.target.value))} /></label></div></section>
+                <section className="settings-section"><h3>{aiText.imageHeading}</h3><div className="ai-options" role="radiogroup" aria-label={tr("aiMode")}>{AI_MODES.map((mode) => (
               <button key={mode.id} type="button" className={aiMode === mode.id ? "ai-option is-selected" : "ai-option"} disabled={!mode.available}
                 aria-pressed={aiMode === mode.id} onClick={() => mode.available && setAiMode(mode.id)}>
                 <span><strong>{mode.id==="prompt"?tr("promptMode"):mode.id==="api"?tr("apiMode"):tr("localAi")}</strong>{!mode.available ? <small>{tr("comingLater")}</small> : null}</span><span>{mode.id==="prompt"?tr("promptModeDesc"):mode.id==="api"?tr("apiModeDesc"):tr("localAiDesc")}</span>
               </button>
-            ))}</div></> : null}
+            ))}</div></section>
+              </div>
+              <div className="settings-column" role="region" aria-label="AI" tabIndex={0}>
+                <LocalAiSettings settings={localAiSettings} locale={locale} onChange={updateLocalAiSettings} />
+                <PromptSettings settings={localAiSettings} locale={locale} onChange={updateLocalAiSettings} />
+              </div>
+            </div>
+          </> : null}
         </article>
       </div> : null}
     </div>
