@@ -5,10 +5,10 @@ import type { LocalAiSettings } from "./localAi";
 import { beatPrompt } from "./aiPrompts";
 import { suggestAiBeats } from "./adaptation/aiBeats";
 import { appendAiBeats } from "./manuscriptModel";
-import { manuscriptChapters } from "./manuscriptChapters";
+import type { ManuscriptChapter } from "./manuscriptChapters";
 import { parseStoryBookExport } from "./storybookImport";
 import { BeatAnalysisDialog } from "./BeatAnalysisDialog";
-import { defaultChapterProfile, importedAdaptationContext, pilotChapter, pilotNarrative, pilotSceneRange, sameTrialSetup, trialIsCurrent, updatePilotChapter, type AdaptationContext, type BeatTrial, type ChapterProfile, type ReviewedText } from "./chapterPilot";
+import { defaultChapterProfile, matchPilotChapters, importedAdaptationContext, pilotChapter, pilotNarrative, pilotSceneRange, sameTrialSetup, trialIsCurrent, updatePilotChapter, type AdaptationContext, type BeatTrial, type ChapterProfile, type ReviewedText } from "./chapterPilot";
 import "./chapterPilot.css";
 
 function ReviewText({label,value,onChange,sv}:{label:string;value:ReviewedText;onChange:(value:ReviewedText)=>void;sv:boolean}) {
@@ -19,7 +19,7 @@ function ReviewText({label,value,onChange,sv}:{label:string;value:ReviewedText;o
 }
 export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{project:ComicProject;chapterId:string;locale:Locale;settings:LocalAiSettings;onUpdate:(change:(p:ComicProject)=>ComicProject)=>void}) {
   const sv=locale==='sv',t=(se:string,en:string)=>sv?se:en,chapter=pilotChapter(project,chapterId);
-  const [sceneId,setSceneId]=useState(chapter?.scenes.find(s=>s.originalText.trim())?.id??''),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[pending,setPending]=useState<AdaptationContext>();
+  const [sceneId,setSceneId]=useState(chapter?.scenes.find(s=>s.originalText.trim())?.id??''),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[pending,setPending]=useState<{context:AdaptationContext;chapters:ManuscriptChapter[]}>();
   const controller=useRef<AbortController>(),revision=useRef(0),latest=useRef(project),fileRevision=useRef(0);latest.current=project;
   const source=project.source.textSnapshot??'';
   useEffect(()=>{setSceneId(chapter?.scenes.find(s=>s.originalText.trim())?.id??'');setMessage('');setPending(undefined);fileRevision.current++;},[chapterId,project.adaptationContext?.exportedAt]);
@@ -53,15 +53,14 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
     try{const data=parseStoryBookExport(await file.text());if(token!==fileRevision.current)return;
       const current=latest.current;
       if(!current.source.storyBookId||data.sourceBookId!==current.source.storyBookId)throw new Error(t('Exporten hör till en annan bok.','The export belongs to a different book.'));
-      const matches=manuscriptChapters(current).every(c=>data.chapters.some(x=>x.id===c.sourceId&&x.text===c.originalText));
-      if(!matches)throw new Error(t('Kapitel-ID eller originalprosa skiljer sig. Piloten ändrar inte manuset vid inläsning av underlag.','Chapter IDs or original prose differ. Loading pilot context does not replace the manuscript.'));
-      const context=importedAdaptationContext(data);if(!context)throw new Error(t('Filen saknar synopsis, Briefs och scener.','The file has no synopsis, Briefs or scenes.'));setPending(context);setMessage('');
+      const chapters=matchPilotChapters(current,data);
+      const context=importedAdaptationContext(data);if(!context)throw new Error(t('Filen saknar synopsis, Briefs och scener.','The file has no synopsis, Briefs or scenes.'));setPending({context,chapters});setMessage('');
     }catch(error){if(token===fileRevision.current)setMessage(error instanceof Error?error.message:String(error));}
   };
   return <details className="chapter-pilot"><summary>{t('Kapitelpilot – underlag och beatförslag','Chapter pilot – context and beat suggestions')}</summary>
     <p>{t('Granska underlaget och välj en scen. A använder scenprosan och namn/ID. B lägger till godkänt berättelseunderlag och dina prioriteringar. Testerna körs var för sig, med ett anrop per test.','Review the context and choose a scene. A uses scene prose and names/IDs. B adds approved story context and chapter priorities. Run tests separately, with one request per test.')}</p>
     {!chapter?<><p>{t('Detta album saknar importerat scenunderlag. Läs in den nya exporten för samma bok. Manus, bilder och befintliga beats behålls.','This album has no imported scene context. Load the new export for the same book. Manuscript, images and existing beats are retained.')}</p><label>{t('Läs in pilotunderlag','Load pilot context')}<input type="file" accept=".json,application/json" onChange={e=>{const f=e.target.files?.[0];if(f)void attach(f);e.currentTarget.value='';}}/></label>
-      {pending?<><p>{t('Underlaget är inläst för granskning. Det används inte av AI ännu.','Context loaded for review. It is not approved for AI use yet.')}</p><button type="button" onClick={()=>{onUpdate(p=>({...p,adaptationContext:pending}));setPending(undefined);}}>{t('Lägg till underlaget i albumet','Add context to album')}</button></>:null}</>:<fieldset disabled={busy}>
+      {pending?<><p>{t('Underlaget är inläst för granskning. Det används inte av AI ännu.','Context loaded for review. It is not approved for AI use yet.')}</p><button type="button" onClick={()=>{onUpdate(p=>({...p,source:{...p.source,chapters:pending.chapters},adaptationContext:pending.context}));setPending(undefined);}}>{t('Lägg till underlaget i albumet','Add context to album')}</button></>:null}</>:<fieldset disabled={busy}>
       <details><summary>{t('Granska berättelseunderlag','Review story context')}</summary>
         <ReviewText sv={sv} label="Synopsis" value={project.adaptationContext!.synopsis} onChange={value=>onUpdate(p=>({...p,adaptationContext:{...p.adaptationContext!,synopsis:value}}))}/>
         <ReviewText sv={sv} label={t('Kapitlets Brief','Chapter Brief')} value={chapter.brief} onChange={brief=>patchChapter(c=>({...c,brief}))}/>

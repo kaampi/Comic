@@ -23,6 +23,18 @@ export function importedAdaptationContext(data:StoryBookImport):AdaptationContex
   if(!data.synopsis&&!data.chapters.some(c=>c.brief||c.scenes?.length))return undefined;
   return {sourceBookId:data.sourceBookId,exportedAt:data.exportedAt??'',synopsis:review(data.synopsis),chapters:data.chapters.map(c=>({sourceId:c.id,brief:review(c.brief),scenes:(c.scenes??[]).map((s,i)=>({id:s.id,order:i+1,title:s.title??`Scene ${i+1}`,originalText:s.description,instructions:review(s.instructions),approved:false})),approvedCharacters:[],approvedLocations:[]}))};
 }
+/** Older albums lack source IDs. Recover them only from unique exact originals. */
+export function matchPilotChapters(project:ComicProject,data:StoryBookImport) {
+  const chapters=manuscriptChapters(project),used=new Set<string>();
+  if(!chapters.length)throw new Error('No manuscript chapters available for matching.');
+  return chapters.map(chapter=>{
+    const candidates=data.chapters.filter(c=>chapter.sourceId?c.id===chapter.sourceId:c.text===chapter.originalText);
+    if(candidates.length!==1||candidates[0].text!==chapter.originalText||used.has(candidates[0].id))
+      throw new Error(`Cannot match chapter "${chapter.title}" to the export. The original manuscript must match exactly; use a separate new album to test a revised export.`);
+    used.add(candidates[0].id);
+    return {...chapter,sourceId:candidates[0].id};
+  });
+}
 export function pilotChapter(project:ComicProject,chapterId:string):PilotChapter | undefined {
   const chapter=manuscriptChapters(project).find(c=>c.id===chapterId);
   return project.adaptationContext?.chapters.find(c=>c.sourceId===chapter?.sourceId);

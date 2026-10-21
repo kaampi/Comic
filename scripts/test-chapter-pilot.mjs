@@ -56,6 +56,14 @@ try {
   assert.throws(()=>parseStoryBookExport(JSON.stringify({...raw,chapters:[{...raw.chapters[0],scenes:[raw.chapters[0].scenes[0],raw.chapters[0].scenes[0]]}]})),/Duplicate/);
   let project=createProject('Pilot fixture','storybook');project.source={type:'storybook',storyBookId:raw.sourceBookId,textSnapshot:source.text,chapters:source.chapters};project.characters=[{id:'rook',sourceId:'source-rook',name:'Rook',description:'A cautious captain.',visualIdentity:''}];
   project.adaptationContext=pilot.importedAdaptationContext(data);
+  const legacyProject={...project,source:{...project.source,chapters:source.chapters.map(({sourceId,...c})=>c)}};
+  const beforeLegacy=JSON.stringify(legacyProject);
+  const matched=pilot.matchPilotChapters(legacyProject,data);
+  assert.equal(matched[0].sourceId,data.chapters[0].id);
+  assert.equal(matched[0].id,source.chapters[0].id);
+  assert.equal(JSON.stringify(legacyProject),beforeLegacy,'matching does not mutate album');
+  assert.throws(()=>pilot.matchPilotChapters(legacyProject,{...data,chapters:[...data.chapters,...data.chapters]}),/Cannot match/);
+  assert.throws(()=>pilot.matchPilotChapters(project,{...data,chapters:data.chapters.map(c=>({...c,text:c.text+'changed'}))}),/Cannot match/);
   const chapterId=source.chapters[0].id;
   assert.deepEqual(pilot.pilotSceneRange(project,chapterId,'scene-1'),{start:0,end:first.length});assert.equal(pilot.pilotSceneRange(project,chapterId,'empty-scene'),undefined);
   const repeated={...project,source:{...project.source,textSnapshot:first+'\n\n'+first,chapters:[{...source.chapters[0],end:first.length*2+2}]}};assert.equal(pilot.pilotSceneRange(repeated,chapterId,'scene-1'),undefined,'ambiguous matches are rejected');
