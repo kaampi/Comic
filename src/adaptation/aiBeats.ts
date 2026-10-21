@@ -104,7 +104,9 @@ export function parseAiBeats(reply: string, source: string, context: BeatContext
     // differences and a small set of equivalent storytelling terms.
     const label=typeof item.beatType==='string'?item.beatType.trim().toLowerCase().replace(/[ _-]+/g,' '):'';
     const aliases:Record<string,BeatType>={'establishing shot':'establishing','character introduction':'introduction',conversation:'dialogue',reflection:'reaction',introspection:'reaction','emotional reaction':'reaction',mood:'atmosphere'};
-    const beatType=beatTypes.includes(label as BeatType)?label as BeatType:aliases[label];
+    const missingType=allowUnknownCharacters&&(item.beatType==null||typeof item.beatType==='string'&&!item.beatType.trim());
+    const beatType=missingType?'action':beatTypes.includes(label as BeatType)?label as BeatType:aliases[label];
+    const typeNotice=missingType?'The model omitted the beat type. Action is a placeholder; review the classification. ':'';
     if (!beatType) throw new Error(`Invalid AI beat type in beat ${index+1}: ${JSON.stringify(item.beatType)??'missing'}. Allowed types: ${beatTypes.join(', ')}. The proposals were not applied.`);
     // Restore original dialogue locally; no model-generated quotation is trusted.
     // A source quotation shared by overlapping beats is assigned only once.
@@ -124,7 +126,7 @@ export function parseAiBeats(reply: string, source: string, context: BeatContext
       sourceTextExcerpt: excerpt, sourceStart: sourceOffset + start, sourceEnd: sourceOffset + end,
       ...(unresolvedCharacters.length?{unresolvedCharacters}:{}),
       ...(allowUnknownCharacters&&item.locationId!=null&&!resolvedLocation?{unresolvedLocation:item.locationId}:{}),
-      ...(allowUnknownCharacters&&item.reason?{adaptationReason:item.reason.slice(0,500)}:{}),
+      ...(allowUnknownCharacters&&(item.reason||typeNotice)?{adaptationReason:(typeNotice+(item.reason??'')).slice(0,500)}:{}),
       characterIds: context.characters.filter(character => character.name && (lower.includes(character.name.toLocaleLowerCase()) || resolvedCharacters.some((c: {id:string}|undefined)=>c?.id===character.id))).map(character => character.id),
       locationId: resolvedLocation?.id ?? context.locations.find(location => location.name && lower.includes(location.name.toLocaleLowerCase()))?.id,
       dialogueCandidates: dialogue, captionCandidates: [],

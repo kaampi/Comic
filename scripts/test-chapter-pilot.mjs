@@ -81,15 +81,23 @@ try {
   const approve=label=>within(screen.getByRole('textbox',{name:label,exact:true}).closest('.pilot-review-text')).getByRole('checkbox');
   await user.click(approve('Synopsis'));await user.click(approve('Chapter Brief'));await user.click(approve('Scene instructions'));await user.click(screen.getByRole('checkbox',{name:'Scene prose reviewed'}));
   assert.equal(runA().disabled,false);
-  const reply={beats:[{from:1,to:2,title:'The hesitant greeting',summary:'Rook meets Seren on the bridge.',visualDescription:'At the doorway, Rook pauses opposite Seren, whose palm is raised.',reason:'Their hesitant greeting establishes fragile trust.',beatType:'reaction',characterIds:['rook','unknown-seren'],unresolvedCharacters:['Seren'],locationId:null}]};
+  const reply={beats:[{from:1,to:2,title:'The hesitant greeting',summary:'Rook meets Seren on the bridge.',visualDescription:'At the doorway, Rook pauses opposite Seren, whose palm is raised.',reason:'Their hesitant greeting establishes fragile trust.',characterIds:['rook','unknown-seren'],unresolvedCharacters:['Seren'],locationId:null}]};
   assert.throws(()=>parseAiBeats(JSON.stringify(reply),first,{characters:[{id:'rook',name:'Rook'}],locations:[]},0,true),/unknown character/,'existing strict callers remain strict');
   const typeFixture={...reply,beats:reply.beats.map(b=>({...b,characterIds:[],unresolvedCharacters:undefined}))};
   for(const [label,expected] of [[' Reaction ','reaction'],['Establishing Shot','establishing'],['introspection','reaction'],['dialogue','dialogue']]) {
     const candidate={beats:typeFixture.beats.map(b=>({...b,beatType:label}))};
     assert.equal(parseAiBeats(JSON.stringify(candidate),first,{characters:[],locations:[]},0,true)[0].beatType,expected);
   }
-  for(const value of ['unrecognized-category',null,12,undefined]) {
+  for(const value of ['unrecognized-category',12]) {
     assert.throws(()=>parseAiBeats(JSON.stringify({beats:typeFixture.beats.map(b=>({...b,beatType:value}))}),first,{characters:[],locations:[]},0,true),/Invalid AI beat type in beat 1.*Allowed types/);
+  }
+  for(const value of [undefined,null,'']) {
+    const candidate={beats:typeFixture.beats.map(b=>({...b,beatType:value}))};
+    const recovered=parseAiBeats(JSON.stringify(candidate),first,{characters:[],locations:[]},0,true,true)[0];
+    assert.equal(recovered.beatType,'action');
+    assert.match(recovered.adaptationReason,/placeholder/);
+    assert.equal(recovered.sourceTextExcerpt,first.slice(recovered.sourceStart,recovered.sourceEnd));
+    assert.throws(()=>parseAiBeats(JSON.stringify(candidate),first,{characters:[],locations:[]},0,true),/Invalid AI beat type/,'ordinary strict parsing remains strict');
   }
   const bodies=[];globalThis.fetch=async(_url,init)=>{networkRequests++;bodies.push(JSON.parse(init.body));return new Response(JSON.stringify({message:{content:JSON.stringify(reply)},done_reason:'stop'}));};
   await user.click(runA());await waitFor(()=>assert.equal(working.beatTrials?.length,1));
