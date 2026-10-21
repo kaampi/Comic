@@ -1,3 +1,4 @@
+import { validBubbleShape } from "./bubbleShape";
 import { validManuscriptChapters } from "./manuscriptChapters";
 import { readOrganization } from "./styleOrganization";
 import { validPanelBorder } from "./panelBorder";
@@ -168,6 +169,8 @@ export function parseAlbumBackup(input: unknown): ComicProject {
       image(place.image);
       for (const overlay of objects(place.overlays)) {
         if (overlay.textColor!==undefined && (typeof overlay.textColor!=="string"||!/^#[0-9a-f]{6}$/i.test(overlay.textColor))) throw new Error("invalid-backup");
+        if(overlay.bubbleShapeSmooth!==undefined&&typeof overlay.bubbleShapeSmooth!=="boolean")throw new Error("invalid-backup");
+        if(overlay.bubbleShapePoints!==undefined&&!validBubbleShape(overlay.bubbleShapePoints,overlay.bubbleShapeSmooth!==false))throw new Error("invalid-backup");
         string(overlay.text);
         if (!["speech", "thought", "caption", "sfx"].includes(overlay.type))
           throw new Error("invalid-backup");

@@ -1,3 +1,4 @@
+import { customBubbleOutline, customBubblePath } from "./bubbleShape";
 import type { TextOverlay, BubbleLink } from "./project";
 import { speechPath, shoutPath, bubbleTailStartAngle } from "./SvgOverlay";
 import { svgGeometry, type Point } from "./idmlGeometry";
@@ -67,7 +68,7 @@ function inside(p: Point, polygon: Point[]) {
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 const center = (o: TextOverlay): Point => ({ x: o.x + o.width / 2, y: o.y + o.height / 2 });
 function bodyOutline(o: TextOverlay): Point[] {
-  const local = o.type === "thought" ? thoughtCloudGeometry(o.width, o.height).outline
+  const local = o.bubbleShapePoints?customBubbleOutline(o):o.type === "thought" ? thoughtCloudGeometry(o.width, o.height).outline
     : flatten(o.bubbleStyle === "shout" ? shoutPath(o) : speechPath({ ...o, tailEnabled: false }, o.bubbleStyle ?? "organic"))[0];
   const a = o.rotation * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), mid = center(o);
   return local.map(p => ({ x: mid.x + (p.x - o.width / 2) * c - (p.y - o.height / 2) * s, y: mid.y + (p.x - o.width / 2) * s + (p.y - o.height / 2) * c }));
@@ -204,7 +205,7 @@ const geometryCache = new Map<string, ReturnType<typeof computeConnectedBubbleGe
 export function connectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTextMetrics) {
   // Paint and text cannot change the contour. Bound the cache so old geometry
   // from dragging/resizing does not accumulate indefinitely.
-  const key = JSON.stringify([metrics?.width ?? 100, metrics?.height ?? 100, group.map(o => [o.id,o.type,o.x,o.y,o.width,o.height,o.rotation,o.bubbleStyle,o.roundness,o.tailEnabled,o.tailX,o.tailY,o.tailStartAngle,o.tailCurve,o.tailRootWidth,o.thoughtTailWidth,o.thoughtTailCurve,o.bubbleLinks])]);
+  const key = JSON.stringify([metrics?.width ?? 100, metrics?.height ?? 100, group.map(o => [o.id,o.type,o.x,o.y,o.width,o.height,o.rotation,o.bubbleStyle,o.roundness,o.tailEnabled,o.tailX,o.tailY,o.tailStartAngle,o.tailCurve,o.tailRootWidth,o.thoughtTailWidth,o.thoughtTailCurve,o.bubbleShapePoints,o.bubbleShapeSmooth,o.bubbleLinks])]);
   const cached = geometryCache.get(key);
   if (cached) { geometryCache.delete(key); geometryCache.set(key,cached); return cached; }
   const geometry = computeConnectedBubbleGeometry(group,metrics);
@@ -216,7 +217,7 @@ function computeConnectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTex
   const polygons: Point[][] = [];
   for (const o of group) {
     const connectedTail=bubbleTailIsConnection(o,group);
-    const cloud=o.type==="thought"?thoughtCloudGeometry(o.width,o.height):undefined;
+    const cloud=o.type==="thought"?(o.bubbleShapePoints?{outline:customBubbleOutline(o),path:customBubblePath(o)}:thoughtCloudGeometry(o.width,o.height)):undefined;
     const paths=cloud?[cloud.path,...(connectedTail?[]:thoughtTrailGeometry(o,cloud.outline)).map(c=>`M ${c.x+c.r} ${c.y} A ${c.r} ${c.r} 0 1 1 ${c.x-c.r} ${c.y} A ${c.r} ${c.r} 0 1 1 ${c.x+c.r} ${c.y} Z`)]:[o.bubbleStyle==="shout"?shoutPath(o):speechPath(connectedTail?{...o,tailEnabled:false}:o,o.bubbleStyle??"organic")];
     const a=o.rotation*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
     for (const d of paths) for (const poly of flatten(d)) polygons.push(poly.map(p=>({x:o.x+o.width/2+(p.x-o.width/2)*c-(p.y-o.height/2)*s,y:o.y+o.height/2+(p.x-o.width/2)*s+(p.y-o.height/2)*c})));

@@ -394,3 +394,9 @@ The top-level Guide opens an English getting-started dialog. It starts with a no
 Under bildrutans inställningar finns en utfällbar **Fri form**-sektion. **Redigera form** visar noder och valfri fästning mot sidrutnätets fyra delningar per enkelpanel. Dubbelklick på kanten lägger till en nod; noder kan dras eller flyttas med piltangenter, och markerad nod kan tas bort ned till tre noder. Konturen får ha urtag men inte korsa eller vidröra sig själv eller överlappa andra rutor. Högst 64 noder. Escape återställer pågående drag.
 
 Markerade kantsegment kan döljas och visas utan att ändra bildens beskärning. Segmentens synlighet sparas med album och backup och används även av raster-, PDF- och IDML-export, inklusive handritade ramar. **Återställ till rektangel** återställer formen och visar alla kanter. Kurvor och automatisk friläggning av figurer ingår inte i detta steg.
+
+### Fri form för textbubblor (2026-10-21)
+
+Textredigerarens egenskaper för markerad pratbubbla, tankebubbla eller berättarruta har en egen **Fri form → Redigera form**. Noder kan dras, flyttas med piltangenter, läggas till med dubbelklick på konturen och tas bort ned till tre noder. Valbar mjuk kontur och fästning mot ett lokalt rutnät. Escape återställer pågående drag; återställ grundform tar bort den egna konturen utan att ändra text, typografi eller svansinställningar. Att öppna verktyget ändrar inte bubblan.
+
+Konturen sparas i normaliserade koordinater som följer bubblans storlek och rotation. Svansens fäste, tankebubblans spår, sammanlänkade bubblor, sidvisning, backup och export använder den egna formen. Befintliga bubblor utan egen kontur behåller sitt utseende. Bildrutornas tidigare Fri form-funktion finns kvar separat.

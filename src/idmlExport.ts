@@ -1,3 +1,4 @@
+import { customBubbleOutline, customBubblePath } from "./bubbleShape";
 import { textPieces } from "./richText";
 import { bubbleGroups, connectedBubbleGeometry } from "./bubbleConnections";
 import type { ComicProject, TextOverlay } from "./project";
@@ -36,7 +37,7 @@ export function idmlFont(o:TextOverlay) {
 function artwork(o:TextOverlay):{paths:GeometryPath[];fill:boolean}[] {
   const style=o.bubbleStyle??"organic";
   if(o.type==="thought") {
-    const cloud=thoughtCloudGeometry(o.width,o.height);
+    const cloud=o.bubbleShapePoints?{outline:customBubbleOutline(o),path:customBubblePath(o)}:thoughtCloudGeometry(o.width,o.height);
     return [...thoughtTrailGeometry(o,cloud.outline).map(c=>({paths:svgGeometry(`M ${c.x+c.r} ${c.y} A ${c.r} ${c.r} 0 1 1 ${c.x-c.r} ${c.y} A ${c.r} ${c.r} 0 1 1 ${c.x+c.r} ${c.y} Z`),fill:true})),{paths:svgGeometry(cloud.path),fill:true}];
   }
   if(o.type==="sfx")return sfxPrimitives(o.sfxShapeId??"none").map(p=>({paths:transformPaths(svgGeometry(p.d),q=>({x:q.x*o.width/100,y:q.y*o.height/60})),fill:p.fill}));

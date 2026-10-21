@@ -25,6 +25,8 @@ export type BubbleLink = {
   endControl?: { along: number; across: number };
 };
 export type TextOverlay = {
+  bubbleShapePoints?: ShapePoint[];
+  bubbleShapeSmooth?: boolean;
   textStyles?: TextStyleRange[];
   bubbleLinks?: BubbleLink[];
   id: string; type: OverlayType; text: string; x: number; y: number; width: number; height: number; rotation: number;

@@ -1,3 +1,4 @@
+import { customBubblePath, customBubbleOutline, customBubbleAttachment } from "./bubbleShape";
 import { richTextLayout, textPieces } from "./richText";
 import { useEffect, useReducer } from "react";
 import { overlayTextLayout, type LayerTextMetrics } from "./pageTypography";
@@ -39,6 +40,7 @@ export function bodyPath(o:TextOverlay,style:string){
 // Captions need an exact rectangle at zero. Negative values bow the four
 // sides inward while retaining the same bounds and four pointed corners.
 export function captionPath(o: TextOverlay) {
+ if(o.bubbleShapePoints)return customBubblePath(o);
  const round=Math.max(-100,Math.min(100,o.roundness??18));
  if(round>0)return bodyPath({...o,roundness:round},"organic");
  const left=o.width*.02,right=o.width*.98,top=o.height*.07,bottom=o.height*.93;
@@ -56,7 +58,7 @@ function speechAttachmentAngle(o:TextOverlay,style:string){
  return Math.atan2(Math.sign(v)*Math.abs(v)**(exponent/2),Math.sign(u)*Math.abs(u)**(exponent/2));
 }
 export function bubbleTailStart(o:TextOverlay){
- const p=o.type==="thought"?thoughtTrailStart(o,thoughtCloudGeometry(o.width,o.height).outline):roundedBodyPoint(o,o.bubbleStyle??"organic",speechAttachmentAngle(o,o.bubbleStyle??"organic"));
+ const p=o.bubbleShapePoints?(o.type==="thought"?thoughtTrailStart(o,customBubbleOutline(o)):customBubbleAttachment(o).point):o.type==="thought"?thoughtTrailStart(o,thoughtCloudGeometry(o.width,o.height).outline):roundedBodyPoint(o,o.bubbleStyle??"organic",speechAttachmentAngle(o,o.bubbleStyle??"organic"));
  const a=o.rotation*Math.PI/180,dx=p.x-o.width/2,dy=p.y-o.height/2;
  return {x:o.x+o.width/2+dx*Math.cos(a)-dy*Math.sin(a),y:o.y+o.height/2+dx*Math.sin(a)+dy*Math.cos(a)};
 }
@@ -65,6 +67,7 @@ export function bubbleTailStartAngle(o:TextOverlay,x:number,y:number){
  return Math.atan2(dx*Math.sin(a)+dy*Math.cos(a),dx*Math.cos(a)-dy*Math.sin(a));
 }
 export function speechPath(o:TextOverlay,style:string){
+ if(o.bubbleShapePoints)return customBubblePath(o);
  if(o.tailEnabled===false)return bodyPath(o,style);
  const w=o.width,h=o.height,cx=w/2,cy=h/2;
  const tx=(o.tailX??o.x+w*.58)-o.x,ty=(o.tailY??o.y+h*1.12)-o.y;
@@ -80,7 +83,7 @@ export function speechPath(o:TextOverlay,style:string){
  for(let i=1;i<=steps;i++){const q=p(a2+sweep*i/steps);d+=` L ${q.x.toFixed(2)} ${q.y.toFixed(2)}`;}
  return d+" Z";
 }
-export function shoutPath(o:TextOverlay){const w=o.width,h=o.height,cx=w/2,cy=h/2,pts=18;return Array.from({length:pts},(_,i)=>{const a=-Math.PI/2+i*Math.PI*2/pts,r=i%2?0.72:1,x=cx+Math.cos(a)*w*.48*r,y=cy+Math.sin(a)*h*.48*r;return(i?"L":"M")+" "+x+" "+y}).join(" ")+" Z";}
+export function shoutPath(o:TextOverlay){if(o.bubbleShapePoints)return customBubblePath(o);const w=o.width,h=o.height,cx=w/2,cy=h/2,pts=18;return Array.from({length:pts},(_,i)=>{const a=-Math.PI/2+i*Math.PI*2/pts,r=i%2?0.72:1,x=cx+Math.cos(a)*w*.48*r,y=cy+Math.sin(a)*h*.48*r;return(i?"L":"M")+" "+x+" "+y}).join(" ")+" Z";}
 
 export function SvgOverlay({overlay,textMetrics,hideText=false,hideShape=false}:{overlay:TextOverlay;textMetrics?:LayerTextMetrics;hideText?:boolean;hideShape?:boolean}){
  const [,refreshFontMetrics]=useReducer((n:number)=>n+1,0);
@@ -102,7 +105,7 @@ export function SvgOverlay({overlay,textMetrics,hideText=false,hideShape=false}:
  const anchor=align==="left"?"start":align==="right"?"end":"middle";
  const rich=textMetrics&&overlay.textStyles?.length?richTextLayout(overlay,textMetrics):undefined;
  const common=commonStyle(overlay);
- const cloud=overlay.type==="thought"?thoughtCloudGeometry(w,h):undefined;
+ const cloud=overlay.type==="thought"?(overlay.bubbleShapePoints?{outline:customBubbleOutline(overlay),path:customBubblePath(overlay)}:thoughtCloudGeometry(w,h)):undefined;
  return <><g display={hideShape?"none":undefined} transform={`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>
   {overlay.type==="speech"?<path d={style==="shout"?shoutPath(overlay):speechPath(overlay,style)} {...common} strokeDasharray={style==="whisper"?"4 3":undefined}/>:null}
   {overlay.type==="thought"?<><g className="thought-trail">{thoughtTrailGeometry(overlay,cloud!.outline).map((circle,i)=><circle key={i} cx={circle.x} cy={circle.y} r={circle.r} {...common}/>)}</g><path className="thought-cloud" d={cloud!.path} {...common} strokeLinejoin="round" strokeLinecap="round"/></>:null}

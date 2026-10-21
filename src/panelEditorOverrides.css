@@ -439,3 +439,11 @@
     width:min(100%, calc((66vh - 80px) * var(--panel-aspect)));
   }
 }
+
+.bubble-free-form { border:1px solid var(--border); padding:12px; margin:12px 0; }
+.bubble-free-form summary { cursor:pointer; font-weight:600; }
+.bubble-shape-tools { display:grid; gap:10px; padding-top:12px; }
+.bubble-shape-tools label { display:flex; align-items:center; gap:8px; }
+.bubble-shape-tools input[type=checkbox] { width:auto; }
+.bubble-shape-node:focus-visible { outline:none; stroke:#171411; stroke-width:3; }
+.bubble-shape-edge:hover { stroke:#2473a6; stroke-opacity:.35; }

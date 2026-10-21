@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-idml-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform==='win32'?'junction':'dir');
-const names=['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','pageBackground.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts','idmlExport.ts'];
+const names=['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','pageBackground.ts','exportFiles.ts','albumExport.tsx','bubbleShape.ts','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts','idmlExport.ts'];
 function archive(bytes) {
   const entries=new Map();let offset=0;const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   while(view.getUint32(offset,true)===0x04034b50) {
@@ -65,6 +65,15 @@ try {
   const noFrameResult=await exportAlbum(frameless,options,()=>{}),noFrameOuter=archive(new Uint8Array(await noFrameResult.blob.arrayBuffer())),noFrameInner=archive(noFrameOuter.get('Test -album-.idml'));
   const noFrameSpread=parse([...noFrameInner].find(([p])=>p.startsWith('Spreads/'))[1]);
   assert.equal([...noFrameSpread.querySelectorAll('Polygon')].filter(e=>e.getAttribute('Name')==='Panel border layer').length,0,'fully hidden borders create no empty IDML geometry');
+  const bubblePoints=[{x:.2,y:.2},{x:3.8,y:.2},{x:3.8,y:3.8},{x:2,y:2.2},{x:.2,y:3.8}];
+  const freeBubbleProject={...project,pages:[{...project.pages[0],placements:[{...layer,overlays:['speech','thought','caption'].map((type,i)=>({...overlay,id:'free-'+i,type,bubbleShapePoints:bubblePoints}))}]}]};
+  const freeBubbleResult=await exportAlbum(freeBubbleProject,options,()=>{}),freeOuter=archive(new Uint8Array(await freeBubbleResult.blob.arrayBuffer())),freeInner=archive(freeOuter.get('Test -album-.idml'));
+  const freeSpread=parse([...freeInner].find(([p])=>p.startsWith('Spreads/'))[1]);
+  for(const type of ['speech','thought','caption']){
+    const item=[...freeSpread.querySelectorAll('Polygon')].find(e=>e.getAttribute('Name')===`${type} free-${['speech','thought','caption'].indexOf(type)}`);
+    assert.ok(item,`${type} custom shape is an editable IDML vector`);
+    assert.ok(item.querySelectorAll('PathPointType').length>=5);
+  }
   assert.deepEqual(progress,[[0,2],[1,2],[2,2]]);
   const outer=archive(new Uint8Array(await result.blob.arrayBuffer()));assert.ok(outer.has('README.txt'));
   const inner=archive(outer.get('Test -album-.idml'));

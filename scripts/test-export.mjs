@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
 try {
-  for(const name of ['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','pageBackground.ts','exportFiles.ts','albumExport.tsx','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+  for(const name of ['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','pageBackground.ts','exportFiles.ts','albumExport.tsx','bubbleShape.ts','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
     const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
     fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
@@ -42,6 +42,14 @@ try {
   const {linkBubbles,unlinkBubble,bubbleGroups,connectedBubbleGeometry,bubbleTailIsConnection,bubbleConnectionControls,bubbleConnectionRibbon,moveConnectionHandle}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
   const a={...layer.overlays[0],id:'a',text:'First',x:10,y:10,width:30,height:20,tailEnabled:false,rotation:0};
   const b={...a,id:'b',text:'Second',x:60,y:10};
+  const freePoints=[{x:.2,y:.2},{x:3.8,y:.2},{x:3.8,y:3.8},{x:2,y:2.2},{x:.2,y:3.8}];
+  const {customBubblePath}=await import(pathToFileURL(path.join(dir,'bubbleShape.mjs')));
+  for(const type of ['speech','thought','caption']){
+    const free={...a,type,rotation:25,bubbleShapePoints:freePoints,bubbleShapeSmooth:true};
+    const svg=await pageSvg(project,{...page,placements:[{...layer,overlays:[free]}]},'',1);
+    assert.ok(svg.includes(customBubblePath(free)),'custom '+type+' contour exports without editor controls');
+    assert.ok(!svg.includes('bubble-shape-node'));
+  }
   const {captionPath,bodyPath}=await import(pathToFileURL(path.join(dir,'SvgOverlay.mjs')));
   const {svgGeometry}=await import(pathToFileURL(path.join(dir,'idmlGeometry.mjs')));
   const caption={...a,type:'caption',roundness:0};
