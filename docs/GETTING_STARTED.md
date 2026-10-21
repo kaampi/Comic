@@ -61,7 +61,7 @@ A panel is a framed part of the comic page. Start with three simple rectangles a
 
 ## 3. Position the picture
 
-The picture fills the panel by default, so some edges may be cropped. Adjust the picture until the important part of the scene is visible.
+The picture fills the panel by default, so some edges may be cropped. Adjust the picture until the important part of the scene is visible. View zoom above the canvas magnifies the editing workspace from 25% to 800% without changing the picture or export. Use +/− or Ctrl/Command + scroll outside Edit image, and hold Space while dragging to pan. Fit restores the full panel view; closing and reopening the editor also resets the view. In Edit image, Ctrl/Command + scroll continues to change the picture placement.
 
 1. In the panel editor, select Edit image. Bubbles are hidden while you position the picture.
 2. Drag the picture to move it. Hold Ctrl or Command while scrolling to zoom, or Alt while scrolling to rotate.
@@ -77,7 +77,7 @@ The picture fills the panel by default, so some edges may be cropped. Adjust the
 Use speech bubbles for spoken dialogue, thought bubbles for thoughts, captions for narration and SFX for sound effects. Keep the first page short enough to read at a glance.
 
 1. Add a text layer in the panel editor and choose its type. Move and resize it to fit the available space.
-2. Double-click the text to type directly in the bubble. Enter inserts a new line; click outside to finish. Escape finishes the current inline text edit and keeps your changes. Right-click a bubble to edit text or shape, copy, duplicate, paste or delete it. While typing, right-click to finish, use Bold, Italic or Underline on the selection, or cut/copy/paste text. In shape mode, right-click a node to delete it or make it sharp/smooth; right-click the outline to add a node. Escape closes a menu first, then finishes the active mode.
+2. Double-click the text to type directly in the bubble. Enter inserts a new line; click outside to finish. Escape finishes the current inline text edit and keeps your changes. Right-click a bubble to edit text or shape, copy, duplicate, paste or delete it. Bring to front, Bring forward, Send backward and Send to back arrange overlapping bubbles within the same panel or page-wide layer; connected bubbles move as one unit. The order is saved and exported. While typing, right-click to finish, use Bold, Italic or Underline on the selection, or cut/copy/paste text. In shape mode, right-click a node to delete it or make it sharp/smooth; right-click the outline to add a node. Escape closes a menu first, then finishes the active mode.
 3. Select the text layer to adjust its font, size, alignment and Text color. Text size is measured in points (pt). Adjust the fill and its opacity separately.
 4. Position the tail so it clearly points to the speaker. Read the whole panel and check that text does not cover an important face or action.
 5. For captions, Roundness 0 gives square corners. Negative values down to -100 bow the sides inward for pointed corners. Positive values keep rounded shapes.
@@ -106,7 +106,7 @@ Finish the exercise by looking at the exported page, where the grid and editing 
 2. Choose the pages and resolution. Pre-export check reviews text box space, empty or unreadable images, and effective image resolution at the printed size. Show opens the affected panel or text. Warnings allow draft exports; unreadable images must be replaced or removed. Then select Download export. Multiple PNG/JPEG pages are packaged in a ZIP.
 3. Open the downloaded file and check reading order, picture crops, text size, contrast and line wrapping.
 
-> IDML — InDesign / Affinity (beta) is for further editing in a page-layout application. Extract the entire ZIP before opening the IDML file, and check fonts, wrapping and layout after import.
+> IDML — InDesign / Affinity (beta) is for further editing in a page-layout application. Extract the entire ZIP before opening the IDML file, and check fonts, wrapping and layout after import. Text, bubbles and SFX share an editable layer to preserve their stacking order.
 
 <a id="foreground-images"></a>
 

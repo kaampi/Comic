@@ -1,6 +1,6 @@
 import { customBubbleOutline, customBubblePath } from "./bubbleShape";
 import { richTextLayout, textPieces } from "./richText";
-import { bubbleGroups, connectedBubbleGeometry } from "./bubbleConnections";
+import { bubbleGroups, overlayStack, connectedBubbleGeometry } from "./bubbleConnections";
 import type { ComicProject, TextOverlay } from "./project";
 import type { ExportOptions } from "./albumExport";
 import { exportFilename } from "./albumExport";
@@ -57,7 +57,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
   let count=0;const id=()=>`cb${++count}`;
   const add=(name:string,content:string)=>files.push({name,bytes:encode(content)});
   const color=(value:string)=>{if(value==="none")return "Swatch/None";if(!/^#[0-9a-f]{6}$/i.test(value))throw new Error("invalid-export-color");const hex=value.toLowerCase();if(!colors.has(hex))colors.set(hex,`Color/CB${hex.slice(1)}`);return colors.get(hex)!;};
-  const layers=[{id:"cbText",name:"Text"},{id:"cbBubbles",name:"Bubbles and SFX"},...(pages.some(page=>page.foregrounds?.length)?[{id:"cbForeground",name:"Foreground images"}]:[]),{id:"cbFrames",name:"Panel borders"},{id:"cbImages",name:"Images"},{id:"cbBackground",name:"Background"}];
+  const layers=[{id:"cbText",name:"Text, bubbles and SFX"},...(pages.some(page=>page.foregrounds?.length)?[{id:"cbForeground",name:"Foreground images"}]:[]),{id:"cbFrames",name:"Panel borders"},{id:"cbImages",name:"Images"},{id:"cbBackground",name:"Background"}];
   const shape=(paths:GeometryPath[],layer:string,name:string,fill:string,stroke="none",weight=0,extra="",children="",transform="1 0 0 1 0 0",tag="Polygon")=>
     `<${tag} Self="${id()}" Name="${xml(name)}" ItemLayer="${layer}" ItemTransform="${transform}" ContentType="${children.startsWith("<Image ")?"GraphicType":"Unassigned"}" FillColor="${color(fill)}" StrokeColor="${color(stroke)}" StrokeWeight="${num(weight)}" StrokeAlignment="CenterAlignment" EndJoin="RoundEndJoin" AppliedObjectStyle="ObjectStyle/$ID/[None]" Visible="true" Locked="false" ${extra}><Properties>${idmlPathGeometry(paths)}</Properties>${children}</${tag}>`;
   const fontLoads=pages.flatMap(p=>[...(p.background?[p.background]:[]),...p.placements,...(p.foregrounds??[])].flatMap(l=>l.overlays)).flatMap(o=>[o,...textPieces(o).map(p=>({...o,...Object.fromEntries(Object.entries(p.style).filter(([,v])=>v!==undefined))}))]).map(o=>typeof document!=="undefined"?document.fonts?.load(overlayFont(o,16),o.text||"ÅÄÖ abc"):undefined);
@@ -88,7 +88,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
     for(const layer of [...(page.background?[page.background]:[]),...page.placements,...(page.foregrounds??[])]) {
       const background=layer.id===page.background?.id,foreground=!!page.foregrounds?.some(l=>l.id===layer.id),full=background||foreground;
       const r=full?{x:0,y:0,width:700,height:sourceH}:layerRect(page,layer,sourceFormat),inset=full?0:PANEL_BORDER;
-      const bubbleLayer=background&&!page.foregrounds?.length?"cbBackground":"cbBubbles",textLayer=background&&!page.foregrounds?.length?"cbBackground":"cbText";
+      const bubbleLayer=background&&!page.foregrounds?.length?"cbBackground":"cbText",textLayer=background&&!page.foregrounds?.length?"cbBackground":"cbText";
       const x=r.x+inset,y=r.y+inset,lw=r.width-2*inset,lh=r.height-2*inset;
       if(lw<=0||lh<=0)throw new Error("invalid-layout");
       const clip=full?rectanglePath(x,y,lw,lh):polygonPath(panelShapePoints(layer).map(p=>({x:x+p.x/4*lw,y:y+p.y/4*lh})));
@@ -107,14 +107,15 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
         }
       }
       const connected=bubbleGroups(layer.overlays);
-      for(const group of connected){
+      for(const unit of overlayStack(layer.overlays)){
+      for(const group of unit.length>1?[unit]:[]){
         const o=group[0],geometry=connectedBubbleGeometry(group,{width:lw,height:lh,pageWidthMm:pageDimensions(sourceFormat).widthMm});
         const local=(p:Point)=>map({x:x+p.x*lw/100,y:y+p.y*lh/100});
         const name=`Connected bubbles ${group.map(o=>o.id).join(" ")}`,itemLayer=bubbleLayer;
         items.push(shape(transformPaths(svgGeometry(geometry.fillPath),local),itemLayer,name,o.fillColor??"#fffdf7","none",0,"",`<FillTransparencySetting><BlendingSetting Opacity="${num(Math.max(0,Math.min(1,o.fillOpacity??1))*100)}" BlendMode="Normal"/></FillTransparencySetting>`));
         items.push(shape(transformPaths(svgGeometry(geometry.strokePath),local),itemLayer,`${name} outline`,"none",o.strokeColor??"#171411",(o.strokeWidth??2)*scale,o.bubbleStyle==="whisper"?'StrokeType="StrokeStyle/$ID/Dashed"':""));
       }
-      for(const o of layer.overlays) {
+      for(const o of unit) {
         const a=o.rotation*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
         const local=(p:Point)=>{const ux=p.x-o.width/2,uy=p.y-o.height/2;return map({x:x+(o.x+o.width/2+c*ux-s*uy)*lw/100,y:y+(o.y+o.height/2+s*ux+c*uy)*lh/100});};
         const fill=o.fillColor??"#fffdf7",stroke=o.strokeColor??"#171411",opacity=Math.max(0,Math.min(1,o.fillOpacity??1));
@@ -163,6 +164,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
         add(storyPath,part("Story",`<Story Self="${story}"><StoryPreference StoryOrientation="Horizontal" StoryDirection="LeftToRightDirection"/>${paragraphs}</Story>`));stories.push(storyPath);
         items.push(`<TextFrame Self="${id()}" Name="${xml(`Text ${o.id}`)}" ParentStory="${story}" PreviousTextFrame="n" NextTextFrame="n" ContentType="TextType" ItemLayer="${textLayer}" ItemTransform="${matrix}" FillColor="Swatch/None" StrokeColor="Swatch/None" AppliedObjectStyle="ObjectStyle/$ID/[None]"><Properties>${idmlPathGeometry([rectanglePath(0,0,tw,th)])}</Properties><TextFramePreference TextColumnCount="1" VerticalJustification="CenterAlign" FirstBaselineOffset="AscentOffset"><Properties><InsetSpacing type="list"><ListItem type="unit">0</ListItem><ListItem type="unit">${num(padding)}</ListItem><ListItem type="unit">0</ListItem><ListItem type="unit">${num(padding)}</ListItem></InsetSpacing></Properties></TextFramePreference></TextFrame>`);
       }
+      }
     }
     const spread=id(),spreadPath=`Spreads/Spread_${spread}.xml`;
     add(spreadPath,part("Spread",`<Spread Self="${spread}" PageCount="1" BindingLocation="0" AllowPageShuffle="false" ItemTransform="1 0 0 1 0 0"><Page Self="${id()}" Name="${page.number}" GeometricBounds="0 0 ${num(h)} ${num(w)}" ItemTransform="1 0 0 1 0 0" AppliedMaster="n"><MarginPreference Top="${num(Math.max(0,dy+gridMetrics.top*scale))}" Bottom="${num(Math.max(0,dy+gridMetrics.bottom*scale))}" Left="${num(Math.max(0,dx+gridMetrics.left*scale))}" Right="${num(Math.max(0,dx+gridMetrics.right*scale))}" ColumnCount="1" ColumnGutter="0"/></Page>${items.join("")}</Spread>`));spreads.push(spreadPath);
@@ -180,7 +182,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
   // OCF requires mimetype first, uncompressed and without an extra field.
   const idml=imageArchive([{name:"mimetype",bytes:encode("application/vnd.adobe.indesign-idml-package")},...files]);check(signal);
   const base=exportFilename(project.title);
-  const readme=`ComicBook AI — IDML export (experimental)\n\n1. Extract the entire ZIP before opening ${base}.idml in InDesign or Affinity Publisher.\n2. Keep Links next to the IDML. If asked for missing images, select the Links folder.\n3. Install the fonts listed below or replace them in the destination application.\n4. Check text wrapping, overflow, layer order and page edges before production.\n\nLayers: Text; Bubbles and SFX; Panel borders; Images; Background.\nImages remain raster images, with editable clipping frames and placement. Bubble contours and tails are vector paths. Text remains editable. Custom bubble text uses positioned editable line frames to preserve contour wrapping. If text does not fit, its remainder is retained in a hidden frame named Overflow text. No font files are embedded.\n\nCurrent limitations: destination font metrics can change wrapping; text weights use available Regular/Bold desktop styles; text and bubble artwork extending beyond a panel are not clipped to its outline; page-edge crop should be checked when using Cover.\nAffinity import is one-way: save subsequent work in Affinity's own format.\n\nFonts:\n${[...fonts.values()].map(f=>`${f.family} — ${f.style}`).join("\n")||"None"}\n`;
+  const readme=`ComicBook AI — IDML export (experimental)\n\n1. Extract the entire ZIP before opening ${base}.idml in InDesign or Affinity Publisher.\n2. Keep Links next to the IDML. If asked for missing images, select the Links folder.\n3. Install the fonts listed below or replace them in the destination application.\n4. Check text wrapping, overflow, layer order and page edges before production.\n\nLayers: Text, bubbles and SFX; Panel borders; Images; Background. Text and bubble artwork share a layer to preserve their stacking order.\nImages remain raster images, with editable clipping frames and placement. Bubble contours and tails are vector paths. Text remains editable. Custom bubble text uses positioned editable line frames to preserve contour wrapping. If text does not fit, its remainder is retained in a hidden frame named Overflow text. No font files are embedded.\n\nCurrent limitations: destination font metrics can change wrapping; text weights use available Regular/Bold desktop styles; text and bubble artwork extending beyond a panel are not clipped to its outline; page-edge crop should be checked when using Cover.\nAffinity import is one-way: save subsequent work in Affinity's own format.\n\nFonts:\n${[...fonts.values()].map(f=>`${f.family} — ${f.style}`).join("\n")||"None"}\n`;
   return {blob:imageArchive([{name:`${base}.idml`,bytes:new Uint8Array(await idml.arrayBuffer())},...assets,{name:"README.txt",bytes:encode(readme)}]),name:`${base}-idml.zip`};
 }
 

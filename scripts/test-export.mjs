@@ -39,9 +39,24 @@ try {
   assert.match(markup,/<svg[^>]+width="2100"/);assert.match(markup,/stroke-width="6"[^>]*vector-effect="non-scaling-stroke"/);
   assert.match(markup,/ÅÄÖ/);assert.match(markup,/Second line/);assert.match(markup,/clip-path/);
   assert.ok(!markup.includes('readingOrder')&&!markup.includes('panel-corner-handle')&&!markup.includes('grid-cell'));
-  const {linkBubbles,unlinkBubble,bubbleGroups,connectedBubbleGeometry,bubbleTailIsConnection,bubbleConnectionControls,bubbleConnectionRibbon,moveConnectionHandle}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
+  const {linkBubbles,unlinkBubble,bubbleGroups,reorderOverlays,overlayStack,connectedBubbleGeometry,bubbleTailIsConnection,bubbleConnectionControls,bubbleConnectionRibbon,moveConnectionHandle}=await import(pathToFileURL(path.join(dir,'bubbleConnections.mjs')));
   const a={...layer.overlays[0],id:'a',text:'First',x:10,y:10,width:30,height:20,tailEnabled:false,rotation:0};
   const b={...a,id:'b',text:'Second',x:60,y:10};
+  const third={...a,id:'third',text:'Top caption',type:'caption'};
+  const connectedPair=linkBubbles([a,b],'a','b');
+  const stacked=[connectedPair[0],third,connectedPair[1]];
+  assert.deepEqual(overlayStack(stacked).map(g=>g.map(o=>o.id)),[['a','b'],['third']]);
+  const raised=reorderOverlays(stacked,'b','front');
+  assert.deepEqual(raised.map(o=>o.id),['third','a','b']);assert.equal(raised[1],stacked[0],'reordering preserves overlay objects and IDs');
+  assert.deepEqual(reorderOverlays(raised,'a','back').map(o=>o.id),['a','b','third']);
+  assert.equal(reorderOverlays(raised,'a','forward'),raised,'top boundary is a no-op');
+  assert.equal(reorderOverlays(raised,'missing','back'),raised);
+  for(const overlays of [stacked,raised]){
+    const svg=await pageSvg(project,{...page,placements:[{...layer,overlays}]},'',1);
+    const groups=[...svg.matchAll(/data-overlay-stack="([^"]+)"/g)].map(m=>m[1]);
+    assert.deepEqual(groups,overlayStack(overlays).map(g=>g.map(o=>o.id).join(' ')),'export paints the same atomic stacking units as the editor');
+    assert.ok(svg.indexOf('connected-bubble-fill')<svg.indexOf('First'),'connected shape precedes its own text');
+  }
   const freePoints=[{x:.2,y:.2},{x:3.8,y:.2},{x:3.8,y:3.8},{x:2,y:2.2},{x:.2,y:3.8}];
   const {customBubblePath}=await import(pathToFileURL(path.join(dir,'bubbleShape.mjs')));
   for(const type of ['speech','thought','caption']){

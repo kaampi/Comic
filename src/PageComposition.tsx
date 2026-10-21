@@ -6,7 +6,7 @@ import { PositionedImage } from "./PositionedImage";
 import { PanelFrameOutline } from "./PanelFrameOutline";
 import { shapeClipPath, shapedPanel } from "./panelShape";
 import { SvgOverlay } from "./SvgOverlay";
-import { ConnectedBubbles } from "./ConnectedBubbles";
+import { StackedOverlays } from "./ConnectedBubbles";
 import { bubbleGroups } from "./bubbleConnections";
 import { pageLayerTextMetrics } from "./pageTypography";
 type Page=ComicProject['pages'][number];
@@ -22,7 +22,7 @@ function TextLayers({project,page,layers,onEdit}:{project:ComicProject;page:Page
  return <svg className="composition-text" viewBox={`0 0 700 ${h}`} preserveAspectRatio="none">{layers.map(layer=>{
    const full=isPageWideLayer(page,layer.id),r=full?{x:0,y:0,width:700,height:h}:layerRect(page,layer,format),b=full?0:PANEL_BORDER,metrics=pageLayerTextMetrics(project,page,layer);
    const interactive=!!onEdit&&!!page.foregrounds?.some(l=>l.id===layer.id);
-   return <svg key={layer.id} data-text-layer={layer.id} x={r.x+b} y={r.y+b} width={r.width-2*b} height={r.height-2*b} viewBox="0 0 100 100" preserveAspectRatio="none" overflow="hidden"><ConnectedBubbles overlays={layer.overlays} textMetrics={metrics}/>{layer.overlays.map(o=><g key={o.id} role={interactive?'button':undefined} tabIndex={interactive?0:undefined} aria-label={interactive?o.text||o.type:undefined} style={{pointerEvents:interactive?'all':'none',cursor:interactive?'pointer':undefined}} onPointerDown={e=>{if(interactive)e.stopPropagation();}} onPointerUp={e=>{if(interactive)e.stopPropagation();}} onClick={e=>{if(interactive){e.stopPropagation();onEdit!(layer.id,o.id);}}} onKeyDown={e=>{if(interactive&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.stopPropagation();onEdit!(layer.id,o.id);}}}><SvgOverlay overlay={o} textMetrics={metrics} hideShape={bubbleGroups(layer.overlays).some(g=>g.some(b=>b.id===o.id))}/>{interactive?<rect x={o.x} y={o.y} width={o.width} height={o.height} fill="transparent" transform={`rotate(${o.rotation} ${o.x+o.width/2} ${o.y+o.height/2})`}/>:null}</g>)}</svg>;
+   return <svg key={layer.id} data-text-layer={layer.id} x={r.x+b} y={r.y+b} width={r.width-2*b} height={r.height-2*b} viewBox="0 0 100 100" preserveAspectRatio="none" overflow="hidden"><StackedOverlays overlays={layer.overlays} textMetrics={metrics}>{layer.overlays.map(o=><g key={o.id} data-overlay-id={o.id} role={interactive?'button':undefined} tabIndex={interactive?0:undefined} aria-label={interactive?o.text||o.type:undefined} style={{pointerEvents:interactive?'all':'none',cursor:interactive?'pointer':undefined}} onPointerDown={e=>{if(interactive)e.stopPropagation();}} onPointerUp={e=>{if(interactive)e.stopPropagation();}} onClick={e=>{if(interactive){e.stopPropagation();onEdit!(layer.id,o.id);}}} onKeyDown={e=>{if(interactive&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.stopPropagation();onEdit!(layer.id,o.id);}}}><SvgOverlay overlay={o} textMetrics={metrics} hideShape={bubbleGroups(layer.overlays).some(g=>g.some(b=>b.id===o.id))}/>{interactive?<rect x={o.x} y={o.y} width={o.width} height={o.height} fill="transparent" transform={`rotate(${o.rotation} ${o.x+o.width/2} ${o.y+o.height/2})`}/>:null}</g>)}</StackedOverlays></svg>;
  })}</svg>;
 }
 export function PageForegroundSurface({project,page,onEdit}:{project:ComicProject;page:Page;onEdit:(id:string,overlayId:string)=>void}){

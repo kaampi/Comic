@@ -52,6 +52,20 @@ try {
   await user.click(screen.getByRole('button',{name:/Bubble menu fixture/}));await user.click(screen.getByRole('button',{name:/Open album for editing/}));await user.click(screen.getByRole('button',{name:'Pages',exact:true}));
   const openPanel=number=>fireEvent.doubleClick(screen.getByLabelText(`panel ${number}`,{exact:true}));
   openPanel(1);
+  const viewControls=()=>screen.getByRole('group',{name:'Editor view zoom'});
+  const viewText=()=>within(viewControls()).getByRole('status').textContent;
+  const transform=()=>document.querySelector('.editor-view-transform');
+  const beforeZoom=JSON.stringify(stored());
+  await user.click(within(viewControls()).getByRole('button',{name:'Zoom in',exact:true}));assert.equal(viewText(),'125%');
+  const viewport=document.querySelector('.editor-viewport');viewport.getBoundingClientRect=()=>({left:0,top:0,width:500,height:500});
+  fireEvent.wheel(viewport,{ctrlKey:true,deltaY:-235,clientX:350,clientY:250});assert.ok(parseInt(viewText())>125);assert.notEqual(transform().style.transform,'translate(0px, 0px) scale(1)');
+  viewport.setPointerCapture=()=>{};viewport.hasPointerCapture=()=>false;
+  const beforePan=transform().style.transform;
+  fireEvent.keyDown(window,{code:'Space'});fireEvent.pointerDown(viewport,{button:0,clientX:100,clientY:100});fireEvent.pointerMove(viewport,{clientX:140,clientY:120});fireEvent.pointerUp(viewport);fireEvent.keyUp(window,{code:'Space'});
+  assert.notEqual(transform().style.transform,beforePan);
+  assert.equal(JSON.stringify(stored()),beforeZoom,'view zoom and pan never save model changes');
+  await user.click(within(viewControls()).getByRole('button',{name:'Fit',exact:true}));assert.equal(viewText(),'100%');assert.equal(transform().style.transform,'translate(0px, 0px) scale(1)');
+  await user.click(within(viewControls()).getByRole('button',{name:'Zoom in',exact:true}));await user.click(screen.getByRole('button',{name:'Close',exact:true}));openPanel(1);assert.equal(viewText(),'100%','reopening resets view');
   const surface=()=>document.querySelector('.panel-editor-modal .editable-overlay.is-selected .overlay-drag-surface');
   const context=target=>fireEvent.contextMenu(target,{clientX:300,clientY:200});
   const item=label=>within(screen.getByRole('menu')).getByRole('menuitem',{name:label,exact:true});
@@ -59,6 +73,10 @@ try {
   await user.click(item('Copy'));
   context(surface());await user.click(item('Duplicate'));assert.equal(stored().pages[0].placements[0].overlays.length,2);
   const copy=stored().pages[0].placements[0].overlays[1];assert.notEqual(copy.id,original.id);assert.deepEqual(copy.bubbleShapePoints,original.bubbleShapePoints);assert.equal(copy.tailX-original.tailX,copy.x-original.x);
+  context(surface());assert.equal(item('Bring to front').disabled,true);await user.click(item('Send to back'));
+  assert.deepEqual(stored().pages[0].placements[0].overlays.map(o=>o.id),[copy.id,original.id]);
+  assert.deepEqual([...document.querySelectorAll('.panel-editor-stage [data-overlay-stack]')].map(e=>e.dataset.overlayStack),[copy.id,original.id]);
+  context(surface());await user.click(item('Bring forward'));assert.deepEqual(stored().pages[0].placements[0].overlays.map(o=>o.id),[original.id,copy.id]);
   context(surface());await user.click(item('Delete'));assert.equal(stored().pages[0].placements[0].overlays.length,1);
   await user.click(screen.getByRole('button',{name:'Close',exact:true}));openPanel(2);
   const stage=document.querySelector('.panel-editor-stage');stage.getBoundingClientRect=()=>({left:0,top:0,width:500,height:500});context(stage);await user.click(item('Paste'));
@@ -90,5 +108,13 @@ try {
 
   context(surface());fireEvent.keyDown(window,{key:'End'});assert.equal(document.activeElement.textContent,'Delete');fireEvent.keyDown(window,{key:'Escape'});assert.equal(screen.queryByRole('menu'),null);
   assert.equal(networkRequests,0);
-  cleanup();console.log('PASS: mode menus, copy/duplicate/paste across panels, clipboard text, selected Bold/Italic/Underline, preserved selection, per-node sharp/smooth, delete limits, Escape ordering, keyboard menus and backup.');
+  const {zoomEditorView,EditorViewport}=await local('EditorViewport');
+  const view={scale:2,x:20,y:-30},point={x:100,y:50},zoomed=zoomEditorView(view,4,point);
+  assert.equal((point.x-zoomed.x)/zoomed.scale,(point.x-view.x)/view.scale);
+  assert.equal((point.y-zoomed.y)/zoomed.scale,(point.y-view.y)/view.scale);
+  assert.equal(zoomEditorView(view,100).scale,8);assert.equal(zoomEditorView(view,0).scale,.25);
+  cleanup();render(React.createElement(EditorViewport,{locale:'en',imageEditing:true},React.createElement('div',{className:'panel-editor-stage'})));
+  fireEvent.wheel(document.querySelector('.editor-viewport'),{ctrlKey:true,deltaY:-200});assert.equal(viewText(),'100%','image editing wheel remains reserved for image placement');
+  await user.click(within(viewControls()).getByRole('button',{name:'Zoom in',exact:true}));assert.equal(viewText(),'125%','explicit view controls remain independent in image mode');
+  cleanup();console.log('PASS: view zoom/pan/reset without model writes, image-wheel separation, stacking controls, mode menus, copy/duplicate/paste across panels, clipboard text, selected Bold/Italic/Underline, preserved selection, per-node sharp/smooth, delete limits, Escape ordering, keyboard menus and backup.');
 }finally{globalThis.fetch=nativeFetch;rmSync(temporary,{recursive:true,force:true});dom.window.close();}

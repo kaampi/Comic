@@ -102,9 +102,17 @@ try {
   assert.equal([...inner.keys()][0],'mimetype');assert.equal(decode(inner.get('mimetype')),'application/vnd.adobe.indesign-idml-package');
   const docs=new Map([...inner].filter(([p])=>p.endsWith('.xml')).map(([p,b])=>[p,parse(b)]));
   const design=docs.get('designmap.xml'),spreadRefs=[...design.getElementsByTagName('idPkg:Spread')];
-  assert.equal(design.querySelectorAll('Layer').length,5);assert.equal(spreadRefs.length,2);
+  assert.equal(design.querySelectorAll('Layer').length,4);assert.equal(spreadRefs.length,2);
   assert.deepEqual(spreadRefs.map(e=>docs.get(e.getAttribute('src')).querySelector('Page').getAttribute('Name')),['1','2']);
   for(const e of [...design.querySelectorAll('[src]')])assert.ok(inner.has(e.getAttribute('src')),'all package parts exist');
+  for(const d of docs.values()){
+    const nodes=[...d.querySelectorAll('Polygon,TextFrame')];
+    const names=nodes.map(n=>n.getAttribute('Name'));
+    const lowerText=names.indexOf('Text o&1'),upperShape=names.indexOf('thought thought');
+    if(lowerText<0)continue;
+    assert.ok(upperShape>lowerText,'upper bubble fill follows lower bubble text');
+    assert.equal(nodes[upperShape].getAttribute('ItemLayer'),nodes[lowerText].getAttribute('ItemLayer'),'text and shapes share one layer to preserve overlap');
+  }
   const joined=[...docs.values()].flatMap(d=>[...d.querySelectorAll('Polygon')]).filter(e=>e.getAttribute('Name')==='Connected bubbles linked-a linked-b');
   assert.equal(joined.length,1,'one shared vector fill for linked bubbles');
   assert.equal(joined[0].getAttribute('StrokeColor'),'Swatch/None','no internal strokes on fill');

@@ -79,3 +79,16 @@
 }
 
 .panel-editor-stage .rich-inline-text { width: 100%; max-height: 100%; overflow: auto; padding: 0; margin: 0; border: 0; background: transparent; outline: 1px dashed var(--form-focus); outline-offset: 2px; white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; letter-spacing: normal; text-transform: none; }
+
+/* View transforms never enter the saved image or overlay geometry. */
+.editor-view-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 10px 18px; flex-shrink: 0; font-size: 13px; }
+.editor-view-controls button { min-width: 32px; min-height: 30px; }
+.editor-view-controls output { min-width: 48px; text-align: center; font-variant-numeric: tabular-nums; }
+.editor-view-controls small { color: var(--text-muted); }
+.editor-viewport { overflow: hidden; touch-action: none; overscroll-behavior: contain; }
+.editor-view-transform { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; transform-origin: center; flex-shrink: 0; }
+.editor-viewport.is-pan-ready, .editor-viewport.is-pan-ready * { cursor: grab !important; }
+.editor-viewport.is-panning, .editor-viewport.is-panning * { cursor: grabbing !important; user-select: none; }
+.editor-view-transform .bubble-shape-node { r: calc(.8px / var(--editor-view-scale)); }
+.editor-view-transform .bubble-connection-handle { r: calc(.9px / var(--editor-view-scale)); }
+.editor-view-transform .connection-hit-area { r: calc(1.8px / var(--editor-view-scale)); }

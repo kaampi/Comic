@@ -300,3 +300,23 @@ function computeConnectedBubbleGeometry(group: TextOverlay[], metrics?: LayerTex
   return {polygons:outlines,boundary:boundary.filter((_,i)=>!slivers.has(i)),fillPath,strokePath:fillPath};
 }
 
+
+// Connected bubbles are one painting/stacking unit. The first member fixes its depth.
+export function overlayStack(overlays: TextOverlay[]): TextOverlay[][] {
+  const linked = bubbleGroups(overlays), seen = new Set<string>();
+  return overlays.flatMap(o => {
+    if (seen.has(o.id)) return [];
+    const group = linked.find(g => g.some(b => b.id === o.id)) ?? [o];
+    group.forEach(b => seen.add(b.id));
+    return [group];
+  });
+}
+export type OverlayStackMove = 'front' | 'forward' | 'backward' | 'back';
+export function reorderOverlays(overlays: TextOverlay[], id: string, move: OverlayStackMove): TextOverlay[] {
+  const stack = overlayStack(overlays), index = stack.findIndex(g => g.some(o => o.id === id));
+  if (index < 0) return overlays;
+  const next = move === 'front' ? stack.length - 1 : move === 'back' ? 0 : Math.max(0, Math.min(stack.length - 1, index + (move === 'forward' ? 1 : -1)));
+  if (next === index) return overlays;
+  const [group] = stack.splice(index, 1); stack.splice(next, 0, group);
+  return stack.flat();
+}

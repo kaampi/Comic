@@ -8,7 +8,7 @@ import { pageLayerTextMetrics } from "./pageTypography";
 import { overlayFont } from "./overlayTypography";
 import { visibleShapeEdges, panelShapePoints, shapedPanel } from "./panelShape";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ConnectedBubbles } from "./ConnectedBubbles";
+import { StackedOverlays } from "./ConnectedBubbles";
 import { bubbleGroups } from "./bubbleConnections";
 import { SvgOverlay } from "./SvgOverlay";
 import type { ComicProject, PageLayer } from "./project";
@@ -70,7 +70,7 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
       const transform=[layer.image.rotation ? `rotate(${layer.image.rotation} ${cx} ${cy})` : "", layer.image.flipX || layer.image.flipY ? `translate(${cx} ${cy}) scale(${layer.image.flipX?-1:1} ${layer.image.flipY?-1:1}) translate(${-cx} ${-cy})` : ""].filter(Boolean).join(" ");
       body.push(`<image href="${xml(url)}" x="${x+placed.x}" y="${y+placed.y}" width="${placed.width}" height="${placed.height}" preserveAspectRatio="none"${transform ? ` transform="${transform}"` : ""}/>`);
     }
-    let overlays=paint.text?renderToStaticMarkup(<svg x={x} y={y} width={w} height={h} viewBox="0 0 100 100" preserveAspectRatio="none"><ConnectedBubbles overlays={layer.overlays??[]} textMetrics={pageLayerTextMetrics(project,page,layer)}/> {(layer.overlays??[]).map(o=><SvgOverlay key={o.id} overlay={o} textMetrics={pageLayerTextMetrics(project,page,layer)} hideShape={bubbleGroups(layer.overlays??[]).some(g=>g.some(b=>b.id===o.id))}/>)}</svg>):"";
+    let overlays=paint.text?renderToStaticMarkup(<svg x={x} y={y} width={w} height={h} viewBox="0 0 100 100" preserveAspectRatio="none"><StackedOverlays overlays={layer.overlays??[]} textMetrics={pageLayerTextMetrics(project,page,layer)}>{(layer.overlays??[]).map(o=><SvgOverlay key={o.id} overlay={o} textMetrics={pageLayerTextMetrics(project,page,layer)} hideShape={bubbleGroups(layer.overlays??[]).some(g=>g.some(b=>b.id===o.id))}/>)}</StackedOverlays></svg>):"";
     // Non-scaling strokes stay proportional to the canonical 700px page at every DPI.
     overlays=overlays.replace(/<[^>]+vector-effect="non-scaling-stroke"[^>]*>/g,tag=>tag.replace(/stroke-width="([^"]+)"/,(_,v)=>`stroke-width="${Number(v)*outputScale}"`));
     body.push(overlays,"</g>");

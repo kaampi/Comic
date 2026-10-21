@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode, type PointerEvent as React
 import type { BubbleLink, TextOverlay } from "./project";
 import type { LayerTextMetrics } from "./pageTypography";
 import type { Locale } from "./settings";
-import { ConnectedBubbles } from "./ConnectedBubbles";
+import { StackedOverlays } from "./ConnectedBubbles";
 import { bubbleConnectionControls, moveConnectionHandle, type ConnectionHandle } from "./bubbleConnections";
 
 const labels = {
@@ -53,8 +53,7 @@ export function BubbleConnectionEditor({ overlays, selectedId, textMetrics, loca
     window.addEventListener('keydown', keydown, true);
   };
   return <>
-    <ConnectedBubbles overlays={preview} textMetrics={textMetrics}/>
-    {children}
+    <StackedOverlays overlays={preview} textMetrics={textMetrics}>{children}</StackedOverlays>
     <g className="bubble-connection-handles">
       {links.map(({ source, target, link }, index) => {
         if (!target) return null;

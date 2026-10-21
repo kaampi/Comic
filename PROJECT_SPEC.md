@@ -416,3 +416,10 @@ I textredigeraren visar högerklick på en bubbla Redigera text, Redigera bubbla
 Vid textredigering bevarar menyn textmarkeringen och erbjuder Avsluta textredigering, Fet, Kursiv, Understruken, Klipp ut, Kopiera och Klistra in. Formatering gäller markeringen, eller hela texten om inget är markerat. Intern textkopiering bevarar typografin; extern text klistras in som vanlig text. Kursiv och understrykning sparas per textrange och används i visning, direktredigering, radmätning, backup och export.
 
 I formredigering erbjuder högerklick på en nod Ta bort nod och Gör skarp/Gör mjuk för just den noden. Högerklick på konturen erbjuder Lägg till nod här. Avsluta formredigering finns i båda menyerna. Minst tre noder och en giltig, ej självkorsande kontur krävs. Escape stänger först en öppen meny, ångrar annars pågående noddrag, eller avslutar aktiv text-/formredigering utan att stänga redigeringsfönstret. Textändringar behålls när textläget avslutas. Menyer stöder piltangenter, Home/End och Escape; synliga knappar finns kvar.
+
+
+### Visningszoom och bubblornas lagerordning (2026-10-21)
+
+Rutans och de sidomfattande lagrens redigerare har separat visningszoom 25–800 %, Anpassa och panorering med mellanslag + dra eller mittenknappen. Ctrl/Command + scroll zoomar runt pekaren utanför Redigera bild; i bildläget behåller gesten sin befintliga funktion för bildplacering. Visningszoom ändrar aldrig projektets bild-, text- eller formgeometri och följer inte med i export. Varje öppning börjar med anpassad vy.
+
+Bubblans högerklicksmeny erbjuder Lägg överst, Flytta framåt, Flytta bakåt och Lägg underst inom dess bildruta eller sidomfattande lager. Sammankopplade bubblor bildar en gemensam lagernivå, förankrad vid första medlemmen i den sparade ordningen. Kontur och text målas tillsammans per lagernivå. Ordningen sparas i befintlig overlaylista och följer backup, sidvisning och export. IDML samlar text, bubblor och SFX på samma redigerbara lager för att överlappningen ska bevaras.
