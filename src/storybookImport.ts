@@ -90,6 +90,12 @@ export function parseStoryBookExport(raw: string): StoryBookImport {
     throw err;
   }
 
+  // Older installed StoryCore versions strip the new context fields entirely.
+  // Stop before mapping scenes rather than crashing or silently losing context.
+  if (manuscript.chapters.some(chapter => !Array.isArray(chapter.scenes))) {
+    throw new Error("StoryCore-installationen är för gammal. Stäng ComicBook AI, kör npm install i ComicBook-AI-mappen och starta appen igen. Läs sedan in exportfilen på nytt.");
+  }
+
   const chapterIds=manuscript.chapters.map(c=>c.id),sceneIds=manuscript.chapters.flatMap(c=>c.scenes.map(s=>s.id));
   if(new Set(chapterIds).size!==chapterIds.length||new Set(sceneIds).size!==sceneIds.length)throw new Error("Duplicate chapter or scene IDs in export.");
   const chapters=[...manuscript.chapters].sort((a,b)=>a.sequence_index-b.sequence_index);
