@@ -19,6 +19,7 @@
     "test:panel-move": "node scripts/test-panel-move.mjs",
     "test:panel-pool": "node scripts/test-panel-pool.mjs",
     "test:foreground": "node scripts/test-foreground.mjs",
+    "test:free-form": "node scripts/test-free-form.mjs",
     "test:export": "node scripts/test-export.mjs",
     "test:export-preflight": "node scripts/test-export-preflight.mjs",
     "test:style-modes": "node scripts/test-style-modes.mjs",

@@ -2,7 +2,7 @@ import type { ShapePoint } from "./panelShape";
 
 // A filled ink ribbon, shared by the preview and every export. Noise depends
 // only on the stable panel ID, never on render order or the current time.
-export function handDrawnBorderPath(points: ShapePoint[], width: number, strength: number, id: string): string {
+export function handDrawnBorderPath(points: ShapePoint[], width: number, strength: number, id: string, hidden: number[] = []): string {
   if (width <= 0 || points.length < 3) return "";
   const amount = Math.max(0, Math.min(100, strength)) / 100;
   let seed = 2166136261;
@@ -16,6 +16,7 @@ export function handDrawnBorderPath(points: ShapePoint[], width: number, strengt
   const pair = (p: ShapePoint) => `${number(p.x)} ${number(p.y)}`;
   const paths: string[] = [];
   points.forEach((a, edge) => {
+    if(hidden.includes(edge))return;
     const b = points[(edge + 1) % points.length], dx = b.x - a.x, dy = b.y - a.y, length = Math.hypot(dx, dy);
     if (length < 1e-7) return;
     const nx = dy / length, ny = -dx / length, count = Math.max(2, Math.ceil((length - 1e-6) / 18));

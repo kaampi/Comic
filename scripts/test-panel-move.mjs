@@ -207,10 +207,11 @@ try {
     up(0,1);assert.equal(JSON.stringify(current()),checkpoint,'cancel leaves album untouched');
   }
   down();await pause(440);move(0,1);
-  await user.click(screen.getByRole('switch',{name:'Free shape'}));
+  await user.click(screen.getByText('Free form',{selector:'summary'}));
+  await user.click(screen.getByRole('button',{name:'Edit shape'}));
   assert.equal(document.querySelector('.is-panel-moving'),null,'changing mode cancels drag');up(0,1);
   down();await pause(440);assert.equal(document.querySelector('.is-panel-moving'),null,'shape editing uses corner tools immediately');up();
-  await user.click(screen.getByRole('switch',{name:'Free shape'}));
+  await user.click(screen.getByRole('button',{name:'Finish editing'}));
   down();await pause(440);move(0,1);
   await user.click(screen.getByRole('button',{name:'Next page',exact:true}));
   assert.equal(document.querySelector('.is-panel-moving'),null,'page navigation cancels drag');up(0,1);
