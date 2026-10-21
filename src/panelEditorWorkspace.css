@@ -89,6 +89,9 @@
 .editor-view-transform { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; transform-origin: center; flex-shrink: 0; }
 .editor-viewport.is-pan-ready, .editor-viewport.is-pan-ready * { cursor: grab !important; }
 .editor-viewport.is-panning, .editor-viewport.is-panning * { cursor: grabbing !important; user-select: none; }
-.editor-view-transform .bubble-shape-node { r: calc(.8px / var(--editor-view-scale)); }
+
 .editor-view-transform .bubble-connection-handle { r: calc(.9px / var(--editor-view-scale)); }
 .editor-view-transform .connection-hit-area { r: calc(1.8px / var(--editor-view-scale)); }
+
+.bubble-curve-handle { outline: none; cursor: grab; touch-action: none; }
+.bubble-curve-handle:focus { fill: #171411; }

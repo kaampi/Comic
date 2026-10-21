@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { TextOverlay } from "./project";
 import type { Locale } from "./settings";
-import { bubbleNodes, customBubbleBodyPath, validBubbleShape, type BubblePoint } from "./bubbleShape";
+import { bubbleNodes, bubbleNodeHandles, moveBubbleHandle, insertBubbleNode, customBubbleBodyPath, validBubbleShape, type BubblePoint } from "./bubbleShape";
+import { EditorViewScale } from "./EditorViewport";
 import { MAX_SHAPE_NODES } from "./panelShape";
 type Tools={overlay:TextOverlay;locale:Locale;editing:boolean;onEditing:(value:boolean)=>void;selected:number|null;onSelected:(value:number|null)=>void;snapping:boolean;onSnapping:(value:boolean)=>void;onChange:(patch:Partial<TextOverlay>)=>void};
 export function BubbleShapeControls({overlay:o,locale,editing,onEditing,selected,onSelected,snapping,onSnapping,onChange}:Tools) {
@@ -18,13 +19,21 @@ export function BubbleShapeControls({overlay:o,locale,editing,onEditing,selected
   </details>;
 }
 export function BubbleShapeHandles({overlay:o,locale,selected,onSelected,snapping,onChange}:Pick<Tools,"overlay"|"locale"|"selected"|"onSelected"|"snapping"|"onChange">) {
+  const groupRef=useRef<SVGGElement>(null),viewScale=useContext(EditorViewScale);
+  const [pixelMatrix,setPixelMatrix]=useState('matrix(.16 0 0 .16 0 0)');
+  useLayoutEffect(()=>{
+    const measure=()=>{const m=groupRef.current?.getScreenCTM?.();if(!m)return;const det=m.a*m.d-m.b*m.c;if(Math.abs(det)<1e-10)return;setPixelMatrix(`matrix(${m.d/det} ${-m.b/det} ${-m.c/det} ${m.a/det} 0 0)`);};
+    measure();const svg=groupRef.current?.ownerSVGElement,observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(measure):undefined;
+    if(svg)observer?.observe(svg);window.addEventListener('resize',measure);
+    return ()=>{observer?.disconnect();window.removeEventListener('resize',measure);};
+  },[viewScale,o.rotation,o.width,o.height]);
   const stop=useRef<(()=>void)|null>(null),callback=useRef(onChange);callback.current=onChange;
   useEffect(()=>()=>stop.current?.(),[o.id]);
   const points=bubbleNodes(o),smooth=o.bubbleShapeSmooth!==false;
   const local=(x:number,y:number,box:DOMRect)=>{const dx=(x-box.left)/box.width*100-o.x-o.width/2,dy=(y-box.top)/box.height*100-o.y-o.height/2,a=-o.rotation*Math.PI/180;return {x:(dx*Math.cos(a)-dy*Math.sin(a)+o.width/2)/o.width*4,y:(dx*Math.sin(a)+dy*Math.cos(a)+o.height/2)/o.height*4};};
   const constrained=(p:BubblePoint)=>{const clamp=(v:number)=>Math.max(0,Math.min(4,snapping?Math.round(v*20)/20:v));return {x:clamp(p.x),y:clamp(p.y)};};
-  const begin=(e:React.PointerEvent<SVGCircleElement>,index:number)=>{
-    if(e.button!==0)return;e.preventDefault();e.stopPropagation();stop.current?.();onSelected(index);
+  const begin=(e:React.PointerEvent<SVGElement>,index:number)=>{
+    if(e.button!==0)return;e.preventDefault();e.stopPropagation();stop.current?.();onSelected(index);groupRef.current?.querySelector<SVGElement>(`[data-bubble-node="${index}"].bubble-shape-node`)?.focus();
     const svg=e.currentTarget.ownerSVGElement,box=svg?.getBoundingClientRect();if(!box?.width||!box.height)return;
     const pointer=e.pointerId,original=o.bubbleShapePoints;let changed=false;
     const move=(ev:PointerEvent)=>{if(ev.pointerId!==pointer)return;const p=constrained(local(ev.clientX,ev.clientY,box)),next=points.map((v,i)=>i===index?{...v,...p}:v);if(validBubbleShape(next,smooth)){changed=true;callback.current({bubbleShapePoints:next});}};
@@ -34,15 +43,45 @@ export function BubbleShapeHandles({overlay:o,locale,selected,onSelected,snappin
     const key=(ev:KeyboardEvent)=>{if(ev.key==='Escape'){ev.preventDefault();ev.stopImmediatePropagation();cancel();}};
     stop.current=cancel;window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',cancel);window.addEventListener('blur',cancel);window.addEventListener('keydown',key,true);
   };
-  return <g className="bubble-shape-handles" transform={`translate(${o.x} ${o.y}) rotate(${o.rotation} ${o.width/2} ${o.height/2})`} onClick={e=>e.stopPropagation()} onDoubleClick={e=>e.stopPropagation()}>
+  const beginHandle=(e:React.PointerEvent<SVGElement>,index:number,side:'handleIn'|'handleOut')=>{
+    if(e.button!==0)return;e.preventDefault();e.stopPropagation();stop.current?.();groupRef.current?.querySelector<SVGElement>(`[data-bubble-handle="${side}"]`)?.focus();
+    const svg=e.currentTarget.ownerSVGElement,box=svg?.getBoundingClientRect();if(!box?.width||!box.height)return;
+    const pointer=e.pointerId,original=o.bubbleShapePoints;let changed=false;
+    const move=(ev:PointerEvent)=>{if(ev.pointerId!==pointer)return;const next=moveBubbleHandle(o,index,side,local(ev.clientX,ev.clientY,box));if(next){changed=true;callback.current({bubbleShapePoints:next});}};
+    const clean=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',cancel);window.removeEventListener('blur',cancel);window.removeEventListener('keydown',key,true);stop.current=null;};
+    const up=(ev:PointerEvent)=>{if(ev.pointerId===pointer)clean();};
+    const cancel=()=>{clean();if(changed)callback.current({bubbleShapePoints:original});};
+    const key=(ev:KeyboardEvent)=>{if(ev.key==='Escape'){ev.preventDefault();ev.stopImmediatePropagation();cancel();}};
+    stop.current=cancel;window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',cancel);window.addEventListener('blur',cancel);window.addEventListener('keydown',key,true);
+  };
+  const active=selected===null?undefined:points[selected],handles=active&&(active.smooth??smooth)?bubbleNodeHandles(points,selected!):undefined;
+  return <g ref={groupRef} className="bubble-shape-handles" transform={`translate(${o.x} ${o.y}) rotate(${o.rotation} ${o.width/2} ${o.height/2})`} onClick={e=>e.stopPropagation()} onDoubleClick={e=>e.stopPropagation()}>
     <path className="bubble-shape-edge" d={customBubbleBodyPath(o)} fill="none" stroke="transparent" strokeWidth="12" vectorEffect="non-scaling-stroke" style={{pointerEvents:'stroke',cursor:'crosshair'}} onPointerDown={e=>{e.preventDefault();e.stopPropagation();}} onDoubleClick={e=>{
       e.preventDefault();e.stopPropagation();if(points.length>=MAX_SHAPE_NODES)return;
       const box=e.currentTarget.ownerSVGElement!.getBoundingClientRect();if(!box.width||!box.height)return;const p=constrained(local(e.clientX,e.clientY,box));
-      let index=0,best=Infinity;
-      // Compare in displayed coordinates, including the bubble aspect ratio.
-      points.forEach((a,i)=>{const b=points[(i+1)%points.length],dx=(b.x-a.x)*o.width*box.width,dy=(b.y-a.y)*o.height*box.height,t=Math.max(0,Math.min(1,((p.x-a.x)*o.width*box.width*dx+(p.y-a.y)*o.height*box.height*dy)/Math.max(1e-8,dx*dx+dy*dy))),distance=Math.hypot((p.x-a.x-t*(b.x-a.x))*o.width*box.width,(p.y-a.y-t*(b.y-a.y))*o.height*box.height);if(distance<best){best=distance;index=i;}});
-      const next=[...points.slice(0,index+1),p,...points.slice(index+1)];if(validBubbleShape(next,smooth)){onChange({bubbleShapePoints:next});onSelected(index+1);}
+      const added=insertBubbleNode(o,p);if(added){onChange({bubbleShapePoints:added.points});onSelected(added.index);}
     }}/>
-    {points.map((p,i)=><circle key={i} data-bubble-node={i} className={`bubble-shape-node${selected===i?' is-selected':''}`} cx={p.x*o.width/4} cy={p.y*o.height/4} r=".8" fill={selected===i?'#2473a6':'#fffdf7'} stroke="#2473a6" strokeWidth="1.5" vectorEffect="non-scaling-stroke" style={{pointerEvents:'all',cursor:'grab',touchAction:'none'}} role="button" tabIndex={0} aria-label={`${locale==='sv'?'Bubbelnod':'Bubble node'} ${i+1}`} onFocus={()=>onSelected(i)} onPointerDown={e=>begin(e,i)} onKeyDown={e=>{const dx=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0,dy=e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0;if(!dx&&!dy)return;e.preventDefault();e.stopPropagation();const step=snapping?.05:.02,next=points.map((v,j)=>j===i?{...v,...constrained({x:v.x+dx*step,y:v.y+dy*step})}:v);if(validBubbleShape(next,smooth))onChange({bubbleShapePoints:next});}}/>)}
+    {points.map((p,i)=><g key={`hit-${i}`} data-bubble-node={i} transform={`translate(${p.x*o.width/4} ${p.y*o.height/4}) ${pixelMatrix}`} onPointerDown={e=>begin(e,i)}><circle r="10" fill="transparent" style={{pointerEvents:'all',cursor:'grab'}}/></g>)}
+    {active&&handles?<g className="bubble-curve-handles">{(['handleIn','handleOut'] as const).map(side=>{
+      const h=handles[side],x=(active.x+h.x)*o.width/4,y=(active.y+h.y)*o.height/4;
+      return <g key={side}>
+        <line x1={active.x*o.width/4} y1={active.y*o.height/4} x2={x} y2={y} stroke="#2473a6" strokeWidth="1" vectorEffect="non-scaling-stroke" style={{pointerEvents:'none'}}/>
+        <g transform={`translate(${x} ${y}) ${pixelMatrix}`}>
+          <circle className="bubble-curve-hit" r="10" fill="transparent" onPointerDown={e=>beginHandle(e,selected!,side)}/>
+          <circle className="bubble-curve-handle" data-bubble-handle={side} r="3" fill="#2473a6" stroke="#fffdf7" strokeWidth="1" role="button" tabIndex={0} aria-label={`${locale==='sv'?'Kurvhandtag':'Curve handle'} ${side==='handleIn'?1:2}`} onPointerDown={e=>beginHandle(e,selected!,side)} onKeyDown={e=>{
+            const dx=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0,dy=e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0;if(!dx&&!dy)return;e.preventDefault();e.stopPropagation();
+            const step=e.shiftKey?.1:.02,next=moveBubbleHandle(o,selected!,side,{x:active.x+h.x+dx*step,y:active.y+h.y+dy*step});if(next)onChange({bubbleShapePoints:next});
+          }}/>
+        </g>
+      </g>;
+    })}</g>:null}
+    {points.map((p,i)=>{
+      const isSmooth=p.smooth??smooth;
+      return <g key={i} data-bubble-node={i} transform={`translate(${p.x*o.width/4} ${p.y*o.height/4}) ${pixelMatrix}`} onPointerDown={e=>begin(e,i)}>
+        <path data-bubble-node={i} data-node-kind={isSmooth?'smooth':'sharp'} className={`bubble-shape-node${selected===i?' is-selected':''}`} d={isSmooth?'M -3 0 A 3 3 0 1 0 3 0 A 3 3 0 1 0 -3 0 Z':'M -3 -3 H 3 V 3 H -3 Z'} fill={selected===i?'#2473a6':'#fffdf7'} stroke="#2473a6" strokeWidth="1" style={{pointerEvents:'all',cursor:'grab',touchAction:'none'}} role="button" tabIndex={0} aria-label={`${locale==='sv'?'Bubbelnod':'Bubble node'} ${i+1}`} onFocus={()=>onSelected(i)} onKeyDown={e=>{
+          const dx=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0,dy=e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0;if(!dx&&!dy)return;e.preventDefault();e.stopPropagation();const step=snapping?.05:.02,next=points.map((v,j)=>j===i?{...v,...constrained({x:v.x+dx*step,y:v.y+dy*step})}:v);if(validBubbleShape(next,smooth))onChange({bubbleShapePoints:next});
+        }}/>
+      </g>;
+    })}
   </g>;
 }

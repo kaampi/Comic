@@ -423,3 +423,10 @@ I formredigering erbjuder högerklick på en nod Ta bort nod och Gör skarp/Gör
 Rutans och de sidomfattande lagrens redigerare har separat visningszoom 25–800 %, Anpassa och panorering med mellanslag + dra eller mittenknappen. Ctrl/Command + scroll zoomar runt pekaren utanför Redigera bild; i bildläget behåller gesten sin befintliga funktion för bildplacering. Visningszoom ändrar aldrig projektets bild-, text- eller formgeometri och följer inte med i export. Varje öppning börjar med anpassad vy.
 
 Bubblans högerklicksmeny erbjuder Lägg överst, Flytta framåt, Flytta bakåt och Lägg underst inom dess bildruta eller sidomfattande lager. Sammankopplade bubblor bildar en gemensam lagernivå, förankrad vid första medlemmen i den sparade ordningen. Kontur och text målas tillsammans per lagernivå. Ordningen sparas i befintlig overlaylista och följer backup, sidvisning och export. IDML samlar text, bubblor och SFX på samma redigerbara lager för att överlappningen ska bevaras.
+
+
+### Kurvhandtag för fria textbubblor (2026-10-21)
+
+Skarpa noder visas som små fyrkanter och mjuka noder som cirklar, med större osynlig träffyta. Nodmarkörer och handtagsändar har fast skärmstorlek oavsett visningszoom, proportioner och rotation. Bara markerad mjuk nod visar sina två kurvhandtag. Handtagen hålls i linje med varandra, med oberoende längd på varje sida. Dragning samt piltangenter (Shift för större steg) ändrar kurvan. Escape, pointercancel och fönstrets fokusförlust återställer pågående drag.
+
+Handtag sparas som vektorer relativt noden i bubblans normaliserade koordinater och följer nodflyttning, bubbelstorlek och rotation. Äldre noder utan sparade handtag behåller tidigare automatiska kurvor exakt tills de justeras. Skarp nod använder inte sina handtag; de finns kvar om noden åter görs mjuk. Grundformsåterställning tar bort egna noder och handtag. Samma geometri används för kontur, svansfäste, förbindelser, textflöde och export. Backup bevarar handtagen och avvisar ogiltiga eller icke ändliga värden.

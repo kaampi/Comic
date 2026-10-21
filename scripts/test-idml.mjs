@@ -65,7 +65,7 @@ try {
   const noFrameResult=await exportAlbum(frameless,options,()=>{}),noFrameOuter=archive(new Uint8Array(await noFrameResult.blob.arrayBuffer())),noFrameInner=archive(noFrameOuter.get('Test -album-.idml'));
   const noFrameSpread=parse([...noFrameInner].find(([p])=>p.startsWith('Spreads/'))[1]);
   assert.equal([...noFrameSpread.querySelectorAll('Polygon')].filter(e=>e.getAttribute('Name')==='Panel border layer').length,0,'fully hidden borders create no empty IDML geometry');
-  const bubblePoints=[{x:.2,y:.2},{x:3.8,y:.2},{x:3.8,y:3.8},{x:2,y:2.2},{x:.2,y:3.8}];
+  const bubblePoints=[{x:.2,y:.2,handleIn:{x:-.1,y:.5},handleOut:{x:.1,y:-.5}},{x:3.8,y:.2},{x:3.8,y:3.8},{x:2,y:2.2},{x:.2,y:3.8}];
   const freeBubbleProject={...project,pages:[{...project.pages[0],placements:[{...layer,overlays:['speech','thought','caption'].map((type,i)=>({...overlay,id:'free-'+i,type,bubbleShapePoints:bubblePoints,textStyles:[{start:0,end:2,fontWeight:700,fontStyle:'italic',underline:true}]}))}]}]};
   const freeBubbleResult=await exportAlbum(freeBubbleProject,options,()=>{}),freeOuter=archive(new Uint8Array(await freeBubbleResult.blob.arrayBuffer())),freeInner=archive(freeOuter.get('Test -album-.idml'));
   const freeSpread=parse([...freeInner].find(([p])=>p.startsWith('Spreads/'))[1]);

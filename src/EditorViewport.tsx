@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
+import { createContext, useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import type { Locale } from "./settings";
+
+export const EditorViewScale = createContext(1);
 
 export type EditorView = { scale: number; x: number; y: number };
 export const fittedView: EditorView = { scale: 1, x: 0, y: 0 };
@@ -55,7 +57,7 @@ export function EditorViewport({ children, locale, imageEditing }: { children: R
       const start = drag.current; if (!start || e.pointerId !== start.id) return;
       e.preventDefault(); e.stopPropagation(); setView({ ...start.view, x: start.view.x + e.clientX - start.x, y: start.view.y + e.clientY - start.y });
     }} onPointerUp={e => { if (drag.current?.id === e.pointerId) { drag.current = undefined; setPanning(false); if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId); } }} onPointerCancel={() => { drag.current = undefined; setPanning(false); }} onLostPointerCapture={() => { drag.current = undefined; setPanning(false); }}>
-      <div className="editor-view-transform" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`, '--editor-view-scale': view.scale } as CSSProperties}>{children}</div>
+      <div className="editor-view-transform" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`, '--editor-view-scale': view.scale } as CSSProperties}><EditorViewScale.Provider value={view.scale}>{children}</EditorViewScale.Provider></div>
     </div>
   </>;
 }

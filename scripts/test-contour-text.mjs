@@ -37,6 +37,11 @@ try{
     const markup=renderToStaticMarkup(React.createElement(SvgOverlay,{overlay:o,textMetrics:metrics}));
     for(const row of layout.rows)for(const run of row.runs)assert.ok(markup.includes(`x="${run.x}"`));
   }
+  const {moveBubbleHandle}=await import(pathToFileURL(path.join(dir,'bubbleShape.mjs')));
+  const curved={...base,bubbleShapeSmooth:true,bubbleShapePoints:[{x:.2,y:.2},{x:3.8,y:.2},{x:3.8,y:3.8},{x:.2,y:3.8}]};
+  const manual=moveBubbleHandle(curved,1,'handleOut',{x:3.5,y:1.5});assert.ok(manual);
+  const edited={...curved,bubbleShapePoints:manual},editedLayout=richTextLayout(edited,metrics);checkRows(edited,editedLayout);
+  assert.notDeepEqual(textBodyPolygon(curved,400,260),textBodyPolygon(edited,400,260),'text space follows the edited Bezier contour');
   const plain=richTextLayout(base,metrics);assert.ok(new Set(plain.rows.map(r=>Math.round(r.available))).size>1,'rows narrow at the notch');
   const huge={...base,text:'A very long text '.repeat(100),fontSize:18},before=JSON.stringify(huge),overflow=richTextLayout(huge,metrics);
   assert.ok(overflow.overflow);assert.ok(overflow.overflowStart<huge.text.length);assert.equal(JSON.stringify(huge),before,'overflow never changes source or point size');

@@ -1,7 +1,7 @@
 import type { TextOverlay } from "./project";
 import { validPanelShape, segmentsMeet, type ShapePoint } from "./panelShape";
 import { thoughtCloudGeometry } from "./thoughtBubble";
-export type BubblePoint = ShapePoint & {smooth?:boolean};
+export type BubblePoint = ShapePoint & {smooth?:boolean;handleIn?:ShapePoint;handleOut?:ShapePoint};
 const xy=(p:BubblePoint)=>`${p.x} ${p.y}`;
 export function bubbleNodes(o:TextOverlay):BubblePoint[] {
   if(validPanelShape(o.bubbleShapePoints))return o.bubbleShapePoints!;
@@ -17,22 +17,42 @@ export function bubbleNodes(o:TextOverlay):BubblePoint[] {
   const exponent=2+(1-Math.max(0,Math.min(100,o.roundness??60))/100)*18;
   return Array.from({length:count},(_,i)=>{const a=i*Math.PI*2/count,ca=Math.cos(a),sa=Math.sin(a),r=shout?(i%2?.72:1):1;return {x:2+rx*(shout?ca:Math.sign(ca)*Math.abs(ca)**(2/exponent))*r,y:2+ry*(shout?sa:Math.sign(sa)*Math.abs(sa)**(2/exponent))*r};});
 }
-function segments(points:BubblePoint[],smooth:boolean) {
+// Handle vectors are relative to the anchor, in the same normalized coordinates.
+// Missing vectors retain the legacy automatic tangent and segment-specific length.
+export function bubbleNodeHandles(points:BubblePoint[],index:number) {
+  const p=points[index],prev=points[(index+points.length-1)%points.length],next=points[(index+1)%points.length];
+  const dx=next.x-prev.x,dy=next.y-prev.y,length=Math.hypot(dx,dy);
+  const automatic=(neighbor:BubblePoint,sign:number)=>{const size=Math.min(Math.hypot(neighbor.x-p.x,neighbor.y-p.y)/4,length/6)/Math.max(1e-10,length);return {x:dx*size*sign,y:dy*size*sign};};
+  return {handleIn:p.handleIn??automatic(prev,-1),handleOut:p.handleOut??automatic(next,1)};
+}
+export function bubbleSegments(points:BubblePoint[],smooth:boolean) {
   return points.map((a,i)=>{
-    const b=points[(i+1)%points.length],prev=points[(i+points.length-1)%points.length],after=points[(i+2)%points.length];
-    const handle=(p:BubblePoint,dx:number,dy:number,length:number)=>{const scale=Math.min(length/4,Math.hypot(dx,dy)/6)/Math.max(1e-10,Math.hypot(dx,dy));return {x:p.x+dx*scale,y:p.y+dy*scale};};
-    const length=Math.hypot(b.x-a.x,b.y-a.y);
-    const aSmooth=a.smooth??smooth,bSmooth=b.smooth??smooth;
-    return {a,b,curved:aSmooth||bSmooth,c1:aSmooth?handle(a,b.x-prev.x,b.y-prev.y,length):a,c2:bSmooth?handle(b,a.x-after.x,a.y-after.y,length):b};
+    const j=(i+1)%points.length,b=points[j],aSmooth=a.smooth??smooth,bSmooth=b.smooth??smooth;
+    const out=bubbleNodeHandles(points,i).handleOut,inside=bubbleNodeHandles(points,j).handleIn;
+    return {a,b,curved:aSmooth||bSmooth,c1:aSmooth?{x:a.x+out.x,y:a.y+out.y}:a,c2:bSmooth?{x:b.x+inside.x,y:b.y+inside.y}:b};
   });
 }
 export function bubbleShapeOutline(points:BubblePoint[],smooth=true):BubblePoint[] {
-  return segments(points,smooth).flatMap(({a,b,c1,c2,curved})=>Array.from({length:curved?8:1},(_,i)=>{const t=i/8,u=1-t;return curved?{x:u**3*a.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t**3*b.x,y:u**3*a.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t**3*b.y}:a;}));
+  return bubbleSegments(points,smooth).flatMap(({a,b,c1,c2,curved},i)=>{
+    const count=points[i].handleOut||points[(i+1)%points.length].handleIn?32:8;
+    return Array.from({length:curved?count:1},(_,i)=>{const t=i/count,u=1-t;return curved?{x:u**3*a.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t**3*b.x,y:u**3*a.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t**3*b.y}:a;});
+  });
+}
+export function moveBubbleHandle(o:TextOverlay,index:number,side:'handleIn'|'handleOut',point:ShapePoint) {
+  const points=bubbleNodes(o),p=points[index];if(!p||!(p.smooth??o.bubbleShapeSmooth!==false)||!Number.isFinite(point.x)||!Number.isFinite(point.y))return null;
+  let dx=point.x-p.x,dy=point.y-p.y,length=Math.hypot(dx,dy);
+  if(length>4){dx*=4/length;dy*=4/length;length=4;}
+  const handles=bubbleNodeHandles(points,index),other=side==='handleIn'?'handleOut':'handleIn',old=handles[other];
+  const oppositeLength=Math.hypot(old.x,old.y);
+  // Keep the opposite length independent while rotating both handles together.
+  const opposite=length>1e-8?{x:-dx/length*oppositeLength,y:-dy/length*oppositeLength}:old;
+  const next=points.map((node,i)=>i===index?{...node,[side]:{x:dx,y:dy},[other]:opposite}:node);
+  return validBubbleShape(next,o.bubbleShapeSmooth!==false)?next:null;
 }
 export function validBubbleShape(points:unknown,smooth=true):points is BubblePoint[] {
   if(!validPanelShape(points))return false;
   const nodes=points as BubblePoint[];
-  if(!nodes.every(p=>p.smooth===undefined||typeof p.smooth==="boolean"))return false;
+  if(!nodes.every(p=>(p.smooth===undefined||typeof p.smooth==="boolean")&&[p.handleIn,p.handleOut].every(h=>h===undefined||!!h&&typeof h==='object'&&Number.isFinite(h.x)&&Number.isFinite(h.y)&&Math.abs(h.x)<=8&&Math.abs(h.y)<=8)))return false;
   if(!nodes.some(p=>p.smooth??smooth))return true;
   const outline=bubbleShapeOutline(points,smooth),n=outline.length;
   for(let i=0;i<n;i++)for(let j=i+2;j<n;j++) {
@@ -46,7 +66,7 @@ export function customBubbleOutline(o:TextOverlay) {
 }
 export function customBubbleBodyPath(o:TextOverlay) {
   const points=bubbleNodes(o),physical=(p:BubblePoint)=>xy({x:p.x*o.width/4,y:p.y*o.height/4});
-  return `M ${physical(points[0])} `+segments(points,o.bubbleShapeSmooth!==false).map(({b,c1,c2,curved})=>!curved?`L ${physical(b)}`:`C ${physical(c1)} ${physical(c2)} ${physical(b)}`).join(" ")+" Z";
+  return `M ${physical(points[0])} `+bubbleSegments(points,o.bubbleShapeSmooth!==false).map(({b,c1,c2,curved})=>!curved?`L ${physical(b)}`:`C ${physical(c1)} ${physical(c2)} ${physical(b)}`).join(" ")+" Z";
 }
 // The attachment is the closest rim point in the requested direction. It
 // remains usable even when an inward notch encloses the nominal centre.

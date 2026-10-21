@@ -57,7 +57,7 @@ try {
     assert.deepEqual(groups,overlayStack(overlays).map(g=>g.map(o=>o.id).join(' ')),'export paints the same atomic stacking units as the editor');
     assert.ok(svg.indexOf('connected-bubble-fill')<svg.indexOf('First'),'connected shape precedes its own text');
   }
-  const freePoints=[{x:.2,y:.2},{x:3.8,y:.2},{x:3.8,y:3.8},{x:2,y:2.2},{x:.2,y:3.8}];
+  const freePoints=[{x:.2,y:.2,handleIn:{x:-.1,y:.5},handleOut:{x:.1,y:-.5}},{x:3.8,y:.2},{x:3.8,y:3.8},{x:2,y:2.2},{x:.2,y:3.8}];
   const {customBubblePath}=await import(pathToFileURL(path.join(dir,'bubbleShape.mjs')));
   for(const type of ['speech','thought','caption']){
     const free={...a,type,rotation:25,bubbleShapePoints:freePoints,bubbleShapeSmooth:true};

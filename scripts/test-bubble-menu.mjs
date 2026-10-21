@@ -98,13 +98,14 @@ try {
   context(surface());await user.click(item('Edit bubble shape'));assert.equal(document.querySelectorAll('.bubble-shape-node').length,4);
   const node=()=>screen.getByRole('button',{name:'Bubble node 1',exact:true});context(node());await user.click(item('Make sharp'));assert.equal(first().bubbleShapePoints[0].smooth,false);
   context(node());await user.click(item('Make smooth'));assert.equal(first().bubbleShapePoints[0].smooth,true);
+  fireEvent.keyDown(screen.getByRole('button',{name:'Curve handle 2',exact:true}),{key:'ArrowRight'});assert.ok(first().bubbleShapePoints[0].handleOut,'curve handles persist in the album');assert.deepEqual(parseAlbumBackup(packAlbumBackup(stored())).pages[0].placements[0].overlays[0].bubbleShapePoints,first().bubbleShapePoints,'backup preserves manual handles');
   context(node());await user.click(item('Delete node'));assert.equal(first().bubbleShapePoints.length,3);
   context(node());assert.equal(item('Delete node').disabled,true);fireEvent.keyDown(window,{key:'Escape'});assert.equal(screen.queryByRole('menu'),null);assert.equal(document.querySelectorAll('.bubble-shape-node').length,3,'Escape dismisses menu before leaving mode');
   const outline=document.querySelector('.bubble-shape-edge'),body=first(),a=body.bubbleShapePoints[0],b=body.bubbleShapePoints[1];outline.ownerSVGElement.getBoundingClientRect=()=>({left:0,top:0,width:100,height:100});
   fireEvent.contextMenu(outline,{clientX:body.x+(a.x+b.x)/2*body.width/4,clientY:body.y+(a.y+b.y)/2*body.height/4});await user.click(item('Add node here'));assert.equal(first().bubbleShapePoints.length,4);
   fireEvent.keyDown(window,{key:'Escape'});assert.equal(document.querySelector('.bubble-shape-handles'),null);assert.ok(document.querySelector('.panel-editor-modal'),'Escape finishes shape before closing the editor');
   const backup=parseAlbumBackup(packAlbumBackup(stored()));assert.deepEqual(backup.pages[0].placements[0].overlays,stored().pages[0].placements[0].overlays);
-  for(const bad of [{fontStyle:'oblique'},{underline:'yes'},{bubbleShapePoints:[{x:.2,y:.2,smooth:'yes'},{x:3.8,y:.2},{x:3.8,y:3.8}]}]){const broken=structuredClone(packAlbumBackup(stored()));Object.assign(broken.project.pages[0].placements[0].overlays[0],bad);assert.throws(()=>parseAlbumBackup(broken),/invalid-backup/);}
+  for(const bad of [{fontStyle:'oblique'},{underline:'yes'},{bubbleShapePoints:[{x:.2,y:.2,handleIn:{x:NaN,y:0}},{x:3.8,y:.2},{x:3.8,y:3.8}]},{bubbleShapePoints:[{x:.2,y:.2,smooth:'yes'},{x:3.8,y:.2},{x:3.8,y:3.8}]}]){const broken=structuredClone(packAlbumBackup(stored()));Object.assign(broken.project.pages[0].placements[0].overlays[0],bad);assert.throws(()=>parseAlbumBackup(broken),/invalid-backup/);}
 
   context(surface());fireEvent.keyDown(window,{key:'End'});assert.equal(document.activeElement.textContent,'Delete');fireEvent.keyDown(window,{key:'Escape'});assert.equal(screen.queryByRole('menu'),null);
   assert.equal(networkRequests,0);

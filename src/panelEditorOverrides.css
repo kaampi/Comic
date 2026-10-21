@@ -448,7 +448,7 @@
 /* SVG's native focus halo can scale with the zoomed canvas. Keep focus inside
    the existing marker instead, including focus restored after a node menu. */
 .bubble-shape-node { outline:none; }
-.bubble-shape-node:focus, .bubble-shape-node:focus-visible { outline:none; stroke:#171411; stroke-width:1.5; }
+.bubble-shape-node:focus, .bubble-shape-node:focus-visible { outline:none; stroke:#171411; stroke-width:1; }
 .bubble-shape-edge:hover { stroke:#2473a6; stroke-opacity:.35; }
 
 .bubble-shape-mode-notice {
