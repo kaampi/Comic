@@ -1,3 +1,4 @@
+import { richTextLayout } from "./richText";
 import { isPageWideLayer } from "./pageBackground";
 import type { ComicProject, PageLayer, TextOverlay } from "./project";
 import { albumPageFormat, layerRect, pageDimensions, pageAspect, PAGE_RENDER_WIDTH, PANEL_BORDER } from "./pageFormat";
@@ -13,9 +14,13 @@ export function overlayTextLayout(overlay: TextOverlay, metrics: LayerTextMetric
   const width = overlay.width * metrics.width / 100, height = overlay.height * metrics.height / 100;
   const padding = width * Math.max(0, Math.min(25, overlay.textPadding ?? 4)) / 100;
   const fontSize = (overlay.fontSize ?? (overlay.type === "sfx" ? 28 : 8)) * 25.4 / 72 * PAGE_RENDER_WIDTH / metrics.pageWidthMm;
+  if(overlay.bubbleShapePoints&&overlay.type!=="sfx"){
+    const layout=richTextLayout(overlay,metrics);
+    return {fontSize,textLines:layout.rows.map(row=>overlay.text.slice(row.start,row.end)),textX:layout.rows[0]?.runs[0]?.x??width/2,textY:layout.rows[0]?.y??height/2,width,height,overflow:layout.overflow,contourLayout:layout};
+  }
   const textLines = wrapOverlayTextToWidth(overlay.text, Math.max(1, width - 2 * padding), measureText ?? overlayTextMeasure(overlay, fontSize));
   const align = overlay.textAlign ?? "center";
-  return { fontSize, textLines, textX: align === "left" ? padding : align === "right" ? width - padding : width / 2, textY: height / 2 - (textLines.length - 1) * fontSize * .575, width, height };
+  return { fontSize, textLines, textX: align === "left" ? padding : align === "right" ? width - padding : width / 2, textY: height / 2 - (textLines.length - 1) * fontSize * .575, width, height, overflow:false,contourLayout:undefined };
 }
 // Convert old panel-relative values once. Preserve the authored vertical size,
 // IDs, images and geometry; the new text rendering also removes glyph stretching.

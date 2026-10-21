@@ -103,7 +103,7 @@ export function SvgOverlay({overlay,textMetrics,hideText=false,hideShape=false}:
  const textLines=pointLayout?.textLines??wrapOverlayText(overlay.text,Math.max(1,Math.floor((w-2*padding)/(fontSize*.5))));
  const align=overlay.textAlign??"center",textX=pointLayout?.textX??(align==="left"?padding:align==="right"?w-padding:w/2);
  const anchor=align==="left"?"start":align==="right"?"end":"middle";
- const rich=textMetrics&&overlay.textStyles?.length?richTextLayout(overlay,textMetrics):undefined;
+ const rich=pointLayout?.contourLayout??(textMetrics&&overlay.textStyles?.length?richTextLayout(overlay,textMetrics):undefined);
  const common=commonStyle(overlay);
  const cloud=overlay.type==="thought"?(overlay.bubbleShapePoints?{outline:customBubbleOutline(overlay),path:customBubblePath(overlay)}:thoughtCloudGeometry(w,h)):undefined;
  return <><g display={hideShape?"none":undefined} transform={`translate(${overlay.x} ${overlay.y}) rotate(${overlay.rotation} ${w/2} ${h/2})`}>

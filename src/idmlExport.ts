@@ -1,5 +1,5 @@
 import { customBubbleOutline, customBubblePath } from "./bubbleShape";
-import { textPieces } from "./richText";
+import { richTextLayout, textPieces } from "./richText";
 import { bubbleGroups, connectedBubbleGeometry } from "./bubbleConnections";
 import type { ComicProject, TextOverlay } from "./project";
 import type { ExportOptions } from "./albumExport";
@@ -119,6 +119,25 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
         const fill=o.fillColor??"#fffdf7",stroke=o.strokeColor??"#171411",opacity=Math.max(0,Math.min(1,o.fillOpacity??1));
         for(const primitive of connected.some(g=>g.some(b=>b.id===o.id))?[]:artwork(o))items.push(shape(transformPaths(primitive.paths,local),bubbleLayer,`${o.type} ${o.id}`,primitive.fill?fill:"none",stroke,(o.strokeWidth??2)*scale,o.bubbleStyle==="whisper"?'StrokeType="StrokeStyle/$ID/Dashed"':"",`<FillTransparencySetting><BlendingSetting Opacity="${num(opacity*100)}" BlendMode="Normal"/></FillTransparencySetting>`));
         if(o.type==="sfx"&&o.sfxTextHidden)continue;
+        if(o.bubbleShapePoints&&o.type!=="sfx") {
+          const layout=richTextLayout(o,{width:lw,height:lh,pageWidthMm:pageDimensions(sourceFormat).widthMm});
+          const frame=(name:string,start:number,end:number,left:number,top:number,frameWidth:number,frameHeight:number,baseline:number,hidden=false)=>{
+            const story=id(),storyPath=`Stories/Story_${story}.xml`;
+            const pieces=textPieces(o,start,end);
+            const content=pieces.map(piece=>{
+              const styled={...o,...Object.fromEntries(Object.entries(piece.style).filter(([,v])=>v!==undefined))},font=idmlFont(styled);
+              fonts.set(`${font.family}/${font.style}`,font);
+              const fontSize=(styled.fontSize??8)*25.4/72*700/pageDimensions(sourceFormat).widthMm*scale;
+              return `<CharacterStyleRange AppliedCharacterStyle="CharacterStyle/$ID/[No character style]" PointSize="${num(fontSize)}" FontStyle="${xml(font.style)}" FillColor="${color(styled.textColor??"#171411")}"><Properties><AppliedFont type="string">${xml(font.family)}</AppliedFont><Leading type="unit">${num(frameHeight*scale)}</Leading></Properties><Content>${xml(piece.text)}</Content></CharacterStyleRange>`;
+            }).join("");
+            add(storyPath,part("Story",`<Story Self="${story}"><StoryPreference StoryOrientation="Horizontal" StoryDirection="LeftToRightDirection"/><ParagraphStyleRange AppliedParagraphStyle="ParagraphStyle/ComicBook" Justification="LeftAlign" Hyphenation="false" SpaceBefore="0" SpaceAfter="0">${content}</ParagraphStyleRange></Story>`));stories.push(storyPath);
+            const cx=layout.width/2,cy=layout.height/2,px=left-cx,py=top-cy,pos=map({x:x+o.x*lw/100+cx+c*px-s*py,y:y+o.y*lh/100+cy+s*px+c*py});
+            items.push(`<TextFrame Self="${id()}" Name="${xml(name)}" ParentStory="${story}" PreviousTextFrame="n" NextTextFrame="n" ContentType="TextType" ItemLayer="${textLayer}" ItemTransform="${num(c)} ${num(s)} ${num(-s)} ${num(c)} ${pair(pos)}" FillColor="Swatch/None" StrokeColor="Swatch/None" Visible="${!hidden}" AppliedObjectStyle="ObjectStyle/$ID/[None]"><Properties>${idmlPathGeometry([rectanglePath(0,0,Math.max(.1,frameWidth)*scale,Math.max(.1,frameHeight)*scale)])}</Properties><TextFramePreference TextColumnCount="1" VerticalJustification="TopAlign" FirstBaselineOffset="FixedHeight" FirstBaselineFixed="${num(baseline*scale)}"><Properties><InsetSpacing type="list">${[0,0,0,0].map(()=>'<ListItem type="unit">0</ListItem>').join("")}</InsetSpacing></Properties></TextFramePreference></TextFrame>`);
+          };
+          layout.rows.forEach((row,i)=>{if(row.start===row.end)return;const left=row.runs[0]?.x??0;frame(`Text ${o.id} line ${i+1}`,row.start,row.end,left,row.y-row.size*.85,row.lineWidth+.01,row.lineHeight,row.size*.85);});
+          if(layout.overflow)frame(`Overflow text ${o.id}`,layout.overflowStart,o.text.length,0,0,layout.width,layout.height,8,true);
+          continue;
+        }
         const font=idmlFont(o);fonts.set(`${font.family}/${font.style}`,font);
         const story=id(),storyPath=`Stories/Story_${story}.xml`,padding=o.width*lw/100*Math.max(0,Math.min(25,o.textPadding??4))/100*scale;
         const tw=o.width*lw/100*scale,th=o.height*lh/100*scale,size=(o.fontSize??(o.type==="sfx"?28:8))*scale/(pageDimensions(sourceFormat).widthMm*72/25.4/700);
@@ -160,7 +179,7 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
   // OCF requires mimetype first, uncompressed and without an extra field.
   const idml=imageArchive([{name:"mimetype",bytes:encode("application/vnd.adobe.indesign-idml-package")},...files]);check(signal);
   const base=exportFilename(project.title);
-  const readme=`ComicBook AI — IDML export (experimental)\n\n1. Extract the entire ZIP before opening ${base}.idml in InDesign or Affinity Publisher.\n2. Keep Links next to the IDML. If asked for missing images, select the Links folder.\n3. Install the fonts listed below or replace them in the destination application.\n4. Check text wrapping, overflow, layer order and page edges before production.\n\nLayers: Text; Bubbles and SFX; Panel borders; Images; Background.\nImages remain raster images, with editable clipping frames and placement. Bubble contours and tails are vector paths. Text remains editable. No font files are embedded.\n\nCurrent limitations: destination font metrics can change wrapping; text weights use available Regular/Bold desktop styles; text and bubble artwork extending beyond a panel are not clipped to its outline; page-edge crop should be checked when using Cover.\nAffinity import is one-way: save subsequent work in Affinity's own format.\n\nFonts:\n${[...fonts.values()].map(f=>`${f.family} — ${f.style}`).join("\n")||"None"}\n`;
+  const readme=`ComicBook AI — IDML export (experimental)\n\n1. Extract the entire ZIP before opening ${base}.idml in InDesign or Affinity Publisher.\n2. Keep Links next to the IDML. If asked for missing images, select the Links folder.\n3. Install the fonts listed below or replace them in the destination application.\n4. Check text wrapping, overflow, layer order and page edges before production.\n\nLayers: Text; Bubbles and SFX; Panel borders; Images; Background.\nImages remain raster images, with editable clipping frames and placement. Bubble contours and tails are vector paths. Text remains editable. Custom bubble text uses positioned editable line frames to preserve contour wrapping. If text does not fit, its remainder is retained in a hidden frame named Overflow text. No font files are embedded.\n\nCurrent limitations: destination font metrics can change wrapping; text weights use available Regular/Bold desktop styles; text and bubble artwork extending beyond a panel are not clipped to its outline; page-edge crop should be checked when using Cover.\nAffinity import is one-way: save subsequent work in Affinity's own format.\n\nFonts:\n${[...fonts.values()].map(f=>`${f.family} — ${f.style}`).join("\n")||"None"}\n`;
   return {blob:imageArchive([{name:`${base}.idml`,bytes:new Uint8Array(await idml.arrayBuffer())},...assets,{name:"README.txt",bytes:encode(readme)}]),name:`${base}-idml.zip`};
 }
 

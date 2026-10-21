@@ -31,9 +31,10 @@ export const readImageSize: ImageSizeReader = (url, signal) => new Promise((reso
   image.onerror=fail;image.src=url;
 });
 // Uses the same line breaks, point conversion and mixed-style row heights as SVG export.
-// This checks the text rectangle, not the curved inside edge of a bubble.
+// Custom bubbles use the same contour-aware fitting as the editor.
 export function textOverflows(overlay: TextOverlay, metrics: LayerTextMetrics) {
   if(!overlay.text.trim() || (overlay.type==="sfx" && overlay.sfxTextHidden))return false;
+  if(overlay.bubbleShapePoints&&overlay.type!=="sfx")return richTextLayout(overlay,metrics).overflow;
   if(overlay.textStyles?.length){
     const layout=richTextLayout(overlay,metrics);
     const padding=layout.width*Math.max(0,Math.min(25,overlay.textPadding??4))/100;

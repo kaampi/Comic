@@ -402,3 +402,9 @@ Textredigerarens egenskaper för markerad pratbubbla, tankebubbla eller berätta
 Konturen sparas i normaliserade koordinater som följer bubblans storlek och rotation. Svansens fäste, tankebubblans spår, sammanlänkade bubblor, sidvisning, backup och export använder den egna formen. Befintliga bubblor utan egen kontur behåller sitt utseende. Bildrutornas tidigare Fri form-funktion finns kvar separat.
 
 Formredigering för textbubblor kan också aktiveras direkt med **Redigera bubblans form** högst upp i textredigerarens huvudrad. Knappen avslutar eventuell pågående direkt textredigering och visar blå noder samt en synlig statusrad. **Avsluta formredigering** återgår till vanligt textläge. Fri form-sektionen ligger bland bubblans utseendeinställningar.
+
+### Textflöde i fria bubblor (2026-10-21)
+
+Bubblor med egen kontur radbryter texten efter kroppens insida, med användarens marginal och utrymme för ramlinjen. Varje rad använder ett sammanhängande intervall som rymmer hela radens höjd; urtag delar aldrig en rad i två delar. Svansen räknas inte som textutrymme. Blandad typografi, Unicode, författarens radbrytningar och punktstorlekar bevaras. Formen och textens fysiska rotation ingår i beräkningen.
+
+Redigerarens visning och direktredigering använder samma radpositioner som SVG, raster och PDF. Om hela texten inte ryms visas **Texten ryms inte** bland textens egenskaper och i exportkontrollen. Överskjutande text behålls i projekt och backup; textstorleken ändras aldrig automatiskt. IDML använder placerade redigerbara textrader för samma radbrytning och behåller eventuell överskjutande källtext i en dold textram märkt Overflow text. Äldre bubblor utan egen kontur behåller sin tidigare textlayout.

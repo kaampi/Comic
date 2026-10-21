@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-idml-'));
 fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform==='win32'?'junction':'dir');
-const names=['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','pageBackground.ts','exportFiles.ts','albumExport.tsx','bubbleShape.ts','SvgOverlay.tsx','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts','idmlExport.ts'];
+const names=['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','pageBackground.ts','exportFiles.ts','albumExport.tsx','bubbleShape.ts','SvgOverlay.tsx','contourText.ts','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts','idmlExport.ts'];
 function archive(bytes) {
   const entries=new Map();let offset=0;const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   while(view.getUint32(offset,true)===0x04034b50) {
@@ -74,6 +74,27 @@ try {
     assert.ok(item,`${type} custom shape is an editable IDML vector`);
     assert.ok(item.querySelectorAll('PathPointType').length>=5);
   }
+  const {richTextLayout}=await import(pathToFileURL(path.join(dir,'richText.mjs')));
+  const {pageLayerTextMetrics}=await import(pathToFileURL(path.join(dir,'pageTypography.mjs')));
+  for(const o of freeBubbleProject.pages[0].placements[0].overlays){
+    const rows=richTextLayout(o,pageLayerTextMetrics(freeBubbleProject,freeBubbleProject.pages[0],freeBubbleProject.pages[0].placements[0])).rows.filter(r=>r.start!==r.end);
+    const frames=[...freeSpread.querySelectorAll('TextFrame')].filter(e=>e.getAttribute('Name').startsWith(`Text ${o.id} line `));
+    assert.equal(frames.length,rows.length,'IDML uses the same contour rows as SVG');
+    frames.forEach((frame,i)=>{
+      const story=parse(freeInner.get(`Stories/Story_${frame.getAttribute('ParentStory')}.xml`));
+      assert.equal([...story.querySelectorAll('Content')].map(c=>c.textContent).join(''),o.text.slice(rows[i].start,rows[i].end));
+      assert.ok(Math.abs(Number(frame.querySelector('TextFramePreference').getAttribute('FirstBaselineFixed'))-rows[i].size*.85*(210*72/25.4/700))<1e-5,'same baseline in print points');
+    });
+  }
+  const overflowing={...overlay,id:'overflow',text:'Long text that will not fit. '.repeat(100),fontSize:40,bubbleShapePoints:bubblePoints};
+  const overflowProject={...freeBubbleProject,pages:[{...freeBubbleProject.pages[0],placements:[{...layer,overlays:[overflowing]}]}]};
+  const overflowLayout=richTextLayout(overflowing,pageLayerTextMetrics(overflowProject,overflowProject.pages[0],overflowProject.pages[0].placements[0]));assert.ok(overflowLayout.overflow);
+  const overflowResult=await exportAlbum(overflowProject,options,()=>{}),overflowOuter=archive(new Uint8Array(await overflowResult.blob.arrayBuffer())),overflowInner=archive(overflowOuter.get('Test -album-.idml'));
+  const overflowSpread=parse([...overflowInner].find(([p])=>p.startsWith('Spreads/'))[1]);
+  const hidden=[...overflowSpread.querySelectorAll('TextFrame')].find(e=>e.getAttribute('Name')==='Overflow text overflow');
+  assert.equal(hidden.getAttribute('Visible'),'false');
+  const hiddenStory=parse(overflowInner.get(`Stories/Story_${hidden.getAttribute('ParentStory')}.xml`));
+  assert.equal([...hiddenStory.querySelectorAll('Content')].map(c=>c.textContent).join(''),overflowing.text.slice(overflowLayout.overflowStart),'IDML retains all overset source text');
   assert.deepEqual(progress,[[0,2],[1,2],[2,2]]);
   const outer=archive(new Uint8Array(await result.blob.arrayBuffer()));assert.ok(outer.has('README.txt'));
   const inner=archive(outer.get('Test -album-.idml'));

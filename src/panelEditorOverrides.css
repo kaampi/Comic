@@ -453,3 +453,5 @@
   border-radius:6px; background:var(--panel); color:var(--text); font-size:.82rem;
 }
 .panel-editor-header-actions { flex-wrap:wrap; }
+
+.text-contour-overflow { margin:8px 0; padding:10px; border:1px solid #c55b35; border-radius:5px; color:var(--text); background:var(--panel); font-size:.82rem; }

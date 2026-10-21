@@ -1,3 +1,4 @@
+import { TextOverflowNotice } from "./TextOverflowNotice";
 import { BubbleShapeControls, BubbleShapeHandles } from "./BubbleShapeEditor";
 import { markBackupCreated } from "./backupReminder";
 import { LocalRecovery } from "./LocalRecovery";
@@ -1021,6 +1022,7 @@ export function App() {
 </label>
 <label>{tr("text")}<textarea rows={4} value={o.text} onBeforeInput={e=>{textEditRange.current??={overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd};}} onKeyDown={e=>{textEditRange.current={overlayId:o.id,...deletionRange(o.text,e.currentTarget.selectionStart,e.currentTarget.selectionEnd,e.key)};}} onPaste={e=>{textEditRange.current={overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd};}} onSelect={e=>setTextSelection({overlayId:o.id,start:e.currentTarget.selectionStart,end:e.currentTarget.selectionEnd})} onChange={(e)=>{updateOverlay(pg.id,pl.id,o.id,{text:e.target.value,textEdit:textEditRange.current?.overlayId===o.id?textEditRange.current:undefined});textEditRange.current=null;}}/>
 </label>
+<TextOverflowNotice overlay={o} metrics={pageLayerTextMetrics(activeProject,pg,pl)} locale={locale}/>
 <p className="quiet">{selectedText?`${tr("formatSelection")}: “${o.text.slice(selectedText.start,selectedText.end).slice(0,60)}”`:tr("formatWholeText")}</p>
 <label>{locale==="sv"?"Textfärg":locale==="nb"?"Tekstfarge":"Text color"}<ColorInput value={typeValues?.textColor??o.sfxTextColor??"#171411"} onChange={textColor=>formatSelectedText(pg.id,pl.id,o,{textColor})}/></label>
 <FontPicker label={tr("font")} value={typeValues?.fontFamily??"Comic Neue, sans-serif"} onChange={fontFamily=>formatSelectedText(pg.id,pl.id,o,{fontFamily})}/>

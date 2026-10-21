@@ -1,7 +1,7 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useReducer, useRef } from "react";
 import type { TextOverlay } from "./project";
 import { overlayTextLayout, type LayerTextMetrics } from "./pageTypography";
-import { textPieces, deletionRange, type TextEditRange } from "./richText";
+import { richTextLayout, textPieces, deletionRange, type TextEditRange } from "./richText";
 
 export function selectionOffsets(root:HTMLElement):[number,number]|null {
   const selection=window.getSelection();if(!selection?.rangeCount)return null;
@@ -19,13 +19,22 @@ function restoreSelection(root:HTMLElement,start:number,end:number){
 }
 function RichInlineText({overlay,textMetrics,label,onChange,onSelection,onFinish,onCancel}:{overlay:TextOverlay;textMetrics:LayerTextMetrics;label:string;onChange:(text:string,edit?:TextEditRange)=>void;onSelection?:(start:number,end:number)=>void;onFinish:()=>void;onCancel:()=>void}){
   const ref=useRef<HTMLDivElement>(null),composing=useRef(false),editRange=useRef<TextEditRange|undefined>(undefined);
+  const [fontRevision,refreshFonts]=useReducer((n:number)=>n+1,0);
+  useEffect(()=>{const fonts=document.fonts;if(!fonts)return;const refresh=()=>refreshFonts();let active=true;fonts.addEventListener('loadingdone',refresh);fonts.ready.then(()=>{if(active)refreshFonts();});return()=>{active=false;fonts.removeEventListener('loadingdone',refresh);};},[]);
   const factor=25.4/72*700/textMetrics.pageWidthMm;
   useLayoutEffect(()=>{
     const root=ref.current;if(!root||composing.current)return;
     const selection=selectionOffsets(root),focused=document.activeElement===root;
-    root.replaceChildren(...textPieces(overlay).map(piece=>{const span=document.createElement('span');span.textContent=piece.text;span.style.color=piece.style.textColor??overlay.textColor??overlay.sfxTextColor??'#171411';span.style.fontFamily=piece.style.fontFamily??overlay.fontFamily??(overlay.type==='sfx'?'Impact, sans-serif':'Comic Neue, sans-serif');span.style.fontSize=`${(piece.style.fontSize??overlay.fontSize??(overlay.type==='sfx'?28:8))*factor}px`;span.style.fontWeight=String(piece.style.fontWeight??overlay.fontWeight??(overlay.type==='sfx'?800:600));return span;}));
+    const spanFor=(piece:ReturnType<typeof textPieces>[number])=>{const span=document.createElement('span');span.textContent=piece.text;span.style.color=piece.style.textColor??overlay.textColor??overlay.sfxTextColor??'#171411';span.style.fontFamily=piece.style.fontFamily??overlay.fontFamily??(overlay.type==='sfx'?'Impact, sans-serif':'Comic Neue, sans-serif');span.style.fontSize=`${(piece.style.fontSize??overlay.fontSize??(overlay.type==='sfx'?28:8))*factor}px`;span.style.fontWeight=String(piece.style.fontWeight??overlay.fontWeight??(overlay.type==='sfx'?800:600));return span;};
+    if(overlay.bubbleShapePoints&&overlay.type!=="sfx"){
+      const layout=richTextLayout(overlay,textMetrics),children:HTMLElement[]=[];let at=0;
+      root.style.position='relative';root.style.width=`${layout.width}px`;root.style.height=`${layout.height}px`;root.style.whiteSpace='pre';root.style.textAlign='left';
+      const sourceGap=(end:number)=>{if(end<=at)return;const span=document.createElement('span');span.textContent=overlay.text.slice(at,end);span.style.position='absolute';span.style.fontSize='0';span.style.whiteSpace='pre';children.push(span);at=end;};
+      for(const row of layout.rows){sourceGap(row.start);for(const run of row.runs){const span=spanFor(run);span.style.position='absolute';span.style.left=`${run.x}px`;span.style.top=`${row.y-run.size*.85}px`;span.style.lineHeight='1.15';span.style.whiteSpace='pre';children.push(span);at=run.end;}}
+      sourceGap(overlay.text.length);root.replaceChildren(...children);
+    }else {root.style.position='';root.style.width='';root.style.height='';root.style.whiteSpace='';root.style.textAlign=overlay.textAlign??'center';root.replaceChildren(...textPieces(overlay).map(spanFor));}
     if(focused&&selection)restoreSelection(root,...selection);
-  },[overlay.text,overlay.textStyles,overlay.fontFamily,overlay.fontSize,overlay.fontWeight,overlay.textColor,overlay.sfxTextColor,factor]);
+  },[overlay.text,overlay.textStyles,overlay.fontFamily,overlay.fontSize,overlay.fontWeight,overlay.textColor,overlay.sfxTextColor,overlay.bubbleShapePoints,overlay.bubbleShapeSmooth,overlay.width,overlay.height,overlay.rotation,overlay.textPadding,overlay.strokeWidth,textMetrics.width,textMetrics.height,factor,fontRevision]);
   useEffect(()=>{ref.current?.focus();},[overlay.id]);
   const select=()=>{const root=ref.current;if(!root)return;const offsets=selectionOffsets(root);if(offsets)onSelection?.(...offsets);};
   const input=()=>{onChange(ref.current?.textContent??'',editRange.current);editRange.current=undefined;select();};
@@ -44,25 +53,26 @@ export function InlineOverlayEditor({ overlay, textMetrics, label, onChange, onS
   onCancel: () => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<SVGGElement>(null);
   const editRange=useRef<TextEditRange|undefined>(undefined);
-  const richMode=useRef(Boolean(overlay.textStyles?.length));
-  if(overlay.textStyles?.length)richMode.current=true;
+  const richMode=useRef(Boolean(overlay.textStyles?.length||overlay.bubbleShapePoints));
+  if(overlay.textStyles?.length||overlay.bubbleShapePoints)richMode.current=true;
   const finishRef = useRef(onFinish);
   finishRef.current = onFinish;
   useEffect(() => {
     ref.current?.focus();
     ref.current?.select();
     const outside = (event: PointerEvent) => {
-      if (!ref.current?.closest(".inline-overlay-editor")?.contains(event.target as Node)) finishRef.current();
+      if (!containerRef.current?.contains(event.target as Node)) finishRef.current();
     };
     document.addEventListener("pointerdown", outside, true);
     return () => document.removeEventListener("pointerdown", outside, true);
   }, [overlay.id]);
   const layout = overlayTextLayout(overlay, textMetrics);
   const padding = layout.width * Math.max(0, Math.min(25, overlay.textPadding ?? 4)) / 100;
-  return <g className="inline-overlay-editor" transform={`translate(${overlay.x} ${overlay.y}) scale(${100 / textMetrics.width} ${100 / textMetrics.height}) rotate(${overlay.rotation} ${layout.width / 2} ${layout.height / 2})`}>
-    <foreignObject width={layout.width} height={layout.height}>
-      <div className="inline-overlay-editor-body" style={{ paddingInline: padding }} onPointerDown={event => event.stopPropagation()}>
+  return <g ref={containerRef} className="inline-overlay-editor" transform={`translate(${overlay.x} ${overlay.y}) scale(${100 / textMetrics.width} ${100 / textMetrics.height}) rotate(${overlay.rotation} ${layout.width / 2} ${layout.height / 2})`}>
+    <foreignObject width={layout.width} height={layout.height} style={{overflow:overlay.bubbleShapePoints?"visible":undefined}}>
+      <div className="inline-overlay-editor-body" style={{ paddingInline: overlay.bubbleShapePoints?0:padding,alignItems:overlay.bubbleShapePoints?"flex-start":undefined }} onPointerDown={event => event.stopPropagation()}>
         {richMode.current?<RichInlineText overlay={overlay} textMetrics={textMetrics} label={label} onChange={onChange} onSelection={onSelection} onFinish={onFinish} onCancel={onCancel}/>:<textarea
           ref={ref}
           aria-label={label}

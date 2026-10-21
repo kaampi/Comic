@@ -1,3 +1,4 @@
+import { layoutInContour } from "./contourText";
 import type { TextOverlay, TextStyle, TextStyleRange } from "./project";
 import type { LayerTextMetrics } from "./pageTypography";
 import { overlayTextMeasure } from "./overlayTypography";
@@ -55,6 +56,10 @@ export function richTextLayout(o:TextOverlay,metrics:LayerTextMetrics){
   const width=o.width*metrics.width/100,height=o.height*metrics.height/100,padding=width*Math.max(0,Math.min(25,o.textPadding??4))/100,available=Math.max(1,width-2*padding);
   const pieces=(start:number,end:number)=>textPieces(o,start,end).map(p=>{const style={...o,...Object.fromEntries(Object.entries(p.style).filter(([,v])=>v!==undefined))},size=(style.fontSize??(o.type==="sfx"?28:8))*factor;return {...p,style,size,width:overlayTextMeasure(style,size)(p.text)};});
   const measure=(start:number,end:number)=>pieces(start,end).reduce((n,p)=>n+p.width,0);
+  if(o.bubbleShapePoints&&o.type!=="sfx"){
+    const layout=layoutInContour(o,width,height,base,(start,end)=>{const runs=pieces(start,end);return {width:runs.reduce((sum,p)=>sum+p.width,0),size:runs.length?Math.max(...runs.map(p=>p.size)):base};});
+    return {width,height,totalHeight:layout.rows.reduce((n,r)=>n+r.lineHeight,0),overflow:layout.overflow,overflowStart:layout.overflowStart,rows:layout.rows.map(row=>{let x=row.x;return {...row,runs:pieces(row.start,row.end).map(run=>{const out={...run,x};x+=run.width;return out;})};})};
+  }
   const lines:{start:number;end:number}[]=[];
   let offset=0;
   for(const paragraph of o.text.split('\n')){
@@ -73,6 +78,6 @@ export function richTextLayout(o:TextOverlay,metrics:LayerTextMetrics){
   }
   const rows=lines.map(line=>{const runs=pieces(line.start,line.end),size=runs.length?Math.max(...runs.map(p=>p.size)):base,lineWidth=runs.reduce((n,p)=>n+p.width,0);return {...line,runs,size,lineWidth,lineHeight:size*1.15};});
   const totalHeight=rows.reduce((n,r)=>n+r.lineHeight,0);let top=(height-totalHeight)/2;
-  return {width,height,totalHeight,rows:rows.map(row=>{let x=o.textAlign==="left"?padding:o.textAlign==="right"?width-padding-row.lineWidth:(width-row.lineWidth)/2;const y=top+row.size*.85;top+=row.lineHeight;return {...row,y,runs:row.runs.map(run=>{const out={...run,x};x+=run.width;return out;})};})};
+  return {width,height,totalHeight,overflow:false,overflowStart:o.text.length,rows:rows.map(row=>{let x=o.textAlign==="left"?padding:o.textAlign==="right"?width-padding-row.lineWidth:(width-row.lineWidth)/2;const y=top+row.size*.85;top+=row.lineHeight;return {...row,y,runs:row.runs.map(run=>{const out={...run,x};x+=run.width;return out;})};})};
 }
 
