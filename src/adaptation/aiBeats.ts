@@ -100,7 +100,12 @@ export function parseAiBeats(reply: string, source: string, context: BeatContext
     if(allowUnknownCharacters&&item.unresolvedCharacters!==undefined&&(!Array.isArray(item.unresolvedCharacters)||item.unresolvedCharacters.some((v:unknown)=>typeof v!=="string")))throw new Error("Invalid unresolved character references.");
     if(allowUnknownCharacters)for(const name of item.unresolvedCharacters??[])if(name.trim()&&excerpt.toLocaleLowerCase().includes(name.toLocaleLowerCase())&&!unresolvedCharacters.includes(name))unresolvedCharacters.push(name);
     if(allowUnknownCharacters&&item.reason!==undefined&&typeof item.reason!=="string")throw new Error("Invalid beat reason.");
-    if (!beatTypes.includes(item.beatType)) throw new Error("Invalid AI beat type.");
+    // Classification labels do not affect source references. Accept harmless casing
+    // differences and a small set of equivalent storytelling terms.
+    const label=typeof item.beatType==='string'?item.beatType.trim().toLowerCase().replace(/[ _-]+/g,' '):'';
+    const aliases:Record<string,BeatType>={'establishing shot':'establishing','character introduction':'introduction',conversation:'dialogue',reflection:'reaction',introspection:'reaction','emotional reaction':'reaction',mood:'atmosphere'};
+    const beatType=beatTypes.includes(label as BeatType)?label as BeatType:aliases[label];
+    if (!beatType) throw new Error(`Invalid AI beat type in beat ${index+1}: ${JSON.stringify(item.beatType)??'missing'}. Allowed types: ${beatTypes.join(', ')}. The proposals were not applied.`);
     // Restore original dialogue locally; no model-generated quotation is trusted.
     // A source quotation shared by overlapping beats is assigned only once.
     const dialogue: AdaptationBeat["dialogueCandidates"] = [];
@@ -115,7 +120,7 @@ export function parseAiBeats(reply: string, source: string, context: BeatContext
     }
     const lower = excerpt.toLocaleLowerCase();
     return {
-      id: id("beat"), order: index + 1, title, summary, beatType: item.beatType,
+      id: id("beat"), order: index + 1, title, summary, beatType,
       sourceTextExcerpt: excerpt, sourceStart: sourceOffset + start, sourceEnd: sourceOffset + end,
       ...(unresolvedCharacters.length?{unresolvedCharacters}:{}),
       ...(allowUnknownCharacters&&item.locationId!=null&&!resolvedLocation?{unresolvedLocation:item.locationId}:{}),

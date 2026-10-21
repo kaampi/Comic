@@ -83,6 +83,14 @@ try {
   assert.equal(runA().disabled,false);
   const reply={beats:[{from:1,to:2,title:'The hesitant greeting',summary:'Rook meets Seren on the bridge.',visualDescription:'At the doorway, Rook pauses opposite Seren, whose palm is raised.',reason:'Their hesitant greeting establishes fragile trust.',beatType:'reaction',characterIds:['rook','unknown-seren'],unresolvedCharacters:['Seren'],locationId:null}]};
   assert.throws(()=>parseAiBeats(JSON.stringify(reply),first,{characters:[{id:'rook',name:'Rook'}],locations:[]},0,true),/unknown character/,'existing strict callers remain strict');
+  const typeFixture={...reply,beats:reply.beats.map(b=>({...b,characterIds:[],unresolvedCharacters:undefined}))};
+  for(const [label,expected] of [[' Reaction ','reaction'],['Establishing Shot','establishing'],['introspection','reaction'],['dialogue','dialogue']]) {
+    const candidate={beats:typeFixture.beats.map(b=>({...b,beatType:label}))};
+    assert.equal(parseAiBeats(JSON.stringify(candidate),first,{characters:[],locations:[]},0,true)[0].beatType,expected);
+  }
+  for(const value of ['unrecognized-category',null,12,undefined]) {
+    assert.throws(()=>parseAiBeats(JSON.stringify({beats:typeFixture.beats.map(b=>({...b,beatType:value}))}),first,{characters:[],locations:[]},0,true),/Invalid AI beat type in beat 1.*Allowed types/);
+  }
   const bodies=[];globalThis.fetch=async(_url,init)=>{networkRequests++;bodies.push(JSON.parse(init.body));return new Response(JSON.stringify({message:{content:JSON.stringify(reply)},done_reason:'stop'}));};
   await user.click(runA());await waitFor(()=>assert.equal(working.beatTrials?.length,1));
   assert.equal(bodies.length,1,'one scene trial makes one request');assert.equal(JSON.parse(bodies[0].messages[1].content).narrativeContext,undefined);
