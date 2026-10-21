@@ -1,3 +1,4 @@
+import { ChapterBeatPilot } from "./ChapterBeatPilot";
 import { manuscriptHtml } from "./manuscriptFormatting";
 import { manuscriptChapters } from "./manuscriptChapters";
 import { BeatAnalysisDialog } from "./BeatAnalysisDialog";
@@ -380,6 +381,7 @@ export function ManuscriptWorkspace({
       <div className="manuscript-document">
         {chapter?<nav className="manuscript-chapters" aria-label={ct.chapter}><button type="button" className="text-button" aria-label={ct.previous} disabled={chapter.order===1} onClick={()=>switchChapter(chapters[chapter.order-2].id)}>←</button><label>{ct.chapter}<select value={chapter.id} onChange={e=>switchChapter(e.target.value)}>{chapters.map(c=><option key={c.id} value={c.id}>{c.order}. {c.title}</option>)}</select></label><span>{chapter.order} / {chapters.length}</span><button type="button" className="text-button" aria-label={ct.next} disabled={chapter.order===chapters.length} onClick={()=>switchChapter(chapters[chapter.order].id)}>→</button></nav>:null}
         {chapter?<p className="quiet">{ct.copy}</p>:null}
+        {chapter?<ChapterBeatPilot key={chapter.id} project={project} chapterId={chapter.id} locale={locale} settings={settings} onUpdate={onUpdate}/>:null}
         <div className="section-heading">
           <h2>{chapter?.title??t.zoom}</h2>
           <span>

@@ -1,3 +1,4 @@
+import { validatePilotData } from "./chapterPilot";
 import { validBubbleShape } from "./bubbleShape";
 import { validManuscriptChapters } from "./manuscriptChapters";
 import { readOrganization } from "./styleOrganization";
@@ -75,6 +76,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   for (const key of ["id", "title", "createdAt", "updatedAt"]) string(p[key]);
   if(p.introduction !== undefined) string(p.introduction);
   if(p.cover !== undefined){record(p.cover);string(p.cover.name);string(p.cover.dataUrl);if(!/^data:image\/(png|jpeg|webp|gif);base64,/i.test(p.cover.dataUrl))throw new Error("invalid-backup");}
+  validatePilotData(p);
   record(p.source);
   if (!["blank", "text", "storybook"].includes(p.source.type))
     throw new Error("invalid-backup");
@@ -221,6 +223,8 @@ export function parseAlbumBackup(input: unknown): ComicProject {
     for (const beat of objects(a.beats)) {
       for (const key of ["title", "summary", "sourceTextExcerpt"])
         string(beat[key]);
+      if(beat.unresolvedCharacters!==undefined)strings(beat.unresolvedCharacters);
+      for(const key of ["unresolvedLocation","adaptationReason","sourceSceneId"])if(beat[key]!==undefined)string(beat[key]);
       strings(beat.characterIds);
       for (const key of [
         "dialogueCandidates",

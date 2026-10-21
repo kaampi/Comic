@@ -55,6 +55,9 @@ export type BubbleSwatch = {
 export type PageLayer={ moveWithText?:boolean; panelBorder?:PanelBorderStyle;shapePoints?:ShapePoint[];hiddenShapeEdges?:number[];id:string;panelId?:string;x:number;y:number;width:number;height:number;readingOrder:number;overlays:TextOverlay[];image?:PanelImage;sourceBeatIds?:string[];adaptationPanelPlanId?:string };
 
 export type ComicProject = {
+  adaptationContext?: import("./chapterPilot").AdaptationContext;
+  adaptationDefaults?: import("./chapterPilot").ChapterProfile;
+  beatTrials?: import("./chapterPilot").BeatTrial[];
   format: 1;
   id: string;
   title: string;

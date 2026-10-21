@@ -22,6 +22,8 @@ This guide describes the current beta. Some features and labels may change. The 
 
 - [AI settings and beat instructions](#ai-prompts)
 
+- [Chapter pilot: compare beat suggestions](#chapter-pilot)
+
 - [Foreground images and page-wide bubbles](#foreground-images)
 
 - [From manuscript to panel plans](#manuscript)
@@ -123,6 +125,21 @@ Settings uses two scrolling columns on larger screens and a single scrolling lay
 
 > Saving instructions does not contact AI. Test changes on a short passage and review the proposed beats before accepting them.
 
+<a id="chapter-pilot"></a>
+
+## Chapter pilot: compare beat suggestions
+
+The chapter pilot uses synopsis, chapter Briefs and scenes from an expanded StoryCore export. New imports retain that material automatically. For an existing album, Load pilot context accepts an export for the same book only when chapter IDs and original prose match; it preserves existing manuscript edits, beats, images and pages.
+
+1. Select the chapter and open Chapter pilot – context and beat suggestions. Review the synopsis and Chapter Brief. Edit ComicBook’s working copy if needed, then tick Approved for AI context for the parts you want B to receive. The imported original remains available below each field.
+2. Choose a non-empty scene, read its prose and tick Scene prose reviewed. Review and approve Scene instructions separately. Scene prose must match an unambiguous passage in the current manuscript. Edited or ambiguous scenes need review before analysis.
+3. Under Chapter adaptation, choose fidelity, pacing and independent focus priorities. Write chapter instructions and Must preserve / evaluation criteria. Chapters inherit album defaults until overridden; Use these choices as album defaults updates the inherited profile. Review any character/location facts before approving them for B; approve only facts valid at this point in the story.
+4. Choose a local text model in Settings. Run A – without story context, then Run B – with approved context. Each test makes one request using only the chosen scene, names/IDs and, for B, approved context and priorities. No whole-book analysis or automatic context-size increase occurs. If the estimated context budget is exceeded, shorten the reviewed context or deliberately adjust Settings.
+5. Compare saved A/B results for narrative relevance, unnecessary splitting, emotional moments, omissions and source fidelity. Keep model, prompt and chapter choices unchanged between the two runs. A setup mismatch is shown. Record your evaluation beside each result. Unknown character references remain visible for review instead of discarding the entire result.
+6. Exclude unsuitable suggestions, then explicitly choose Add selected beats to album from the result you prefer. Existing work is retained. Applied suggestions cannot be applied twice from the same trial. Changed source text disables applying an old result. Trial inputs, results, notes and review choices are included in local album storage and backups.
+
+> Start with one scene. Opening the pilot, reviewing context and changing priorities never contact AI. A and B are separate deliberate requests. Suggestions still need your judgement; priorities and protected moments are instructions, not automatic guarantees.
+
 <a id="foreground-images"></a>
 
 ## Foreground images and page-wide bubbles
@@ -221,6 +238,10 @@ Export creates files for reading or further layout work. Choose PDF, PNG, JPEG o
 ### AI settings and beat instructions
 
 Open Settings and find Prompts in the AI column to customize Suggest beats. Save prompt applies your instructions to future suggestions; Restore default returns to the built-in prompt.
+
+### Chapter pilot: compare beat suggestions
+
+In Manuscript, choose a chapter and open Chapter pilot. Review its story context and scene prose, then run A without story context and B with approved context. Results remain separate until you add selected beats.
 
 ### Foreground images and page-wide bubbles
 

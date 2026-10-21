@@ -12,6 +12,7 @@
     "test:module-paths": "node scripts/test-module-paths.mjs",
     "test:about": "node scripts/test-about.mjs",
     "test:library-drop": "node scripts/test-library-drop.mjs",
+    "test:chapter-pilot": "node scripts/test-chapter-pilot.mjs",
     "test:chapters": "node scripts/test-chapters.mjs",
     "test:adaptation": "node scripts/test-adaptation.mjs",
     "test:image-prompts": "node scripts/test-image-prompts.mjs",

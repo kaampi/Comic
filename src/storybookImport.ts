@@ -7,7 +7,9 @@ export type StoryBookImport = {
   title: string;
   text: string;
   illustrationStyle: string;
-  chapters: Array<{ id: string; title: string; text: string; sourceIndex?: number }>;
+  synopsis?: string;
+  exportedAt?: string;
+  chapters: Array<{ id: string; title: string; text: string; sourceIndex?: number; brief?: string; scenes?: Array<{id:string; title?:string; description:string; instructions?:string}> }>;
   characters: Array<{ id: string; name: string; description: string; pronoun?: string; approximateAge?: number }>;
   locations: Array<{ id: string; name: string; description: string }>;
 };
@@ -88,6 +90,8 @@ export function parseStoryBookExport(raw: string): StoryBookImport {
     throw err;
   }
 
+  const chapterIds=manuscript.chapters.map(c=>c.id),sceneIds=manuscript.chapters.flatMap(c=>c.scenes.map(s=>s.id));
+  if(new Set(chapterIds).size!==chapterIds.length||new Set(sceneIds).size!==sceneIds.length)throw new Error("Duplicate chapter or scene IDs in export.");
   const chapters=[...manuscript.chapters].sort((a,b)=>a.sequence_index-b.sequence_index);
   return {
     kind: "storybook-ai.manuscript",
@@ -96,7 +100,9 @@ export function parseStoryBookExport(raw: string): StoryBookImport {
     title: manuscript.title || "Importerat StoryBook-manus",
     text: chapters.map((chapter) => chapter.prose).join("\n\n"),
     illustrationStyle: manuscript.illustrationStyle,
-    chapters: chapters.map((chapter) => ({ id: chapter.id, title: chapter.title || "Kapitel", text: chapter.prose, sourceIndex: chapter.sequence_index })),
+    ...(manuscript.synopsis?{synopsis:manuscript.synopsis}:{}),
+    exportedAt: manuscript.exportedAt,
+    chapters: chapters.map((chapter) => ({ id: chapter.id, title: chapter.title || "Kapitel", text: chapter.prose, sourceIndex: chapter.sequence_index, ...(chapter.brief?{brief:chapter.brief}:{}), ...(chapter.scenes.length?{scenes:[...chapter.scenes].sort((a,b)=>a.sequence_index-b.sequence_index).map(s=>({id:s.id,title:s.title,description:s.description,instructions:s.instructions}))}:{}) })),
     characters: entitiesOfKind(manuscript, "characters").map((entity) => ({
       id: entity.entity_ref,
       name: entity.name,

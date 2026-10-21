@@ -148,6 +148,7 @@ try {
   localStorage.clear();localStorage.setItem("comicbook-ai.locale","sv");localStorage.setItem("comicbook-ai.projects",JSON.stringify([working]));
   render(React.createElement(App));
   await user.click(screen.getByRole("button",{name:/Workflow fixture/}));
+  await user.click(screen.getByRole("button",{name:/Öppna album för redigering/}));
   const nav=screen.getByRole("group",{name:"Projektinnehåll"});
   assert.deepEqual(Array.from(nav.querySelectorAll(":scope > button")).map(b=>b.textContent),["1Manus","2Beats","3Bildmanus","4Bilder","5Sidor"]);
   await user.selectOptions(screen.getByRole("combobox",{name:"Kapitel"}),b.id);
