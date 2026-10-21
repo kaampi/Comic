@@ -445,7 +445,10 @@
 .bubble-shape-tools { display:grid; gap:10px; padding-top:12px; }
 .bubble-shape-tools label { display:flex; align-items:center; gap:8px; }
 .bubble-shape-tools input[type=checkbox] { width:auto; }
-.bubble-shape-node:focus-visible { outline:none; stroke:#171411; stroke-width:3; }
+/* SVG's native focus halo can scale with the zoomed canvas. Keep focus inside
+   the existing marker instead, including focus restored after a node menu. */
+.bubble-shape-node { outline:none; }
+.bubble-shape-node:focus, .bubble-shape-node:focus-visible { outline:none; stroke:#171411; stroke-width:1.5; }
 .bubble-shape-edge:hover { stroke:#2473a6; stroke-opacity:.35; }
 
 .bubble-shape-mode-notice {
