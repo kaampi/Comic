@@ -50,17 +50,19 @@ try{
   function Harness(){const [o,set]=React.useState({...base,tailEnabled:false}),[editing,onEditing]=React.useState(false),[selected,onSelected]=React.useState(null),[snapping,onSnapping]=React.useState(false);saved=o;
     const props={overlay:o,locale:'sv',editing,onEditing,selected,onSelected,snapping,onSnapping,onChange:patch=>set(old=>({...old,...patch}))};
     return React.createElement(React.Fragment,null,React.createElement(BubbleShapeControls,props),React.createElement('svg',{viewBox:'0 0 100 100'},React.createElement(SvgOverlay,{overlay:o}),editing&&React.createElement(BubbleShapeHandles,props)));}
-  const view=render(React.createElement(Harness));
+  const view=render(React.createElement(Harness));view.container.classList.add('panel-editor-stage');
+  const markerStyles=document.createElement('style'),workspaceStyles=fs.readFileSync('src/panelEditorWorkspace.css','utf8');markerStyles.textContent=workspaceStyles.slice(workspaceStyles.indexOf('/* HTML markers'));document.head.appendChild(markerStyles);
+
   const details=view.container.querySelector('details');details.open=true;fireEvent(details,new window.Event('toggle'));
   fireEvent.click(screen.getByRole('button',{name:'Redigera form'}));
   assert.equal(saved.bubbleShapePoints,undefined,'opening tools preserves existing artwork');
   assert.equal(screen.getAllByRole('button',{name:/Bubbelnod/}).length,16);
-  const firstNode=screen.getByRole('button',{name:'Bubbelnod 1',exact:true});fireEvent.focus(firstNode);fireEvent.keyDown(firstNode,{key:'ArrowLeft'});
+  const firstNode=screen.getByRole('button',{name:'Bubbelnod 1',exact:true});assert.equal(firstNode.tagName,'BUTTON');assert.equal(window.getComputedStyle(firstNode.querySelector('span')).borderRadius,'50%');assert.equal(window.getComputedStyle(firstNode).width,'8px');assert.equal(window.getComputedStyle(firstNode.querySelector('span')).borderTopWidth,'1px');fireEvent.focus(firstNode);fireEvent.keyDown(firstNode,{key:'ArrowLeft'});
   assert.equal(saved.bubbleShapePoints.length,16);
   const before=structuredClone(saved.bubbleShapePoints);
   const svg=view.container.querySelector('svg');svg.getBoundingClientRect=()=>({left:0,top:0,width:100,height:100});
   const rootHandles=view.container.querySelector('.bubble-shape-handles');rootHandles.getScreenCTM=()=>({a:8,b:3,c:2,d:6});fireEvent(window,new window.Event('resize'));
-  const inverse=firstNode.parentElement.getAttribute('transform').match(/matrix\(([^)]+)\)/)[1].split(' ').map(Number);
+  const inverse=firstNode.closest('foreignObject').parentElement.getAttribute('transform').match(/matrix\(([^)]+)\)/)[1].split(' ').map(Number);
   assert.ok(Math.abs(8*inverse[0]+2*inverse[1]-1)<1e-9);assert.ok(Math.abs(3*inverse[0]+6*inverse[1])<1e-9);
   assert.ok(Math.abs(8*inverse[2]+2*inverse[3])<1e-9);assert.ok(Math.abs(3*inverse[2]+6*inverse[3]-1)<1e-9,'node markers cancel zoom, rotation and unequal SVG scales');
   fireEvent.pointerDown(firstNode,{button:0,clientX:59,clientY:25});fireEvent.pointerMove(window,{clientX:55,clientY:25});
@@ -76,7 +78,7 @@ try{
   assert.ok(saved.bubbleShapePoints[0].handleIn);assert.ok(saved.bubbleShapePoints[0].handleOut);
   const committedHandles=structuredClone(saved.bubbleShapePoints);fireEvent.keyDown(screen.getByRole('button',{name:'Bubbelnod 1',exact:true}),{key:'ArrowLeft'});
   assert.deepEqual(saved.bubbleShapePoints[0].handleOut,committedHandles[0].handleOut,'moving an anchor carries relative handles without changing their vectors');
-  fireEvent.click(screen.getByLabelText('Mjuk kontur'));assert.equal(saved.bubbleShapeSmooth,false);assert.equal(view.container.querySelectorAll('.bubble-curve-handle').length,0);assert.ok([...view.container.querySelectorAll('.bubble-shape-node')].every(n=>n.dataset.nodeKind==='sharp'));
+  fireEvent.click(screen.getByLabelText('Mjuk kontur'));assert.equal(saved.bubbleShapeSmooth,false);assert.equal(view.container.querySelectorAll('.bubble-curve-handle').length,0);assert.ok([...view.container.querySelectorAll('.bubble-shape-node')].every(n=>n.dataset.nodeKind==='sharp'));assert.equal(window.getComputedStyle(firstNode.querySelector('span')).borderRadius,'0');assert.equal(window.getComputedStyle(firstNode).width,'8px');assert.equal(window.getComputedStyle(firstNode.querySelector('span')).borderTopWidth,'1px');
   const count=saved.bubbleShapePoints.length;fireEvent.doubleClick(view.container.querySelector('.bubble-shape-edge'),{clientX:35,clientY:12.1});
   assert.equal(saved.bubbleShapePoints.length,count+1);
   fireEvent.click(screen.getByRole('button',{name:'Ta bort nod'}));assert.equal(saved.bubbleShapePoints.length,count);

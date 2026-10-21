@@ -93,5 +93,24 @@
 .editor-view-transform .bubble-connection-handle { r: calc(.9px / var(--editor-view-scale)); }
 .editor-view-transform .connection-hit-area { r: calc(1.8px / var(--editor-view-scale)); }
 
-.bubble-curve-handle { outline: none; cursor: grab; touch-action: none; }
-.bubble-curve-handle:focus { fill: #171411; }
+/* HTML markers inside inverse-transformed foreignObjects stay in screen pixels.
+   Reset native/global button focus, padding and minimum sizes explicitly. */
+.panel-editor-stage .bubble-shape-node,
+.panel-editor-stage .bubble-curve-handle {
+  all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; min-width: 0; min-height: 0; padding: 0; margin: 0;
+  border: 0; outline: none !important; box-shadow: none !important;
+  background: transparent; cursor: grab; touch-action: none; pointer-events: all;
+}
+.bubble-shape-node > span, .bubble-curve-handle > span {
+  display: block; box-sizing: border-box; width: 8px; height: 8px;
+  border: 1px solid #2473a6; background: #fffdf7; pointer-events: none;
+}
+.bubble-shape-node[data-node-kind="sharp"] > span { border-radius: 0; }
+.bubble-shape-node[data-node-kind="smooth"] > span { border-radius: 50%; }
+.bubble-shape-node.is-selected > span { background: #2473a6; }
+.bubble-shape-node:focus > span { border-color: #171411; }
+.bubble-curve-handle > span { width: 6px; height: 6px; border-radius: 50%; background: #2473a6; }
+.bubble-curve-handle:focus > span { border-color: #171411; }
+
+.panel-editor-stage .bubble-shape-node { position: absolute; left: 6px; top: 6px; width: 8px; height: 8px; }
