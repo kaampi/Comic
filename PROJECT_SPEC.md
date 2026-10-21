@@ -388,3 +388,9 @@ Första milstolpen är en fungerande kort serie på 1–3 sidor med ett fåtal k
 The top-level Guide opens an English getting-started dialog. It starts with a no-AI exercise: create an album, draw page frames, upload images, add text, download a backup and export a page. Further sections explain manuscript beats, panel plans, image prompts, style snapshots and beta feedback.
 
 `src/guideContent.ts` is the shared source for the in-app guide and `docs/GETTING_STARTED.md`. Each topic has a stable ID and `shortHelp` for future contextual help beside UI headings. Run `npm run docs:guide` after editing content. `npm run test:guide` checks documentation freshness and guide navigation, keyboard focus and dismissal. Installation instructions are a separate documentation task.
+
+### Fri form för bildrutor (2026-10-21)
+
+Under bildrutans inställningar finns en utfällbar **Fri form**-sektion. **Redigera form** visar noder och valfri fästning mot sidrutnätets fyra delningar per enkelpanel. Dubbelklick på kanten lägger till en nod; noder kan dras eller flyttas med piltangenter, och markerad nod kan tas bort ned till tre noder. Konturen får ha urtag men inte korsa eller vidröra sig själv eller överlappa andra rutor. Högst 64 noder. Escape återställer pågående drag.
+
+Markerade kantsegment kan döljas och visas utan att ändra bildens beskärning. Segmentens synlighet sparas med album och backup och används även av raster-, PDF- och IDML-export, inklusive handritade ramar. **Återställ till rektangel** återställer formen och visar alla kanter. Kurvor och automatisk friläggning av figurer ingår inte i detta steg.

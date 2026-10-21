@@ -49,7 +49,7 @@ export type BubbleSwatch = {
   characterId?: string;
 };
 
-export type PageLayer={ moveWithText?:boolean; panelBorder?:PanelBorderStyle;shapePoints?:ShapePoint[];id:string;panelId?:string;x:number;y:number;width:number;height:number;readingOrder:number;overlays:TextOverlay[];image?:PanelImage;sourceBeatIds?:string[];adaptationPanelPlanId?:string };
+export type PageLayer={ moveWithText?:boolean; panelBorder?:PanelBorderStyle;shapePoints?:ShapePoint[];hiddenShapeEdges?:number[];id:string;panelId?:string;x:number;y:number;width:number;height:number;readingOrder:number;overlays:TextOverlay[];image?:PanelImage;sourceBeatIds?:string[];adaptationPanelPlanId?:string };
 
 export type ComicProject = {
   format: 1;

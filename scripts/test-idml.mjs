@@ -53,6 +53,18 @@ try {
     assert.equal(frame.querySelectorAll('GeometryPathType').length,8,'four ink ribbons and four round joins');
     assert.ok([...frame.querySelectorAll('PathPointType')].some(p=>p.getAttribute('Anchor')!==p.getAttribute('LeftDirection')),'editable cubic curves retain their handles');
   }
+  for(const style of ['clean','hand-drawn']) {
+    const opened={...project,pages:[{...project.pages[0],placements:[{...layer,hiddenShapeEdges:[0,2]}]}],panelBorderDefaults:{...handProject.panelBorderDefaults,style}};
+    const output=await exportAlbum(opened,options,()=>{}),out=archive(new Uint8Array(await output.blob.arrayBuffer())),inner=archive(out.get('Test -album-.idml'));
+    const spread=parse([...inner].find(([p])=>p.startsWith('Spreads/'))[1]);
+    const frame=[...spread.querySelectorAll('Polygon')].find(e=>e.getAttribute('Name')==='Panel border layer');
+    assert.equal(frame.querySelectorAll('GeometryPathType').length,style==='hand-drawn'?4:2);
+    if(style==='clean')assert.ok([...frame.querySelectorAll('GeometryPathType')].every(e=>e.getAttribute('PathOpen')==='true'));
+  }
+  const frameless={...project,pages:[{...project.pages[0],placements:[{...layer,hiddenShapeEdges:[0,1,2,3]}]}]};
+  const noFrameResult=await exportAlbum(frameless,options,()=>{}),noFrameOuter=archive(new Uint8Array(await noFrameResult.blob.arrayBuffer())),noFrameInner=archive(noFrameOuter.get('Test -album-.idml'));
+  const noFrameSpread=parse([...noFrameInner].find(([p])=>p.startsWith('Spreads/'))[1]);
+  assert.equal([...noFrameSpread.querySelectorAll('Polygon')].filter(e=>e.getAttribute('Name')==='Panel border layer').length,0,'fully hidden borders create no empty IDML geometry');
   assert.deepEqual(progress,[[0,2],[1,2],[2,2]]);
   const outer=archive(new Uint8Array(await result.blob.arrayBuffer()));assert.ok(outer.has('README.txt'));
   const inner=archive(outer.get('Test -album-.idml'));

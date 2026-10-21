@@ -5,7 +5,7 @@ import type { ExportOptions } from "./albumExport";
 import { exportFilename } from "./albumExport";
 import { albumPageFormat, layerRect, pageGridMetrics, pageAspect, pageDimensions, PANEL_BORDER, validPageFormat } from "./pageFormat";
 import { panelOutline } from "./panelGeometry";
-import { panelShapePoints } from "./panelShape";
+import { visibleShapeEdges, panelShapePoints } from "./panelShape";
 import { panelBorderStyle, panelBorderWidth } from "./panelBorder";
 import { handDrawnBorderPath } from "./handDrawnBorder";
 import { imagePlacement, imageAffineTransform } from "./imageView";
@@ -98,10 +98,10 @@ export async function exportIdml(project:ComicProject,options:ExportOptions,onPr
       items.push(shape(transformPaths([clip],map),foreground?"cbForeground":background?"cbBackground":"cbImages",`Image frame ${layer.id}`,foreground?"none":"#fffdf7","none",0,"",imageXml));
       if(!full) {
         const border=panelBorderStyle(project,layer);
-        if(border.visible&&border.thicknessPt>0) {
+        if(border.visible&&border.thicknessPt>0&&visibleShapeEdges(panelShapePoints(layer),layer.hiddenShapeEdges).length>0) {
           const outline=panelOutline(page,layer,sourceFormat);
-          if(border.style==="hand-drawn"&&(border.roughness??50)>0)items.push(shape(transformPaths(svgGeometry(handDrawnBorderPath(outline,panelBorderWidth(project,layer),border.roughness??50,layer.id)),map),"cbFrames",`Panel border ${layer.id}`,border.color));
-          else items.push(shape(transformPaths([polygonPath(outline)],map),"cbFrames",`Panel border ${layer.id}`,"none",border.color,border.thicknessPt*scale/(pageDimensions(sourceFormat).widthMm*72/25.4/700)));
+          if(border.style==="hand-drawn"&&(border.roughness??50)>0)items.push(shape(transformPaths(svgGeometry(handDrawnBorderPath(outline,panelBorderWidth(project,layer),border.roughness??50,layer.id,layer.hiddenShapeEdges)),map),"cbFrames",`Panel border ${layer.id}`,border.color));
+          else items.push(shape(transformPaths(layer.hiddenShapeEdges?.length?visibleShapeEdges(outline,layer.hiddenShapeEdges).map(({a,b})=>polygonPath([a,b],true)):[polygonPath(outline)],map),"cbFrames",`Panel border ${layer.id}`,"none",border.color,border.thicknessPt*scale/(pageDimensions(sourceFormat).widthMm*72/25.4/700)));
         }
       }
       const connected=bubbleGroups(layer.overlays);

@@ -1,7 +1,7 @@
 import { panelBorderWidth, type PanelBorderStyle } from "./panelBorder";
 import type { ComicProject, PageLayer } from "./project";
 import { layerRect, pageDimensions, PAGE_RENDER_WIDTH, PANEL_BORDER, type PageFormat } from "./pageFormat";
-import { panelShapePoints, shapedPanel, validPanelShape, type ShapePoint } from "./panelShape";
+import { cross, segmentsMeet, panelShapePoints, shapedPanel, validPanelShape, type ShapePoint } from "./panelShape";
 type Page = ComicProject["pages"][number];
 export type PanelSide = "left" | "right" | "above" | "below";
 const epsilon=1e-7;
@@ -12,15 +12,26 @@ export function panelOutline(page: Page, layer: PageLayer, format: PageFormat): 
 export function panelsOverlap(page: Page, a: PageLayer, b: PageLayer, format: PageFormat, defaults?: PanelBorderStyle): boolean {
   const pa=panelOutline(page,a,format),pb=panelOutline(page,b,format);
   const clearance=(panelBorderWidth({pageFormat:format,panelBorderDefaults:defaults},a)+panelBorderWidth({pageFormat:format,panelBorderDefaults:defaults},b))/2;
-  // Separating axes for convex polygons, including both half-stroke widths.
-  for(const polygon of [pa,pb])for(let i=0;i<polygon.length;i++){
-    const p=polygon[i],q=polygon[(i+1)%polygon.length],length=Math.hypot(q.x-p.x,q.y-p.y);
-    const nx=(q.y-p.y)/length,ny=(p.x-q.x)/length;
-    const aa=pa.map(v=>v.x*nx+v.y*ny),bb=pb.map(v=>v.x*nx+v.y*ny);
-    if(Math.max(...aa)+clearance<=Math.min(...bb)+epsilon||Math.max(...bb)+clearance<=Math.min(...aa)+epsilon)return false;
+  const inside=(p:ShapePoint,polygon:ShapePoint[])=>{
+    let result=false;
+    for(let i=0,j=polygon.length-1;i<polygon.length;j=i++) {
+      const a=polygon[i],b=polygon[j];
+      if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)result=!result;
+    }
+    return result;
+  };
+  const distance=(p:ShapePoint,a:ShapePoint,b:ShapePoint)=>{
+    const dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy)));
+    return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
+  };
+  for(let i=0;i<pa.length;i++)for(let j=0;j<pb.length;j++) {
+    const a=pa[i],b=pa[(i+1)%pa.length],c=pb[j],d=pb[(j+1)%pb.length];
+    if(segmentsMeet(a,b,c,d) && (clearance>epsilon || (cross(a,b,c)*cross(a,b,d)<-epsilon && cross(c,d,a)*cross(c,d,b)<-epsilon)))return true;
+    if(Math.min(distance(a,c,d),distance(b,c,d),distance(c,a,b),distance(d,a,b))+epsilon<clearance)return true;
   }
-  return true;
+  return inside(pa[0],pb)||inside(pb[0],pa);
 }
+
 export function fitPanelToNeighbor(page: Page, layer: PageLayer, neighbor: PageLayer, side: PanelSide, marginMm: number, format: PageFormat, defaults?: PanelBorderStyle): PageLayer | null {
   if(layer.id===neighbor.id||!Number.isFinite(marginMm)||marginMm<0||marginMm>20)return null;
   const direction=side==="left"?{x:-1,y:0}:side==="right"?{x:1,y:0}:side==="above"?{x:0,y:-1}:{x:0,y:1};
@@ -52,7 +63,7 @@ export function fitPanelToNeighbor(page: Page, layer: PageLayer, neighbor: PageL
   const unique=clipped.filter((p,i)=>!clipped.some((q,j)=>j<i&&Math.hypot(p.x-q.x,p.y-q.y)<epsilon));
   const shapePoints=unique.map(p=>({x:Math.max(0,Math.min(4,(p.x-left)/w*4)),y:Math.max(0,Math.min(4,(p.y-top)/h*4))}));
   if(!validPanelShape(shapePoints))return null;
-  const result={...candidate,shapePoints};
+  const result={...candidate,shapePoints,hiddenShapeEdges:undefined};
   if(page.placements.some(p=>p.id!==layer.id&&panelsOverlap(page,result,p,format,defaults)))return null;
   return result;
 }

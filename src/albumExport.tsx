@@ -6,7 +6,7 @@ import { panelOutline } from "./panelGeometry";
 import { imagePlacement } from "./imageView";
 import { pageLayerTextMetrics } from "./pageTypography";
 import { overlayFont } from "./overlayTypography";
-import { panelShapePoints, shapedPanel } from "./panelShape";
+import { visibleShapeEdges, panelShapePoints, shapedPanel } from "./panelShape";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ConnectedBubbles } from "./ConnectedBubbles";
 import { bubbleGroups } from "./bubbleConnections";
@@ -76,7 +76,8 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
     body.push(overlays,"</g>");
     const frameWidth=full||!paint.art?0:panelBorderWidth(project,layer),frameColor=panelBorderStyle(project,layer).color;
     const frameStyle=panelBorderStyle(project,layer);
-    if(!full&&frameWidth>0&&frameStyle.style==="hand-drawn"&&(frameStyle.roughness??50)>0)body.push(`<path d="${handDrawnBorderPath(panelOutline(page,layer,format),frameWidth,frameStyle.roughness??50,layer.id)}" fill="${frameColor}"/>`);
+    if(!full&&frameWidth>0&&frameStyle.style==="hand-drawn"&&(frameStyle.roughness??50)>0)body.push(`<path d="${handDrawnBorderPath(panelOutline(page,layer,format),frameWidth,frameStyle.roughness??50,layer.id,layer.hiddenShapeEdges)}" fill="${frameColor}"/>`);
+    else if(!full&&frameWidth>0&&layer.hiddenShapeEdges?.length)body.push(...visibleShapeEdges(panelOutline(page,layer,format),layer.hiddenShapeEdges).map(({a,b})=>`<path d="M ${a.x} ${a.y} L ${b.x} ${b.y}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}" stroke-linecap="round"/>`));
     else if(shaped&&frameWidth>0)body.push(`<polygon points="${polygon}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}" stroke-linejoin="round"/>`);
     else if(!full&&frameWidth>0)body.push(`<rect x="${r.x+border/2}" y="${r.y+border/2}" width="${r.width-border}" height="${r.height-border}" fill="none" stroke="${frameColor}" stroke-width="${frameWidth}"/>`);
   }

@@ -1,7 +1,7 @@
 import { validManuscriptChapters } from "./manuscriptChapters";
 import { readOrganization } from "./styleOrganization";
 import { validPanelBorder } from "./panelBorder";
-import { validPanelShape } from "./panelShape";
+import { panelShapePoints, validPanelShape } from "./panelShape";
 import { normalizeProjectTypography } from "./pageTypography";
 import { validPageFormat, spacingFitsAlbum } from "./pageFormat";
 import { pageLayers } from "./pageBackground";
@@ -163,6 +163,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
       if (place.width <= 0 || place.height <= 0)
         throw new Error("invalid-backup");
       if (place.shapePoints !== undefined && !validPanelShape(place.shapePoints)) throw new Error("invalid-backup");
+      if(place.hiddenShapeEdges!==undefined && (!Array.isArray(place.hiddenShapeEdges)||place.hiddenShapeEdges.length>panelShapePoints(place).length||!place.hiddenShapeEdges.every((i:unknown)=>typeof i==="number"&&Number.isInteger(i)&&i>=0&&i<panelShapePoints(place).length)))throw new Error("invalid-backup");
       if (place.panelBorder !== undefined && !validPanelBorder(place.panelBorder)) throw new Error("invalid-backup");
       image(place.image);
       for (const overlay of objects(place.overlays)) {
