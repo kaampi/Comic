@@ -99,15 +99,34 @@ try {
   globalThis.fetch=async(_url,init)=>{calls++;body=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:2,title:'A hesitant greeting',summary:'Seren greets Rook.',visualDescription:'At the bridge doorway, Seren faces Rook with her palm raised.',beatType:'reaction',characterIds:[],locationId:null}]})},done_reason:'stop'}));};
   await user.click(screen.getByRole('button',{name:'Suggest comic beats for scene'}));
   await waitFor(()=>assert.ok(screen.getByRole('button',{name:'Add selected beats'})));
+  assert.ok(screen.getByText('Incomplete – content is missing or unreported.'));
   assert.ok(!body.messages[0].content.includes('LONG_DISCOVERY_PROMPT'));assert.ok(settings.prompts.beats.includes('LONG_DISCOVERY_PROMPT'),'saved general prompt is retained');
   assert.equal(body.options.num_ctx,8192);
-  assert.equal(calls,1);const payload=JSON.parse(body.messages[1].content);assert.equal(payload.narrativeContext.synopsis,working.adaptationContext.synopsis.text);assert.equal(payload.narrativeContext.sceneInstructions,'Show hesitation and a possible reunion.');assert.equal(payload.narrativeContext.mustPreserve,'The raised hand.');assert.ok(payload.segments.every(s=>second.includes(s.text)));
+  assert.equal(calls,1);const payload=JSON.parse(body.messages[1].content);assert.equal(payload.narrativeContext.synopsis,working.adaptationContext.synopsis.text);assert.equal(payload.narrativeContext.sceneInstructions,'Show hesitation and a possible reunion.');assert.equal(payload.narrativeContext.mustPreserve,'The raised hand.');assert.deepEqual(payload.coverageRequirements,{'1':'Show hesitation and a possible reunion.','2':'The raised hand.'});assert.ok(body.messages[0].content.includes('coverage'));assert.ok(payload.segments.every(s=>second.includes(s.text)));
   assert.equal(working.adaptations[0].beats.length,1,'proposals require explicit application');
   const purposeInput=screen.getByRole('textbox',{name:'What should the scene accomplish?'});
   fireEvent.change(purposeInput,{target:{value:'A changed scene purpose.'}});assert.equal(screen.getByRole('button',{name:'Add selected beats'}).disabled,true);
   fireEvent.change(purposeInput,{target:{value:'Show hesitation and a possible reunion.'}});
 
+  globalThis.fetch=async(_url,init)=>{calls++;body=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:2,title:'A hesitant greeting',summary:'Seren greets Rook.',visualDescription:'At the bridge doorway, Seren faces Rook with her palm raised.',beatType:'reaction',characterIds:[],locationId:null}],coverage:{'1':{beatNumbers:[1],missing:''},'2':{beatNumbers:[1],missing:''}}})},done_reason:'stop'}));};
+  await user.click(screen.getByRole('button',{name:'Suggest comic beats for scene'}));
+  await waitFor(()=>assert.ok(screen.getByText('AI reports coverage. Check that the beats convey the entire purpose.')));
+  assert.equal(calls,2,'each deliberate run makes exactly one request');
+  const include=screen.getByRole('checkbox',{name:'Include'});
+  await user.click(include);
+  assert.ok(screen.getByText('Incomplete – content is missing or unreported.'));
+  await user.click(include);
   await user.click(screen.getByRole('button',{name:'Add selected beats'}));
   assert.equal(working.adaptations[0].beats.length,1);assert.equal(working.adaptations[0].beats[0].scenePlaceholder,undefined);assert.equal(working.adaptations[0].panelPlans.length,1);
+  const {readSceneCoverage}=await import(pathToFileURL(join(temporary,'adaptation/aiBeats.mjs')));
+  const source='A door opens. A hand rises.';
+  const raw=[{from:2,to:2,title:'Hand'},{from:1,to:1,title:'Door'}];
+  const mapped=[{id:'door',title:'Door',sourceStart:10,sourceEnd:23},{id:'hand',title:'Hand',sourceStart:24,sourceEnd:37}];
+  const reply=JSON.stringify({beats:raw,coverage:{'1':{beatNumbers:[1],missing:''},'2':{beatNumbers:[],missing:'The loss is not conveyed.'}}});
+  const coverage=readSceneCoverage(reply,['Greeting','Loss'],mapped,source,10);
+  assert.deepEqual(coverage[0].beatIds,['hand'],'coverage references survive sorting and global offsets');
+  assert.equal(coverage[0].verified,true);assert.equal(coverage[1].missing,'The loss is not conveyed.');
+  assert.equal(readSceneCoverage(JSON.stringify({beats:raw,coverage:{'1':{beatNumbers:[99],missing:''}}}),['Greeting'],mapped,source,10)[0].verified,false);
+  assert.equal(readSceneCoverage(JSON.stringify({beats:raw}),['Greeting'],mapped,source,10)[0].verified,false);
   console.log('PASS: scene import and local creation, stable source offsets, explicit omission, starter coverage, one scene request with intent, reviewed application, authored asset preservation and backup validation.');
 } finally {globalThis.fetch=nativeFetch;rmSync(temporary,{recursive:true,force:true});dom.window.close();}

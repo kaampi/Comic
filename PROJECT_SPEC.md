@@ -477,3 +477,6 @@ ManuscriptScenes är separata från äldre bild/scenbiblioteket och pilotens rå
 
 ### Kort scenprompt för definierade scener (2026-10-22)
 Scenknappen använder en egen kompakt anpassningsprompt eftersom textgränser och avsikt redan är fastställda. Den återanvänder inte den längre generella upptäcktsprompten från Settings. Godkänd synopsis, Brief och scenens syfte/bevarandekrav skickas fortfarande, med oförändrad kontext/svarsgräns och ett anrop. Generell analys och pilotens promptinställningar bevaras. Budgetfel hänvisar inte längre felaktigt till piloten.
+
+### Täckning av scenavsikt i normal scenadaption (2026-10-22)
+Samma manuellt startade anrop som föreslår beats ska redovisa täckning för scenens hela syfte och valfria bevarandekrav. Varje krav återförs lokalt från indatan och länkas till föreslagna beats; saknade/ogiltiga rapporter, luckor och bortvalda stödbeats visas som ofullständiga. Textändringar i förslag kräver ny manuell granskning av rapporten. Modellens självbedömning är inte semantisk verifiering; användaren får granska och välja att använda även ofullständiga förslag. Ingen automatisk omkörning, större kontext eller bokspecifik hårdkodning införs.

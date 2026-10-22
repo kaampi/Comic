@@ -9,7 +9,7 @@ import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
 import type { LocalAiSettings } from "./localAi";
 import type { AdaptationBeat, BeatType, PanelPlan } from "./adaptation/types";
-import { suggestAiBeats } from "./adaptation/aiBeats";
+import { suggestAiBeats, type SceneCoverage } from "./adaptation/aiBeats";
 import {
   activeManuscriptAdaptation,
   addManualBeat,
@@ -143,6 +143,7 @@ export function ManuscriptWorkspace({
       beats: AdaptationBeat[];
       sourceSceneId?:string;
       sceneSnapshot?:string;
+      coverage?: SceneCoverage[];
     } | null>(null),
     [excluded, setExcluded] = useState<string[]>([]);
   useEffect(()=>{const next=prepareManuscriptScenes(project);if(next!==project)onUpdate(prepareManuscriptScenes);},[project]);
@@ -277,6 +278,7 @@ export function ManuscriptWorkspace({
     };
     let timer = window.setTimeout(timeout, 300000);
     try {
+      let coverage: SceneCoverage[] | undefined;
       const beats = await suggestAiBeats({
         source: snapshot.slice(scope.start, scope.end),
         sourceOffset: scope.start,
@@ -286,7 +288,7 @@ export function ManuscriptWorkspace({
         },
         settings,
         signal: controller.signal,
-        ...(scene?{singleRequest:true,allowUnknownCharacters:true,taskPrompt:SCENE_ADAPTATION_PROMPT,narrativeContext:{synopsis:project.adaptationContext?.synopsis.approved?project.adaptationContext.synopsis.text:'',brief:contextChapter?.brief.approved?contextChapter.brief.text:'',sceneInstructions:scene.purpose,mustPreserve:scene.preserve}}:{}),
+        ...(scene?{singleRequest:true,coverageRequirements:[scene.purpose,...(scene.preserve.trim()?[scene.preserve]:[])],onCoverage:(rows:SceneCoverage[])=>{coverage=rows;},allowUnknownCharacters:true,taskPrompt:SCENE_ADAPTATION_PROMPT,narrativeContext:{synopsis:project.adaptationContext?.synopsis.approved?project.adaptationContext.synopsis.text:'',brief:contextChapter?.brief.approved?contextChapter.brief.text:'',sceneInstructions:scene.purpose,mustPreserve:scene.preserve}}:{}),
         onProgress: (done, total) => {
           if (token !== request.current) return;
           setProgress(`${Math.min(done + 1, total)} / ${total}`);
@@ -295,7 +297,7 @@ export function ManuscriptWorkspace({
         },
       });
       if (token === request.current && !controller.signal.aborted)
-        setDraft({ source: snapshot, sourceSceneId, sceneSnapshot:scene?JSON.stringify(scene):undefined, beats:beats.map(b=>({...b,...(sourceSceneId?{sourceSceneId}:{} )})) });
+        setDraft({ source: snapshot, coverage, sourceSceneId, sceneSnapshot:scene?JSON.stringify(scene):undefined, beats:beats.map(b=>({...b,...(sourceSceneId?{sourceSceneId}:{} )})) });
     } catch (error) {
       if (token === request.current)
         setMessage(
@@ -542,6 +544,12 @@ export function ManuscriptWorkspace({
           <section className="beat-ai-review">
             <h3>{t.aiReview}</h3>
             {(draft.source !== source || (!!draft.sourceSceneId&&draft.sceneSnapshot!==JSON.stringify(project.manuscriptScenes?.find(s=>s.id===draft.sourceSceneId)))) ? <p role="alert">{t.stale}</p> : null}
+            {draft.coverage ? <section aria-label={locale==='sv'?'Scenens täckning':'Scene coverage'} className="beat-review-warning">
+              <h4>{locale==='sv'?'Scenens täckning':'Scene coverage'}</h4>
+              <p>{draft.coverage.some(row=>!row.verified||row.missing||!row.beatIds.length||row.beatIds.some(id=>excluded.includes(id))) ? (locale==='sv'?'Ofullständigt – innehåll saknas eller är inte redovisat.':'Incomplete – content is missing or unreported.') : (locale==='sv'?'AI:n uppger täckning. Granska att hela syftet verkligen syns i beatsen.':'AI reports coverage. Check that the beats convey the entire purpose.')}</p>
+              <p>{locale==='sv'?'Detta är modellens egen bedömning, inte en verifiering av berättelsens innehåll.':'This is the model’s own assessment, not verification of story content.'}</p>
+              {draft.coverage.map((row,i)=><div key={i}><strong>{row.requirement}</strong><p>{row.beatIds.filter(id=>!excluded.includes(id)).map(id=>`${locale==='sv'?'Beat':'Beat'} ${draft.beats.findIndex(b=>b.id===id)+1}`).join(', ') || (locale==='sv'?'Inga valda beats redovisade.':'No selected beats reported.')}</p>{row.missing?<p>{locale==='sv'?'Saknas: ':'Missing: '}{row.missing}</p>:null}{!row.verified?<p>{locale==='sv'?'Saknad eller ogiltig täckningsredovisning.':'Missing or invalid coverage report.'}</p>:null}{row.beatIds.some(id=>excluded.includes(id))?<p>{locale==='sv'?'Ett stödjande beat har valts bort; granska täckningen igen.':'A supporting beat was excluded; review coverage again.'}</p>:null}</div>)}
+            </section>:null}
             {draft.beats.map((b) => (
               <article key={b.id}>
                 <label>
@@ -566,6 +574,7 @@ export function ManuscriptWorkspace({
                       d
                         ? {
                             ...d,
+                            coverage:d.coverage?.map(row=>({...row,verified:false})),
                             beats: d.beats.map((x) =>
                               x.id === b.id
                                 ? { ...x, title: e.target.value }
@@ -584,6 +593,7 @@ export function ManuscriptWorkspace({
                       d
                         ? {
                             ...d,
+                            coverage:d.coverage?.map(row=>({...row,verified:false})),
                             beats: d.beats.map((x) =>
                               x.id === b.id
                                 ? {
@@ -606,7 +616,7 @@ export function ManuscriptWorkspace({
                     )
                   }
                 />
-                <label>{locale === "sv" ? "Föreslagen bildscen" : "Suggested visual scene"}<textarea rows={3} value={b.visualCandidates[0]?.description ?? ""} onChange={e => setDraft(d => d ? { ...d, beats: d.beats.map(x => x.id === b.id ? { ...x, visualCandidates: x.visualCandidates.map((v, i) => i === 0 ? { ...v, description: e.target.value } : v) } : x) } : d)} /></label>
+                <label>{locale === "sv" ? "Föreslagen bildscen" : "Suggested visual scene"}<textarea rows={3} value={b.visualCandidates[0]?.description ?? ""} onChange={e => setDraft(d => d ? { ...d, coverage:d.coverage?.map(row=>({...row,verified:false})), beats: d.beats.map(x => x.id === b.id ? { ...x, visualCandidates: x.visualCandidates.map((v, i) => i === 0 ? { ...v, description: e.target.value } : v) } : x) } : d)} /></label>
                 <blockquote>{b.sourceTextExcerpt}</blockquote>
               </article>
             ))}

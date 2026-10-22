@@ -144,9 +144,30 @@ export function parseAiBeats(reply: string, source: string, context: BeatContext
   });
 }
 
+export type SceneCoverage = { requirement: string; beatIds: string[]; missing: string; verified: boolean };
+
+/** Resolve report indices before source-order sorting; unknown or absent reports stay incomplete. */
+export function readSceneCoverage(reply: string, requirements: string[], beats: AdaptationBeat[], source: string, offset = 0): SceneCoverage[] {
+  let payload: any;
+  try { payload = JSON.parse(reply.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")); } catch { payload = {}; }
+  const segments = numberSourceSegments(source);
+  return requirements.map((requirement, index) => {
+    const row = payload.coverage?.[String(index + 1)];
+    const refs = row?.beatNumbers;
+    const valid = Array.isArray(refs) && refs.length > 0 && new Set(refs).size === refs.length && refs.every((n: unknown) => Number.isSafeInteger(n) && Number(n) >= 1 && Number(n) <= (payload.beats?.length ?? 0));
+    const beatIds: string[] = valid ? refs.flatMap((n: number) => {
+      const raw = payload.beats[n - 1];
+      return beats.filter(b => b.sourceStart === offset + segments[Number(raw.from) - 1]?.start && b.sourceEnd === offset + segments[Number(raw.to ?? raw.from) - 1]?.end && b.title === raw.title?.trim().slice(0,80)).map(b => b.id);
+    }) : [];
+    const verified = !!valid && beatIds.length === refs.length && typeof row?.missing === "string";
+    return { requirement, beatIds, verified, missing: typeof row?.missing === "string" ? row.missing.trim().slice(0,600) : "" };
+  });
+}
+
 export async function suggestAiBeats(options: {
   source: string; sourceOffset?: number; context: BeatContext; settings: LocalAiSettings;
   onDiagnostics?: (value:LocalChatDiagnostics)=>void;
+  coverageRequirements?: string[]; onCoverage?: (rows: SceneCoverage[]) => void;
   singleRequest?: boolean; narrativeContext?: unknown; taskPrompt?: string; allowUnknownCharacters?: boolean;
   signal?: AbortSignal; fetchImpl?: typeof fetch; onProgress?: (done: number, total: number) => void;
 }): Promise<AdaptationBeat[]> {
@@ -160,7 +181,7 @@ export async function suggestAiBeats(options: {
       characters: options.singleRequest?options.context.characters:options.context.characters.filter(c => c.name && chunk.text.toLowerCase().includes(c.name.toLowerCase())),
       locations: options.singleRequest?options.context.locations:options.context.locations.filter(l => l.name && chunk.text.toLowerCase().includes(l.name.toLowerCase()))
     };
-    const maxBeats = Math.max(1, Math.min(8, Math.floor(Math.min(2048, options.settings.contextWindow * .35) / 240)));
+    const maxBeats = Math.max(1, Math.min(8, Math.floor((Math.min(2048, options.settings.contextWindow * .35) - (options.coverageRequirements?.length ? 500 : 0)) / 240)));
     const messages: Array<{ role: "system" | "user"; content: string }> = [{
       role: "system", content: [
         options.taskPrompt??beatPrompt(options.settings),
@@ -169,6 +190,7 @@ export async function suggestAiBeats(options: {
         `Use the manuscript language. Titles: at most 8 words. Summaries: at most 25 words. Visual descriptions: at most 40 words. Return at most ${maxBeats} beats per reply; prioritize meaningful moments over mechanical splitting.`,
         'Return only JSON: {"beats":[{"from":1,"to":2,"title":"short title","summary":"brief event","visualDescription":"one visible moment, rewritten as staging","beatType":"action","characterIds":[],"locationId":null}]}.',
         ...(options.allowUnknownCharacters?["For each beat optionally add reason (at most 25 words) explaining its story function. If a named character in the source has no supplied ID, use an empty characterIds entry list for that person and add unresolvedCharacters:[name]. Never invent an ID or add a character to the story."]:[]),
+        ...(options.coverageRequirements?.length ? ['In this SAME JSON reply add coverage, keyed by each supplied coverageRequirements id: "coverage":{"1":{"beatNumbers":[1,2],"missing":""}}. beatNumbers are 1-based positions in your returned beats array. Check EVERY part of each requirement, including grief, memories, relationships and unresolved feelings. Split distinct meaningful moments rather than repeating routine movement. State specifically what is missing in missing; empty only if all parts are represented. Include every requirement even when unsupported (empty beatNumbers and explain why). A mention of grief in a rationale does not cover it unless the beat actually conveys it.'] : []),
         "from and to are inclusive integer segment IDs from the input. Use the same ID for both when a beat uses one segment. Return beats in source order.",
         "Beats may share source segments when one sentence contains several distinct events, but do not repeat the same beat.",
         "Allowed beatType: " + beatTypes.join(", ") + ".",
@@ -177,6 +199,7 @@ export async function suggestAiBeats(options: {
     }, {
       role: "user", content: JSON.stringify({ knownCharacters: context.characters, knownLocations: context.locations,
         ...(options.narrativeContext?{narrativeContext:options.narrativeContext}:{}),
+        ...(options.coverageRequirements?.length?{coverageRequirements:Object.fromEntries(options.coverageRequirements.map((text,i)=>[String(i+1),text]))}:{}),
         segments: numberSourceSegments(chunk.text).map(segment => ({ id: segment.id, text: segment.text })) })
 
     }];
@@ -186,7 +209,9 @@ export async function suggestAiBeats(options: {
       if(estimatedInput+output>options.settings.contextWindow*.9)throw new Error("Scene and approved context exceed the current context budget. Shorten the reviewed context or choose a shorter scene before trying again.");
     }
     const reply = await completeLocalChat(options.settings, messages, options.signal, options.fetchImpl, options.onDiagnostics);
-    beats.push(...parseAiBeats(reply, chunk.text, context, (options.sourceOffset ?? 0) + chunk.start, true, options.allowUnknownCharacters));
+    const parsed = parseAiBeats(reply, chunk.text, context, (options.sourceOffset ?? 0) + chunk.start, true, options.allowUnknownCharacters);
+    if(options.coverageRequirements?.length) options.onCoverage?.(readSceneCoverage(reply, options.coverageRequirements, parsed, chunk.text, (options.sourceOffset ?? 0) + chunk.start));
+    beats.push(...parsed);
   }
   options.onProgress?.(chunks.length, chunks.length);
   return beats.map((beat, index) => ({ ...beat, order: index + 1 }));
