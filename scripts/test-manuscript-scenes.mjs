@@ -136,6 +136,40 @@ try {
   assert.ok(screen.getByText(/Finish reason: length/));
   assert.equal(JSON.stringify(working.adaptations),preserved,'failed generation preserves existing work');
   assert.equal(calls,3,'failed generation has no automatic retry');
+  globalThis.fetch=async()=>{calls++;return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:1,summary:'Rook reaches the bridge.',reason:'Arrival.'},{from:2,to:2,summary:'Seren raises a hand.',reason:'A greeting.'}]})},done_reason:'stop'}));};
+  await user.click(screen.getByRole('button',{name:'Suggest comic beats for scene'}));
+  await waitFor(()=>assert.equal(screen.getAllByRole('checkbox',{name:/Mark for merge:/}).length,2));
+  const beforeMerge=JSON.stringify(working.adaptations);
+  const marks=screen.getAllByRole('checkbox',{name:/Mark for merge:/});
+  await user.click(marks[0]);await user.click(marks[1]);
+  assert.ok(screen.getAllByRole('checkbox',{name:'Include'}).every(box=>box.checked),'merge marking is independent of Include');
+  await user.click(screen.getByRole('button',{name:'Merge marked proposals'}));
+  const preview=screen.getByRole('region',{name:'Review merge'});
+  assert.ok(within(preview).getByText(second,{selector:'blockquote'}));
+  const mergedSummary=within(preview).getByRole('textbox',{name:'Merged summary'});
+  fireEvent.change(mergedSummary,{target:{value:'Rook arrives and Seren greets him.'}});
+  fireEvent.change(purposeInput,{target:{value:'A different intention.'}});
+  assert.equal(within(preview).getByRole('button',{name:'Save merge'}).disabled,true,'changed scene metadata blocks merge');
+  fireEvent.change(purposeInput,{target:{value:'Show hesitation and a possible reunion.'}});
+
+  await user.click(within(preview).getByRole('button',{name:'Cancel merge'}));
+  assert.equal(screen.getAllByRole('checkbox',{name:'Include'}).length,2);assert.equal(JSON.stringify(working.adaptations),beforeMerge);
+  await user.click(screen.getByRole('button',{name:'Merge marked proposals'}));
+  fireEvent.change(screen.getByRole('textbox',{name:'Merged summary'}),{target:{value:'Rook arrives and Seren greets him.'}});
+  await user.click(screen.getByRole('button',{name:'Save merge'}));
+  assert.equal(screen.getAllByRole('checkbox',{name:'Include'}).length,1);
+  await user.click(screen.getByRole('button',{name:'Undo merge'}));
+  assert.equal(screen.getAllByRole('checkbox',{name:'Include'}).length,2);
+  for(const checkbox of screen.getAllByRole('checkbox',{name:/Mark for merge:/}))await user.click(checkbox);
+  await user.click(screen.getByRole('button',{name:'Merge marked proposals'}));
+  fireEvent.change(screen.getByRole('textbox',{name:'Merged summary'}),{target:{value:'Rook arrives and Seren greets him.'}});
+  await user.click(screen.getByRole('button',{name:'Save merge'}));
+  assert.equal(JSON.stringify(working.adaptations),beforeMerge,'merging only edits the proposal draft');
+  assert.equal(calls,4,'merge, cancel and undo do not call AI');
+  await user.click(screen.getByRole('button',{name:'Add selected beats'}));
+  const appliedMerge=working.adaptations[0].beats.find(b=>b.summary==='Rook arrives and Seren greets him.');
+  assert.equal(appliedMerge.sourceTextExcerpt,second);assert.equal(appliedMerge.sourceStart,0);assert.equal(appliedMerge.sourceEnd,second.length);
+  assert.equal(working.adaptations[0].beats.length,2,'earlier authored beat is preserved');
   const {readSceneCoverage,suggestAiBeats,parseAiBeats}=await import(pathToFileURL(join(temporary,'adaptation/aiBeats.mjs')));
   const source='A door opens. A hand rises.';
   const raw=[{from:2,to:2,title:'Hand'},{from:1,to:1,title:'Door'}];
@@ -151,6 +185,15 @@ try {
   assert.deepEqual(selected[0].visualCandidates,[]);assert.deepEqual(selected[0].characterIds,[]);assert.equal(selected[0].locationId,undefined);
   assert.throws(()=>parseAiBeats(JSON.stringify({beats:[{from:99,summary:'No source.'}]}),source,{characters:[],locations:[]},0,false,true,true),/unknown source segment/);
   assert.throws(()=>parseAiBeats(JSON.stringify({beats:[{from:1,summary:'Same.'},{from:2,summary:'Same.'}]}),source,{characters:[],locations:[]},0,false,true,true),/repeated a selected beat/);
+  const {mergeBeatProposals}=await local('mergeBeatProposals');
+  const mergeSource='One. Gap. Two. Tail.';
+  const candidates=[{...selected[0],id:'one',summary:'One',sourceStart:0,sourceEnd:4,sourceTextExcerpt:'One.'},{...selected[0],id:'two',summary:'Two',sourceStart:10,sourceEnd:14,sourceTextExcerpt:'Two.'},{...selected[0],id:'tail',summary:'Tail',sourceStart:15,sourceEnd:20,sourceTextExcerpt:'Tail.'}];
+  const combined=mergeBeatProposals(candidates,['one','two'],mergeSource);
+  assert.equal(combined[0].sourceTextExcerpt,'One. Gap. Two.');assert.equal(combined[0].id,'one');assert.equal(combined[1].id,'tail');assert.equal(candidates.length,3);
+  assert.throws(()=>mergeBeatProposals(candidates,['one','tail'],mergeSource),/consecutive/);
+  assert.throws(()=>mergeBeatProposals(candidates,['one','missing'],mergeSource),/consecutive/);
+  assert.throws(()=>mergeBeatProposals(candidates,['one','two'],mergeSource.replace('One','New')),/current source/);
+  assert.throws(()=>mergeBeatProposals(candidates.map(b=>b.id==='two'?{...b,sourceSceneId:'other'}:b),['one','two'],mergeSource),/same scene/);
   // A realistic full scene plus approved synopsis and entity IDs must fit 8192,
   // while genuinely oversized input must still fail before a network request.
   let realisticCalls=0,requestBody;

@@ -1,3 +1,4 @@
+import { mergeBeatProposals } from "./mergeBeatProposals";
 import { ManuscriptSceneList } from "./ManuscriptSceneList";
 import { SCENE_ADAPTATION_PROMPT, prepareManuscriptScenes, createManuscriptScene, sceneRange, applySceneBeats } from "./manuscriptScenes";
 import { ChapterBeatPilot } from "./ChapterBeatPilot";
@@ -147,6 +148,14 @@ export function ManuscriptWorkspace({
     } | null>(null),
     [excluded, setExcluded] = useState<string[]>([]);
   useEffect(()=>{const next=prepareManuscriptScenes(project);if(next!==project)onUpdate(prepareManuscriptScenes);},[project]);
+  const [mergeIds,setMergeIds]=useState<string[]>([]);
+  const [mergeEdit,setMergeEdit]=useState<{base:string;beats:AdaptationBeat[];id:string;title:string;summary:string;reason:string}|null>(null);
+  const [mergeUndo,setMergeUndo]=useState<{beats:AdaptationBeat[];after:string}|null>(null);
+  useEffect(()=>{setMergeIds(ids=>ids.filter(id=>!excluded.includes(id)));},[excluded]);
+  const proposalStale=!!draft&&(draft.source!==source||!!draft.sourceSceneId&&draft.sceneSnapshot!==JSON.stringify(project.manuscriptScenes?.find(s=>s.id===draft.sourceSceneId)));
+  const mergeIndices=draft?.beats.flatMap((b,i)=>mergeIds.includes(b.id)?[i]:[])??[];
+  const canMerge=!!draft&&!proposalStale&&mergeIndices.length>=2&&mergeIndices.at(-1)!-mergeIndices[0]+1===mergeIndices.length&&!mergeIds.some(id=>excluded.includes(id));
+  useEffect(()=>{if(!draft){setMergeIds([]);setMergeEdit(null);setMergeUndo(null);}},[draft===null]);
   const [sceneDiagnostics,setSceneDiagnostics]=useState<{title:string;trace:LocalChatDiagnostics}|null>(null);
   const [sceneDraft,setSceneDraft]=useState<{range:TextRange;source:string;title:string;purpose:string;preserve:string}|null>(null);
   useEffect(() => {
@@ -271,6 +280,7 @@ export function ManuscriptWorkspace({
     setProgress("");
     setMessage("");
     setDraft(null);
+    setMergeIds([]);setMergeEdit(null);setMergeUndo(null);
     setSceneDiagnostics(null);
     setExcluded([]);
     let timedOut = false;
@@ -554,11 +564,28 @@ export function ManuscriptWorkspace({
               <p>{locale==='sv'?'Detta är modellens egen bedömning, inte en verifiering av berättelsens innehåll.':'This is the model’s own assessment, not verification of story content.'}</p>
               {draft.coverage.map((row,i)=><div key={i}><strong>{row.requirement}</strong><p>{row.beatIds.filter(id=>!excluded.includes(id)).map(id=>`${locale==='sv'?'Beat':'Beat'} ${draft.beats.findIndex(b=>b.id===id)+1}`).join(', ') || (locale==='sv'?'Inga valda beats redovisade.':'No selected beats reported.')}</p>{row.missing?<p>{locale==='sv'?'Saknas: ':'Missing: '}{row.missing}</p>:null}{!row.verified?<p>{locale==='sv'?'Saknad eller ogiltig täckningsredovisning.':'Missing or invalid coverage report.'}</p>:null}{row.beatIds.some(id=>excluded.includes(id))?<p>{locale==='sv'?'Ett stödjande beat har valts bort; granska täckningen igen.':'A supporting beat was excluded; review coverage again.'}</p>:null}</div>)}
             </section>:null}
+            <div className="beat-merge-controls">
+              <p>{locale==='sv'?'Markera intilliggande förslag för sammanslagning. Ta med avgör vilka beats som läggs till i albumet.':'Mark consecutive proposals to merge. Include controls which beats are added to the album.'}</p>
+              <button type="button" disabled={!canMerge||!!mergeEdit} onClick={()=>{try{const beats=mergeBeatProposals(draft.beats,mergeIds,draft.source);const merged=beats.find(b=>b.id===draft.beats.find(b=>mergeIds.includes(b.id))?.id)!;setMergeEdit({base:JSON.stringify(draft.beats),beats,id:merged.id,title:merged.title,summary:merged.summary,reason:merged.adaptationReason??''});}catch(error){setMessage(error instanceof Error?error.message:String(error));}}}>{locale==='sv'?'Slå ihop markerade förslag':'Merge marked proposals'}</button>
+              <button type="button" disabled={!mergeUndo||proposalStale||!!mergeEdit||JSON.stringify(draft.beats)!==mergeUndo.after} onClick={()=>{if(!mergeUndo)return;setDraft({...draft,beats:mergeUndo.beats});setExcluded(excluded.filter(id=>mergeUndo.beats.some(b=>b.id===id)));setMergeUndo(null);setMergeIds([]);}}>{locale==='sv'?'Ångra sammanslagning':'Undo merge'}</button>
+            </div>
+            {mergeEdit?<section className="beat-merge-preview" aria-label={locale==='sv'?'Granska sammanslagning':'Review merge'}>
+              <h4>{locale==='sv'?'Granska sammanslagning':'Review merge'}</h4>
+              <p>{locale==='sv'?'Källan omfattar hela intervallet från första till sista markerade beatet, inklusive eventuell text däremellan. Redigera sammanfattningen före sammanslagning.':'The source covers the full range from the first to the last marked beat, including any text between them. Edit the summary before merging.'}</p>
+              <label>{locale==='sv'?'Sammanslagen titel':'Merged title'}<input value={mergeEdit.title} onChange={e=>setMergeEdit({...mergeEdit,title:e.target.value})}/></label>
+              <label>{locale==='sv'?'Sammanslagen sammanfattning':'Merged summary'}<textarea rows={5} value={mergeEdit.summary} onChange={e=>setMergeEdit({...mergeEdit,summary:e.target.value})}/></label>
+              <label>{locale==='sv'?'Berättelsefunktion':'Story function'}<textarea rows={3} value={mergeEdit.reason} onChange={e=>setMergeEdit({...mergeEdit,reason:e.target.value})}/></label>
+              <blockquote>{mergeEdit.beats.find(b=>b.id===mergeEdit.id)?.sourceTextExcerpt}</blockquote>
+              <button type="button" disabled={proposalStale||!canMerge||mergeEdit.base!==JSON.stringify(draft.beats)||!mergeEdit.title.trim()||!mergeEdit.summary.trim()} onClick={()=>{if(proposalStale||!canMerge||mergeEdit.base!==JSON.stringify(draft.beats))return;const beats=mergeEdit.beats.map(b=>b.id===mergeEdit.id?{...b,title:mergeEdit.title.trim(),summary:mergeEdit.summary.trim(),adaptationReason:mergeEdit.reason.trim()}:b);setMergeUndo({beats:draft.beats,after:JSON.stringify(beats)});setDraft({...draft,beats,coverage:undefined});setExcluded(excluded.filter(id=>beats.some(b=>b.id===id)));setMergeIds([]);setMergeEdit(null);}}>{locale==='sv'?'Spara sammanslagning':'Save merge'}</button>
+              <button type="button" onClick={()=>setMergeEdit(null)}>{locale==='sv'?'Avbryt':'Cancel merge'}</button>
+            </section>:null}
             {draft.beats.map((b) => (
               <article key={b.id}>
+                <label><input type="checkbox" aria-label={`${locale==='sv'?'Markera för sammanslagning':'Mark for merge'}: ${b.title}`} checked={mergeIds.includes(b.id)} disabled={excluded.includes(b.id)||proposalStale||!!mergeEdit} onChange={e=>setMergeIds(ids=>e.target.checked?[...ids,b.id]:ids.filter(id=>id!==b.id))}/>{locale==='sv'?'Markera för sammanslagning':'Mark for merge'}</label>
                 <label>
                   <input
                     type="checkbox"
+                    disabled={!!mergeEdit}
                     checked={!excluded.includes(b.id)}
                     onChange={(e) =>
                       setExcluded((ids) =>
@@ -630,7 +657,7 @@ export function ManuscriptWorkspace({
               className="primary-button"
               disabled={
                 (draft.source !== source || (!!draft.sourceSceneId&&draft.sceneSnapshot!==JSON.stringify(project.manuscriptScenes?.find(s=>s.id===draft.sourceSceneId)))) ||
-                draft.beats.every((b) => excluded.includes(b.id))
+                !!mergeEdit || draft.beats.every((b) => excluded.includes(b.id))
               }
               onClick={() => {
                 const proposals = draft.beats.filter(
