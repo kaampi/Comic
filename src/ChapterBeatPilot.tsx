@@ -4,13 +4,13 @@ import type { Locale } from "./settings";
 import type { LocalAiSettings, LocalChatDiagnostics } from "./localAi";
 import { beatPrompt } from "./aiPrompts";
 import { BEAT_SELECTION_PROMPT, suggestBeatSelection } from "./adaptation/beatSelection";
-import { READING_CHECK_PROMPT, runReadingCheck, type ReadingCheck } from "./adaptation/readingCheck";
+import { READING_CHECK_PROMPT, runReadingCheck, validateReadingCheck, type ReadingCheck } from "./adaptation/readingCheck";
 import { numberSourceSegments, suggestAiBeats } from "./adaptation/aiBeats";
 import { appendAiBeats } from "./manuscriptModel";
 import type { ManuscriptChapter } from "./manuscriptChapters";
 import { parseStoryBookExport } from "./storybookImport";
 import { BeatAnalysisDialog } from "./BeatAnalysisDialog";
-import { defaultChapterProfile, matchPilotChapters, importedAdaptationContext, pilotChapter, pilotNarrative, pilotSceneRange, sameTrialSetup, trialIsCurrent, updatePilotChapter, type AdaptationContext, type BeatTrial, type ChapterProfile, type ReviewedText } from "./chapterPilot";
+import { defaultChapterProfile, reviewedReading, matchPilotChapters, importedAdaptationContext, pilotChapter, pilotNarrative, pilotSceneRange, sameTrialSetup, trialIsCurrent, updatePilotChapter, type AdaptationContext, type BeatTrial, type ChapterProfile, type ReviewedText } from "./chapterPilot";
 import "./chapterPilot.css";
 
 function ReviewText({label,value,onChange,sv}:{label:string;value:ReviewedText;onChange:(value:ReviewedText)=>void;sv:boolean}) {
@@ -18,6 +18,21 @@ function ReviewText({label,value,onChange,sv}:{label:string;value:ReviewedText;o
     <label className="pilot-check"><input type="checkbox" checked={value.approved} onChange={e=>onChange({...value,approved:e.target.checked})}/>{sv?'Godkänt för AI-underlag':'Approved for AI context'}</label>
     <details><summary>{sv?'Visa importerad originaltext':'Show imported original'}</summary><pre>{value.original||'—'}</pre></details>
   </div>;
+}
+function ReadingReviewEditor({trial,disabled,sv,onSave,onInvalidate}:{trial:BeatTrial;disabled:boolean;sv:boolean;onSave:(answers:ReadingCheck)=>void;onInvalidate:()=>void}) {
+  const initial=trial.readingReview?.answers??trial.readingCheck!;
+  const [draft,setDraft]=useState(()=>structuredClone(initial)),[refs,setRefs]=useState(()=>Object.fromEntries(Object.entries(initial).map(([k,v])=>[k,v.evidence.join(', ')]))),[error,setError]=useState('');
+  const labels={currentSituation:sv?'Nutida plats och förflyttning':'Present location and movement',pastEvents:sv?'Minnen och tidigare händelser':'Memories and earlier events',change:sv?'Förändring och kvarvarande osäkerhet':'Change and remaining uncertainty'};
+  return <details><summary>{sv?'Granska och rätta läsförståelsen':'Review and correct understanding'}</summary><fieldset disabled={disabled}>
+    <p>{sv?'Rätta svaren och deras källhänvisningar. Modellens original och råsvar behålls. Godkänn sedan din granskning; urvalet startas separat.':'Correct the answers and source references. Original model answers and raw replies are retained. Approve your review, then start selection separately.'}</p>
+    {(['currentSituation','pastEvents','change'] as const).map(key=><div key={key}><label>{labels[key]}<textarea rows={3} value={draft[key].answer} onChange={e=>{setDraft({...draft,[key]:{...draft[key],answer:e.target.value}});onInvalidate();setError('');}}/></label><label>{sv?'Källsegment, kommaseparerade':'Source segments, comma-separated'} ({labels[key]})<input value={refs[key]} onChange={e=>{setRefs({...refs,[key]:e.target.value});onInvalidate();setError('');}}/></label></div>)}
+    <button type="button" onClick={()=>{try{
+      const answers=structuredClone(draft);
+      for(const key of ['currentSituation','pastEvents','change'] as const){const value=refs[key].trim();if(value&&!/^\d+(?:\s*,\s*\d+)*$/.test(value))throw new Error(sv?'Ange segmentnummer separerade med kommatecken.':'Enter segment numbers separated by commas.');answers[key].evidence=value?value.split(',').map(Number):[];}
+      validateReadingCheck(answers,trial.inputs.source);onSave(answers);setError('');
+    }catch(e){setError(e instanceof Error?e.message:String(e));}}}>{sv?'Spara och godkänn granskningen':'Save and approve review'}</button>
+    {trial.readingReview?.approved?<p>{sv?'Granskningen är godkänd för urval.':'Review approved for selection.'}</p>:null}{error?<p role="alert">{error}</p>:null}
+  </fieldset></details>;
 }
 export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{project:ComicProject;chapterId:string;locale:Locale;settings:LocalAiSettings;onUpdate:(change:(p:ComicProject)=>ComicProject)=>void}) {
   const sv=locale==='sv',t=(se:string,en:string)=>sv?se:en,chapter=pilotChapter(project,chapterId);
@@ -31,20 +46,22 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
   const patchChapter=(change:Parameters<typeof updatePilotChapter>[2])=>onUpdate(p=>updatePilotChapter(p,chapterId,change));
   const patchProfile=(change:Partial<ChapterProfile>)=>patchChapter(c=>({...c,profile:{...profile,...change}}));
   const trials=(project.beatTrials??[]).filter(r=>r.inputs.chapterId===chapterId&&r.inputs.sceneId===sceneId);
-  const run=async(variant:'A'|'B'|'C'|'D')=>{
+  const run=async(variant:'A'|'B'|'C'|'D',readingTrialId?:string)=>{
     if(!scene||!range||!chapter)return;
     if(!settings.servers[settings.engine].model.trim()){setMessage(t('Välj en textmodell i Settings först.','Select a text model in Settings first.'));return;}
+    let understanding:ReadingCheck|undefined;
+    if(readingTrialId){try{understanding=reviewedReading(latest.current,chapterId,sceneId,readingTrialId);}catch(e){setMessage(e instanceof Error?e.message:String(e));return;}}
     const token=++revision.current,abort=new AbortController();controller.current=abort;
     const narrative=pilotNarrative(project,chapterId,sceneId);
     const known={characters:project.characters.map(c=>({id:c.id,name:c.name})),locations:project.locations.map(l=>({id:l.id,name:l.name}))};
     const selectionNarrative={...narrative,characterFacts:narrative.characterFacts.map(({name,description})=>({name,description})),locationFacts:narrative.locationFacts.map(({name,description})=>({name,description}))};
-    const inputs={chapterId,sceneId,source:source.slice(range.start,range.end),sourceOffset:range.start,model:settings.servers[settings.engine].model,engine:settings.engine,server:settings.servers[settings.engine].baseUrl,contextWindow:settings.contextWindow,prompt:variant==='D'?READING_CHECK_PROMPT:variant==='C'?BEAT_SELECTION_PROMPT:beatPrompt(settings),context:variant==='D'?{}:variant==='C'?{narrative:selectionNarrative}:{narrative,known}};
+    const inputs={chapterId,sceneId,source:source.slice(range.start,range.end),sourceOffset:range.start,model:settings.servers[settings.engine].model,engine:settings.engine,server:settings.servers[settings.engine].baseUrl,contextWindow:settings.contextWindow,prompt:variant==='D'?READING_CHECK_PROMPT:variant==='C'?BEAT_SELECTION_PROMPT:beatPrompt(settings),context:variant==='D'?{}:variant==='C'?{narrative:selectionNarrative,...(understanding?{readingTrialId,reviewedUnderstanding:understanding}:{})}:{narrative,known}};
     let diagnostics:LocalChatDiagnostics|undefined;
     setBusy(true);setMessage('');const timer=window.setTimeout(()=>abort.abort(),300000);
     try{
       let readingCheck:ReadingCheck|undefined;
       if(variant==='D')readingCheck=await runReadingCheck({source:inputs.source,settings,signal:abort.signal,onDiagnostics:value=>{diagnostics=value;}});
-      const beats=variant==='D'?[]:variant==='C'?await suggestBeatSelection({source:inputs.source,sourceOffset:range.start,narrativeContext:selectionNarrative,settings,signal:abort.signal,onDiagnostics:value=>{diagnostics=value;}}):await suggestAiBeats({source:inputs.source,sourceOffset:range.start,context:known,settings,signal:abort.signal,singleRequest:true,onDiagnostics:value=>{diagnostics=value;},allowUnknownCharacters:true,taskPrompt:inputs.prompt,...(variant==='B'?{narrativeContext:narrative}:{})});
+      const beats=variant==='D'?[]:variant==='C'?await suggestBeatSelection({source:inputs.source,sourceOffset:range.start,narrativeContext:selectionNarrative,reviewedUnderstanding:understanding,settings,signal:abort.signal,onDiagnostics:value=>{diagnostics=value;}}):await suggestAiBeats({source:inputs.source,sourceOffset:range.start,context:known,settings,signal:abort.signal,singleRequest:true,onDiagnostics:value=>{diagnostics=value;},allowUnknownCharacters:true,taskPrompt:inputs.prompt,...(variant==='B'?{narrativeContext:narrative}:{})});
       if(token!==revision.current||abort.signal.aborted)return;
       const trial:BeatTrial={id:'beat-trial-'+crypto.randomUUID(),variant,createdAt:new Date().toISOString(),inputs,diagnostics,readingCheck,beats:beats.map(b=>({...b,chapterId,sourceSceneId:sceneId})),excluded:[],applied:[],notes:''};
       if(!trialIsCurrent(latest.current,trial))return;
@@ -109,8 +126,9 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
     {message?<p role="status">{message}</p>:null}
     {trials.length>1?<p className="pilot-comparison">{(()=>{const a=trials.filter(r=>r.variant==='A').at(-1),b=trials.filter(r=>r.variant==='B').at(-1);return a&&b?(sameTrialSetup(a,b)?t('Senaste A och B har samma testförutsättningar.','Latest A and B use the same test setup.'):t('Senaste A och B har olika testförutsättningar. Kör om båda innan du jämför.','Latest A and B have different setups. Rerun both before comparing.')):'';})()}</p>:null}
     <div className="pilot-results">{trials.map(trial=>{
+      const guided=trial.variant==='C'&&!!trial.inputs.context&&typeof trial.inputs.context==='object'&&'readingTrialId' in trial.inputs.context;
       const current=trialIsCurrent(project,trial),selected=trial.beats.filter(b=>!trial.excluded.includes(b.id)&&!trial.applied.includes(b.id));
-      return <details key={trial.id} open className="pilot-trial"><summary>{trial.variant} · {trial.inputs.model} · {new Date(trial.createdAt).toLocaleString()} · {trial.variant==='D'?t('läsförståelse','reading comprehension'):`${trial.beats.length} beats`}{trial.variant==='C'?t(' · enbart urval',' · selection only'):''}</summary>
+      return <details key={trial.id} open className="pilot-trial"><summary>{trial.variant} · {trial.inputs.model} · {new Date(trial.createdAt).toLocaleString()} · {trial.variant==='D'?t('läsförståelse','reading comprehension'):`${trial.beats.length} beats`}{trial.variant==='C'?(guided?t(' · urval med granskat D-underlag',' · selection with reviewed D context'):t(' · enbart urval',' · selection only')):''}</summary>
         {trial.error?<p role="alert">{t('Testet misslyckades: ','Test failed: ')}{trial.error}</p>:null}
         {trial.diagnostics?<details><summary>{t('Visa AI-diagnostik','Show AI diagnostics')}</summary>
           <p>{t('Svarsgräns','Output limit')}: {trial.diagnostics.maxOutputTokens} tokens · {t('Kontext','Context')}: {trial.diagnostics.contextWindow} · {t('Avslutsorsak','Finish reason')}: {trial.diagnostics.finishReason??'—'}</p>
@@ -125,6 +143,10 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
           const label={currentSituation:t('Var befinner sig personen i nutiden?','Where is the character during the present action?'),pastEvents:t('Vad är minnen eller tidigare händelser?','What are memories or earlier events?'),change:t('Vad förändras?','What changes?')}[key];
           return <article key={key}><strong>{label}</strong><p>{answer.answer}</p><details><summary>{t('Visa källstöd','Show source evidence')} ({answer.evidence.join(', ')||'—'})</summary>{answer.evidence.length?answer.evidence.map(id=><blockquote key={id}>{id}. {segments[id-1]?.text}</blockquote>):<p>{t('Modellen angav inget källstöd.','The model provided no source evidence.')}</p>}</details></article>;
         })}<p className="quiet">{t('Detta är modellens tolkning, inte en verifierad facitbedömning.','This is the model’s interpretation, not a verified assessment.')}</p></div>:null}
+        {trial.variant==='D'&&trial.readingCheck&&!trial.error?<>
+          <ReadingReviewEditor trial={trial} sv={sv} disabled={!current||busy} onInvalidate={()=>{if(trial.readingReview?.approved)patchTrial(trial.id,{readingReview:{...trial.readingReview,approved:false}});}} onSave={answers=>patchTrial(trial.id,{readingReview:{answers,approved:true}})}/>
+          <button type="button" disabled={!current||busy||!scene?.approved||!trial.readingReview?.approved} onClick={()=>void run('C',trial.id)}>{t('Kör urval med denna granskning','Run selection with this review')}</button>
+        </>:null}
         {trial.beats.map(b=><article key={b.id}><label className="pilot-check"><input type="checkbox" disabled={!current||trial.applied.includes(b.id)||busy} checked={!trial.excluded.includes(b.id)} onChange={e=>patchTrial(trial.id,{excluded:e.target.checked?trial.excluded.filter(id=>id!==b.id):[...trial.excluded,b.id]})}/><strong>{b.title}</strong>{trial.applied.includes(b.id)?t(' · tillagt',' · added'):''}</label><p>{b.summary}</p>{b.adaptationReason?<p className="quiet">{b.adaptationReason}</p>:null}<p><em>{b.visualCandidates[0]?.description}</em></p>{b.unresolvedCharacters?.length?<p className="pilot-warning">{t('Karaktärsreferenser att komplettera: ','Character references to review: ')}{b.unresolvedCharacters.join(', ')}</p>:null}{b.unresolvedLocation?<p className="pilot-warning">{t('Plats att komplettera: ','Location to review: ')}{b.unresolvedLocation}</p>:null}<blockquote>{b.sourceTextExcerpt}</blockquote></article>)}
         <label>{t('Bedömning: urval, uppdelning, känslor, källtrogenhet och luckor','Evaluation: selection, splitting, emotion, source fidelity and omissions')}<textarea rows={3} value={trial.notes} onChange={e=>patchTrial(trial.id,{notes:e.target.value})}/></label>
         <details><summary>{t('Visa testets underlag','Show test inputs')}</summary><pre>{JSON.stringify(trial.inputs,null,2)}</pre></details>

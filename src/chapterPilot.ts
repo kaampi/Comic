@@ -18,7 +18,7 @@ export type AdaptationContext = { sourceBookId:string; exportedAt:string; synops
 export type PilotInputs = { chapterId:string; sceneId:string; source:string; sourceOffset:number; model:string; engine:string; server:string; contextWindow:number; prompt:string; context:unknown };
 export type BeatTrial = {
   id:string; variant:'A'|'B'|'C'|'D'; createdAt:string; inputs:PilotInputs; beats:AdaptationBeat[];
-  excluded:string[]; applied:string[]; notes:string; diagnostics?:LocalChatDiagnostics; error?:string; readingCheck?:ReadingCheck;
+  excluded:string[]; applied:string[]; notes:string; diagnostics?:LocalChatDiagnostics; error?:string; readingCheck?:ReadingCheck; readingReview?:{answers:ReadingCheck;approved:boolean};
 };
 const review = (text=''):ReviewedText => ({original:text,text,approved:false});
 export function importedAdaptationContext(data:StoryBookImport):AdaptationContext | undefined {
@@ -72,6 +72,14 @@ export function trialIsCurrent(project:ComicProject,trial:BeatTrial):boolean {
 }
 export function sameTrialSetup(a:BeatTrial,b:BeatTrial):boolean { return JSON.stringify(a.inputs)===JSON.stringify(b.inputs); }
 
+/** Only approved reviews for the exact current scene may guide a new selection. */
+export function reviewedReading(project:ComicProject,chapterId:string,sceneId:string,trialId:string):ReadingCheck {
+  const trial=project.beatTrials?.find(t=>t.id===trialId);
+  if(!trial||trial.variant!=='D'||trial.error||!trial.readingCheck||!trial.readingReview?.approved||trial.inputs.chapterId!==chapterId||trial.inputs.sceneId!==sceneId||!trialIsCurrent(project,trial))throw new Error('Review and approve a current reading check for this scene first.');
+  validateReadingCheck(trial.readingReview.answers,trial.inputs.source);
+  return structuredClone(trial.readingReview.answers);
+}
+
 // Validate optional additions independently so old backups remain valid.
 export function validatePilotData(project:any):void {
   const fail=()=>{throw new Error('invalid-backup');};
@@ -90,7 +98,7 @@ export function validatePilotData(project:any):void {
   if(project.beatTrials!==undefined){if(!Array.isArray(project.beatTrials))fail();const ids=new Set();
     for(const r of project.beatTrials){obj(r);if(r.error!==undefined)str(r.error);
       if(r.diagnostics!==undefined){const d=r.diagnostics;obj(d);str(d.requestBody);try{obj(JSON.parse(d.requestBody));}catch{fail();}for(const k of ['responseBody','rawReply','finishReason'])if(d[k]!==undefined)str(d[k]);if(!Number.isInteger(d.maxOutputTokens)||d.maxOutputTokens<1||!Number.isInteger(d.contextWindow)||d.contextWindow<1024)fail();}
-      str(r.id);str(r.createdAt);str(r.notes);if(ids.has(r.id)||!['A','B','C','D'].includes(r.variant))fail();ids.add(r.id);strings(r.excluded);strings(r.applied);const i=r.inputs;obj(i);for(const k of ['chapterId','sceneId','source','model','engine','server','prompt'])str(i[k]);if(!Number.isInteger(i.sourceOffset)||i.sourceOffset<0||!Number.isInteger(i.contextWindow)||i.contextWindow<1024)fail();if(!Array.isArray(r.beats))fail();if(r.readingCheck!==undefined){if(r.variant!=='D'||r.beats.length)fail();try{validateReadingCheck(r.readingCheck,i.source);}catch{fail();}}if(r.variant==='D'&&(r.beats.length||r.applied.length))fail();
+      str(r.id);str(r.createdAt);str(r.notes);if(ids.has(r.id)||!['A','B','C','D'].includes(r.variant))fail();ids.add(r.id);strings(r.excluded);strings(r.applied);const i=r.inputs;obj(i);for(const k of ['chapterId','sceneId','source','model','engine','server','prompt'])str(i[k]);if(!Number.isInteger(i.sourceOffset)||i.sourceOffset<0||!Number.isInteger(i.contextWindow)||i.contextWindow<1024)fail();if(!Array.isArray(r.beats))fail();if(r.readingReview!==undefined){if(r.variant!=='D'||!r.readingCheck||typeof r.readingReview?.approved!=='boolean')fail();try{validateReadingCheck(r.readingReview.answers,i.source);}catch{fail();}}if(r.readingCheck!==undefined){if(r.variant!=='D'||r.beats.length)fail();try{validateReadingCheck(r.readingCheck,i.source);}catch{fail();}}if(r.variant==='D'&&(r.beats.length||r.applied.length))fail();
       for(const b of r.beats){obj(b);if(!['establishing','introduction','action','dialogue','reaction','transition','atmosphere','climax','resolution'].includes(b.beatType)||!Number.isInteger(b.targetPanelCount)||b.targetPanelCount<1||b.targetPanelCount>12)fail();for(const k of ['id','title','summary','sourceTextExcerpt','beatType'])str(b[k]);for(const k of ['sourceSceneId','adaptationReason','unresolvedLocation'])if(b[k]!==undefined)str(b[k]);strings(b.characterIds);if(b.unresolvedCharacters!==undefined)strings(b.unresolvedCharacters);if(!Number.isInteger(b.sourceStart)||!Number.isInteger(b.sourceEnd)||b.sourceStart<i.sourceOffset||b.sourceEnd>i.sourceOffset+i.source.length||b.sourceEnd<=b.sourceStart||i.source.slice(b.sourceStart-i.sourceOffset,b.sourceEnd-i.sourceOffset)!==b.sourceTextExcerpt)fail();for(const k of ['dialogueCandidates','captionCandidates','visualCandidates'])if(!Array.isArray(b[k]))fail();for(const v of b.visualCandidates){obj(v);str(v.id);str(v.description);}for(const t of [...b.dialogueCandidates,...b.captionCandidates]){obj(t);str(t.id);str(t.text);}}
     }
   }

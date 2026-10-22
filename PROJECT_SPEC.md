@@ -459,3 +459,6 @@ Separat granskningsläge med en kort fast prompt: ett anrop över den valda scen
 
 ### Kapitelpilot D: läsförståelse (2026-10-22)
 Ett separat test skickar endast vald scenprosa, numrerad som i A/B/C, och en fast kort prompt. Modellen besvarar nutida plats/förflyttning, minnen/tidigare händelser och praktisk eller känslomässig förändring. Varje svar har segment-ID:n som visas med exakt källtext. Resultat och diagnostik sparas lokalt och i backup; de är modellens tolkning, inte verifierat facit. Inga beats, paneler, följdanrop eller ändrad kontextstorlek. Befintliga testlägen bevaras.
+
+### Granskad läsförståelse till urval (2026-10-22)
+D-resultat kan granskas i en separat redigerbar kopia av svar och segmentreferenser. Explicit spara/godkänn krävs; ändringar återkallar godkännandet. Ett separat knapptryck kör C med den granskade förståelsen, vald scen och aktuellt godkänt berättelseunderlag. Ett anrop; ingen automatisk kedja. C sparar D-testets ID och en oföränderlig kopia av det använda underlaget i inputs. Original-D och råsvar bevaras. Felaktiga, ej godkända, inaktuella eller andra sceners D-resultat kan inte användas.
