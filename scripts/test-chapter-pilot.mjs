@@ -160,14 +160,15 @@ try {
   const {parseBeatSelection}=await local('adaptation/beatSelection');
   const selectionReply={beats:[{from:2,to:2,summary:'Seren greets Rook.',reason:'Their meeting establishes a relationship.'},{from:1,to:1,summary:'Rook arrives.',reason:'Establish the scene.'}]};
   const inventoryReply={passages:selectionReply.beats};
+  const purposeReply={purposes:[{purpose:'Establish a hesitant greeting',passages:selectionReply.beats,missing:null},{purpose:'An unresolved promise',passages:[],missing:'No explicit promise occurs in the source.'}]};
   const chosen=parseBeatSelection(JSON.stringify(selectionReply),first,37);
   assert.deepEqual(chosen.map(b=>b.summary),['Rook arrives.','Seren greets Rook.']);
   for(const b of chosen){assert.equal(b.sourceTextExcerpt,first.slice(b.sourceStart-37,b.sourceEnd-37));assert.deepEqual(b.visualCandidates,[]);assert.deepEqual(b.characterIds,[]);}
   for(const beats of [[],[{from:0,to:1,summary:'X',reason:'Y'}],[{from:2,to:1,summary:'X',reason:'Y'}],[{from:1,to:1,summary:'X'}]])assert.throws(()=>parseBeatSelection(JSON.stringify({beats}),first));
   let selectionCalls=0,selectionBody;
-  globalThis.fetch=async(_url,init)=>{selectionCalls++;selectionBody=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify(inventoryReply)},done_reason:'stop'}));};
+  globalThis.fetch=async(_url,init)=>{selectionCalls++;selectionBody=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify(purposeReply)},done_reason:'stop'}));};
   const beforeSelection=working.beatTrials.length,albumBeforeSelection=JSON.stringify(working.adaptations);
-  await user.click(screen.getByRole('button',{name:'Run C – inventory meaning-bearing passages'}));
+  await user.click(screen.getByRole('button',{name:'Run C – find evidence for scene purposes'}));
   await waitFor(()=>assert.equal(working.beatTrials.length,beforeSelection+1));
   const selectionTrial=working.beatTrials.at(-1);assert.equal(selectionTrial.variant,'C');assert.equal(selectionCalls,1);
   const selectionUser=JSON.parse(selectionBody.messages[1].content);
@@ -181,15 +182,40 @@ try {
   assert.equal(within(selectionCard).queryByRole('button',{name:'Add selected beats to album'}),null);
   assert.ok(within(selectionCard).getByText('Inventory before beat selection – no visual proposals or panels are created.'));
   const {parsePassageInventory}=await local('adaptation/beatSelection');
-  assert.equal(selectionTrial.inputs.selectionTask,'inventory');
-  assert.ok(selectionBody.messages[0].content.includes('Do not select final comic beats'));
-  assert.ok(selectionBody.messages[0].content.includes('"passages"'));
+  assert.equal(selectionTrial.inputs.selectionTask,'scene-purpose');
+  assert.deepEqual(selectionTrial.purposeResults,purposeReply.purposes);
+  assert.ok(within(selectionCard).getByText('Establish a hesitant greeting'));
+  assert.ok(within(selectionCard).getByText(/Missing or incomplete source support/));
+  assert.ok(selectionBody.messages[0].content.includes('chapter brief describes a broader chapter'));
+  assert.equal(selectionBody.format.properties.purposes.maxItems,4);
+  assert.deepEqual(selectionBody.format.properties.purposes.items.properties.passages.items.properties.from.enum,[1,2,3]);
+  assert.ok(selectionBody.messages[0].content.includes('"purposes"'));
   assert.ok(!selectionBody.messages[0].content.includes('"beats"'));
   const many=Array.from({length:10},(_,i)=>({from:1,to:1,summary:'Distinct source observation '+i,reason:'A source-supported contribution.'}));
   assert.equal(parsePassageInventory(JSON.stringify({passages:many}),first).length,10,'inventory is not restricted to the old eight-beat cap');
   for(const value of [{beats:many},{passages:[]},{passages:Array(13).fill(many[0])},{passages:[{...many[0],from:999}]}])assert.throws(()=>parsePassageInventory(JSON.stringify(value),first));
-  const oldTrialBackup=structuredClone(packAlbumBackup(working));delete oldTrialBackup.project.beatTrials.at(-1).inputs.selectionTask;
+  const oldTrialBackup=structuredClone(packAlbumBackup(working));delete oldTrialBackup.project.beatTrials.at(-1).inputs.selectionTask;delete oldTrialBackup.project.beatTrials.at(-1).purposeResults;
   assert.equal(parseAlbumBackup(oldTrialBackup).beatTrials.at(-1).variant,'C','historical C trials remain valid without inventory marker');
+  const {parsePurposeResults,findScenePurposeEvidence,scenePurposeSchema}=await local('adaptation/scenePurpose');
+  const gapOnly={purposes:[{purpose:'A future plan',passages:[],missing:'There is no source evidence for this plan.'}]};
+  assert.deepEqual(parsePurposeResults(JSON.stringify(gapOnly),first).beats,[]);
+  for(const bad of [
+    {purposes:Array(5).fill(purposeReply.purposes[0])},
+    {purposes:[{...purposeReply.purposes[0],passages:Array(4).fill(selectionReply.beats[0])}]},
+    {purposes:[{...purposeReply.purposes[0],passages:[{...selectionReply.beats[0],to:999}]}]},
+    {purposes:[{purpose:'X',passages:[],missing:null}]}])assert.throws(()=>parsePurposeResults(JSON.stringify(bad),first));
+  const supported=parsePurposeResults(JSON.stringify(purposeReply),first,91);for(const b of supported.beats)assert.equal(b.sourceTextExcerpt,first.slice(b.sourceStart-91,b.sourceEnd-91));
+  await assert.rejects(findScenePurposeEvidence({source:first,sourceOffset:0,narrativeContext:{sceneInstructions:''},settings}),/approve the scene instructions/);
+  assert.equal(selectionCalls,1,'missing scene instructions make no extra request');
+  let schemaBody;
+  await completeLocalChat(openSettings,[{role:'user',content:'fixture'}],undefined,async(_url,init)=>{schemaBody=JSON.parse(init.body);return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(purposeReply)},finish_reason:'stop'}]}));},undefined,scenePurposeSchema(first));
+  assert.equal(schemaBody.response_format.type,'json_schema');assert.equal(schemaBody.response_format.json_schema.strict,true);
+  assert.deepEqual(schemaBody.response_format.json_schema.schema,selectionBody.format);
+  let refusedSchemaCalls=0;
+  globalThis.fetch=async()=>{refusedSchemaCalls++;return new Response('{}',{status:400,statusText:'Unsupported schema'});};
+  await assert.rejects(findScenePurposeEvidence({source:first,sourceOffset:0,narrativeContext:{sceneInstructions:'Establish a hesitant greeting.'},settings}),/HTTP 400/);
+  assert.equal(refusedSchemaCalls,1,'unsupported schema is not retried with a weaker contract');
+  const badPurposeBackup=structuredClone(packAlbumBackup(working));badPurposeBackup.project.beatTrials.at(-1).purposeResults[0].passages[0].to=999;assert.throws(()=>parseAlbumBackup(badPurposeBackup),/invalid-backup/);
   const {parseReadingCheck,runReadingCheck}=await local('adaptation/readingCheck');
   const readingReply={currentSituation:{answer:'Rook is on the bridge.',evidence:[1,2]},pastEvents:{answer:'No earlier events are stated.',evidence:[]},change:{answer:'Seren signals for Rook to wait.',evidence:[2]}};
   assert.deepEqual(parseReadingCheck(JSON.stringify(readingReply),first),readingReply);
@@ -214,7 +240,7 @@ try {
   await user.click(screen.getByRole('button',{name:'Run D – reading comprehension'}));await screen.findByRole('dialog');await user.click(screen.getByRole('button',{name:'Cancel',exact:true}));
   await act(async()=>completeReading(new Response(JSON.stringify({message:{content:JSON.stringify(readingReply)},done_reason:'stop'}))));assert.equal(working.beatTrials.length,beforeReading+1);
   // A reviewed D snapshot guides a separate C request; editing invalidates approval.
-  const reviewedButton=within(readingCard).getByRole('button',{name:'Run inventory with this review'});
+  const reviewedButton=within(readingCard).getByRole('button',{name:'Find scene evidence with this review'});
   assert.equal(reviewedButton.disabled,true);
   await user.click(within(readingCard).getByText('Review and correct understanding',{selector:'summary'}));
   const presentEditor=within(readingCard).getByRole('textbox',{name:'Present location and movement',exact:true});
@@ -224,7 +250,7 @@ try {
   assert.equal(working.beatTrials.find(t=>t.id===readingTrial.id).readingCheck.currentSituation.answer,readingReply.currentSituation.answer,'original D answer retained');
   assert.equal(working.beatTrials.find(t=>t.id===readingTrial.id).diagnostics.rawReply,JSON.stringify(readingReply));
   let guidedCalls=0,guidedBody;
-  globalThis.fetch=async(_url,init)=>{guidedCalls++;guidedBody=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify(inventoryReply)},done_reason:'stop'}));};
+  globalThis.fetch=async(_url,init)=>{guidedCalls++;guidedBody=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify(purposeReply)},done_reason:'stop'}));};
   const beforeGuided=working.beatTrials.length;
   await user.click(reviewedButton);await waitFor(()=>assert.equal(working.beatTrials.length,beforeGuided+1));
   const guided=working.beatTrials.at(-1),guidedPayload=JSON.parse(guidedBody.messages[1].content);
