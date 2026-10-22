@@ -1,3 +1,4 @@
+import { prepareManuscriptScenes } from "./manuscriptScenes";
 import { importedAdaptationContext } from "./chapterPilot";
 import { PromptSettings } from "./PromptSettings";
 import { EditorViewport } from "./EditorViewport";
@@ -840,7 +841,7 @@ export function App() {
       locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:""})):[],
       scenes:storyBookImport.chapters.filter((chapter)=>chapter.text).map((chapter)=>({id:"scene-"+crypto.randomUUID(),title:chapter.title,sourceText:chapter.text,panelIds:[]}))
     };
-    const next=[project,...projects];projectsRef.current=next;setProjects(next);persistProjects(next);setActiveProjectId(project.id);setProjectTab("manus");setSelectedPageId(null);setSelectedSceneId(null);setPanelEditor(null);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
+    const next=[prepareManuscriptScenes(project),...projects];projectsRef.current=next;setProjects(next);persistProjects(next);setActiveProjectId(project.id);setProjectTab("manus");setSelectedPageId(null);setSelectedSceneId(null);setPanelEditor(null);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
   };
   const deleteProject = (projectId:string) => {
     const project=projects.find((item)=>item.id===projectId);

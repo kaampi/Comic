@@ -42,7 +42,8 @@
     "test:project-start": "node scripts/test-project-start.mjs",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
-    "desktop:info": "tauri info"
+    "desktop:info": "tauri info",
+    "test:manuscript-scenes": "node scripts/test-manuscript-scenes.mjs"
   },
   "dependencies": {
     "@ocedo-apps/storycore": "git+https://github.com/ocedo-apps/storycore.git#2fdca9fada3f6e147f5b43408fc0a90e93fc0342",

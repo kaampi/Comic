@@ -1,3 +1,4 @@
+import { moveSceneAnchors } from "./manuscriptSceneTypes";
 import { manuscriptChapters, chapterForRange } from "./manuscriptChapters";
 import type { ComicProject } from "./project";
 import type {
@@ -207,6 +208,7 @@ export function addManualBeat(
   const beat: AdaptationBeat = {
     ...first,
     id: id("beat"),
+    sourceSceneId:(()=>{const owners=(project.manuscriptScenes??[]).filter(s=>!s.omitted&&!s.needsReview&&s.start!==undefined&&s.end!==undefined&&range.start>=s.start&&range.end<=s.end);return owners.length===1?owners[0].id:undefined;})(),
     sourceTextExcerpt: excerpt,
     sourceStart: range.start,
     sourceEnd: range.end,
@@ -264,7 +266,8 @@ export function appendAiBeats(
         (beat) =>
           beat.sourceStart === proposal.sourceStart &&
           beat.sourceEnd === proposal.sourceEnd &&
-          beat.summary === proposal.summary,
+          beat.summary === proposal.summary &&
+          beat.sourceSceneId === proposal.sourceSceneId,
       )
     )
       beats.push(proposal);
@@ -345,6 +348,7 @@ export function editManuscript(
   return {
     ...project,
     source: { ...project.source, textSnapshot: nextSource },
+    manuscriptScenes:moveSceneAnchors(project.manuscriptScenes,start,oldEnd,newEnd),
     adaptations,
   };
 }
@@ -381,6 +385,7 @@ export function patchManuscriptBeat(
         ? {
             ...beat,
             ...patch,
+            scenePlaceholder:false,
             visualCandidates:
               patch.visualCandidates ??
               beat.visualCandidates.map((visual) =>
@@ -414,6 +419,7 @@ export function addBeatPanel(
   const panel = panelForBeat(beat, adaptation.panelPlans.length + 1, variation);
   return withAdaptation(project, {
     ...adaptation,
+    beats:adaptation.beats.map(b=>b.id===beatId?{...b,scenePlaceholder:false}:b),
     panelPlans: [...adaptation.panelPlans, panel],
     status: "panels-generated",
   });
@@ -528,7 +534,7 @@ export function ensureBeatPanels(project: ComicProject, chapterId?: string | nul
   if (!existing) return project;
   const missing = existing.beats.filter(
     (beat) =>
-      beat.status !== "discarded" && (!chapterId || beat.chapterId === chapterId) &&
+      beat.status !== "discarded" && !beat.scenePlaceholder && (!chapterId || beat.chapterId === chapterId) &&
       !existing.panelPlans.some((panel) =>
         panel.sourceBeatIds.includes(beat.id),
       ),

@@ -1,3 +1,5 @@
+import { ManuscriptSceneList } from "./ManuscriptSceneList";
+import { prepareManuscriptScenes, createManuscriptScene, sceneRange, applySceneBeats } from "./manuscriptScenes";
 import { ChapterBeatPilot } from "./ChapterBeatPilot";
 import { manuscriptHtml } from "./manuscriptFormatting";
 import { manuscriptChapters } from "./manuscriptChapters";
@@ -139,13 +141,17 @@ export function ManuscriptWorkspace({
     [draft, setDraft] = useState<{
       source: string;
       beats: AdaptationBeat[];
+      sourceSceneId?:string;
+      sceneSnapshot?:string;
     } | null>(null),
     [excluded, setExcluded] = useState<string[]>([]);
+  useEffect(()=>{const next=prepareManuscriptScenes(project);if(next!==project)onUpdate(prepareManuscriptScenes);},[project]);
+  const [sceneDraft,setSceneDraft]=useState<{range:TextRange;source:string;title:string;purpose:string;preserve:string}|null>(null);
   useEffect(() => {
     if (
       project.adaptations[0]?.beats.some(
         (beat) =>
-          beat.status !== "discarded" &&
+          beat.status !== "discarded" && !beat.scenePlaceholder &&
           !project.adaptations[0].panelPlans.some((panel) =>
             panel.sourceBeatIds.includes(beat.id),
           ),
@@ -169,7 +175,7 @@ export function ManuscriptWorkspace({
   }, [source]);
   const switchChapter=(id:string)=>{caret.current=null;setChapterId(id);};
   useEffect(()=>{
-    request.current++;abort.current?.abort();setBusy(false);setRange(null);setMenu(null);setDraft(null);setMessage("");caret.current=null;
+    request.current++;abort.current?.abort();setBusy(false);setRange(null);setMenu(null);setDraft(null);setSceneDraft(null);setMessage("");caret.current=null;
     if(chapter)setSelected(scopedBeats[0]?.id??null);
   },[chapter?.id]);
   const updateSource=(p:ComicProject,value:string)=>chapter?editManuscriptChapter(p,chapter.id,value):editManuscript(p,value);
@@ -241,7 +247,7 @@ export function ManuscriptWorkspace({
     });
     setMenu(null);
   };
-  const analyse = async (chapterRange?:TextRange) => {
+  const analyse = async (chapterRange?:TextRange,sourceSceneId?:string) => {
     setMenu(null);
     const target=chapterRange??range;
     if (!target) return;
@@ -249,6 +255,10 @@ export function ManuscriptWorkspace({
       setMessage(t.noModel);
       return;
     }
+    const scene=sourceSceneId?project.manuscriptScenes?.find(s=>s.id===sourceSceneId):undefined;
+    if(sourceSceneId&&(!scene||scene.omitted||!sceneRange(project,scene)||!scene.purpose.trim()))return;
+    const approvedChapter=scene?.chapterId?chapters.find(c=>c.id===scene.chapterId):undefined;
+    const contextChapter=project.adaptationContext?.chapters.find(c=>c.sourceId===approvedChapter?.sourceId);
     const scope = { ...target },
       snapshot = source;
     abort.current?.abort();
@@ -276,6 +286,7 @@ export function ManuscriptWorkspace({
         },
         settings,
         signal: controller.signal,
+        ...(scene?{singleRequest:true,allowUnknownCharacters:true,narrativeContext:{synopsis:project.adaptationContext?.synopsis.approved?project.adaptationContext.synopsis.text:'',brief:contextChapter?.brief.approved?contextChapter.brief.text:'',sceneInstructions:scene.purpose,mustPreserve:scene.preserve}}:{}),
         onProgress: (done, total) => {
           if (token !== request.current) return;
           setProgress(`${Math.min(done + 1, total)} / ${total}`);
@@ -284,7 +295,7 @@ export function ManuscriptWorkspace({
         },
       });
       if (token === request.current && !controller.signal.aborted)
-        setDraft({ source: snapshot, beats });
+        setDraft({ source: snapshot, sourceSceneId, sceneSnapshot:scene?JSON.stringify(scene):undefined, beats:beats.map(b=>({...b,...(sourceSceneId?{sourceSceneId}:{} )})) });
     } catch (error) {
       if (token === request.current)
         setMessage(
@@ -301,6 +312,8 @@ export function ManuscriptWorkspace({
       if (token === request.current) setBusy(false);
     }
   };
+  const createScene=()=>{if(!range)return;setMenu(null);setSceneDraft({range:{...range},source,title:'',purpose:'',preserve:''});};
+  const analyseScene=(id:string)=>{const scene=project.manuscriptScenes?.find(s=>s.id===id),target=scene&&sceneRange(project,scene);if(target)void analyse(target,id);};
   const beat = scopedBeats.find((b) => b.id === selected),
     index = scopedBeats.findIndex((b) => b.id === selected);
   const beatPanels = adaptation.panelPlans.filter((plan) =>
@@ -382,6 +395,7 @@ export function ManuscriptWorkspace({
         {chapter?<nav className="manuscript-chapters" aria-label={ct.chapter}><button type="button" className="text-button" aria-label={ct.previous} disabled={chapter.order===1} onClick={()=>switchChapter(chapters[chapter.order-2].id)}>←</button><label>{ct.chapter}<select value={chapter.id} onChange={e=>switchChapter(e.target.value)}>{chapters.map(c=><option key={c.id} value={c.id}>{c.order}. {c.title}</option>)}</select></label><span>{chapter.order} / {chapters.length}</span><button type="button" className="text-button" aria-label={ct.next} disabled={chapter.order===chapters.length} onClick={()=>switchChapter(chapters[chapter.order].id)}>→</button></nav>:null}
         {chapter?<p className="quiet">{ct.copy}</p>:null}
         {chapter?<ChapterBeatPilot key={chapter.id} project={project} chapterId={chapter.id} locale={locale} settings={settings} onUpdate={onUpdate}/>:null}
+        <ManuscriptSceneList project={project} chapterId={chapter?.id} locale={locale} selection={range} busy={busy} onUpdate={onUpdate} onChoose={choose} onAnalyse={analyseScene}/>
         <div className="section-heading">
           <h2>{chapter?.title??t.zoom}</h2>
           <span>
@@ -390,6 +404,7 @@ export function ManuscriptWorkspace({
         </div>
         <p className="quiet">{t.hint}</p>
         <div className="manuscript-toolbar">
+          <button type="button" disabled={!range||busy} onMouseDown={e=>e.preventDefault()} onClick={createScene}>{locale==='sv'?'Skapa scen':'Create scene'}</button>
           <button
             type="button"
             className="primary-button"
@@ -455,7 +470,7 @@ export function ManuscriptWorkspace({
             capture();
             setMenu({
               x: Math.max(8, Math.min(e.clientX, window.innerWidth - 280)),
-              y: Math.max(8, Math.min(e.clientY, window.innerHeight - 130)),
+              y: Math.max(8, Math.min(e.clientY, window.innerHeight - 180)),
             });
           }}
           dangerouslySetInnerHTML={{ __html: markedSource }}
@@ -526,7 +541,7 @@ export function ManuscriptWorkspace({
         {draft ? (
           <section className="beat-ai-review">
             <h3>{t.aiReview}</h3>
-            {draft.source !== source ? <p role="alert">{t.stale}</p> : null}
+            {(draft.source !== source || (!!draft.sourceSceneId&&draft.sceneSnapshot!==JSON.stringify(project.manuscriptScenes?.find(s=>s.id===draft.sourceSceneId)))) ? <p role="alert">{t.stale}</p> : null}
             {draft.beats.map((b) => (
               <article key={b.id}>
                 <label>
@@ -599,14 +614,14 @@ export function ManuscriptWorkspace({
               type="button"
               className="primary-button"
               disabled={
-                draft.source !== source ||
+                (draft.source !== source || (!!draft.sourceSceneId&&draft.sceneSnapshot!==JSON.stringify(project.manuscriptScenes?.find(s=>s.id===draft.sourceSceneId)))) ||
                 draft.beats.every((b) => excluded.includes(b.id))
               }
               onClick={() => {
                 const proposals = draft.beats.filter(
                   (b) => !excluded.includes(b.id),
                 );
-                onUpdate((p) => appendAiBeats(p, proposals));
+                onUpdate((p) => {if(draft.source!==p.source.textSnapshot||(draft.sourceSceneId&&draft.sceneSnapshot!==JSON.stringify(p.manuscriptScenes?.find(s=>s.id===draft.sourceSceneId))))return p;return draft.sourceSceneId?applySceneBeats(p,draft.sourceSceneId,proposals):appendAiBeats(p,proposals);});
                 setSelected(proposals[0]?.id ?? selected);
                 setDraft(null);
               }}
@@ -624,6 +639,7 @@ export function ManuscriptWorkspace({
         ) : null}
         {beat ? (
           <>
+            {beat.scenePlaceholder?<p className="beat-review-warning">{locale==='sv'?'Startbeat för en scen. Utveckla gestaltningen eller lägg till en panel när du är redo.':'Starting beat for a scene. Develop its adaptation or add a panel when ready.'}</p>:null}
             <div className="beat-navigation">
               <button
                 type="button"
@@ -1146,6 +1162,7 @@ export function ManuscriptWorkspace({
             }}
             style={{ left: menu.x, top: menu.y }}
           >
+            <button type="button" role="menuitem" disabled={!range||busy} onClick={createScene}>{locale==='sv'?'Skapa scen':'Create scene'}</button>
             <button
               type="button"
               role="menuitem"
@@ -1165,6 +1182,16 @@ export function ManuscriptWorkspace({
           </div>
         </>
       ) : null}
+      {sceneDraft?<div className="scene-dialog-backdrop"><form role="dialog" aria-modal="true" aria-label={locale==='sv'?'Skapa scen':'Create scene'} className="scene-dialog" onKeyDown={e=>{if(e.key==='Escape'){e.preventDefault();setSceneDraft(null);}}} onSubmit={e=>{e.preventDefault();if(sceneDraft.source!==source)return;try{onUpdate(p=>{if((p.source.textSnapshot??'')!==sceneDraft.source)return p;const result=createManuscriptScene(p,sceneDraft.range,sceneDraft.title,sceneDraft.purpose,sceneDraft.preserve);setSelected(activeManuscriptAdaptation(result.project).beats.find(b=>b.sourceSceneId===result.sceneId)?.id??null);return result.project;});setSceneDraft(null);}catch(error){setMessage(error instanceof Error?error.message:String(error));}}}>
+        <h3>{locale==='sv'?'Skapa scen från markeringen':'Create scene from selection'}</h3>
+        <label>{locale==='sv'?'Scennamn':'Scene name'}<input autoFocus required value={sceneDraft.title} onChange={e=>setSceneDraft({...sceneDraft,title:e.target.value})}/></label>
+        <label>{locale==='sv'?'Vad ska scenen åstadkomma?':'What should the scene accomplish?'}<textarea required rows={3} value={sceneDraft.purpose} onChange={e=>setSceneDraft({...sceneDraft,purpose:e.target.value})}/></label>
+        <label>{locale==='sv'?'Viktigt att bevara (valfritt)':'Important to preserve (optional)'}<textarea rows={2} value={sceneDraft.preserve} onChange={e=>setSceneDraft({...sceneDraft,preserve:e.target.value})}/></label>
+        <details><summary>{locale==='sv'?'Markerad text':'Selected text'}</summary><pre>{sceneDraft.source.slice(sceneDraft.range.start,sceneDraft.range.end)}</pre></details>
+        {sceneDraft.source!==source?<p role="alert">{t.stale}</p>:null}
+        <button type="submit" disabled={sceneDraft.source!==source||!sceneDraft.title.trim()||!sceneDraft.purpose.trim()}>{locale==='sv'?'Spara scen':'Save scene'}</button>
+        <button type="button" onClick={()=>setSceneDraft(null)}>{locale==='sv'?'Avbryt':'Cancel'}</button>
+      </form></div>:null}
       {promptPanel ? <ImagePromptEditor key={project.id + promptPanel.id} project={project} panel={promptPanel} locale={locale} settings={settings} onClose={() => setPromptPanelId(null)} onSave={patch => {
         onUpdate(p => generateBeatPanelPrompt(patchBeatPanel(p, promptPanel.id, patch), promptPanel.id));
         setPromptPanelId(null);

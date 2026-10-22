@@ -9,7 +9,7 @@ import ts from "typescript";
 // Compile only the local domain modules; no app, browser or manuscript fixture is needed.
 const temporary = mkdtempSync(join(tmpdir(), "comicbook-adaptation-"));
 globalThis.crypto ??= { randomUUID };
-const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "visualSceneAi", "aiPrompts", "localAi", "project", "projectSaveStatus", "stylesLibrary", "styleColorMode", "painterlyStyles", "manuscriptModel", "manuscriptChapters", "adaptation/prompts", "pageLayout", "overlayTypography", "pageFormat", "pageTypography", "richText", "contourText", "bubbleShape", "thoughtBubble", "pageBackground", "panelGeometry", "panelBorder", "panelShape"];
+const files = ["adaptation/extract", "adaptation/repair", "adaptation/panelize", "adaptation/aiBeats", "visualSceneAi", "aiPrompts", "localAi", "project", "projectSaveStatus", "stylesLibrary", "styleColorMode", "painterlyStyles", "manuscriptModel", "manuscriptSceneTypes", "manuscriptChapters", "adaptation/prompts", "pageLayout", "overlayTypography", "pageFormat", "pageTypography", "richText", "contourText", "bubbleShape", "thoughtBubble", "pageBackground", "panelGeometry", "panelBorder", "panelShape"];
 for (const file of files) {
   const source = readFileSync(new URL("../src/" + file + ".ts", import.meta.url), "utf8");
   const result = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });

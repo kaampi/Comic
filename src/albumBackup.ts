@@ -1,3 +1,4 @@
+import { validateManuscriptScenes } from "./manuscriptSceneTypes";
 import { validatePilotData } from "./chapterPilot";
 import { validBubbleShape } from "./bubbleShape";
 import { validManuscriptChapters } from "./manuscriptChapters";
@@ -87,6 +88,8 @@ export function parseAlbumBackup(input: unknown): ComicProject {
     for(const item of [...(Array.isArray(adaptation?.beats)?adaptation.beats:[]),...(Array.isArray(adaptation?.panelPlans)?adaptation.panelPlans:[])])if(item && item.chapterId!==undefined&&(typeof item.chapterId!=="string"||(p.source.chapters!==undefined&&!chapterIds.has(item.chapterId))))throw new Error("invalid-backup");
   }
   for(const item of Array.isArray(p.panels)?p.panels:[])if(item && item.chapterId!==undefined&&(typeof item.chapterId!=="string"||(p.source.chapters!==undefined&&!chapterIds.has(item.chapterId))))throw new Error("invalid-backup");
+  validateManuscriptScenes(p.manuscriptScenes,p.source.textSnapshot??'');
+  for(const scene of p.manuscriptScenes??[])if(p.source.chapters!==undefined&&scene.chapterId!==undefined&&!chapterIds.has(scene.chapterId))throw new Error('invalid-backup');
   record(p.style);
   for (const key of ["id", "name", "promptText"]) string(p.style[key]);
   if (p.style.promptModules !== undefined) {
@@ -224,6 +227,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
       for (const key of ["title", "summary", "sourceTextExcerpt"])
         string(beat[key]);
       if(beat.unresolvedCharacters!==undefined)strings(beat.unresolvedCharacters);
+      if(beat.scenePlaceholder!==undefined&&typeof beat.scenePlaceholder!=="boolean")throw new Error("invalid-backup");
       for(const key of ["unresolvedLocation","adaptationReason","sourceSceneId"])if(beat[key]!==undefined)string(beat[key]);
       strings(beat.characterIds);
       for (const key of [

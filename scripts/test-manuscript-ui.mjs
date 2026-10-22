@@ -1398,7 +1398,7 @@ try {
   await new Promise(resolve=>setTimeout(resolve,20));
   assert.equal(saved().pages[0].background.image.name,"background.png");
   assert.equal(within(backgroundEditor).queryByLabelText("Passning"),null);
-  fireEvent.change(within(backgroundEditor).getByLabelText(/^Zoom/),{target:{value:"150"}});
+  fireEvent.change(within(backgroundEditor).getByRole("spinbutton",{name:/^Zoom/}),{target:{value:"150"}});
   fireEvent.change(within(backgroundEditor).getByLabelText("X-position (%)"),{target:{value:"25"}});
   fireEvent.change(within(backgroundEditor).getByLabelText("Y-position (%)"),{target:{value:"-10"}});
   assert.equal(saved().pages[0].background.image.fit,"cover");
@@ -1486,7 +1486,7 @@ try {
   assert.ok(shapeInitialEditor.querySelector('.inline-overlay-editor'),'normal double-click starts text editing');
   await user.click(within(shapeInitialEditor.querySelector('header')).getByRole('button',{name:'Redigera bubblans form',exact:true}));
   assert.equal(shapeInitialEditor.querySelector('.inline-overlay-editor'),null,'header action exits text editing');
-  assert.match(within(shapeInitialEditor).getByRole('status').textContent,/Formredigering aktiv/);
+  assert.match(shapeInitialEditor.querySelector('.bubble-shape-mode-notice').textContent,/Formredigering aktiv/);
   fireEvent.doubleClick(bubbleSurface);
   assert.equal(shapeInitialEditor.querySelector('.inline-overlay-editor'),null,'active shape mode never opens text editing');
   fireEvent.doubleClick(shapeInitialEditor.querySelector('.bubble-shape-edge'));
@@ -1619,7 +1619,7 @@ try {
   Object.defineProperty(panImage,'naturalWidth',{configurable:true,value:800});
   Object.defineProperty(panImage,'naturalHeight',{configurable:true,value:400});
   fireEvent.load(panImage);
-  fireEvent.change(within(shapedEditor).getByLabelText(/^Zoom/),{target:{value:'200'}});
+  fireEvent.change(within(shapedEditor).getByRole('spinbutton',{name:/^Zoom/}),{target:{value:'200'}});
   const frameBeforePan=structuredClone(saved().pages[0].placements[0]);
   fireEvent.pointerDown(panLayer,{button:0,clientX:100,clientY:100});
   fireEvent.pointerMove(window,{clientX:140,clientY:140});
@@ -1703,7 +1703,7 @@ try {
   console.log('PASS: independent image flips, toggle state, unchanged original/text, backup validation and reset.');
   const beforeShapeImage=structuredClone(saved().pages[0].placements[0]);
   assert.equal(shapedEditor.querySelector('.panel-editor-stage > svg').style.display,'none','image mode hides text without removing its data');
-  fireEvent.change(within(shapedEditor).getByLabelText(/^Zoom/),{target:{value:'50'}});
+  fireEvent.change(within(shapedEditor).getByRole('spinbutton',{name:/^Zoom/}),{target:{value:'50'}});
   assert.equal(saved().pages[0].placements[0].image.zoom,.5,'numeric zoom can leave space around the image');
   fireEvent.wheel(panLayer,{deltaY:100,ctrlKey:true,cancelable:true});
   assert.equal(saved().pages[0].placements[0].image.zoom,.4,'wheel zoom uses the same range');

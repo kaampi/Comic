@@ -26,6 +26,8 @@ This guide describes the current beta. Some features and labels may change. The 
 
 - [Foreground images and page-wide bubbles](#foreground-images)
 
+- [Scenes: preserve the story before adapting it](#manuscript-scenes)
+
 - [From manuscript to panel plans](#manuscript)
 
 - [Prepare prompts and bring pictures back](#image-prompts)
@@ -154,6 +156,20 @@ Use foreground images for a character, object or decoration that crosses panel b
 
 > Remove image in the editor keeps the layer and its text so you can replace the picture. Remove foreground layer removes the picture and all text belonging to it. Album backups include the original images, their order and the editable bubbles.
 
+<a id="manuscript-scenes"></a>
+
+## Scenes: preserve the story before adapting it
+
+Scenes define story units before comic beats are selected. A StoryBook synopsis gives the larger arc, a chapter Brief gives the chapter goal, and each scene gives a local purpose. The manuscript supplies actual events and dialogue. Import and local scene creation do not contact AI.
+
+1. Open Manuscript. Nonempty StoryBook scenes appear in Scenes with their source text and purpose. Each receives a starting beat unless existing beats are already linked. Empty imported scenes are skipped; uncertain source matches are marked for review.
+2. To define your own scene, select text within one chapter, right-click and choose Create scene, or use the toolbar button. Enter a name and purpose, optionally add Important to preserve, then Save scene.
+3. Expand any scene to edit its purpose and preservation notes, inspect its text and follow its linked beats. A starting beat reserves a place for the whole scene; it creates no panel until you develop it. You may add several beats and panels.
+4. After editing manuscript text, review any flagged scene. Use a new text selection to adjust its bounds, or confirm the updated prose. Original imported prose remains available. Mark a scene Omit scene from adaptation only as an explicit decision; existing authored assets remain for manual handling.
+5. Choose Suggest comic beats for scene for one deliberate AI request. It uses that scene’s prose and intent, together with approved synopsis and chapter Brief when available. Review proposals before Add selected beats. Only an unused starting placeholder is replaced; authored beats and images are retained.
+
+> Every scene should remain accounted for, but a starting beat is not proof that the scene has been adapted well. Check that its purpose, emotions and uncertainty survive the adaptation.
+
 <a id="manuscript"></a>
 
 ## From manuscript to panel plans
@@ -246,6 +262,10 @@ In Manuscript, choose a chapter and open Chapter pilot. Review its story context
 ### Foreground images and page-wide bubbles
 
 Add a transparent PNG above the frames, then choose Edit image and bubbles. Its text can span the whole page. Move the image alone or enable Move image and bubbles together. The top image in the list is in front.
+
+### Scenes: preserve the story before adapting it
+
+Import StoryBook scenes or select manuscript text and choose Create scene. Give each scene a name, purpose and optional details to preserve.
 
 ### From manuscript to panel plans
 

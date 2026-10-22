@@ -47,6 +47,7 @@ export type VisualCandidate = {
 };
 
 export type AdaptationBeat = {
+  scenePlaceholder?: boolean;
   unresolvedCharacters?: string[];
   unresolvedLocation?: string;
   adaptationReason?: string;
