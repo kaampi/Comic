@@ -189,6 +189,9 @@ try {
   const mergeSource='One. Gap. Two. Tail.';
   const candidates=[{...selected[0],id:'one',summary:'One',sourceStart:0,sourceEnd:4,sourceTextExcerpt:'One.'},{...selected[0],id:'two',summary:'Two',sourceStart:10,sourceEnd:14,sourceTextExcerpt:'Two.'},{...selected[0],id:'tail',summary:'Tail',sourceStart:15,sourceEnd:20,sourceTextExcerpt:'Tail.'}];
   const combined=mergeBeatProposals(candidates,['one','two'],mergeSource);
+  assert.equal(combined[0].targetPanelCount,1,'a merged beat does not multiply identical panel plans');
+  const {panelize}=await local('adaptation/panelize');
+  assert.equal(panelize(combined).filter(p=>p.sourceBeatIds.includes(combined[0].id)).length,1);
   assert.equal(combined[0].sourceTextExcerpt,'One. Gap. Two.');assert.equal(combined[0].id,'one');assert.equal(combined[1].id,'tail');assert.equal(candidates.length,3);
   assert.throws(()=>mergeBeatProposals(candidates,['one','tail'],mergeSource),/consecutive/);
   assert.throws(()=>mergeBeatProposals(candidates,['one','missing'],mergeSource),/consecutive/);

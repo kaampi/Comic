@@ -492,3 +492,6 @@ Normal scenanalys begär nu endast from/to, kort sammanfattning och berättelsef
 
 ### Slå ihop granskade beatförslag (2026-10-22)
 I normal förslagsgranskning är Markera för sammanslagning separat från Ta med. Minst två intilliggande, inkluderade förslag med aktuellt källstöd i samma scen/kapitel kan sammanföras utan AI-anrop. Förhandsgranskningen visar hela omslutande källintervallet (även eventuell text mellan förslagen) och redigerbar titel, sammanfattning och berättelsefunktion. Spara ändrar bara utkastet, inte albumet. Första förslagets ID bevaras; dialog, bildkandidater, källtext och entiteter bevaras/samlas, medan motstridiga platser lämnas ospecificerade. Ångra återställer senaste sammanslagningen innan ytterligare beatredigering. Ny analys och kapitelbyte rensar sammanslagningsutkast. Inaktuellt underlag eller ändrade förslag spärrar sparning. Vanligt explicit tillägg krävs fortfarande och befintliga beats, paneler och bilder påverkas inte.
+
+### Panelantal efter sammanslagning (2026-10-22)
+Sammanslagna beatförslag börjar med targetPanelCount=1. Ursprungliga förslags panelantal summeras inte, eftersom sammanslagningen inte definierar skilda bildögonblick och annars gav identiska panelbeskrivningar. Fler paneler planeras uttryckligen senare. Befintliga paneler och bilder rensas inte automatiskt.

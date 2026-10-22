@@ -28,7 +28,8 @@ export function mergeBeatProposals(beats: AdaptationBeat[], ids: string[], sourc
     dialogueCandidates:unique(selected.flatMap(b=>b.dialogueCandidates)),
     captionCandidates:unique(selected.flatMap(b=>b.captionCandidates)),
     visualCandidates:visuals.map(v=>({...v,selected:v.id===preferred})),
-    targetPanelCount:selected.reduce((n,b)=>n+b.targetPanelCount,0),
+    // Merging story moments does not define their visual panel breakdown.
+    targetPanelCount:1,
   };
   return [...beats.slice(0,indices[0]),merged,...beats.slice(indices.at(-1)!+1)].map((b,i)=>({...b,order:i+1}));
 }
