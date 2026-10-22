@@ -1,6 +1,6 @@
 import { beatPrompt } from "../aiPrompts";
 import { copiesSourcePassage } from "../visualSceneAi";
-import { completeLocalChat, type LocalAiSettings } from "../localAi";
+import { completeLocalChat, type LocalAiSettings, type LocalChatDiagnostics } from "../localAi";
 import type { AdaptationBeat, BeatType, StoryAdaptation } from "./types";
 
 const beatTypes: BeatType[] = ["establishing", "introduction", "action", "dialogue", "reaction", "transition", "atmosphere", "climax", "resolution"];
@@ -146,6 +146,7 @@ export function parseAiBeats(reply: string, source: string, context: BeatContext
 
 export async function suggestAiBeats(options: {
   source: string; sourceOffset?: number; context: BeatContext; settings: LocalAiSettings;
+  onDiagnostics?: (value:LocalChatDiagnostics)=>void;
   singleRequest?: boolean; narrativeContext?: unknown; taskPrompt?: string; allowUnknownCharacters?: boolean;
   signal?: AbortSignal; fetchImpl?: typeof fetch; onProgress?: (done: number, total: number) => void;
 }): Promise<AdaptationBeat[]> {
@@ -184,7 +185,7 @@ export async function suggestAiBeats(options: {
       const estimatedInput=Math.ceil(messages.reduce((n,m)=>n+m.content.length,0)/3),output=Math.min(2048,Math.floor(options.settings.contextWindow*.35));
       if(estimatedInput+output>options.settings.contextWindow*.9)throw new Error("Scene and approved context exceed the current context budget. Shorten the reviewed context or increase context size in Settings before running the pilot.");
     }
-    const reply = await completeLocalChat(options.settings, messages, options.signal, options.fetchImpl);
+    const reply = await completeLocalChat(options.settings, messages, options.signal, options.fetchImpl, options.onDiagnostics);
     beats.push(...parseAiBeats(reply, chunk.text, context, (options.sourceOffset ?? 0) + chunk.start, true, options.allowUnknownCharacters));
   }
   options.onProgress?.(chunks.length, chunks.length);

@@ -1,3 +1,4 @@
+import type { LocalChatDiagnostics } from "./localAi";
 import type { ComicProject } from "./project";
 import type { StoryBookImport } from "./storybookImport";
 import type { AdaptationBeat } from "./adaptation/types";
@@ -16,7 +17,7 @@ export type AdaptationContext = { sourceBookId:string; exportedAt:string; synops
 export type PilotInputs = { chapterId:string; sceneId:string; source:string; sourceOffset:number; model:string; engine:string; server:string; contextWindow:number; prompt:string; context:unknown };
 export type BeatTrial = {
   id:string; variant:'A'|'B'; createdAt:string; inputs:PilotInputs; beats:AdaptationBeat[];
-  excluded:string[]; applied:string[]; notes:string;
+  excluded:string[]; applied:string[]; notes:string; diagnostics?:LocalChatDiagnostics; error?:string;
 };
 const review = (text=''):ReviewedText => ({original:text,text,approved:false});
 export function importedAdaptationContext(data:StoryBookImport):AdaptationContext | undefined {
@@ -86,7 +87,9 @@ export function validatePilotData(project:any):void {
     }
   }
   if(project.beatTrials!==undefined){if(!Array.isArray(project.beatTrials))fail();const ids=new Set();
-    for(const r of project.beatTrials){obj(r);str(r.id);str(r.createdAt);str(r.notes);if(ids.has(r.id)||!['A','B'].includes(r.variant))fail();ids.add(r.id);strings(r.excluded);strings(r.applied);const i=r.inputs;obj(i);for(const k of ['chapterId','sceneId','source','model','engine','server','prompt'])str(i[k]);if(!Number.isInteger(i.sourceOffset)||i.sourceOffset<0||!Number.isInteger(i.contextWindow)||i.contextWindow<1024)fail();if(!Array.isArray(r.beats))fail();
+    for(const r of project.beatTrials){obj(r);if(r.error!==undefined)str(r.error);
+      if(r.diagnostics!==undefined){const d=r.diagnostics;obj(d);str(d.requestBody);try{obj(JSON.parse(d.requestBody));}catch{fail();}for(const k of ['responseBody','rawReply','finishReason'])if(d[k]!==undefined)str(d[k]);if(!Number.isInteger(d.maxOutputTokens)||d.maxOutputTokens<1||!Number.isInteger(d.contextWindow)||d.contextWindow<1024)fail();}
+      str(r.id);str(r.createdAt);str(r.notes);if(ids.has(r.id)||!['A','B'].includes(r.variant))fail();ids.add(r.id);strings(r.excluded);strings(r.applied);const i=r.inputs;obj(i);for(const k of ['chapterId','sceneId','source','model','engine','server','prompt'])str(i[k]);if(!Number.isInteger(i.sourceOffset)||i.sourceOffset<0||!Number.isInteger(i.contextWindow)||i.contextWindow<1024)fail();if(!Array.isArray(r.beats))fail();
       for(const b of r.beats){obj(b);if(!['establishing','introduction','action','dialogue','reaction','transition','atmosphere','climax','resolution'].includes(b.beatType)||!Number.isInteger(b.targetPanelCount)||b.targetPanelCount<1||b.targetPanelCount>12)fail();for(const k of ['id','title','summary','sourceTextExcerpt','beatType'])str(b[k]);for(const k of ['sourceSceneId','adaptationReason','unresolvedLocation'])if(b[k]!==undefined)str(b[k]);strings(b.characterIds);if(b.unresolvedCharacters!==undefined)strings(b.unresolvedCharacters);if(!Number.isInteger(b.sourceStart)||!Number.isInteger(b.sourceEnd)||b.sourceStart<i.sourceOffset||b.sourceEnd>i.sourceOffset+i.source.length||b.sourceEnd<=b.sourceStart||i.source.slice(b.sourceStart-i.sourceOffset,b.sourceEnd-i.sourceOffset)!==b.sourceTextExcerpt)fail();for(const k of ['dialogueCandidates','captionCandidates','visualCandidates'])if(!Array.isArray(b[k]))fail();for(const v of b.visualCandidates){obj(v);str(v.id);str(v.description);}for(const t of [...b.dialogueCandidates,...b.captionCandidates]){obj(t);str(t.id);str(t.text);}}
     }
   }

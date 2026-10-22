@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
-import type { LocalAiSettings } from "./localAi";
+import type { LocalAiSettings, LocalChatDiagnostics } from "./localAi";
 import { beatPrompt } from "./aiPrompts";
 import { suggestAiBeats } from "./adaptation/aiBeats";
 import { appendAiBeats } from "./manuscriptModel";
@@ -36,15 +36,23 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
     const narrative=pilotNarrative(project,chapterId,sceneId);
     const known={characters:project.characters.map(c=>({id:c.id,name:c.name})),locations:project.locations.map(l=>({id:l.id,name:l.name}))};
     const inputs={chapterId,sceneId,source:source.slice(range.start,range.end),sourceOffset:range.start,model:settings.servers[settings.engine].model,engine:settings.engine,server:settings.servers[settings.engine].baseUrl,contextWindow:settings.contextWindow,prompt:beatPrompt(settings),context:{narrative,known}};
+    let diagnostics:LocalChatDiagnostics|undefined;
     setBusy(true);setMessage('');const timer=window.setTimeout(()=>abort.abort(),300000);
     try{
-      const beats=await suggestAiBeats({source:inputs.source,sourceOffset:range.start,context:known,settings,signal:abort.signal,singleRequest:true,allowUnknownCharacters:true,taskPrompt:inputs.prompt,...(variant==='B'?{narrativeContext:narrative}:{})});
+      const beats=await suggestAiBeats({source:inputs.source,sourceOffset:range.start,context:known,settings,signal:abort.signal,singleRequest:true,onDiagnostics:value=>{diagnostics=value;},allowUnknownCharacters:true,taskPrompt:inputs.prompt,...(variant==='B'?{narrativeContext:narrative}:{})});
       if(token!==revision.current||abort.signal.aborted)return;
-      const trial:BeatTrial={id:'beat-trial-'+crypto.randomUUID(),variant,createdAt:new Date().toISOString(),inputs,beats:beats.map(b=>({...b,chapterId,sourceSceneId:sceneId})),excluded:[],applied:[],notes:''};
+      const trial:BeatTrial={id:'beat-trial-'+crypto.randomUUID(),variant,createdAt:new Date().toISOString(),inputs,diagnostics,beats:beats.map(b=>({...b,chapterId,sourceSceneId:sceneId})),excluded:[],applied:[],notes:''};
       if(!trialIsCurrent(latest.current,trial))return;
       onUpdate(p=>({...p,beatTrials:[...(p.beatTrials??[]),trial]}));
       setMessage(t(`Test ${variant} sparat. Inga beats har lagts till i albumet.`,`Test ${variant} saved. No beats have been added to the album.`));
-    }catch(error){if(token===revision.current)setMessage(abort.signal.aborted?t('Analysen avbröts. Tidigare resultat finns kvar.','Analysis cancelled. Previous results are preserved.'):String(error instanceof Error?error.message:error));}
+    }catch(error){if(token===revision.current){
+      const detail=String(error instanceof Error?error.message:error);
+      setMessage(abort.signal.aborted?t('Analysen avbröts. Tidigare resultat finns kvar.','Analysis cancelled. Previous results are preserved.'):detail);
+      if(!abort.signal.aborted&&diagnostics){
+        const failed:BeatTrial={id:'beat-trial-'+crypto.randomUUID(),variant,createdAt:new Date().toISOString(),inputs,diagnostics,error:detail,beats:[],excluded:[],applied:[],notes:''};
+        if(trialIsCurrent(latest.current,failed))onUpdate(p=>({...p,beatTrials:[...(p.beatTrials??[]),failed]}));
+      }
+    }}
     finally{window.clearTimeout(timer);if(token===revision.current)setBusy(false);}
   };
   const patchTrial=(id:string,change:Partial<BeatTrial>)=>onUpdate(p=>({...p,beatTrials:p.beatTrials?.map(r=>r.id===id?{...r,...change}:r)}));
@@ -94,6 +102,14 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
     <div className="pilot-results">{trials.map(trial=>{
       const current=trialIsCurrent(project,trial),selected=trial.beats.filter(b=>!trial.excluded.includes(b.id)&&!trial.applied.includes(b.id));
       return <details key={trial.id} open className="pilot-trial"><summary>{trial.variant} · {trial.inputs.model} · {new Date(trial.createdAt).toLocaleString()} · {trial.beats.length} beats</summary>
+        {trial.error?<p role="alert">{t('Testet misslyckades: ','Test failed: ')}{trial.error}</p>:null}
+        {trial.diagnostics?<details><summary>{t('Visa AI-diagnostik','Show AI diagnostics')}</summary>
+          <p>{t('Svarsgräns','Output limit')}: {trial.diagnostics.maxOutputTokens} tokens · {t('Kontext','Context')}: {trial.diagnostics.contextWindow} · {t('Avslutsorsak','Finish reason')}: {trial.diagnostics.finishReason??'—'}</p>
+          <p className="quiet">{t('Det faktiska anropet och svaret sparas med testet. Inga extra AI-anrop görs.','The actual request and response are saved with the trial. No additional AI requests are made.')}</p>
+          <label>{t('Hela anropet (inklusive systeminstruktioner och numrerade segment)','Full request (including system instructions and numbered segments)')}<textarea readOnly rows={12} value={JSON.stringify(JSON.parse(trial.diagnostics.requestBody),null,2)}/></label>
+          <label>{t('Modellens råsvar före bearbetning','Raw model reply before processing')}<textarea readOnly rows={10} value={trial.diagnostics.rawReply??t('Inget textsvar mottaget.','No text reply received.')}/></label>
+          <details><summary>{t('Hela serversvaret och metadata','Full server response and metadata')}</summary><textarea readOnly rows={10} value={trial.diagnostics.responseBody??t('Inget serversvar mottaget.','No server response received.')}/></details>
+        </details>:<p className="quiet">{t('AI-diagnostik saknas för detta äldre test.','AI diagnostics are unavailable for this older trial.')}</p>}
         {!current?<p role="alert">{t('Källtexten har ändrats. Resultatet kan granskas men inte läggas till.','Source text changed. You can review this result but cannot apply it.')}</p>:null}
         {trial.beats.map(b=><article key={b.id}><label className="pilot-check"><input type="checkbox" disabled={!current||trial.applied.includes(b.id)||busy} checked={!trial.excluded.includes(b.id)} onChange={e=>patchTrial(trial.id,{excluded:e.target.checked?trial.excluded.filter(id=>id!==b.id):[...trial.excluded,b.id]})}/><strong>{b.title}</strong>{trial.applied.includes(b.id)?t(' · tillagt',' · added'):''}</label><p>{b.summary}</p>{b.adaptationReason?<p className="quiet">{b.adaptationReason}</p>:null}<p><em>{b.visualCandidates[0]?.description}</em></p>{b.unresolvedCharacters?.length?<p className="pilot-warning">{t('Karaktärsreferenser att komplettera: ','Character references to review: ')}{b.unresolvedCharacters.join(', ')}</p>:null}{b.unresolvedLocation?<p className="pilot-warning">{t('Plats att komplettera: ','Location to review: ')}{b.unresolvedLocation}</p>:null}<blockquote>{b.sourceTextExcerpt}</blockquote></article>)}
         <label>{t('Bedömning: urval, uppdelning, känslor, källtrogenhet och luckor','Evaluation: selection, splitting, emotion, source fidelity and omissions')}<textarea rows={3} value={trial.notes} onChange={e=>patchTrial(trial.id,{notes:e.target.value})}/></label>

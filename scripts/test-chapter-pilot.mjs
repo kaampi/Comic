@@ -115,6 +115,10 @@ try {
   }
   const bodies=[];globalThis.fetch=async(_url,init)=>{networkRequests++;bodies.push(JSON.parse(init.body));return new Response(JSON.stringify({message:{content:JSON.stringify(reply)},done_reason:'stop'}));};
   await user.click(runA());await waitFor(()=>assert.equal(working.beatTrials?.length,1));
+  assert.deepEqual(JSON.parse(working.beatTrials[0].diagnostics.requestBody),bodies[0]);
+  assert.equal(working.beatTrials[0].diagnostics.rawReply,JSON.stringify(reply));
+  assert.equal(working.beatTrials[0].diagnostics.finishReason,'stop');
+  assert.equal(working.beatTrials[0].diagnostics.maxOutputTokens,2048);
   assert.equal(bodies.length,1,'one scene trial makes one request');assert.equal(JSON.parse(bodies[0].messages[1].content).narrativeContext,undefined);
   assert.deepEqual(working.adaptations[0].beats,originalBeats);assert.deepEqual(working.pages,originalPages);
   await user.click(runB());await waitFor(()=>assert.equal(working.beatTrials.length,2));
@@ -129,6 +133,25 @@ try {
   // A late result after cancellation cannot replace or append earlier trials.
   let finish;globalThis.fetch=()=>new Promise(resolve=>{finish=resolve;});await user.click(runA());await screen.findByRole('dialog');await user.click(screen.getByRole('button',{name:'Cancel',exact:true}));
   await act(async()=>finish(new Response(JSON.stringify({message:{content:JSON.stringify(reply)},done_reason:'stop'}))));assert.equal(working.beatTrials.length,2);
+  // Failed replies retain the exact request and unprocessed reply without adding beats.
+  for(const [content,reason] of [['{"beats":[','length'],['not JSON','stop']]) {
+    let count=0;globalThis.fetch=async()=>{count++;return new Response(JSON.stringify({message:{content},done_reason:reason,eval_count:17}));};
+    const before=working.beatTrials.length,album=JSON.stringify(working.adaptations);
+    await user.click(runB());await waitFor(()=>assert.equal(working.beatTrials.length,before+1));
+    const failed=working.beatTrials.at(-1);assert.ok(failed.error);assert.equal(failed.beats.length,0);
+    assert.equal(failed.diagnostics.rawReply,content);assert.equal(failed.diagnostics.finishReason,reason);
+    assert.equal(count,1);assert.equal(JSON.stringify(working.adaptations),album);
+    assert.deepEqual(parseAlbumBackup(packAlbumBackup(working)).beatTrials,working.beatTrials);
+  }
+  const badDiagnostic=structuredClone(packAlbumBackup(working));badDiagnostic.project.beatTrials[0].diagnostics.requestBody='broken';
+  assert.throws(()=>parseAlbumBackup(badDiagnostic),/invalid-backup/);
+  const {completeLocalChat}=await local('localAi');let openTrace;
+  const openSettings={...settings,engine:'openai-compatible',servers:{...settings.servers,'openai-compatible':{model:'fixture',baseUrl:'http://localhost:1234'}}};
+  await assert.rejects(completeLocalChat(openSettings,[{role:'user',content:'fixture'}],undefined,async()=>new Response(JSON.stringify({choices:[{message:{content:'partial'},finish_reason:'length'}],usage:{completion_tokens:2048}})),d=>{openTrace=d;}),/truncated/);
+  assert.equal(openTrace.rawReply,'partial');assert.equal(openTrace.finishReason,'length');
+  assert.equal(JSON.parse(openTrace.requestBody).max_tokens,2048);
+  assert.equal(JSON.parse(openTrace.responseBody).usage.completion_tokens,2048);
+  assert.ok(screen.getAllByText('Show AI diagnostics',{selector:'summary'}).length>=4);
   let budgetCalls=0;await assert.rejects(suggestAiBeats({source:first,context:{characters:[],locations:[]},settings:{...settings,contextWindow:1024},singleRequest:true,narrativeContext:{synopsis:'x'.repeat(12000)},fetchImpl:async()=>{budgetCalls++;throw new Error('must not call');}}),/context budget/);assert.equal(budgetCalls,0);
   await user.click(screen.getByRole('button',{name:'Edit source for test'}));assert.equal(pilot.trialIsCurrent(working,working.beatTrials[0]),false);assert.ok(screen.getAllByRole('button',{name:'Add selected beats to album'}).every(b=>b.disabled));
   cleanup();

@@ -91,17 +91,26 @@ export async function getLocalModelContextLength(settings: LocalAiSettings, sign
   return Object.entries(data.model_info).find(([key, value]) => key.endsWith(".context_length") &&
     typeof value === "number" && Number.isFinite(value) && value > 0)?.[1] as number | undefined;
 }
+export type LocalChatDiagnostics = {
+  requestBody: string; responseBody?: string; rawReply?: string;
+  maxOutputTokens: number; contextWindow: number; finishReason?: string;
+};
 export async function completeLocalChat(settings: LocalAiSettings, messages: Array<{ role: "system" | "user"; content: string }>,
-  signal?: AbortSignal, fetchImpl?: typeof fetch): Promise<string> {
+  signal?: AbortSignal, fetchImpl?: typeof fetch, onDiagnostics?: (value:LocalChatDiagnostics)=>void): Promise<string> {
   const model = settings.servers[settings.engine].model;
   if (!model.trim()) throw new Error("Select a local text model first.");
   const maxTokens = Math.min(2048, Math.floor(settings.contextWindow * .35));
   const body = settings.engine === "ollama"
     ? { model, messages, stream: false, format: "json", options: { temperature: .2, num_predict: maxTokens, num_ctx: settings.contextWindow } }
     : { model, messages, stream: false, temperature: .2, max_tokens: maxTokens };
+  const diagnostics:LocalChatDiagnostics={requestBody:JSON.stringify(body),maxOutputTokens:maxTokens,contextWindow:settings.contextWindow};
+  onDiagnostics?.({...diagnostics});
   const data = await requestJson(endpoint(settings, "/api/chat", "/chat/completions"), {
     method: "POST", headers: { "Content-Type": "application/json" }, signal, body: JSON.stringify(body)
   }, fetchImpl);
+  const rawReply=settings.engine==='ollama'?data?.message?.content:data?.choices?.[0]?.message?.content;
+  const finishReason=settings.engine==='ollama'?data?.done_reason:data?.choices?.[0]?.finish_reason;
+  onDiagnostics?.({...diagnostics,responseBody:JSON.stringify(data),...(typeof rawReply==='string'?{rawReply}:{}),...(typeof finishReason==='string'?{finishReason}:{})});
   if (data?.done_reason === "length" || data?.choices?.[0]?.finish_reason === "length" ||
       (settings.engine === "ollama" && typeof data?.eval_count === "number" && data.eval_count >= maxTokens)) {
     throw new Error("The model response was truncated. Increase the context size or analyse a shorter passage.");
