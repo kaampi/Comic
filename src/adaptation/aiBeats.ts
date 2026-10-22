@@ -183,7 +183,7 @@ export async function suggestAiBeats(options: {
     if(options.singleRequest){
       // Conservative estimate; never silently increase context size or split a comparison run.
       const estimatedInput=Math.ceil(messages.reduce((n,m)=>n+m.content.length,0)/3),output=Math.min(2048,Math.floor(options.settings.contextWindow*.35));
-      if(estimatedInput+output>options.settings.contextWindow*.9)throw new Error("Scene and approved context exceed the current context budget. Shorten the reviewed context or increase context size in Settings before running the pilot.");
+      if(estimatedInput+output>options.settings.contextWindow*.9)throw new Error("Scene and approved context exceed the current context budget. Shorten the reviewed context or choose a shorter scene before trying again.");
     }
     const reply = await completeLocalChat(options.settings, messages, options.signal, options.fetchImpl, options.onDiagnostics);
     beats.push(...parseAiBeats(reply, chunk.text, context, (options.sourceOffset ?? 0) + chunk.start, true, options.allowUnknownCharacters));

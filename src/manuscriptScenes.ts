@@ -5,6 +5,9 @@ import { manuscriptChapters, chapterForRange } from "./manuscriptChapters";
 import { pilotSceneRange } from "./chapterPilot";
 import { activeManuscriptAdaptation, withAdaptation, appendAiBeats, type TextRange } from "./manuscriptModel";
 
+/** Scene boundaries and intent are already authored; avoid the discovery prompt. */
+export const SCENE_ADAPTATION_PROMPT = `Adapt this already-defined scene into a small set of comic beats. Its sceneInstructions state the purpose and mustPreserve lists details to retain. Represent the scene's emotional and causal function, including unresolved feelings, not just movement. Use only the supplied prose for events, time, place and dialogue. Synopsis and chapter Brief explain significance, not future events to add. Keep explicit memories distinct from present action. Do not invent visits, possessions or emotional resolution. Combine repeated movement but preserve distinct meaningful moments. Provide a short summary and one source-supported visible moment per beat. Follow the application's JSON and source-reference contract.`;
+
 export function sceneRange(project:ComicProject,scene:ManuscriptScene):TextRange|undefined {
   const text=project.source.textSnapshot??'';
   if(scene.start===undefined||scene.end===undefined||scene.needsReview||scene.start<0||scene.end>text.length||!text.slice(scene.start,scene.end).trim())return;

@@ -1,5 +1,5 @@
 import { ManuscriptSceneList } from "./ManuscriptSceneList";
-import { prepareManuscriptScenes, createManuscriptScene, sceneRange, applySceneBeats } from "./manuscriptScenes";
+import { SCENE_ADAPTATION_PROMPT, prepareManuscriptScenes, createManuscriptScene, sceneRange, applySceneBeats } from "./manuscriptScenes";
 import { ChapterBeatPilot } from "./ChapterBeatPilot";
 import { manuscriptHtml } from "./manuscriptFormatting";
 import { manuscriptChapters } from "./manuscriptChapters";
@@ -286,7 +286,7 @@ export function ManuscriptWorkspace({
         },
         settings,
         signal: controller.signal,
-        ...(scene?{singleRequest:true,allowUnknownCharacters:true,narrativeContext:{synopsis:project.adaptationContext?.synopsis.approved?project.adaptationContext.synopsis.text:'',brief:contextChapter?.brief.approved?contextChapter.brief.text:'',sceneInstructions:scene.purpose,mustPreserve:scene.preserve}}:{}),
+        ...(scene?{singleRequest:true,allowUnknownCharacters:true,taskPrompt:SCENE_ADAPTATION_PROMPT,narrativeContext:{synopsis:project.adaptationContext?.synopsis.approved?project.adaptationContext.synopsis.text:'',brief:contextChapter?.brief.approved?contextChapter.brief.text:'',sceneInstructions:scene.purpose,mustPreserve:scene.preserve}}:{}),
         onProgress: (done, total) => {
           if (token !== request.current) return;
           setProgress(`${Math.min(done + 1, total)} / ${total}`);

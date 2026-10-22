@@ -81,7 +81,8 @@ try {
   const initial=JSON.parse(original);assert.equal(initial.manuscriptScenes,undefined,'source object is not mutated');
   // The editor creates scenes from an actual DOM text selection, without AI.
   let working=createProject('Local scene fixture','text');working.source={type:'text',textSnapshot:second};
-  const settings=defaultLocalAiSettings();settings.servers.ollama.model='fixture';
+  const settings=defaultLocalAiSettings();settings.servers.ollama.model='fixture';settings.prompts={beats:'LONG_DISCOVERY_PROMPT '.repeat(1000)};
+  working.adaptationContext={sourceBookId:'local',exportedAt:'fixture',synopsis:{original:'A story about trust. '.repeat(160),text:'A story about trust. '.repeat(160),approved:true},chapters:[]};
   function Harness(){const [p,set]=React.useState(working);working=p;return React.createElement(ManuscriptWorkspace,{project:p,locale:'en',settings,onSettings:()=>{},onUpdate:fn=>set(prev=>fn(prev))});}
   const user=userEvent.setup({document});render(React.createElement(Harness));
   const editor=screen.getByRole('textbox',{name:'Manus'}),walker=document.createTreeWalker(editor,NodeFilter.SHOW_TEXT),node=walker.nextNode(),r=document.createRange();r.setStart(node,0);r.setEnd(node,node.textContent.length);window.getSelection().removeAllRanges();window.getSelection().addRange(r);
@@ -98,7 +99,9 @@ try {
   globalThis.fetch=async(_url,init)=>{calls++;body=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:2,title:'A hesitant greeting',summary:'Seren greets Rook.',visualDescription:'At the bridge doorway, Seren faces Rook with her palm raised.',beatType:'reaction',characterIds:[],locationId:null}]})},done_reason:'stop'}));};
   await user.click(screen.getByRole('button',{name:'Suggest comic beats for scene'}));
   await waitFor(()=>assert.ok(screen.getByRole('button',{name:'Add selected beats'})));
-  assert.equal(calls,1);const payload=JSON.parse(body.messages[1].content);assert.equal(payload.narrativeContext.sceneInstructions,'Show hesitation and a possible reunion.');assert.equal(payload.narrativeContext.mustPreserve,'The raised hand.');assert.ok(payload.segments.every(s=>second.includes(s.text)));
+  assert.ok(!body.messages[0].content.includes('LONG_DISCOVERY_PROMPT'));assert.ok(settings.prompts.beats.includes('LONG_DISCOVERY_PROMPT'),'saved general prompt is retained');
+  assert.equal(body.options.num_ctx,8192);
+  assert.equal(calls,1);const payload=JSON.parse(body.messages[1].content);assert.equal(payload.narrativeContext.synopsis,working.adaptationContext.synopsis.text);assert.equal(payload.narrativeContext.sceneInstructions,'Show hesitation and a possible reunion.');assert.equal(payload.narrativeContext.mustPreserve,'The raised hand.');assert.ok(payload.segments.every(s=>second.includes(s.text)));
   assert.equal(working.adaptations[0].beats.length,1,'proposals require explicit application');
   const purposeInput=screen.getByRole('textbox',{name:'What should the scene accomplish?'});
   fireEvent.change(purposeInput,{target:{value:'A changed scene purpose.'}});assert.equal(screen.getByRole('button',{name:'Add selected beats'}).disabled,true);
