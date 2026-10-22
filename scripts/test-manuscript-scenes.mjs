@@ -104,6 +104,14 @@ try {
   assert.equal(body.options.num_ctx,8192);
   assert.equal(calls,1);const payload=JSON.parse(body.messages[1].content);assert.equal(payload.narrativeContext.synopsis,working.adaptationContext.synopsis.text);assert.equal(payload.narrativeContext.sceneInstructions,'Show hesitation and a possible reunion.');assert.equal(payload.narrativeContext.mustPreserve,'The raised hand.');assert.deepEqual(payload.coverageRequirements,{'1':'Show hesitation and a possible reunion.','2':'The raised hand.'});assert.ok(body.messages[0].content.includes('coverage'));assert.ok(payload.segments.every(s=>second.includes(s.text)));
   assert.equal(working.adaptations[0].beats.length,1,'proposals require explicit application');
+  const diagnosticsSummary=screen.getByText(/Show AI diagnostics ·/,{selector:'summary'});
+  assert.equal(diagnosticsSummary.parentElement.open,false);
+  await user.click(diagnosticsSummary);
+  assert.deepEqual(JSON.parse(screen.getByRole('textbox',{name:'Full request (including system instructions and numbered segments)'}).value),body);
+  const rawReply=screen.getByRole('textbox',{name:'Raw model reply before processing'}).value;
+  assert.equal(JSON.parse(rawReply).beats[0].title,'A hesitant greeting');
+  assert.equal(calls,1,'opening diagnostics makes no additional request');
+
   const purposeInput=screen.getByRole('textbox',{name:'What should the scene accomplish?'});
   fireEvent.change(purposeInput,{target:{value:'A changed scene purpose.'}});assert.equal(screen.getByRole('button',{name:'Add selected beats'}).disabled,true);
   fireEvent.change(purposeInput,{target:{value:'Show hesitation and a possible reunion.'}});
@@ -118,6 +126,15 @@ try {
   await user.click(include);
   await user.click(screen.getByRole('button',{name:'Add selected beats'}));
   assert.equal(working.adaptations[0].beats.length,1);assert.equal(working.adaptations[0].beats[0].scenePlaceholder,undefined);assert.equal(working.adaptations[0].panelPlans.length,1);
+
+  const preserved=JSON.stringify(working.adaptations);
+  globalThis.fetch=async()=>{calls++;return new Response(JSON.stringify({message:{content:'{"beats":['},done_reason:'length'}));};
+  await user.click(screen.getByRole('button',{name:'Suggest comic beats for scene'}));
+  await waitFor(()=>assert.ok(screen.getByText(/Analysis failed/)));
+  assert.equal(screen.getByRole('textbox',{name:'Raw model reply before processing'}).value,'{"beats":[');
+  assert.ok(screen.getByText(/Finish reason: length/));
+  assert.equal(JSON.stringify(working.adaptations),preserved,'failed generation preserves existing work');
+  assert.equal(calls,3,'failed generation has no automatic retry');
   const {readSceneCoverage,suggestAiBeats}=await import(pathToFileURL(join(temporary,'adaptation/aiBeats.mjs')));
   const source='A door opens. A hand rises.';
   const raw=[{from:2,to:2,title:'Hand'},{from:1,to:1,title:'Door'}];

@@ -7,7 +7,7 @@ import { BeatAnalysisDialog } from "./BeatAnalysisDialog";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ComicProject } from "./project";
 import type { Locale } from "./settings";
-import type { LocalAiSettings } from "./localAi";
+import type { LocalAiSettings, LocalChatDiagnostics } from "./localAi";
 import type { AdaptationBeat, BeatType, PanelPlan } from "./adaptation/types";
 import { suggestAiBeats, type SceneCoverage } from "./adaptation/aiBeats";
 import {
@@ -147,6 +147,7 @@ export function ManuscriptWorkspace({
     } | null>(null),
     [excluded, setExcluded] = useState<string[]>([]);
   useEffect(()=>{const next=prepareManuscriptScenes(project);if(next!==project)onUpdate(prepareManuscriptScenes);},[project]);
+  const [sceneDiagnostics,setSceneDiagnostics]=useState<{title:string;trace:LocalChatDiagnostics}|null>(null);
   const [sceneDraft,setSceneDraft]=useState<{range:TextRange;source:string;title:string;purpose:string;preserve:string}|null>(null);
   useEffect(() => {
     if (
@@ -176,7 +177,7 @@ export function ManuscriptWorkspace({
   }, [source]);
   const switchChapter=(id:string)=>{caret.current=null;setChapterId(id);};
   useEffect(()=>{
-    request.current++;abort.current?.abort();setBusy(false);setRange(null);setMenu(null);setDraft(null);setSceneDraft(null);setMessage("");caret.current=null;
+    request.current++;abort.current?.abort();setBusy(false);setRange(null);setMenu(null);setDraft(null);setSceneDraft(null);setSceneDiagnostics(null);setMessage("");caret.current=null;
     if(chapter)setSelected(scopedBeats[0]?.id??null);
   },[chapter?.id]);
   const updateSource=(p:ComicProject,value:string)=>chapter?editManuscriptChapter(p,chapter.id,value):editManuscript(p,value);
@@ -270,6 +271,7 @@ export function ManuscriptWorkspace({
     setProgress("");
     setMessage("");
     setDraft(null);
+    setSceneDiagnostics(null);
     setExcluded([]);
     let timedOut = false;
     const timeout = () => {
@@ -288,6 +290,7 @@ export function ManuscriptWorkspace({
         },
         settings,
         signal: controller.signal,
+        ...(scene?{onDiagnostics:(trace:LocalChatDiagnostics)=>{if(token===request.current&&!controller.signal.aborted)setSceneDiagnostics({title:scene.title,trace});}}:{}),
         ...(scene?{singleRequest:true,coverageRequirements:[scene.purpose,...(scene.preserve.trim()?[scene.preserve]:[])],onCoverage:(rows:SceneCoverage[])=>{coverage=rows;},allowUnknownCharacters:true,taskPrompt:SCENE_ADAPTATION_PROMPT,narrativeContext:{synopsis:project.adaptationContext?.synopsis.approved?project.adaptationContext.synopsis.text:'',brief:contextChapter?.brief.approved?contextChapter.brief.text:'',sceneInstructions:scene.purpose,mustPreserve:scene.preserve}}:{}),
         onProgress: (done, total) => {
           if (token !== request.current) return;
@@ -647,6 +650,14 @@ export function ManuscriptWorkspace({
             </button>
           </section>
         ) : null}
+        {sceneDiagnostics && !busy ? <details className="beat-ai-review">
+          <summary>{locale==='sv'?'Visa AI-diagnostik':'Show AI diagnostics'} · {sceneDiagnostics.title}</summary>
+          <p>{locale==='sv'?'Senaste scenanalysen i denna vy. Ingen ny AI-förfrågan görs när du öppnar diagnostiken. Uppgifterna försvinner när vyn stängs eller en ny analys startas.':'Latest scene analysis in this view. Opening diagnostics makes no AI request. This information is cleared when the view closes or a new analysis starts.'}</p>
+          <p>{locale==='sv'?'Svarsgräns':'Output limit'}: {sceneDiagnostics.trace.maxOutputTokens} tokens · {locale==='sv'?'Kontext':'Context'}: {sceneDiagnostics.trace.contextWindow} · {locale==='sv'?'Avslutsorsak':'Finish reason'}: {sceneDiagnostics.trace.finishReason??'—'}</p>
+          <label>{locale==='sv'?'Hela anropet (inklusive systeminstruktioner och numrerade segment)':'Full request (including system instructions and numbered segments)'}<textarea readOnly rows={12} value={JSON.stringify(JSON.parse(sceneDiagnostics.trace.requestBody),null,2)}/></label>
+          <label>{locale==='sv'?'Modellens råsvar före bearbetning':'Raw model reply before processing'}<textarea readOnly rows={10} value={sceneDiagnostics.trace.rawReply??(locale==='sv'?'Inget textsvar mottaget.':'No text reply received.')}/></label>
+          <details><summary>{locale==='sv'?'Hela serversvaret och metadata':'Full server response and metadata'}</summary><textarea aria-label={locale==='sv'?'Hela serversvaret och metadata':'Full server response and metadata'} readOnly rows={10} value={sceneDiagnostics.trace.responseBody??(locale==='sv'?'Inget serversvar mottaget.':'No server response received.')}/></details>
+        </details>:null}
         {beat ? (
           <>
             {beat.scenePlaceholder?<p className="beat-review-warning">{locale==='sv'?'Startbeat för en scen. Utveckla gestaltningen eller lägg till en panel när du är redo.':'Starting beat for a scene. Develop its adaptation or add a panel when ready.'}</p>:null}

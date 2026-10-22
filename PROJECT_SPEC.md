@@ -483,3 +483,6 @@ Samma manuellt startade anrop som föreslår beats ska redovisa täckning för s
 
 ### Kompakt kontrakt för scenens täckningsrapport (2026-10-22)
 Scenadaption med täckningskrav använder ett sammanhållet kort kontrakt i stället för att stapla generella instruktioner, scenprompt och täckningsinstruktioner. Hela godkända underlaget behålls. Budgetkontrollen, kontextstorleken och svarsgränsen är oförändrade. Regressionstest omfattar en hel syntetisk scen, synopsis och namn/ID:n för åtta personer och sex platser vid 8192 kontext, samt avvisning av verkligt för stort underlag utan nätverksanrop.
+
+### AI-diagnostik för normal scenanalys (2026-10-22)
+Under scenförslagen visas utfällbar diagnostik från samma anrop: hela skickade förfrågan, rå textsvar före bearbetning, serversvar och metadata, kontext/svarsgräns och avslutsorsak. Diagnostik finns även vid tolkningsfel eller avklippt svar. Ingen extra AI-förfrågan görs. Endast senaste analysen i den öppna manusvyn behålls i minnet; den rensas vid ny analys, kapitelbyte eller stängd vy och ingår inte i albumbackup. Sena eller avbrutna svar får inte ersätta aktuell diagnostik. Befintligt arbete påverkas inte.
