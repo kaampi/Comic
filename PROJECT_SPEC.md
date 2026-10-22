@@ -480,3 +480,6 @@ Scenknappen använder en egen kompakt anpassningsprompt eftersom textgränser oc
 
 ### Täckning av scenavsikt i normal scenadaption (2026-10-22)
 Samma manuellt startade anrop som föreslår beats ska redovisa täckning för scenens hela syfte och valfria bevarandekrav. Varje krav återförs lokalt från indatan och länkas till föreslagna beats; saknade/ogiltiga rapporter, luckor och bortvalda stödbeats visas som ofullständiga. Textändringar i förslag kräver ny manuell granskning av rapporten. Modellens självbedömning är inte semantisk verifiering; användaren får granska och välja att använda även ofullständiga förslag. Ingen automatisk omkörning, större kontext eller bokspecifik hårdkodning införs.
+
+### Kompakt kontrakt för scenens täckningsrapport (2026-10-22)
+Scenadaption med täckningskrav använder ett sammanhållet kort kontrakt i stället för att stapla generella instruktioner, scenprompt och täckningsinstruktioner. Hela godkända underlaget behålls. Budgetkontrollen, kontextstorleken och svarsgränsen är oförändrade. Regressionstest omfattar en hel syntetisk scen, synopsis och namn/ID:n för åtta personer och sex platser vid 8192 kontext, samt avvisning av verkligt för stort underlag utan nätverksanrop.

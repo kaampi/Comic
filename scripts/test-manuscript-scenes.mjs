@@ -118,7 +118,7 @@ try {
   await user.click(include);
   await user.click(screen.getByRole('button',{name:'Add selected beats'}));
   assert.equal(working.adaptations[0].beats.length,1);assert.equal(working.adaptations[0].beats[0].scenePlaceholder,undefined);assert.equal(working.adaptations[0].panelPlans.length,1);
-  const {readSceneCoverage}=await import(pathToFileURL(join(temporary,'adaptation/aiBeats.mjs')));
+  const {readSceneCoverage,suggestAiBeats}=await import(pathToFileURL(join(temporary,'adaptation/aiBeats.mjs')));
   const source='A door opens. A hand rises.';
   const raw=[{from:2,to:2,title:'Hand'},{from:1,to:1,title:'Door'}];
   const mapped=[{id:'door',title:'Door',sourceStart:10,sourceEnd:23},{id:'hand',title:'Hand',sourceStart:24,sourceEnd:37}];
@@ -128,5 +128,16 @@ try {
   assert.equal(coverage[0].verified,true);assert.equal(coverage[1].missing,'The loss is not conveyed.');
   assert.equal(readSceneCoverage(JSON.stringify({beats:raw,coverage:{'1':{beatNumbers:[99],missing:''}}}),['Greeting'],mapped,source,10)[0].verified,false);
   assert.equal(readSceneCoverage(JSON.stringify({beats:raw}),['Greeting'],mapped,source,10)[0].verified,false);
+  // A realistic full scene plus approved synopsis and entity IDs must fit 8192,
+  // while genuinely oversized input must still fail before a network request.
+  let realisticCalls=0,requestBody;
+  const realisticSource=Array.from({length:46},(_,i)=>`Rook considers the quiet room and the familiar doorway while holding a worn canvas bag on evening ${i}.`).join(' ');
+  const realisticOptions={source:realisticSource,context:{characters:Array.from({length:8},(_,i)=>({id:`character-00000000-0000-4000-8000-${String(i).padStart(12,'0')}`,name:`Person ${i}`})),locations:Array.from({length:6},(_,i)=>({id:`location-00000000-0000-4000-8000-${String(i).padStart(12,'0')}`,name:`Place ${i}`}))},settings,singleRequest:true,allowUnknownCharacters:true,taskPrompt:scenes.SCENE_ADAPTATION_PROMPT,coverageRequirements:['Establish loss, familiarity and an uncertain return.'],narrativeContext:{synopsis:'A story about loss and trust. '.repeat(125),brief:'Show a hesitant return to a familiar place.',sceneInstructions:'Establish loss, familiarity and an uncertain return.',mustPreserve:''},fetchImpl:async(_url,init)=>{realisticCalls++;requestBody=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:1,title:'Return',summary:'Rook pauses.',visualDescription:'Rook stands at a doorway, bag hanging from one shoulder.',beatType:'reaction',characterIds:[],locationId:null}],coverage:{'1':{beatNumbers:[1],missing:'Loss remains unrepresented.'}}})},done_reason:'stop'}));}};
+  await suggestAiBeats(realisticOptions);
+  assert.equal(realisticCalls,1);assert.equal(requestBody.options.num_ctx,8192);assert.equal(requestBody.options.num_predict,2048);
+  assert.equal(JSON.parse(requestBody.messages[1].content).narrativeContext.synopsis,realisticOptions.narrativeContext.synopsis);
+  assert.ok(requestBody.messages[0].content.length<2600,'scene contract stays compact');
+  await assert.rejects(()=>suggestAiBeats({...realisticOptions,source:realisticSource.repeat(10)}),/context budget/);
+  assert.equal(realisticCalls,1,'oversized input is rejected before transport');
   console.log('PASS: scene import and local creation, stable source offsets, explicit omission, starter coverage, one scene request with intent, reviewed application, authored asset preservation and backup validation.');
 } finally {globalThis.fetch=nativeFetch;rmSync(temporary,{recursive:true,force:true});dom.window.close();}
