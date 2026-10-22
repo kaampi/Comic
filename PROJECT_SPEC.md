@@ -453,3 +453,6 @@ A/B-resultat, testförutsättningar, exakt källtext, val, tilläggsstatus och b
 
 ### Kapitelpilot: AI-diagnostik (2026-10-22)
 Varje ny pilotkörning sparar det faktiska request-innehållet (systeminstruktion, segment, underlag och tokeninställningar), råsvaret och servermetadata. Även avklippta svar och tolkningsfel sparas som misslyckade tester med tom beatlista. Utfällbar AI-diagnostik visar dessa lokalt, utan extra modellförfrågan. Avbrutna eller inaktuella körningar lägger inte till resultat. Äldre tester fungerar men saknar diagnostik.
+
+### Kapitelpilot C: enbart urval (2026-10-22)
+Separat granskningsläge med en kort fast prompt: ett anrop över den valda scenen och godkänt berättelseunderlag. Endast källintervall, sammanfattning och berättelsefunktion begärs; inga bildbeskrivningar, typer eller karaktärs-/plats-ID:n. Resultatet sparas som C med diagnostik och backupstöd men kan inte appliceras som panelplaner. A/B och användarens sparade beatprompt bevaras. Inga automatiska följdanrop, ändrad kontextstorlek eller nya modeller.

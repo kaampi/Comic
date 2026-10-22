@@ -152,6 +152,28 @@ try {
   assert.equal(JSON.parse(openTrace.requestBody).max_tokens,2048);
   assert.equal(JSON.parse(openTrace.responseBody).usage.completion_tokens,2048);
   assert.ok(screen.getAllByText('Show AI diagnostics',{selector:'summary'}).length>=4);
+  const {parseBeatSelection}=await local('adaptation/beatSelection');
+  const selectionReply={beats:[{from:2,to:2,summary:'Seren greets Rook.',reason:'Their meeting establishes a relationship.'},{from:1,to:1,summary:'Rook arrives.',reason:'Establish the scene.'}]};
+  const chosen=parseBeatSelection(JSON.stringify(selectionReply),first,37);
+  assert.deepEqual(chosen.map(b=>b.summary),['Rook arrives.','Seren greets Rook.']);
+  for(const b of chosen){assert.equal(b.sourceTextExcerpt,first.slice(b.sourceStart-37,b.sourceEnd-37));assert.deepEqual(b.visualCandidates,[]);assert.deepEqual(b.characterIds,[]);}
+  for(const beats of [[],[{from:0,to:1,summary:'X',reason:'Y'}],[{from:2,to:1,summary:'X',reason:'Y'}],[{from:1,to:1,summary:'X'}]])assert.throws(()=>parseBeatSelection(JSON.stringify({beats}),first));
+  let selectionCalls=0,selectionBody;
+  globalThis.fetch=async(_url,init)=>{selectionCalls++;selectionBody=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify(selectionReply)},done_reason:'stop'}));};
+  const beforeSelection=working.beatTrials.length,albumBeforeSelection=JSON.stringify(working.adaptations);
+  await user.click(screen.getByRole('button',{name:'Run C – selection only with approved context'}));
+  await waitFor(()=>assert.equal(working.beatTrials.length,beforeSelection+1));
+  const selectionTrial=working.beatTrials.at(-1);assert.equal(selectionTrial.variant,'C');assert.equal(selectionCalls,1);
+  const selectionUser=JSON.parse(selectionBody.messages[1].content);
+  assert.equal(selectionUser.knownCharacters,undefined);assert.equal(selectionUser.knownLocations,undefined);
+  assert.equal(selectionUser.narrativeContext.brief,raw.chapters[0].brief);
+  assert.ok(selectionUser.segments.length>0);assert.equal(selectionBody.options.num_ctx,settings.contextWindow);
+  assert.ok(!selectionBody.messages[0].content.includes('"visualDescription"'));
+  assert.equal(JSON.stringify(working.adaptations),albumBeforeSelection);
+  assert.deepEqual(parseAlbumBackup(packAlbumBackup(working)).beatTrials,working.beatTrials);
+  const selectionCard=screen.getByText(/C · pilot-test/).closest('.pilot-trial');
+  assert.equal(within(selectionCard).queryByRole('button',{name:'Add selected beats to album'}),null);
+  assert.ok(within(selectionCard).getByText('Selection only – this trial does not create visual proposals or panels.'));
   let budgetCalls=0;await assert.rejects(suggestAiBeats({source:first,context:{characters:[],locations:[]},settings:{...settings,contextWindow:1024},singleRequest:true,narrativeContext:{synopsis:'x'.repeat(12000)},fetchImpl:async()=>{budgetCalls++;throw new Error('must not call');}}),/context budget/);assert.equal(budgetCalls,0);
   await user.click(screen.getByRole('button',{name:'Edit source for test'}));assert.equal(pilot.trialIsCurrent(working,working.beatTrials[0]),false);assert.ok(screen.getAllByRole('button',{name:'Add selected beats to album'}).every(b=>b.disabled));
   cleanup();
