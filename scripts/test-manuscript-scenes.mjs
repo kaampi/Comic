@@ -96,37 +96,38 @@ try {
   assert.equal(networkRequests,0);assert.equal(working.manuscriptScenes.length,1);assert.equal(working.adaptations[0].beats.length,1);assert.equal(working.adaptations[0].panelPlans.length,0);
   await user.click(screen.getByText(/1\. The reunion · starting beat/,{selector:'summary'}));
   let calls=0,body;
-  globalThis.fetch=async(_url,init)=>{calls++;body=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:2,title:'A hesitant greeting',summary:'Seren greets Rook.',visualDescription:'At the bridge doorway, Seren faces Rook with her palm raised.',beatType:'reaction',characterIds:[],locationId:null}]})},done_reason:'stop'}));};
+  globalThis.fetch=async(_url,init)=>{calls++;body=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:2,summary:'Seren greets Rook.',reason:'A hesitant reunion begins.'}]})},done_reason:'stop'}));};
   await user.click(screen.getByRole('button',{name:'Suggest comic beats for scene'}));
   await waitFor(()=>assert.ok(screen.getByRole('button',{name:'Add selected beats'})));
-  assert.ok(screen.getByText('Incomplete – content is missing or unreported.'));
+  assert.ok(screen.getByText(/Review selection and source support first/));
   assert.ok(!body.messages[0].content.includes('LONG_DISCOVERY_PROMPT'));assert.ok(settings.prompts.beats.includes('LONG_DISCOVERY_PROMPT'),'saved general prompt is retained');
   assert.equal(body.options.num_ctx,8192);
-  assert.equal(calls,1);const payload=JSON.parse(body.messages[1].content);assert.equal(payload.narrativeContext.synopsis,working.adaptationContext.synopsis.text);assert.equal(payload.narrativeContext.sceneInstructions,'Show hesitation and a possible reunion.');assert.equal(payload.narrativeContext.mustPreserve,'The raised hand.');assert.deepEqual(payload.coverageRequirements,{'1':'Show hesitation and a possible reunion.','2':'The raised hand.'});assert.ok(body.messages[0].content.includes('coverage'));assert.ok(payload.segments.every(s=>second.includes(s.text)));
+  assert.equal(calls,1);const payload=JSON.parse(body.messages[1].content);assert.equal(payload.narrativeContext.synopsis,working.adaptationContext.synopsis.text);assert.equal(payload.narrativeContext.sceneInstructions,'Show hesitation and a possible reunion.');assert.equal(payload.narrativeContext.mustPreserve,'The raised hand.');assert.equal(payload.coverageRequirements,undefined);assert.equal(payload.knownCharacters,undefined);assert.equal(payload.knownLocations,undefined);assert.ok(body.messages[0].content.includes('Your ONLY task is selection'));assert.ok(payload.segments.every(s=>second.includes(s.text)));
   assert.equal(working.adaptations[0].beats.length,1,'proposals require explicit application');
   const diagnosticsSummary=screen.getByText(/Show AI diagnostics ·/,{selector:'summary'});
   assert.equal(diagnosticsSummary.parentElement.open,false);
   await user.click(diagnosticsSummary);
   assert.deepEqual(JSON.parse(screen.getByRole('textbox',{name:'Full request (including system instructions and numbered segments)'}).value),body);
   const rawReply=screen.getByRole('textbox',{name:'Raw model reply before processing'}).value;
-  assert.equal(JSON.parse(rawReply).beats[0].title,'A hesitant greeting');
+  assert.equal(JSON.parse(rawReply).beats[0].summary,'Seren greets Rook.');
   assert.equal(calls,1,'opening diagnostics makes no additional request');
 
   const purposeInput=screen.getByRole('textbox',{name:'What should the scene accomplish?'});
   fireEvent.change(purposeInput,{target:{value:'A changed scene purpose.'}});assert.equal(screen.getByRole('button',{name:'Add selected beats'}).disabled,true);
   fireEvent.change(purposeInput,{target:{value:'Show hesitation and a possible reunion.'}});
 
-  globalThis.fetch=async(_url,init)=>{calls++;body=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:2,title:'A hesitant greeting',summary:'Seren greets Rook.',visualDescription:'At the bridge doorway, Seren faces Rook with her palm raised.',beatType:'reaction',characterIds:[],locationId:null}],coverage:{'1':{beatNumbers:[1],missing:''},'2':{beatNumbers:[1],missing:''}}})},done_reason:'stop'}));};
+  globalThis.fetch=async(_url,init)=>{calls++;body=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:2,summary:'Seren greets Rook.',reason:'A hesitant reunion begins.'}],coverage:{'1':{beatNumbers:[1],missing:''},'2':{beatNumbers:[1],missing:''}}})},done_reason:'stop'}));};
   await user.click(screen.getByRole('button',{name:'Suggest comic beats for scene'}));
-  await waitFor(()=>assert.ok(screen.getByText('AI reports coverage. Check that the beats convey the entire purpose.')));
+  await waitFor(()=>assert.ok(screen.getByRole('button',{name:'Add selected beats'})));
   assert.equal(calls,2,'each deliberate run makes exactly one request');
   const include=screen.getByRole('checkbox',{name:'Include'});
   await user.click(include);
-  assert.ok(screen.getByText('Incomplete – content is missing or unreported.'));
+  assert.ok(screen.getByText(/Review selection and source support first/));
   await user.click(include);
   await user.click(screen.getByRole('button',{name:'Add selected beats'}));
   assert.equal(working.adaptations[0].beats.length,1);assert.equal(working.adaptations[0].beats[0].scenePlaceholder,undefined);assert.equal(working.adaptations[0].panelPlans.length,1);
 
+  assert.deepEqual(working.adaptations[0].beats[0].visualCandidates,[]);assert.deepEqual(working.adaptations[0].beats[0].characterIds,[]);assert.equal(working.adaptations[0].beats[0].locationId,undefined);
   const preserved=JSON.stringify(working.adaptations);
   globalThis.fetch=async()=>{calls++;return new Response(JSON.stringify({message:{content:'{"beats":['},done_reason:'length'}));};
   await user.click(screen.getByRole('button',{name:'Suggest comic beats for scene'}));
@@ -135,7 +136,7 @@ try {
   assert.ok(screen.getByText(/Finish reason: length/));
   assert.equal(JSON.stringify(working.adaptations),preserved,'failed generation preserves existing work');
   assert.equal(calls,3,'failed generation has no automatic retry');
-  const {readSceneCoverage,suggestAiBeats}=await import(pathToFileURL(join(temporary,'adaptation/aiBeats.mjs')));
+  const {readSceneCoverage,suggestAiBeats,parseAiBeats}=await import(pathToFileURL(join(temporary,'adaptation/aiBeats.mjs')));
   const source='A door opens. A hand rises.';
   const raw=[{from:2,to:2,title:'Hand'},{from:1,to:1,title:'Door'}];
   const mapped=[{id:'door',title:'Door',sourceStart:10,sourceEnd:23},{id:'hand',title:'Hand',sourceStart:24,sourceEnd:37}];
@@ -145,11 +146,16 @@ try {
   assert.equal(coverage[0].verified,true);assert.equal(coverage[1].missing,'The loss is not conveyed.');
   assert.equal(readSceneCoverage(JSON.stringify({beats:raw,coverage:{'1':{beatNumbers:[99],missing:''}}}),['Greeting'],mapped,source,10)[0].verified,false);
   assert.equal(readSceneCoverage(JSON.stringify({beats:raw}),['Greeting'],mapped,source,10)[0].verified,false);
+  const selected=parseAiBeats(JSON.stringify({beats:[{from:2,to:2,summary:'A hand rises.',reason:'A greeting.',characterIds:['invented'],locationId:'invented'}]}),source,{characters:[{id:'person',name:'hand'}],locations:[]},10,false,true,true);
+  assert.equal(selected[0].sourceTextExcerpt,'A hand rises.');assert.equal(selected[0].sourceStart,24);
+  assert.deepEqual(selected[0].visualCandidates,[]);assert.deepEqual(selected[0].characterIds,[]);assert.equal(selected[0].locationId,undefined);
+  assert.throws(()=>parseAiBeats(JSON.stringify({beats:[{from:99,summary:'No source.'}]}),source,{characters:[],locations:[]},0,false,true,true),/unknown source segment/);
+  assert.throws(()=>parseAiBeats(JSON.stringify({beats:[{from:1,summary:'Same.'},{from:2,summary:'Same.'}]}),source,{characters:[],locations:[]},0,false,true,true),/repeated a selected beat/);
   // A realistic full scene plus approved synopsis and entity IDs must fit 8192,
   // while genuinely oversized input must still fail before a network request.
   let realisticCalls=0,requestBody;
   const realisticSource=Array.from({length:46},(_,i)=>`Rook considers the quiet room and the familiar doorway while holding a worn canvas bag on evening ${i}.`).join(' ');
-  const realisticOptions={source:realisticSource,context:{characters:Array.from({length:8},(_,i)=>({id:`character-00000000-0000-4000-8000-${String(i).padStart(12,'0')}`,name:`Person ${i}`})),locations:Array.from({length:6},(_,i)=>({id:`location-00000000-0000-4000-8000-${String(i).padStart(12,'0')}`,name:`Place ${i}`}))},settings,singleRequest:true,allowUnknownCharacters:true,taskPrompt:scenes.SCENE_ADAPTATION_PROMPT,coverageRequirements:['Establish loss, familiarity and an uncertain return.'],narrativeContext:{synopsis:'A story about loss and trust. '.repeat(125),brief:'Show a hesitant return to a familiar place.',sceneInstructions:'Establish loss, familiarity and an uncertain return.',mustPreserve:''},fetchImpl:async(_url,init)=>{realisticCalls++;requestBody=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:1,title:'Return',summary:'Rook pauses.',visualDescription:'Rook stands at a doorway, bag hanging from one shoulder.',beatType:'reaction',characterIds:[],locationId:null}],coverage:{'1':{beatNumbers:[1],missing:'Loss remains unrepresented.'}}})},done_reason:'stop'}));}};
+  const realisticOptions={source:realisticSource,context:{characters:Array.from({length:8},(_,i)=>({id:`character-00000000-0000-4000-8000-${String(i).padStart(12,'0')}`,name:`Person ${i}`})),locations:Array.from({length:6},(_,i)=>({id:`location-00000000-0000-4000-8000-${String(i).padStart(12,'0')}`,name:`Place ${i}`}))},settings,singleRequest:true,selectionOnly:true,allowUnknownCharacters:true,taskPrompt:scenes.SCENE_ADAPTATION_PROMPT,coverageRequirements:['Establish loss, familiarity and an uncertain return.'],narrativeContext:{synopsis:'A story about loss and trust. '.repeat(125),brief:'Show a hesitant return to a familiar place.',sceneInstructions:'Establish loss, familiarity and an uncertain return.',mustPreserve:''},fetchImpl:async(_url,init)=>{realisticCalls++;requestBody=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:1,title:'Return',summary:'Rook pauses.',visualDescription:'Rook stands at a doorway, bag hanging from one shoulder.',beatType:'reaction',characterIds:[],locationId:null}],coverage:{'1':{beatNumbers:[1],missing:'Loss remains unrepresented.'}}})},done_reason:'stop'}));}};
   await suggestAiBeats(realisticOptions);
   assert.equal(realisticCalls,1);assert.equal(requestBody.options.num_ctx,8192);assert.equal(requestBody.options.num_predict,2048);
   assert.equal(JSON.parse(requestBody.messages[1].content).narrativeContext.synopsis,realisticOptions.narrativeContext.synopsis);

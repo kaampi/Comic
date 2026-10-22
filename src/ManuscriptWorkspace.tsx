@@ -280,7 +280,7 @@ export function ManuscriptWorkspace({
     };
     let timer = window.setTimeout(timeout, 300000);
     try {
-      let coverage: SceneCoverage[] | undefined;
+      const coverage: SceneCoverage[] | undefined = undefined;
       const beats = await suggestAiBeats({
         source: snapshot.slice(scope.start, scope.end),
         sourceOffset: scope.start,
@@ -291,7 +291,7 @@ export function ManuscriptWorkspace({
         settings,
         signal: controller.signal,
         ...(scene?{onDiagnostics:(trace:LocalChatDiagnostics)=>{if(token===request.current&&!controller.signal.aborted)setSceneDiagnostics({title:scene.title,trace});}}:{}),
-        ...(scene?{singleRequest:true,coverageRequirements:[scene.purpose,...(scene.preserve.trim()?[scene.preserve]:[])],onCoverage:(rows:SceneCoverage[])=>{coverage=rows;},allowUnknownCharacters:true,taskPrompt:SCENE_ADAPTATION_PROMPT,narrativeContext:{synopsis:project.adaptationContext?.synopsis.approved?project.adaptationContext.synopsis.text:'',brief:contextChapter?.brief.approved?contextChapter.brief.text:'',sceneInstructions:scene.purpose,mustPreserve:scene.preserve}}:{}),
+        ...(scene?{singleRequest:true,selectionOnly:true,allowUnknownCharacters:true,taskPrompt:SCENE_ADAPTATION_PROMPT,narrativeContext:{synopsis:project.adaptationContext?.synopsis.approved?project.adaptationContext.synopsis.text:'',brief:contextChapter?.brief.approved?contextChapter.brief.text:'',sceneInstructions:scene.purpose,mustPreserve:scene.preserve}}:{}),
         onProgress: (done, total) => {
           if (token !== request.current) return;
           setProgress(`${Math.min(done + 1, total)} / ${total}`);
@@ -547,6 +547,7 @@ export function ManuscriptWorkspace({
           <section className="beat-ai-review">
             <h3>{t.aiReview}</h3>
             {(draft.source !== source || (!!draft.sourceSceneId&&draft.sceneSnapshot!==JSON.stringify(project.manuscriptScenes?.find(s=>s.id===draft.sourceSceneId)))) ? <p role="alert">{t.stale}</p> : null}
+            {draft.sourceSceneId?<p>{locale==='sv'?'Granska urvalet och källstödet först. Bildregi, karaktärer och plats väljs senare. Beattypen Reaktion är ett lokalt startvärde.':'Review selection and source support first. Visual staging, characters and location are chosen later. Reaction is a local default beat type.'}</p>:null}
             {draft.coverage ? <section aria-label={locale==='sv'?'Scenens täckning':'Scene coverage'} className="beat-review-warning">
               <h4>{locale==='sv'?'Scenens täckning':'Scene coverage'}</h4>
               <p>{draft.coverage.some(row=>!row.verified||row.missing||!row.beatIds.length||row.beatIds.some(id=>excluded.includes(id))) ? (locale==='sv'?'Ofullständigt – innehåll saknas eller är inte redovisat.':'Incomplete – content is missing or unreported.') : (locale==='sv'?'AI:n uppger täckning. Granska att hela syftet verkligen syns i beatsen.':'AI reports coverage. Check that the beats convey the entire purpose.')}</p>
@@ -619,7 +620,8 @@ export function ManuscriptWorkspace({
                     )
                   }
                 />
-                <label>{locale === "sv" ? "Föreslagen bildscen" : "Suggested visual scene"}<textarea rows={3} value={b.visualCandidates[0]?.description ?? ""} onChange={e => setDraft(d => d ? { ...d, coverage:d.coverage?.map(row=>({...row,verified:false})), beats: d.beats.map(x => x.id === b.id ? { ...x, visualCandidates: x.visualCandidates.map((v, i) => i === 0 ? { ...v, description: e.target.value } : v) } : x) } : d)} /></label>
+                {!draft.sourceSceneId?<label>{locale === "sv" ? "Föreslagen bildscen" : "Suggested visual scene"}<textarea rows={3} value={b.visualCandidates[0]?.description ?? ""} onChange={e => setDraft(d => d ? { ...d, coverage:d.coverage?.map(row=>({...row,verified:false})), beats: d.beats.map(x => x.id === b.id ? { ...x, visualCandidates: x.visualCandidates.map((v, i) => i === 0 ? { ...v, description: e.target.value } : v) } : x) } : d)} /></label>:null}
+                {b.adaptationReason?<p>{b.adaptationReason}</p>:null}
                 <blockquote>{b.sourceTextExcerpt}</blockquote>
               </article>
             ))}
