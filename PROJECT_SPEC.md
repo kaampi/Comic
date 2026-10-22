@@ -462,3 +462,6 @@ Ett separat test skickar endast vald scenprosa, numrerad som i A/B/C, och en fas
 
 ### Granskad läsförståelse till urval (2026-10-22)
 D-resultat kan granskas i en separat redigerbar kopia av svar och segmentreferenser. Explicit spara/godkänn krävs; ändringar återkallar godkännandet. Ett separat knapptryck kör C med den granskade förståelsen, vald scen och aktuellt godkänt berättelseunderlag. Ett anrop; ingen automatisk kedja. C sparar D-testets ID och en oföränderlig kopia av det använda underlaget i inputs. Original-D och råsvar bevaras. Felaktiga, ej godkända, inaktuella eller andra sceners D-resultat kan inte användas.
+
+### C inventerar före urval (2026-10-22)
+Nya C-körningar inventerar betydelsebärande passager i källordning utan rangordning eller slutligt beaturval. Kontraktet är passages med from/to, kort sammanfattning och berättelsefunktion, högst 12 kompakta poster inom befintlig svarsbudget. Inga bokdetaljer hårdkodas. Samma godkända berättelseunderlag och eventuell granskad D-kopia används, i ett anrop och med oförändrad kontext. inputs.selectionTask=inventory skiljer nya körningar från historiska C-urval, som behåller sin ursprungliga märkning och data. Inventeringen är fortfarande endast för granskning; automatisk sammanslagning eller panelgenerering införs inte.
