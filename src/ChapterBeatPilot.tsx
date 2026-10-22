@@ -4,7 +4,8 @@ import type { Locale } from "./settings";
 import type { LocalAiSettings, LocalChatDiagnostics } from "./localAi";
 import { beatPrompt } from "./aiPrompts";
 import { BEAT_SELECTION_PROMPT, suggestBeatSelection } from "./adaptation/beatSelection";
-import { suggestAiBeats } from "./adaptation/aiBeats";
+import { READING_CHECK_PROMPT, runReadingCheck, type ReadingCheck } from "./adaptation/readingCheck";
+import { numberSourceSegments, suggestAiBeats } from "./adaptation/aiBeats";
 import { appendAiBeats } from "./manuscriptModel";
 import type { ManuscriptChapter } from "./manuscriptChapters";
 import { parseStoryBookExport } from "./storybookImport";
@@ -30,20 +31,22 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
   const patchChapter=(change:Parameters<typeof updatePilotChapter>[2])=>onUpdate(p=>updatePilotChapter(p,chapterId,change));
   const patchProfile=(change:Partial<ChapterProfile>)=>patchChapter(c=>({...c,profile:{...profile,...change}}));
   const trials=(project.beatTrials??[]).filter(r=>r.inputs.chapterId===chapterId&&r.inputs.sceneId===sceneId);
-  const run=async(variant:'A'|'B'|'C')=>{
+  const run=async(variant:'A'|'B'|'C'|'D')=>{
     if(!scene||!range||!chapter)return;
     if(!settings.servers[settings.engine].model.trim()){setMessage(t('Välj en textmodell i Settings först.','Select a text model in Settings first.'));return;}
     const token=++revision.current,abort=new AbortController();controller.current=abort;
     const narrative=pilotNarrative(project,chapterId,sceneId);
     const known={characters:project.characters.map(c=>({id:c.id,name:c.name})),locations:project.locations.map(l=>({id:l.id,name:l.name}))};
     const selectionNarrative={...narrative,characterFacts:narrative.characterFacts.map(({name,description})=>({name,description})),locationFacts:narrative.locationFacts.map(({name,description})=>({name,description}))};
-    const inputs={chapterId,sceneId,source:source.slice(range.start,range.end),sourceOffset:range.start,model:settings.servers[settings.engine].model,engine:settings.engine,server:settings.servers[settings.engine].baseUrl,contextWindow:settings.contextWindow,prompt:variant==='C'?BEAT_SELECTION_PROMPT:beatPrompt(settings),context:variant==='C'?{narrative:selectionNarrative}:{narrative,known}};
+    const inputs={chapterId,sceneId,source:source.slice(range.start,range.end),sourceOffset:range.start,model:settings.servers[settings.engine].model,engine:settings.engine,server:settings.servers[settings.engine].baseUrl,contextWindow:settings.contextWindow,prompt:variant==='D'?READING_CHECK_PROMPT:variant==='C'?BEAT_SELECTION_PROMPT:beatPrompt(settings),context:variant==='D'?{}:variant==='C'?{narrative:selectionNarrative}:{narrative,known}};
     let diagnostics:LocalChatDiagnostics|undefined;
     setBusy(true);setMessage('');const timer=window.setTimeout(()=>abort.abort(),300000);
     try{
-      const beats=variant==='C'?await suggestBeatSelection({source:inputs.source,sourceOffset:range.start,narrativeContext:selectionNarrative,settings,signal:abort.signal,onDiagnostics:value=>{diagnostics=value;}}):await suggestAiBeats({source:inputs.source,sourceOffset:range.start,context:known,settings,signal:abort.signal,singleRequest:true,onDiagnostics:value=>{diagnostics=value;},allowUnknownCharacters:true,taskPrompt:inputs.prompt,...(variant==='B'?{narrativeContext:narrative}:{})});
+      let readingCheck:ReadingCheck|undefined;
+      if(variant==='D')readingCheck=await runReadingCheck({source:inputs.source,settings,signal:abort.signal,onDiagnostics:value=>{diagnostics=value;}});
+      const beats=variant==='D'?[]:variant==='C'?await suggestBeatSelection({source:inputs.source,sourceOffset:range.start,narrativeContext:selectionNarrative,settings,signal:abort.signal,onDiagnostics:value=>{diagnostics=value;}}):await suggestAiBeats({source:inputs.source,sourceOffset:range.start,context:known,settings,signal:abort.signal,singleRequest:true,onDiagnostics:value=>{diagnostics=value;},allowUnknownCharacters:true,taskPrompt:inputs.prompt,...(variant==='B'?{narrativeContext:narrative}:{})});
       if(token!==revision.current||abort.signal.aborted)return;
-      const trial:BeatTrial={id:'beat-trial-'+crypto.randomUUID(),variant,createdAt:new Date().toISOString(),inputs,diagnostics,beats:beats.map(b=>({...b,chapterId,sourceSceneId:sceneId})),excluded:[],applied:[],notes:''};
+      const trial:BeatTrial={id:'beat-trial-'+crypto.randomUUID(),variant,createdAt:new Date().toISOString(),inputs,diagnostics,readingCheck,beats:beats.map(b=>({...b,chapterId,sourceSceneId:sceneId})),excluded:[],applied:[],notes:''};
       if(!trialIsCurrent(latest.current,trial))return;
       onUpdate(p=>({...p,beatTrials:[...(p.beatTrials??[]),trial]}));
       setMessage(t(`Test ${variant} sparat. Inga beats har lagts till i albumet.`,`Test ${variant} saved. No beats have been added to the album.`));
@@ -99,13 +102,15 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
       <div className="pilot-actions"><button type="button" disabled={!scene?.approved||!range} onClick={()=>void run('A')}>{t('Kör A – utan berättelseunderlag','Run A – without story context')}</button><button type="button" className="primary-button" disabled={!scene?.approved||!range} onClick={()=>void run('B')}>{t('Kör B – med godkänt underlag','Run B – with approved context')}</button></div>
       <button type="button" disabled={!scene?.approved||!range} onClick={()=>void run('C')}>{t('Kör C – enbart urval med godkänt underlag','Run C – selection only with approved context')}</button>
       <p className="quiet">{t('C använder en separat kort urvalsprompt och godkänt underlag. Inga bilder, typer eller karaktärs-/plats-ID:n begärs. Ett anrop; resultatet är endast för granskning.','C uses a separate short selection prompt and approved context. No images, types or character/location IDs are requested. One request; results are for review only.')}</p>
+      <button type="button" disabled={!scene?.approved||!range} onClick={()=>void run('D')}>{t('Kör D – läsförståelse','Run D – reading comprehension')}</button>
+      <p className="quiet">{t('D läser bara scenprosan: var personen är, vad som hänt tidigare och vad som förändras. Ett anrop, utan berättelseunderlag eller beatgenerering.','D reads only the scene prose: present location, earlier events and what changes. One request, without narrative context or beat generation.')}</p>
       <p className="quiet">{t('Använd samma modell, prompt och prioriteringar i A och B. Ändrar du dem, kör båda testen igen. Förslag läggs inte till automatiskt.','Use the same model, prompt and priorities for A and B. If you change them, rerun both tests. Suggestions are never added automatically.')}</p>
     </fieldset>}
     {message?<p role="status">{message}</p>:null}
     {trials.length>1?<p className="pilot-comparison">{(()=>{const a=trials.filter(r=>r.variant==='A').at(-1),b=trials.filter(r=>r.variant==='B').at(-1);return a&&b?(sameTrialSetup(a,b)?t('Senaste A och B har samma testförutsättningar.','Latest A and B use the same test setup.'):t('Senaste A och B har olika testförutsättningar. Kör om båda innan du jämför.','Latest A and B have different setups. Rerun both before comparing.')):'';})()}</p>:null}
     <div className="pilot-results">{trials.map(trial=>{
       const current=trialIsCurrent(project,trial),selected=trial.beats.filter(b=>!trial.excluded.includes(b.id)&&!trial.applied.includes(b.id));
-      return <details key={trial.id} open className="pilot-trial"><summary>{trial.variant} · {trial.inputs.model} · {new Date(trial.createdAt).toLocaleString()} · {trial.beats.length} beats{trial.variant==='C'?t(' · enbart urval',' · selection only'):''}</summary>
+      return <details key={trial.id} open className="pilot-trial"><summary>{trial.variant} · {trial.inputs.model} · {new Date(trial.createdAt).toLocaleString()} · {trial.variant==='D'?t('läsförståelse','reading comprehension'):`${trial.beats.length} beats`}{trial.variant==='C'?t(' · enbart urval',' · selection only'):''}</summary>
         {trial.error?<p role="alert">{t('Testet misslyckades: ','Test failed: ')}{trial.error}</p>:null}
         {trial.diagnostics?<details><summary>{t('Visa AI-diagnostik','Show AI diagnostics')}</summary>
           <p>{t('Svarsgräns','Output limit')}: {trial.diagnostics.maxOutputTokens} tokens · {t('Kontext','Context')}: {trial.diagnostics.contextWindow} · {t('Avslutsorsak','Finish reason')}: {trial.diagnostics.finishReason??'—'}</p>
@@ -115,11 +120,16 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
           <details><summary>{t('Hela serversvaret och metadata','Full server response and metadata')}</summary><textarea readOnly rows={10} value={trial.diagnostics.responseBody??t('Inget serversvar mottaget.','No server response received.')}/></details>
         </details>:<p className="quiet">{t('AI-diagnostik saknas för detta äldre test.','AI diagnostics are unavailable for this older trial.')}</p>}
         {!current?<p role="alert">{t('Källtexten har ändrats. Resultatet kan granskas men inte läggas till.','Source text changed. You can review this result but cannot apply it.')}</p>:null}
+        {trial.readingCheck?<div>{(['currentSituation','pastEvents','change'] as const).map(key=>{
+          const answer=trial.readingCheck![key],segments=numberSourceSegments(trial.inputs.source);
+          const label={currentSituation:t('Var befinner sig personen i nutiden?','Where is the character during the present action?'),pastEvents:t('Vad är minnen eller tidigare händelser?','What are memories or earlier events?'),change:t('Vad förändras?','What changes?')}[key];
+          return <article key={key}><strong>{label}</strong><p>{answer.answer}</p><details><summary>{t('Visa källstöd','Show source evidence')} ({answer.evidence.join(', ')||'—'})</summary>{answer.evidence.length?answer.evidence.map(id=><blockquote key={id}>{id}. {segments[id-1]?.text}</blockquote>):<p>{t('Modellen angav inget källstöd.','The model provided no source evidence.')}</p>}</details></article>;
+        })}<p className="quiet">{t('Detta är modellens tolkning, inte en verifierad facitbedömning.','This is the model’s interpretation, not a verified assessment.')}</p></div>:null}
         {trial.beats.map(b=><article key={b.id}><label className="pilot-check"><input type="checkbox" disabled={!current||trial.applied.includes(b.id)||busy} checked={!trial.excluded.includes(b.id)} onChange={e=>patchTrial(trial.id,{excluded:e.target.checked?trial.excluded.filter(id=>id!==b.id):[...trial.excluded,b.id]})}/><strong>{b.title}</strong>{trial.applied.includes(b.id)?t(' · tillagt',' · added'):''}</label><p>{b.summary}</p>{b.adaptationReason?<p className="quiet">{b.adaptationReason}</p>:null}<p><em>{b.visualCandidates[0]?.description}</em></p>{b.unresolvedCharacters?.length?<p className="pilot-warning">{t('Karaktärsreferenser att komplettera: ','Character references to review: ')}{b.unresolvedCharacters.join(', ')}</p>:null}{b.unresolvedLocation?<p className="pilot-warning">{t('Plats att komplettera: ','Location to review: ')}{b.unresolvedLocation}</p>:null}<blockquote>{b.sourceTextExcerpt}</blockquote></article>)}
         <label>{t('Bedömning: urval, uppdelning, känslor, källtrogenhet och luckor','Evaluation: selection, splitting, emotion, source fidelity and omissions')}<textarea rows={3} value={trial.notes} onChange={e=>patchTrial(trial.id,{notes:e.target.value})}/></label>
         <details><summary>{t('Visa testets underlag','Show test inputs')}</summary><pre>{JSON.stringify(trial.inputs,null,2)}</pre></details>
-        {trial.variant==='C'?<p className="quiet">{t('Enbart urval – inga bildförslag eller paneler skapas från detta test.','Selection only – this trial does not create visual proposals or panels.')}</p>:<button type="button" className="primary-button" disabled={!current||!selected.length||busy} onClick={()=>onUpdate(p=>{
-          const saved=p.beatTrials?.find(r=>r.id===trial.id);if(!saved||saved.variant==='C'||!trialIsCurrent(p,saved))return p;
+        {trial.variant==='D'?<p className="quiet">{t('Läsförståelsetest – inga beats eller paneler skapas.','Reading check – no beats or panels are created.')}</p>:trial.variant==='C'?<p className="quiet">{t('Enbart urval – inga bildförslag eller paneler skapas från detta test.','Selection only – this trial does not create visual proposals or panels.')}</p>:<button type="button" className="primary-button" disabled={!current||!selected.length||busy} onClick={()=>onUpdate(p=>{
+          const saved=p.beatTrials?.find(r=>r.id===trial.id);if(!saved||(saved.variant==='C'||saved.variant==='D')||!trialIsCurrent(p,saved))return p;
           const picked=saved.beats.filter(b=>!saved.excluded.includes(b.id)&&!saved.applied.includes(b.id));
           const next=appendAiBeats(p,picked);return {...next,beatTrials:next.beatTrials?.map(r=>r.id===saved.id?{...r,applied:[...r.applied,...picked.map(b=>b.id)]}:r)};
         })}>{t('Lägg till valda beats i albumet','Add selected beats to album')}</button>}

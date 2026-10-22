@@ -456,3 +456,6 @@ Varje ny pilotkörning sparar det faktiska request-innehållet (systeminstruktio
 
 ### Kapitelpilot C: enbart urval (2026-10-22)
 Separat granskningsläge med en kort fast prompt: ett anrop över den valda scenen och godkänt berättelseunderlag. Endast källintervall, sammanfattning och berättelsefunktion begärs; inga bildbeskrivningar, typer eller karaktärs-/plats-ID:n. Resultatet sparas som C med diagnostik och backupstöd men kan inte appliceras som panelplaner. A/B och användarens sparade beatprompt bevaras. Inga automatiska följdanrop, ändrad kontextstorlek eller nya modeller.
+
+### Kapitelpilot D: läsförståelse (2026-10-22)
+Ett separat test skickar endast vald scenprosa, numrerad som i A/B/C, och en fast kort prompt. Modellen besvarar nutida plats/förflyttning, minnen/tidigare händelser och praktisk eller känslomässig förändring. Varje svar har segment-ID:n som visas med exakt källtext. Resultat och diagnostik sparas lokalt och i backup; de är modellens tolkning, inte verifierat facit. Inga beats, paneler, följdanrop eller ändrad kontextstorlek. Befintliga testlägen bevaras.
