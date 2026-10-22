@@ -150,7 +150,7 @@ try {
   assert.equal(saves,0);
   fireEvent.doubleClick(panel());
   assert.ok(document.querySelector('.panel-editor-modal'),'double click still opens editor');
-  await user.click(document.querySelector('.panel-editor-header-actions button'));
+  await user.click(screen.getByRole('button',{name:'Close',exact:true}));
   down(); move(0.2,0); await pause(440); up(0.2,0);
   assert.equal(document.querySelector('.is-panel-moving'),null,'movement before hold cancels activation');
   assert.equal(saves,0);

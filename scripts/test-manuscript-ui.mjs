@@ -712,13 +712,13 @@ try {
     `[data-panel-id="${originalPanel}"]`,
   );
   assert.ok(libraryCard.querySelector("img"));
-  assert.equal(document.querySelector('.page-sidebar .panel-library h3').firstChild.textContent.trim(),'Bildbibliotek');
-  assert.equal(document.querySelector('.page-sidebar .page-list'),null);
+  assert.equal(document.querySelector('.pages-library .panel-library h3').firstChild.textContent.trim(),'Bildbibliotek');
+  assert.equal(document.querySelector('.pages-library .page-list'),null);
   assert.ok(document.querySelector('.page-canvas-header .page-new-button'));
-  assert.equal(within(document.querySelector('.page-sidebar')).queryByRole('button',{name:'Ny sida',exact:true}),null);
+  assert.equal(within(document.querySelector('.pages-library')).queryByRole('button',{name:'Ny sida',exact:true}),null);
   assert.ok(libraryCard.closest('.panel-library-beat').querySelector('h4').textContent.startsWith('Beat '));
-  assert.ok(document.querySelector('.project-sidebar .page-frame-picker select'));
-  assert.equal(document.querySelector('.page-sidebar select'),null);
+  assert.ok(document.querySelector('.pages-settings .page-frame-picker select'));
+  assert.equal(document.querySelector('.pages-library .panel-library select'),null);
 
   await user.click(document.querySelectorAll(".drawn-panel")[0]);
   await user.click(libraryCard);
@@ -1107,7 +1107,7 @@ try {
     JSON.parse(localStorage.getItem("comicbook-ai.local-text-ai")).engine,
     "openai-compatible",
   );
-  await user.click(screen.getByRole("button", { name: "Manus", exact: true }));
+  await user.click(screen.getByRole("button", { name: "Manus & scener", exact: true }));
   const lastSaved = saved();
   const originalSetItem = window.Storage.prototype.setItem;
   window.Storage.prototype.setItem = function (key, value) {
@@ -1741,17 +1741,18 @@ try {
   assert.equal(window.getComputedStyle(visibleAlbumMenu).display,"flex");
   assert.ok(within(visibleAlbumMenu).getByRole("button",{name:"Backup",exact:true}));
   const albumSections=within(visibleAlbumMenu).getByRole("group",{name:"Projektinnehåll",exact:true});
-  assert.deepEqual(Array.from(albumSections.querySelectorAll(":scope > button")).map(button=>button.textContent),["1Manus","2Beats","3Bildmanus","4Bilder","5Sidor"]);
+  const workflowNav=screen.getByRole("navigation",{name:"Arbetsflöde"});
+  assert.deepEqual(Array.from(workflowNav.querySelectorAll(":scope > button")).map(button=>button.getAttribute("aria-label")),["Manus & scener","Beats","Paneler","Bilder","Sidor","Export"]);
   if(!albumSections.querySelector("details").open)await user.click(within(albumSections).getByText("Verktyg",{selector:"summary"}));
   assert.equal(document.querySelector('.project-side-nav'),null);
-  const leftSettings=screen.getByRole("complementary",{name:"Arbetsinställningar",exact:true});
+  const leftSettings=screen.getByRole("complementary",{name:"Sidans egenskaper",exact:true});
   assert.ok(within(leftSettings).getByRole("region",{name:"Sidinställningar",exact:true}));
   assert.ok(leftSettings.querySelector('.grid-settings'));
   assert.equal(document.querySelector('.page-planner .grid-settings'),null);
   for(const [label,selector] of [["Karaktärer",".library-workspace"],["Platser",".library-workspace"],["Bildrutor",".scene-workspace"],["Sidor",".page-workspace"]]){
-    await user.click(within(albumSections).getByRole("button",{name:label,exact:true}));
+    await user.click(within(label==='Sidor'?workflowNav:albumSections).getByRole("button",{name:label,exact:true}));
     assert.ok(document.querySelector(selector));
-    assert.equal(within(albumSections).getByRole("button",{name:label,exact:true}).getAttribute('aria-current'),label==='Sidor'?'step':'page');
+    assert.equal(within(label==='Sidor'?workflowNav:albumSections).getByRole("button",{name:label,exact:true}).getAttribute('aria-current'),label==='Sidor'?'step':'page');
   }
   albumMenuStyles.remove();
   await user.click(
@@ -1788,7 +1789,7 @@ try {
   assert.throws(()=>parseAlbumBackup(invalidFormatBackup),/invalid-backup/);
   fireEvent.keyDown(window, { key: "Escape" });
   assert.equal(screen.queryByRole("dialog"), null);
-  await user.click(screen.getByRole("button", {name:"Exportera",exact:true}));
+  await user.click(screen.getByRole("button", {name:"Export",exact:true}));
   const exportDialog=screen.getByRole("dialog",{name:"Exportera",exact:true});
   assert.equal(within(exportDialog).getByLabelText("Format",{exact:true}).value,"custom");
   assert.equal(within(exportDialog).getByLabelText("Upplösning (dpi)").value,"300");

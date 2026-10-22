@@ -329,3 +329,61 @@
 .beat-merge-preview { padding:12px; border:1px solid var(--border,#bbb); border-radius:8px; margin:12px 0; }
 .beat-merge-preview label { display:grid; gap:5px; margin:10px 0; }
 .beat-merge-preview blockquote { max-height:220px; overflow:auto; white-space:pre-wrap; }
+
+/* Chapter/scenes → source or proposals → selected object's properties. */
+.manuscript-studio{grid-template-columns:190px minmax(280px,1fr) 10px minmax(300px,var(--beat-sidebar));gap:0;align-items:start;}
+.manuscript-studio [hidden]{display:none!important;}
+.manuscript-navigation{grid-column:1;padding:16px 12px;position:sticky;top:8px;max-height:calc(100dvh - 210px);overflow:auto;border-right:1px solid var(--border);min-width:0;}
+.manuscript-document{grid-column:2;padding:16px 20px;}
+.manuscript-studio>.beat-resizer{grid-column:3;}
+.manuscript-studio>.beat-inspector{grid-column:4;top:8px;max-height:calc(100dvh - 205px);padding:16px;}
+.manuscript-navigation .manuscript-chapters{display:grid;grid-template-columns:auto 1fr auto;gap:6px;}
+.manuscript-navigation .manuscript-chapters label{grid-column:1/-1;grid-row:1;}
+.manuscript-navigation .manuscript-chapters>span{text-align:center;font-size:.75rem;}
+.manuscript-navigation h3{font-size:.85rem;}
+.manuscript-scene-navigation>button{display:grid;gap:5px;width:100%;text-align:left;border:1px solid transparent;background:transparent;padding:10px 8px;margin-bottom:5px;border-radius:7px;}
+.manuscript-scene-navigation>button[aria-current]{border-color:var(--border);background:var(--paper);box-shadow:inset 3px 0 var(--ink);}
+.manuscript-scene-navigation small{color:var(--text-dim);font-size:.7rem;}
+.manuscript-scene-navigation span{font-size:.8rem;overflow-wrap:anywhere;}
+.manuscript-navigation>details{margin:16px 0;font-size:.8rem;}
+.manuscript-beat-list{display:grid;gap:6px;margin-top:10px;}
+.manuscript-beat-list>button{font-size:.75rem;text-align:left;padding:6px;overflow-wrap:anywhere;}
+.manuscript-context{min-width:0;}
+.manuscript-context textarea{display:block;width:100%;min-width:0;font-size:.8rem;margin:8px 0;}
+.manuscript-context section{margin:15px 0;}
+.manuscript-context .context-approval{display:flex;gap:6px;font-size:.73rem;align-items:center;}
+.manuscript-advanced>.chapter-pilot{margin-top:8px;padding:8px;}
+.manuscript-advanced{position:relative;}
+.manuscript-advanced[open]>.chapter-pilot{width:min(950px,calc(100vw - 60px));position:relative;z-index:5;background:var(--paper);box-shadow:0 10px 20px #0002;max-height:75vh;overflow:auto;}
+.manuscript-context-line{margin:0 0 12px;color:var(--text-dim);font-size:.75rem;}
+.manuscript-scenes{padding:0;border:0;margin:12px 0;}
+.manuscript-scenes>h3{font-size:.95rem;}
+.scene-property-group{border-top:1px solid var(--border);margin:14px 0;padding-top:12px;}
+.scene-property-group h4{font-size:.85rem;margin:0 0 10px;}
+.scene-property-group>summary{font-size:.85rem;}
+.scene-property-group>button{font-size:.78rem;max-width:100%;white-space:normal;}
+.manuscript-scenes label{font-size:.8rem;}
+.manuscript-scenes .scene-omit-toggle{display:flex;gap:8px;align-items:center;}
+.scene-linked-beats{display:grid;gap:6px;margin-top:10px;}
+.scene-linked-beats>button{text-align:left;font-size:.75rem;overflow-wrap:anywhere;}
+.manuscript-document .beat-ai-review{border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--paper);}
+.manuscript-document .beat-ai-review>article{background:var(--panel);padding:16px;border:1px solid var(--border);border-radius:8px;margin:14px 0;}
+.manuscript-document .beat-ai-review input:not([type=checkbox]),.manuscript-document .beat-ai-review textarea{width:100%;min-width:0;box-sizing:border-box;}
+.manuscript-document .beat-ai-review label{font-size:.8rem;}
+.manuscript-document .beat-ai-review input[type=checkbox]{display:inline-block;margin:0 6px 0 0;}
+.manuscript-document .beat-ai-review article>label{display:inline-flex;align-items:center;margin-right:14px;}
+.manuscript-document .beat-ai-review blockquote{font:14px/1.65 Georgia,serif;margin:12px 0;padding-left:12px;border-left:2px solid var(--border);white-space:pre-wrap;}
+@media(max-width:1250px){.manuscript-studio{grid-template-columns:165px minmax(260px,1fr) 8px 310px;}.manuscript-document{padding:14px;}}
+@media(max-width:1000px){.manuscript-studio{grid-template-columns:160px minmax(0,1fr);}.manuscript-document{grid-column:2;grid-row:1;}.manuscript-navigation{grid-column:1;grid-row:1 / span 2;}.manuscript-studio>.beat-resizer{display:none;}.manuscript-studio>.beat-inspector{grid-column:2;grid-row:2;position:static;max-height:none;border-top:1px solid var(--border);}.manuscript-scenes fieldset{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;}.manuscript-advanced[open]>.chapter-pilot{width:min(800px,calc(100vw - 35px));}}
+@media(max-width:620px){.manuscript-studio{display:flex;flex-direction:column;}.manuscript-navigation{position:static;max-height:none;width:100%;padding:12px;border-bottom:1px solid var(--border);}.manuscript-document,.manuscript-studio>.beat-inspector{width:100%;padding:12px;}.manuscript-scene-navigation{display:grid;grid-template-columns:1fr 1fr;gap:5px;}.manuscript-scene-navigation h3{grid-column:1/-1;}.manuscript-scenes fieldset{display:block;}.manuscript-advanced[open]>.chapter-pilot{width:100%;}.manuscript-source{padding:16px;}.manuscript-toolbar{gap:6px;}.manuscript-toolbar>button{font-size:.75rem;}}
+
+.manuscript-navigation-beats{display:grid;gap:6px;margin-top:10px}.manuscript-navigation-beats>button{font-size:.75rem;text-align:left;padding:6px}
+.scene-analyse-action{width:100%;font-size:.78rem;margin:4px 0 12px}
+
+.manuscript-view-links{display:grid;gap:7px;margin-top:18px;border-top:1px solid var(--border);padding-top:14px}
+.manuscript-view-links button{text-align:left;font-size:.78rem;background:transparent;border:1px solid transparent;padding:8px}
+.manuscript-view-links button[aria-pressed=true]{background:var(--paper);border-color:var(--border)}
+.manuscript-context-workspace .manuscript-context{padding:18px;border:1px solid var(--border);border-radius:8px;background:var(--paper)}
+.manuscript-context-workspace .manuscript-context>summary{font-size:1.1rem;font-weight:600}
+.manuscript-context-workspace textarea{font-size:.9rem}
+.manuscript-advanced-workspace .chapter-pilot{margin:0}

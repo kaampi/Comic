@@ -1,3 +1,4 @@
+import { WorkflowNavigation } from "./WorkflowNavigation";
 import { useBackupReminder } from "./useBackupReminder";
 import { parseOrganization, type StyleOrganization } from "./styleOrganization";
 import { PanelBorderControls } from "./PanelBorderControls";
@@ -187,9 +188,6 @@ export function AlbumMenu({
             {project.panels.length} {sv ? "rutor" : "panels"}
           </span>
           <div className="album-section-nav" role="group" aria-label={uiText(locale,"projectContent")}>
-            {([ ["manus", sv ? "Manus" : "Manuscript"], ["beats", "Beats"], ["storyboard", sv ? "Bildmanus" : "Storyboard"], ["images", sv ? "Bilder" : "Images"], ["pages", sv ? "Sidor" : "Pages"] ] as const).map(([value,label], index) =>
-              <button key={value} type="button" className={section===value?"is-active":""} aria-current={section===value?"step":undefined} onClick={()=>onSection(value)}><span className="workflow-step-number" aria-hidden="true">{index+1}</span>{label}</button>
-            )}
             <details className="album-support-tools"><summary>{sv ? "Verktyg" : "Tools"}</summary><div>
               {([["characters","characters"],["locations","locations"],["adaptation","adaptation"],["scenes","panels"]] as const).map(([value,label])=><button key={value} type="button" className={section===value?"is-active":""} aria-current={section===value?"page":undefined} onClick={()=>onSection(value)}>{uiText(locale,label)}</button>)}
             </div></details>
@@ -198,7 +196,7 @@ export function AlbumMenu({
           <button onClick={() => onMode("settings")}>
             {sv ? "Albuminställningar" : "Album settings"}
           </button>
-          <button onClick={() => onMode("export")}>{sv ? "Exportera" : "Export"}</button>
+
           <button key={project.id} className={backupReminder.due?"backup-reminder":""} aria-describedby={backupReminder.due?"backup-reminder-info":undefined} title={backupReminder.due?backupHint:undefined} onClick={() => onMode("backup")}>Backup</button>{backupReminder.due?<span className="visually-hidden" id="backup-reminder-info">{backupHint}</span>:null}
           <button onClick={() => onMode("backup")}>
             {sv ? "Återställ säkerhetskopia…" : "Restore backup…"}
@@ -208,6 +206,7 @@ export function AlbumMenu({
           </button>
         </nav>
       )}
+      {project?<WorkflowNavigation section={section} mode={mode} locale={locale} onSection={onSection} onMode={onMode}/>:null}
       {mode && (
         <div
           className="album-dialog-backdrop"

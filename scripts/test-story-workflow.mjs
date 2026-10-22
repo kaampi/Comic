@@ -149,8 +149,8 @@ try {
   render(React.createElement(App));
   await user.click(screen.getByRole("button",{name:/Workflow fixture/}));
   await user.click(screen.getByRole("button",{name:/Öppna album för redigering/}));
-  const nav=screen.getByRole("group",{name:"Projektinnehåll"});
-  assert.deepEqual(Array.from(nav.querySelectorAll(":scope > button")).map(b=>b.textContent),["1Manus","2Beats","3Bildmanus","4Bilder","5Sidor"]);
+  const nav=screen.getByRole("navigation",{name:"Arbetsflöde"});
+  assert.deepEqual(Array.from(nav.querySelectorAll(":scope > button")).map(b=>b.getAttribute("aria-label")),["Manus & scener","Beats","Paneler","Bilder","Sidor","Export"]);
   await user.selectOptions(screen.getByRole("combobox",{name:"Kapitel"}),b.id);
   await user.click(within(nav).getByRole("button",{name:"Beats",exact:true}));
   assert.equal(document.querySelectorAll(".workflow-beat").length,1,"selected manuscript chapter follows into Beats");
@@ -159,9 +159,35 @@ try {
   await user.click(screen.getByRole("button",{name:/Till bilder/}));
   await user.click(screen.getByRole("button",{name:/Till sidor/}));
   assert.ok(document.querySelector(".page-workspace"));
-  await user.click(within(nav).getByRole("button",{name:"Manus",exact:true}));
+  assert.ok(document.querySelector('.workflow-navigation.is-compact'),'Pages keeps navigation compact');
+  const resizeSettings=screen.getByRole('separator',{name:'Ändra bredd på sidinställningar'});
+  const oldWidth=Number(resizeSettings.getAttribute('aria-valuenow'));
+  fireEvent.keyDown(resizeSettings,{key:'ArrowRight'});
+  assert.equal(Number(resizeSettings.getAttribute('aria-valuenow')),Math.min(440,oldWidth+20));
+  const viewSnapshot=JSON.stringify(JSON.parse(localStorage.getItem('comicbook-ai.projects'))[0].pages);
+  const canvasMarkup=document.querySelector('.layout-canvas').innerHTML;
+  await user.click(screen.getByRole('button',{name:'Fokusläge',exact:true}));
+  assert.equal(screen.queryByRole('complementary',{name:'Sidans egenskaper'}),null);
+  assert.equal(screen.queryByRole('complementary',{name:'Sidans resurser'}),null);
+  assert.ok(screen.getByRole('button',{name:'Lämna fokusläge'}));
+  await user.click(screen.getByRole('button',{name:'Zooma in sidan'}));
+  assert.ok(screen.getByLabelText('Sidans förstoring').textContent.includes('%'));
+  await user.click(screen.getByRole('button',{name:'Anpassa bredd'}));
+  await user.click(screen.getByRole('button',{name:'Anpassa sida'}));
+  await user.click(screen.getByRole('button',{name:'Lämna fokusläge'}));
+  await user.click(screen.getByRole('button',{name:'Läsordning',exact:true}));
+  assert.ok(document.querySelector('.pages-library .placement-list'));
+  assert.ok(document.querySelector('.pages-library .placement-list'),'reading order moved beside the canvas');
+  await user.click(screen.getByRole('button',{name:'Bildbibliotek',exact:true}));
+  await user.click(screen.getByRole('button',{name:'Sidinställningar',exact:true}));
+  assert.equal(screen.queryByRole('complementary',{name:'Sidans egenskaper'}),null);
+  await user.click(screen.getByRole('button',{name:'Sidinställningar',exact:true}));
+  assert.equal(document.querySelector('.layout-canvas').innerHTML,canvasMarkup,'view controls preserve panels/text');
+  assert.equal(JSON.stringify(JSON.parse(localStorage.getItem('comicbook-ai.projects'))[0].pages),viewSnapshot,'zoom and focus never change saved geometry');
+
+  await user.click(within(nav).getByRole("button",{name:"Manus & scener",exact:true}));
   assert.equal(screen.getByRole("combobox",{name:"Kapitel"}).value,b.id,"chapter survives travelling through pages and back");
   assert.equal(networkRequests,0,"navigation, manual editing and image handling never automatically contact AI");
   cleanup();
-  console.log("PASS: integrated App five-step navigation, shared chapter, real page-builder handoff, return to source, no automatic AI requests");
+  console.log("PASS: integrated App six-step navigation, page focus, fit and reading-order tabs, shared chapter, real page-builder handoff, return to source, no automatic AI requests");
 } finally { rmSync(temporary,{recursive:true,force:true});dom.window.close(); }

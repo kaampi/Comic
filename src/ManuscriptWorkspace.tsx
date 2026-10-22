@@ -1,5 +1,6 @@
+import { ManuscriptContext } from "./ManuscriptContext";
 import { mergeBeatProposals } from "./mergeBeatProposals";
-import { ManuscriptSceneList } from "./ManuscriptSceneList";
+import { ManuscriptSceneList, ManuscriptSceneNavigation } from "./ManuscriptSceneList";
 import { SCENE_ADAPTATION_PROMPT, prepareManuscriptScenes, createManuscriptScene, sceneRange, applySceneBeats } from "./manuscriptScenes";
 import { ChapterBeatPilot } from "./ChapterBeatPilot";
 import { manuscriptHtml } from "./manuscriptFormatting";
@@ -113,6 +114,11 @@ export function ManuscriptWorkspace({
   const chapterId=selectedChapterId===undefined?localChapterId:selectedChapterId;
   const setChapterId=(id:string|null)=>{setLocalChapterId(id);onChapterChange?.(id);};
   const chapter=chapters.find(c=>c.id===chapterId)??chapters[0];
+  const [activeSceneId,setActiveSceneId]=useState<string|null>(null);
+  const [documentMode,setDocumentMode]=useState<'source'|'proposals'|'context'|'advanced'>('source');
+  const [inspectorMode,setInspectorMode]=useState<'scene'|'beat'>((project.manuscriptScenes??[]).some(s=>chapter?s.chapterId===chapter.id:!s.chapterId)?'scene':'beat');
+  const chapterSceneList=(project.manuscriptScenes??[]).filter(s=>chapter?s.chapterId===chapter.id:!s.chapterId).sort((a,b)=>(a.start??Infinity)-(b.start??Infinity));
+  const activeScene=chapterSceneList.find(s=>s.id===activeSceneId)??chapterSceneList[0];
   const viewStart=chapter?.start??0,viewEnd=chapter?.end??source.length;
   const scopedBeats=chapter?adaptation.beats.filter(b=>b.chapterId===chapter.id||(b.sourceStart!==undefined&&b.sourceEnd!==undefined&&b.sourceStart<viewEnd&&b.sourceEnd>viewStart)):adaptation.beats;
   const ct=locale==="sv"?{chapter:"Kapitel",previous:"Föregående kapitel",next:"Nästa kapitel",analyse:"Föreslå beats för kapitlet",copy:"Lokal arbetskopia från StoryBook. Ändringar här påverkar inte originalet.",original:"Importerad originaltext (skrivskyddad)"}:locale==="nb"?{chapter:"Kapittel",previous:"Forrige kapittel",next:"Neste kapittel",analyse:"Foreslå beats for kapittelet",copy:"Lokal arbeidskopi fra StoryBook. Endringer her påvirker ikke originalen.",original:"Importert originaltekst (skrivebeskyttet)"}:{chapter:"Chapter",previous:"Previous chapter",next:"Next chapter",analyse:"Suggest beats for chapter",copy:"Local working copy from StoryBook. Changes here do not affect the original.",original:"Imported original text (read-only)"};
@@ -134,7 +140,7 @@ export function ManuscriptWorkspace({
   const [width, setWidth] = useState(
     () =>
       Number(localStorage.getItem("comicbook-ai.manuscript-sidebar-width")) ||
-      420,
+      340,
   );
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
@@ -155,7 +161,7 @@ export function ManuscriptWorkspace({
   const proposalStale=!!draft&&(draft.source!==source||!!draft.sourceSceneId&&draft.sceneSnapshot!==JSON.stringify(project.manuscriptScenes?.find(s=>s.id===draft.sourceSceneId)));
   const mergeIndices=draft?.beats.flatMap((b,i)=>mergeIds.includes(b.id)?[i]:[])??[];
   const canMerge=!!draft&&!proposalStale&&mergeIndices.length>=2&&mergeIndices.at(-1)!-mergeIndices[0]+1===mergeIndices.length&&!mergeIds.some(id=>excluded.includes(id));
-  useEffect(()=>{if(!draft){setMergeIds([]);setMergeEdit(null);setMergeUndo(null);}},[draft===null]);
+  useEffect(()=>{if(!draft){setDocumentMode('source');setMergeIds([]);setMergeEdit(null);setMergeUndo(null);}},[draft===null]);
   const [sceneDiagnostics,setSceneDiagnostics]=useState<{title:string;trace:LocalChatDiagnostics}|null>(null);
   const [sceneDraft,setSceneDraft]=useState<{range:TextRange;source:string;title:string;purpose:string;preserve:string}|null>(null);
   useEffect(() => {
@@ -239,11 +245,15 @@ export function ManuscriptWorkspace({
       total += length;
     }
   }, [source, selected, chapter?.id]);
+  useLayoutEffect(()=>{if(selected&&documentMode==='source')editor.current?.querySelector(`[data-beat-ids~="${selected}"]`)?.scrollIntoView?.({block:'nearest'});},[selected,documentMode]);
   const capture = () => {
     const next = readRange();
     setRange(next && next.end > next.start ? next : null);
   };
   const choose = (id: string) => {
+    setDocumentMode('source');
+    setInspectorMode('beat');
+    const chosen=adaptation.beats.find(b=>b.id===id);if(chosen?.sourceSceneId)setActiveSceneId(chosen.sourceSceneId);
     setSelected(id);
     editor.current
       ?.querySelector(`[data-beat-ids~="${id}"]`)
@@ -251,6 +261,7 @@ export function ManuscriptWorkspace({
   };
   const create = () => {
     if (!range) return;
+    setInspectorMode('beat');
     onUpdate((p) => {
       const result = addManualBeat(p, range);
       setSelected(result.beatId);
@@ -260,6 +271,7 @@ export function ManuscriptWorkspace({
   };
   const analyse = async (chapterRange?:TextRange,sourceSceneId?:string) => {
     setMenu(null);
+    setDocumentMode('source');
     const target=chapterRange??range;
     if (!target) return;
     if (!settings.servers[settings.engine].model.trim()) {
@@ -309,8 +321,8 @@ export function ManuscriptWorkspace({
           timer = window.setTimeout(timeout, 300000);
         },
       });
-      if (token === request.current && !controller.signal.aborted)
-        setDraft({ source: snapshot, coverage, sourceSceneId, sceneSnapshot:scene?JSON.stringify(scene):undefined, beats:beats.map(b=>({...b,...(sourceSceneId?{sourceSceneId}:{} )})) });
+      if (token === request.current && !controller.signal.aborted) {
+        setDocumentMode('proposals');setDraft({ source: snapshot, coverage, sourceSceneId, sceneSnapshot:scene?JSON.stringify(scene):undefined, beats:beats.map(b=>({...b,...(sourceSceneId?{sourceSceneId}:{} )})) });}
     } catch (error) {
       if (token === request.current)
         setMessage(
@@ -406,11 +418,18 @@ export function ManuscriptWorkspace({
         } as React.CSSProperties
       }
     >
-      <div className="manuscript-document">
+      <aside className="manuscript-navigation" aria-label={locale==='sv'?'Kapitel och scener':'Chapters and scenes'}>
         {chapter?<nav className="manuscript-chapters" aria-label={ct.chapter}><button type="button" className="text-button" aria-label={ct.previous} disabled={chapter.order===1} onClick={()=>switchChapter(chapters[chapter.order-2].id)}>←</button><label>{ct.chapter}<select value={chapter.id} onChange={e=>switchChapter(e.target.value)}>{chapters.map(c=><option key={c.id} value={c.id}>{c.order}. {c.title}</option>)}</select></label><span>{chapter.order} / {chapters.length}</span><button type="button" className="text-button" aria-label={ct.next} disabled={chapter.order===chapters.length} onClick={()=>switchChapter(chapters[chapter.order].id)}>→</button></nav>:null}
-        {chapter?<p className="quiet">{ct.copy}</p>:null}
-        {chapter?<ChapterBeatPilot key={chapter.id} project={project} chapterId={chapter.id} locale={locale} settings={settings} onUpdate={onUpdate}/>:null}
-        <ManuscriptSceneList project={project} chapterId={chapter?.id} locale={locale} selection={range} busy={busy} onUpdate={onUpdate} onChoose={choose} onAnalyse={analyseScene}/>
+        <ManuscriptSceneNavigation project={project} chapterId={chapter?.id} locale={locale} selectedSceneId={activeScene?.id} onSelect={id=>{setActiveSceneId(id);setInspectorMode('scene');setDocumentMode('source');const first=adaptation.beats.find(b=>b.sourceSceneId===id);if(first)setSelected(first.id);}}/>
+        <details><summary>Beats · {scopedBeats.length}</summary><div className="manuscript-navigation-beats">{scopedBeats.map(b=><button type="button" key={b.id} onClick={()=>choose(b.id)}>{b.order}. {b.title}</button>)}</div></details>
+        <div className="manuscript-view-links">{draft?<button type="button" aria-pressed={documentMode==='proposals'} onClick={()=>setDocumentMode('proposals')}>{locale==='sv'?'Beatförslag':'Beat proposals'}</button>:null}<button type="button" aria-pressed={documentMode==='source'} onClick={()=>setDocumentMode('source')}>{locale==='sv'?'Manustext':'Source text'}</button><button type="button" aria-pressed={documentMode==='context'} onClick={()=>setDocumentMode('context')}>{locale==='sv'?'Berättelseunderlag':'Story context'}</button>{chapter?<button type="button" aria-pressed={documentMode==='advanced'} onClick={()=>setDocumentMode('advanced')}>{locale==='sv'?'Avancerat':'Advanced'}</button>:null}</div>
+      </aside>
+      <div className="manuscript-document">
+        <p className="manuscript-context-line">{chapter?.title??project.title}{activeScene?` · ${activeScene.title}`:''}</p>
+
+        <div className="manuscript-context-workspace" hidden={documentMode!=='context'}><ManuscriptContext project={project} chapterSourceId={chapter?.sourceId} locale={locale} onUpdate={onUpdate}/></div>
+        {chapter?<div className="manuscript-advanced-workspace" hidden={documentMode!=='advanced'}><ChapterBeatPilot key={chapter.id} project={project} chapterId={chapter.id} locale={locale} settings={settings} onUpdate={onUpdate}/></div>:null}
+        <div className="manuscript-source-area" hidden={documentMode!=='source'}>
         <div className="section-heading">
           <h2>{chapter?.title??t.zoom}</h2>
           <span>
@@ -477,8 +496,7 @@ export function ManuscriptWorkspace({
             const node = (e.target as HTMLElement).closest<HTMLElement>(
               "[data-beat-ids]",
             );
-            if (node?.dataset.beatIds)
-              setSelected(node.dataset.beatIds.split(" ")[0]);
+            if (node?.dataset.beatIds) {setInspectorMode('beat');setSelected(node.dataset.beatIds.split(" ")[0]);}
           }}
           onContextMenu={(e) => {
             e.preventDefault();
@@ -491,61 +509,9 @@ export function ManuscriptWorkspace({
           dangerouslySetInnerHTML={{ __html: markedSource }}
         />
         {chapter?<details className="manuscript-original"><summary>{ct.original}</summary><pre>{chapter.originalText}</pre></details>:null}
-      </div>
-      <div
-        className="beat-resizer"
-        role="separator"
-        aria-label={t.resize}
-        aria-orientation="vertical"
-        aria-valuemin={320}
-        aria-valuemax={700}
-        aria-valuenow={width}
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-            e.preventDefault();
-            setWidth((w) =>
-              Math.max(
-                320,
-                Math.min(700, w + (e.key === "ArrowLeft" ? 20 : -20)),
-              ),
-            );
-          }
-        }}
-        onPointerDown={(e) => {
-          const initial = e.clientX,
-            original = width;
-          const move = (event: PointerEvent) =>
-            setWidth(
-              Math.max(320, Math.min(700, original + initial - event.clientX)),
-            );
-          const end = () => {
-            window.removeEventListener("pointermove", move);
-            window.removeEventListener("pointerup", end);
-          };
-          window.addEventListener("pointermove", move);
-          window.addEventListener("pointerup", end);
-        }}
-      />
-      <aside className="beat-inspector">
-        {deletedBeat ? (
-          <div className="beat-review-warning" role="status">
-            <p>{t.deleted}</p>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => {
-                updateProject(() => deletedBeat.project);
-                setSelected(deletedBeat.beatId);
-                setDeletedBeat(null);
-              }}
-            >
-              {t.undoDelete}
-            </button>
-          </div>
-        ) : null}
-        {busy ? <BeatAnalysisDialog locale={locale} progress={progress} returnFocus={editor.current} onCancel={() => { request.current++; abort.current?.abort(); setBusy(false); setMessage(t.cancelled); }} /> : null}
-        {message ? (
+        </div>
+{busy ? <BeatAnalysisDialog locale={locale} progress={progress} returnFocus={editor.current} onCancel={() => { request.current++; abort.current?.abort(); setBusy(false); setMessage(t.cancelled); }} /> : null}
+{message ? (
           <p role="alert">
             {message}
             <button type="button" className="text-button" onClick={onSettings}>
@@ -553,7 +519,7 @@ export function ManuscriptWorkspace({
             </button>
           </p>
         ) : null}
-        {draft ? (
+{draft && documentMode==='proposals' ? (
           <section className="beat-ai-review">
             <h3>{t.aiReview}</h3>
             {(draft.source !== source || (!!draft.sourceSceneId&&draft.sceneSnapshot!==JSON.stringify(project.manuscriptScenes?.find(s=>s.id===draft.sourceSceneId)))) ? <p role="alert">{t.stale}</p> : null}
@@ -664,7 +630,7 @@ export function ManuscriptWorkspace({
                   (b) => !excluded.includes(b.id),
                 );
                 onUpdate((p) => {if(draft.source!==p.source.textSnapshot||(draft.sourceSceneId&&draft.sceneSnapshot!==JSON.stringify(p.manuscriptScenes?.find(s=>s.id===draft.sourceSceneId))))return p;return draft.sourceSceneId?applySceneBeats(p,draft.sourceSceneId,proposals):appendAiBeats(p,proposals);});
-                setSelected(proposals[0]?.id ?? selected);
+                setInspectorMode('beat');setSelected(proposals[0]?.id ?? selected);
                 setDraft(null);
               }}
             >
@@ -679,7 +645,7 @@ export function ManuscriptWorkspace({
             </button>
           </section>
         ) : null}
-        {sceneDiagnostics && !busy ? <details className="beat-ai-review">
+{sceneDiagnostics && !busy ? <details className="beat-ai-review">
           <summary>{locale==='sv'?'Visa AI-diagnostik':'Show AI diagnostics'} · {sceneDiagnostics.title}</summary>
           <p>{locale==='sv'?'Senaste scenanalysen i denna vy. Ingen ny AI-förfrågan görs när du öppnar diagnostiken. Uppgifterna försvinner när vyn stängs eller en ny analys startas.':'Latest scene analysis in this view. Opening diagnostics makes no AI request. This information is cleared when the view closes or a new analysis starts.'}</p>
           <p>{locale==='sv'?'Svarsgräns':'Output limit'}: {sceneDiagnostics.trace.maxOutputTokens} tokens · {locale==='sv'?'Kontext':'Context'}: {sceneDiagnostics.trace.contextWindow} · {locale==='sv'?'Avslutsorsak':'Finish reason'}: {sceneDiagnostics.trace.finishReason??'—'}</p>
@@ -687,6 +653,65 @@ export function ManuscriptWorkspace({
           <label>{locale==='sv'?'Modellens råsvar före bearbetning':'Raw model reply before processing'}<textarea readOnly rows={10} value={sceneDiagnostics.trace.rawReply??(locale==='sv'?'Inget textsvar mottaget.':'No text reply received.')}/></label>
           <details><summary>{locale==='sv'?'Hela serversvaret och metadata':'Full server response and metadata'}</summary><textarea aria-label={locale==='sv'?'Hela serversvaret och metadata':'Full server response and metadata'} readOnly rows={10} value={sceneDiagnostics.trace.responseBody??(locale==='sv'?'Inget serversvar mottaget.':'No server response received.')}/></details>
         </details>:null}
+      </div>
+      <div
+        className="beat-resizer"
+        role="separator"
+        aria-label={t.resize}
+        aria-orientation="vertical"
+        aria-valuemin={320}
+        aria-valuemax={700}
+        aria-valuenow={width}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            e.preventDefault();
+            setWidth((w) =>
+              Math.max(
+                320,
+                Math.min(700, w + (e.key === "ArrowLeft" ? 20 : -20)),
+              ),
+            );
+          }
+        }}
+        onPointerDown={(e) => {
+          const initial = e.clientX,
+            original = width;
+          const move = (event: PointerEvent) =>
+            setWidth(
+              Math.max(320, Math.min(700, original + initial - event.clientX)),
+            );
+          const end = () => {
+            window.removeEventListener("pointermove", move);
+            window.removeEventListener("pointerup", end);
+          };
+          window.addEventListener("pointermove", move);
+          window.addEventListener("pointerup", end);
+        }}
+      />
+      <aside className="beat-inspector">
+        <div className="workspace-tabs" role="group" aria-label={locale==='sv'?'Egenskapsvy':'Property view'}><button type="button" aria-pressed={inspectorMode==='scene'} onClick={()=>setInspectorMode('scene')}>{locale==='sv'?'Scen':'Scene'}</button><button type="button" aria-pressed={inspectorMode==='beat'} onClick={()=>setInspectorMode('beat')}>Beat</button></div>
+        {activeScene?<button type="button" className="primary-button scene-analyse-action" disabled={busy||activeScene.omitted||!sceneRange(project,activeScene)||!activeScene.title.trim()||!activeScene.purpose.trim()} onClick={()=>analyseScene(activeScene.id)}>{locale==='sv'?'Föreslå seriebeats för scenen':'Suggest comic beats for scene'}</button>:null}
+        <div hidden={inspectorMode!=='scene'}><ManuscriptSceneList project={project} chapterId={chapter?.id} selectedSceneId={activeScene?.id} locale={locale} selection={range} busy={busy} onUpdate={onUpdate} onChoose={choose} onAnalyse={analyseScene}/></div>
+        <div hidden={inspectorMode!=='beat'}>
+
+        {deletedBeat ? (
+          <div className="beat-review-warning" role="status">
+            <p>{t.deleted}</p>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => {
+                updateProject(() => deletedBeat.project);
+                setSelected(deletedBeat.beatId);
+                setDeletedBeat(null);
+              }}
+            >
+              {t.undoDelete}
+            </button>
+          </div>
+        ) : null}
+
         {beat ? (
           <>
             {beat.scenePlaceholder?<p className="beat-review-warning">{locale==='sv'?'Startbeat för en scen. Utveckla gestaltningen eller lägg till en panel när du är redo.':'Starting beat for a scene. Develop its adaptation or add a panel when ready.'}</p>:null}
@@ -1200,6 +1225,7 @@ export function ManuscriptWorkspace({
             </button>
           ))}
         </details>
+        </div>
       </aside>
       {menu ? (
         <>
@@ -1232,7 +1258,7 @@ export function ManuscriptWorkspace({
           </div>
         </>
       ) : null}
-      {sceneDraft?<div className="scene-dialog-backdrop"><form role="dialog" aria-modal="true" aria-label={locale==='sv'?'Skapa scen':'Create scene'} className="scene-dialog" onKeyDown={e=>{if(e.key==='Escape'){e.preventDefault();setSceneDraft(null);}}} onSubmit={e=>{e.preventDefault();if(sceneDraft.source!==source)return;try{onUpdate(p=>{if((p.source.textSnapshot??'')!==sceneDraft.source)return p;const result=createManuscriptScene(p,sceneDraft.range,sceneDraft.title,sceneDraft.purpose,sceneDraft.preserve);setSelected(activeManuscriptAdaptation(result.project).beats.find(b=>b.sourceSceneId===result.sceneId)?.id??null);return result.project;});setSceneDraft(null);}catch(error){setMessage(error instanceof Error?error.message:String(error));}}}>
+      {sceneDraft?<div className="scene-dialog-backdrop"><form role="dialog" aria-modal="true" aria-label={locale==='sv'?'Skapa scen':'Create scene'} className="scene-dialog" onKeyDown={e=>{if(e.key==='Escape'){e.preventDefault();setSceneDraft(null);}}} onSubmit={e=>{e.preventDefault();if(sceneDraft.source!==source)return;try{onUpdate(p=>{if((p.source.textSnapshot??'')!==sceneDraft.source)return p;const result=createManuscriptScene(p,sceneDraft.range,sceneDraft.title,sceneDraft.purpose,sceneDraft.preserve);setActiveSceneId(result.sceneId);setInspectorMode('scene');setSelected(activeManuscriptAdaptation(result.project).beats.find(b=>b.sourceSceneId===result.sceneId)?.id??null);return result.project;});setSceneDraft(null);}catch(error){setMessage(error instanceof Error?error.message:String(error));}}}>
         <h3>{locale==='sv'?'Skapa scen från markeringen':'Create scene from selection'}</h3>
         <label>{locale==='sv'?'Scennamn':'Scene name'}<input autoFocus required value={sceneDraft.title} onChange={e=>setSceneDraft({...sceneDraft,title:e.target.value})}/></label>
         <label>{locale==='sv'?'Vad ska scenen åstadkomma?':'What should the scene accomplish?'}<textarea required rows={3} value={sceneDraft.purpose} onChange={e=>setSceneDraft({...sceneDraft,purpose:e.target.value})}/></label>

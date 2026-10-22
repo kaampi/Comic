@@ -94,7 +94,7 @@ try {
   await user.type(within(dialog).getByRole('textbox',{name:'Important to preserve (optional)'}),'The raised hand.');
   await user.click(within(dialog).getByRole('button',{name:'Save scene'}));
   assert.equal(networkRequests,0);assert.equal(working.manuscriptScenes.length,1);assert.equal(working.adaptations[0].beats.length,1);assert.equal(working.adaptations[0].panelPlans.length,0);
-  await user.click(screen.getByText(/1\. The reunion · starting beat/,{selector:'summary'}));
+  await user.click(within(screen.getByRole('navigation',{name:'Manuscript scenes'})).getByRole('button',{name:/1\. The reunion/}));
   let calls=0,body;
   globalThis.fetch=async(_url,init)=>{calls++;body=JSON.parse(init.body);return new Response(JSON.stringify({message:{content:JSON.stringify({beats:[{from:1,to:2,summary:'Seren greets Rook.',reason:'A hesitant reunion begins.'}]})},done_reason:'stop'}));};
   await user.click(screen.getByRole('button',{name:'Suggest comic beats for scene'}));
@@ -208,5 +208,12 @@ try {
   assert.ok(requestBody.messages[0].content.length<2600,'scene contract stays compact');
   await assert.rejects(()=>suggestAiBeats({...realisticOptions,source:realisticSource.repeat(10)}),/context budget/);
   assert.equal(realisticCalls,1,'oversized input is rejected before transport');
+  const contextCalls=calls,sourceBeforeContext=working.source.textSnapshot;
+  await user.click(screen.getByRole('button',{name:'Story context',exact:true}));
+  fireEvent.change(screen.getByRole('textbox',{name:'Synopsis'}),{target:{value:'A revised synopsis for review.'}});
+  assert.equal(working.adaptationContext.synopsis.approved,false,'editing story context revokes AI approval');
+  assert.equal(working.source.textSnapshot,sourceBeforeContext);
+  await user.click(screen.getByRole('button',{name:'Source text',exact:true}));
+  assert.ok(screen.getByRole('textbox',{name:'Manus'}));assert.equal(calls,contextCalls,'view navigation never calls AI');
   console.log('PASS: scene import and local creation, stable source offsets, explicit omission, starter coverage, one scene request with intent, reviewed application, authored asset preservation and backup validation.');
 } finally {globalThis.fetch=nativeFetch;rmSync(temporary,{recursive:true,force:true});dom.window.close();}

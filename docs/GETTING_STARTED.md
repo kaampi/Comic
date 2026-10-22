@@ -26,6 +26,8 @@ This guide describes the current beta. Some features and labels may change. The 
 
 - [Foreground images and page-wide bubbles](#foreground-images)
 
+- [Workspace navigation and room for your page](#workspace-layout)
+
 - [Scenes: preserve the story before adapting it](#manuscript-scenes)
 
 - [From manuscript to panel plans](#manuscript)
@@ -156,6 +158,19 @@ Use foreground images for a character, object or decoration that crosses panel b
 
 > Remove image in the editor keeps the layer and its text so you can replace the picture. Remove foreground layer removes the picture and all text belonging to it. Album backups include the original images, their order and the editable bubbles.
 
+<a id="workspace-layout"></a>
+
+## Workspace navigation and room for your page
+
+The workflow cards show your current stage; they do not mark chapters or scenes complete. Every stage remains available for manual work. Manuscript uses chapter/scene navigation on the left, source text or proposals in the center, and properties on the right.
+
+1. On Pages, toggle Page settings and Image library & reading order to show or hide the side panels. Drag their dividers, or focus a divider and use the arrow keys, to adjust their width on a wide screen.
+2. Focus mode hides both side panels. Exit focus mode restores your previous panel visibility. Escape also exits when no dialog is open.
+3. Fit page shows the full page in the available space. Fit width fills the available width. The plus/minus controls zoom the page view relative to its fitted size; scroll to reach content outside the view. These controls never change the printed page, image crop, panel coordinates or export.
+4. Use the Reading order tab beside Image library to change ordering and panel links. New page, page navigation and Delete page remain above the canvas.
+
+> A scene beat selection is a draft, not finished image direction. Review source support first, then stage the panels.
+
 <a id="manuscript-scenes"></a>
 
 ## Scenes: preserve the story before adapting it
@@ -164,7 +179,7 @@ Scenes define story units before comic beats are selected. A StoryBook synopsis 
 
 1. Open Manuscript. Nonempty StoryBook scenes appear in Scenes with their source text and purpose. Each receives a starting beat unless existing beats are already linked. Empty imported scenes are skipped; uncertain source matches are marked for review.
 2. To define your own scene, select text within one chapter, right-click and choose Create scene, or use the toolbar button. Enter a name and purpose, optionally add Important to preserve, then Save scene.
-3. Expand any scene to edit its purpose and preservation notes, inspect its text and follow its linked beats. A starting beat reserves a place for the whole scene; it creates no panel until you develop it. You may add several beats and panels.
+3. Choose a scene in the left navigation to edit its purpose and preservation notes in the Scene properties panel on the right. Source text or beat proposals occupy the center. Use Story context for synopsis and chapter Brief, and Advanced for the chapter pilot. A starting beat reserves a place for the whole scene; it creates no panel until you develop it. You may add several beats and panels.
 4. After editing manuscript text, review any flagged scene. Use a new text selection to adjust its bounds, or confirm the updated prose. Original imported prose remains available. Mark a scene Omit scene from adaptation only as an explicit decision; existing authored assets remain for manual handling.
 5. Choose Suggest comic beats for scene for one deliberate AI request. It uses that scene’s prose and intent, together with approved synopsis and chapter Brief when available. Review proposals before Add selected beats. Only an unused starting placeholder is replaced; authored beats and images are retained.
 
@@ -174,7 +189,7 @@ Scenes define story units before comic beats are selected. A StoryBook synopsis 
 
 ## From manuscript to panel plans
 
-Follow the five steps in the album menu: Manuscript → Beats → Storyboard → Images → Pages. You can return between steps without losing your work. Characters, Locations and the older editing workspaces are available under Tools. Use Manuscript to plan a longer story. A manuscript is the source text; a beat is a meaningful story moment; a panel plan describes one illustration. A page frame is where that panel is placed in the layout.
+Follow the six clickable workflow cards: Manuscript & scenes → Beats → Panels → Images → Pages → Export. Pages uses a compact navigation row to leave more room for the editor. You can return between steps without losing your work. Characters, Locations and the older editing workspaces are available under Tools. Use Manuscript to plan a longer story. A manuscript is the source text; a beat is a meaningful story moment; a panel plan describes one illustration. A page frame is where that panel is placed in the layout.
 
 1. Enter your source text in Manuscript, or create an album from a StoryBook export. Importing copies the content into ComicBook AI and does not change StoryBook. Imported books keep their chapters: choose a chapter above the manuscript or use Previous chapter and Next chapter. The original imported text remains available as a read-only reference; edits affect only the ComicBook working copy.
 2. Select a short passage in the manuscript and use the selection menu to create a beat. Choose a moment that can be shown clearly.
@@ -262,6 +277,10 @@ In Manuscript, choose a chapter and open Chapter pilot. Review its story context
 ### Foreground images and page-wide bubbles
 
 Add a transparent PNG above the frames, then choose Edit image and bubbles. Its text can span the whole page. Move the image alone or enable Move image and bubbles together. The top image in the list is in front.
+
+### Workspace navigation and room for your page
+
+Move between six workflow stages. Pages has collapsible side panels, focus mode and display-only fit/zoom controls.
 
 ### Scenes: preserve the story before adapting it
 

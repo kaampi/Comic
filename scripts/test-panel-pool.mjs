@@ -115,7 +115,9 @@ try {
   await user.click(screen.getByRole("button",{name:"Place on page",exact:true}));
   assert.equal(stored().unplacedPanels.length,0);assert.equal(stored().pages[2].placements[0].id,"layer-0");assert.deepEqual(stored().pages[2].placements[0].image,image);
   // Lift to album pool and drop onto a precise free cell using the same drag path as the browser.
+  await user.click(screen.getByRole("button",{name:"Reading order",exact:true}));
   await user.click(screen.getByRole("button",{name:"Lift from page",exact:true}));
+  await user.click(screen.getByRole("button",{name:"Image library",exact:true}));
   const data={types:[],values:{},setData(type,value){this.types.push(type);this.values[type]=value;},getData(type){return this.values[type]??"";}};
   fireEvent.dragStart(document.querySelector(".pool-drag"),{dataTransfer:data});
   const grid=document.querySelector(".layout-panels");grid.getBoundingClientRect=()=>({left:0,top:0,width:680,height:970,right:680,bottom:970});

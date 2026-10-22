@@ -495,3 +495,12 @@ I normal förslagsgranskning är Markera för sammanslagning separat från Ta me
 
 ### Panelantal efter sammanslagning (2026-10-22)
 Sammanslagna beatförslag börjar med targetPanelCount=1. Ursprungliga förslags panelantal summeras inte, eftersom sammanslagningen inte definierar skilda bildögonblick och annars gav identiska panelbeskrivningar. Fler paneler planeras uttryckligen senare. Befintliga paneler och bilder rensas inte automatiskt.
+
+### Arbetssteg och omgrupperade arbetsytor (2026-10-22)
+Sex klickbara stegkort visar Manus & scener, Beats, Paneler, Bilder, Sidor och Export. Ikoner, rubriker och responsiva hjälptexter orienterar användaren utan att låsa steg eller påstå att ett kapitel är färdigt. Export använder befintlig exportdialog. Sidor visar en kompakt stegrad.
+
+Manus har en kapitel-/scennavigation till vänster, text eller granskade förslag i mitten och scen-/beategenskaper till höger. Scenval ändrar vilken egenskap som redigeras; manustextens kapitelgränser och globala positioner behålls. Synopsis och kapitelbrief redigeras/godkänns under Berättelseunderlag; ändringar återkallar AI-godkännande. Piloten finns under Avancerat. Scenfält grupperas i Berättelse, Underlag/textkoppling och Adaption. Förslag, sammanslagning och diagnostik får den breda mittkolumnen.
+
+Sidor behåller befintliga verktyg och renderare men grupperar vänsterspalten i Sida och Markerad bildruta. Båda sidopanelerna kan döljas. Fokusläge döljer båda och återställer tidigare synlighet när det lämnas; Escape lämnar fokusläge om ingen dialog är öppen. Kolumnbredder kan dras eller styras med tangentbord på breda skärmar och sparas som lokala visningsval. Bildbibliotek och läsordning delar högerspalten via flikar. Läsordningens befintliga händelser/källkopplingar behålls genom samma React-innehåll.
+
+Sidan har Anpassa sida, Anpassa bredd och visningszoom 25–400 procent relativt inpassningen; överskjutande innehåll kan scrollas. Tillgängligt utrymme mäts på nytt när arbetsytans storlek ändras. Inga geometri-, bild-, text- eller exportvärden ändras av visningskontrollerna. Smala skärmar staplar egenskaper och arbetsyta. Navigation och omgruppering startar ingen AI och kräver ingen projektmigrering. StoryBook-originalet påverkas inte.
