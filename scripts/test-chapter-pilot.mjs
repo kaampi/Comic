@@ -122,6 +122,11 @@ try {
   assert.equal(bodies.length,1,'one scene trial makes one request');assert.equal(JSON.parse(bodies[0].messages[1].content).narrativeContext,undefined);
   assert.deepEqual(working.adaptations[0].beats,originalBeats);assert.deepEqual(working.pages,originalPages);
   await user.click(runB());await waitFor(()=>assert.equal(working.beatTrials.length,2));
+  const olderCard=screen.getByText(/A · pilot-test/).closest('.pilot-trial');
+  const newestCard=screen.getByText(/B · pilot-test/).closest('.pilot-trial');
+  assert.equal(olderCard.open,false);assert.equal(newestCard.open,true);
+  await user.click(olderCard.querySelector('summary'));assert.equal(olderCard.open,true);
+  await user.click(olderCard.querySelector('summary'));assert.equal(olderCard.open,false);
   const payload=JSON.parse(bodies[1].messages[1].content);assert.equal(payload.narrativeContext.synopsis,raw.synopsis);assert.equal(payload.narrativeContext.brief,raw.chapters[0].brief);assert.equal(payload.narrativeContext.sceneInstructions,raw.chapters[0].scenes[0].instructions);assert.deepEqual(payload.narrativeContext.characterFacts,[],'unapproved facts are not sent');
   assert.equal(bodies[0].model,bodies[1].model);assert.equal(bodies[0].options.num_ctx,bodies[1].options.num_ctx);
   assert.ok(pilot.sameTrialSetup(working.beatTrials[0],working.beatTrials[1]));assert.ok(screen.getByText('Latest A and B use the same test setup.'));
@@ -129,7 +134,7 @@ try {
   const backup=parseAlbumBackup(packAlbumBackup(working));assert.deepEqual(backup.beatTrials,working.beatTrials);assert.deepEqual(backup.adaptationContext,working.adaptationContext);assert.deepEqual(normalizeStoredProjects([JSON.parse(JSON.stringify(working))])[0].beatTrials,JSON.parse(JSON.stringify(working.beatTrials)));
   const broken=structuredClone(packAlbumBackup(working));broken.project.adaptationContext.synopsis.approved='yes';assert.throws(()=>parseAlbumBackup(broken),/invalid-backup/);
   const corrupt=structuredClone(packAlbumBackup(working));corrupt.project.beatTrials[0].beats[0].sourceEnd=99999;assert.throws(()=>parseAlbumBackup(corrupt),/invalid-backup/);
-  await user.click(screen.getAllByRole('button',{name:'Add selected beats to album'})[1]);assert.equal(working.adaptations[0].beats.length,originalBeats.length+1);assert.deepEqual(working.pages,originalPages);assert.equal(working.beatTrials[1].applied.length,1);
+  await user.click(within(newestCard).getByRole('button',{name:'Add selected beats to album'}));assert.equal(working.adaptations[0].beats.length,originalBeats.length+1);assert.deepEqual(working.pages,originalPages);assert.equal(working.beatTrials[1].applied.length,1);
   // A late result after cancellation cannot replace or append earlier trials.
   let finish;globalThis.fetch=()=>new Promise(resolve=>{finish=resolve;});await user.click(runA());await screen.findByRole('dialog');await user.click(screen.getByRole('button',{name:'Cancel',exact:true}));
   await act(async()=>finish(new Response(JSON.stringify({message:{content:JSON.stringify(reply)},done_reason:'stop'}))));assert.equal(working.beatTrials.length,2);
@@ -230,6 +235,7 @@ try {
   assert.equal(JSON.stringify(working.adaptations),albumBeforeSelection);
   assert.deepEqual(parseAlbumBackup(packAlbumBackup(working)).beatTrials,working.beatTrials);
   const snapshot=JSON.stringify(guided.inputs.context.reviewedUnderstanding);
+  await user.click(readingCard.querySelector('summary'));
   fireEvent.change(presentEditor,{target:{value:'An edited interpretation.'}});assert.equal(reviewedButton.disabled,true);
   assert.throws(()=>pilot.reviewedReading(working,chapterId,'scene-1',readingTrial.id),/approve/);
   await user.click(within(readingCard).getByRole('button',{name:'Save and approve review'}));
@@ -237,7 +243,7 @@ try {
   assert.equal(JSON.stringify(guided.inputs.context.reviewedUnderstanding),snapshot);
   const badReview=structuredClone(packAlbumBackup(working));badReview.project.beatTrials.find(t=>t.id===readingTrial.id).readingReview.answers.change.evidence=[999];assert.throws(()=>parseAlbumBackup(badReview),/invalid-backup/);
   let budgetCalls=0;await assert.rejects(suggestAiBeats({source:first,context:{characters:[],locations:[]},settings:{...settings,contextWindow:1024},singleRequest:true,narrativeContext:{synopsis:'x'.repeat(12000)},fetchImpl:async()=>{budgetCalls++;throw new Error('must not call');}}),/context budget/);assert.equal(budgetCalls,0);
-  await user.click(screen.getByRole('button',{name:'Edit source for test'}));assert.equal(pilot.trialIsCurrent(working,working.beatTrials[0]),false);assert.ok(screen.getAllByRole('button',{name:'Add selected beats to album'}).every(b=>b.disabled));
+  await user.click(screen.getByRole('button',{name:'Edit source for test'}));assert.equal(pilot.trialIsCurrent(working,working.beatTrials[0]),false);await user.click(olderCard.querySelector('summary'));assert.ok(screen.getAllByRole('button',{name:'Add selected beats to album'}).every(b=>b.disabled));
   assert.throws(()=>pilot.reviewedReading(working,chapterId,'scene-1',readingTrial.id),/approve/);
   cleanup();
   // Attach expanded context to an existing album without changing authored assets.
