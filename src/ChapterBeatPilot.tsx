@@ -10,7 +10,7 @@ import { appendAiBeats } from "./manuscriptModel";
 import type { ManuscriptChapter } from "./manuscriptChapters";
 import { parseStoryBookExport } from "./storybookImport";
 import { BeatAnalysisDialog } from "./BeatAnalysisDialog";
-import { defaultChapterProfile, reviewedReading, matchPilotChapters, importedAdaptationContext, pilotChapter, pilotNarrative, pilotSceneRange, sameTrialSetup, trialIsCurrent, updatePilotChapter, type AdaptationContext, type BeatTrial, type ChapterProfile, type ReviewedText } from "./chapterPilot";
+import { defaultChapterProfile, reviewedReading, scenePurposeLines, approvedScenePurposes, matchPilotChapters, importedAdaptationContext, pilotChapter, pilotNarrative, pilotSceneRange, sameTrialSetup, trialIsCurrent, updatePilotChapter, type AdaptationContext, type BeatTrial, type ChapterProfile, type ReviewedText } from "./chapterPilot";
 import "./chapterPilot.css";
 
 function ReviewText({label,value,onChange,sv}:{label:string;value:ReviewedText;onChange:(value:ReviewedText)=>void;sv:boolean}) {
@@ -51,12 +51,13 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
     if(!settings.servers[settings.engine].model.trim()){setMessage(t('Välj en textmodell i Settings först.','Select a text model in Settings first.'));return;}
     let understanding:ReadingCheck|undefined;
     if(readingTrialId){try{understanding=reviewedReading(latest.current,chapterId,sceneId,readingTrialId);}catch(e){setMessage(e instanceof Error?e.message:String(e));return;}}
-    if(variant==='C'&&(!scene.instructions.approved||!scene.instructions.text.trim())){setMessage(t('Granska och godkänn scenens instruktion först.','Review and approve the scene instructions first.'));return;}
+    let approvedPurposes:string[]|undefined;
+    if(variant==='C'){try{approvedPurposes=approvedScenePurposes(scene);}catch(e){setMessage(e instanceof Error?e.message:String(e));return;}}
     const token=++revision.current,abort=new AbortController();controller.current=abort;
     const narrative=pilotNarrative(project,chapterId,sceneId);
     const known={characters:project.characters.map(c=>({id:c.id,name:c.name})),locations:project.locations.map(l=>({id:l.id,name:l.name}))};
     const selectionNarrative={...narrative,characterFacts:narrative.characterFacts.map(({name,description})=>({name,description})),locationFacts:narrative.locationFacts.map(({name,description})=>({name,description}))};
-    const inputs={...(variant==='C'?{selectionTask:'scene-purpose' as const}:{}),chapterId,sceneId,source:source.slice(range.start,range.end),sourceOffset:range.start,model:settings.servers[settings.engine].model,engine:settings.engine,server:settings.servers[settings.engine].baseUrl,contextWindow:settings.contextWindow,prompt:variant==='D'?READING_CHECK_PROMPT:variant==='C'?SCENE_PURPOSE_PROMPT:beatPrompt(settings),context:variant==='D'?{}:variant==='C'?{narrative:selectionNarrative,...(understanding?{readingTrialId,reviewedUnderstanding:understanding}:{})}:{narrative,known}};
+    const inputs={...(variant==='C'?{selectionTask:'fixed-scene-purpose' as const,approvedPurposes}:{}),chapterId,sceneId,source:source.slice(range.start,range.end),sourceOffset:range.start,model:settings.servers[settings.engine].model,engine:settings.engine,server:settings.servers[settings.engine].baseUrl,contextWindow:settings.contextWindow,prompt:variant==='D'?READING_CHECK_PROMPT:variant==='C'?SCENE_PURPOSE_PROMPT:beatPrompt(settings),context:variant==='D'?{}:variant==='C'?{narrative:selectionNarrative,...(understanding?{readingTrialId,reviewedUnderstanding:understanding}:{})}:{narrative,known}};
     let diagnostics:LocalChatDiagnostics|undefined;
     setBusy(true);setMessage('');const timer=window.setTimeout(()=>abort.abort(),300000);
     try{
@@ -64,7 +65,7 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
       if(variant==='D')readingCheck=await runReadingCheck({source:inputs.source,settings,signal:abort.signal,onDiagnostics:value=>{diagnostics=value;}});
       let purposeResults:ScenePurposeResult[]|undefined;
       let purposeBeats:BeatTrial['beats']=[];
-      if(variant==='C'){const result=await findScenePurposeEvidence({source:inputs.source,sourceOffset:range.start,narrativeContext:selectionNarrative,reviewedUnderstanding:understanding,settings,signal:abort.signal,onDiagnostics:value=>{diagnostics=value;}});purposeResults=result.purposeResults;purposeBeats=result.beats;}
+      if(variant==='C'){const result=await findScenePurposeEvidence({approvedPurposes:approvedPurposes!,source:inputs.source,sourceOffset:range.start,narrativeContext:selectionNarrative,reviewedUnderstanding:understanding,settings,signal:abort.signal,onDiagnostics:value=>{diagnostics=value;}});purposeResults=result.purposeResults;purposeBeats=result.beats;}
       const beats=variant==='D'?[]:variant==='C'?purposeBeats:await suggestAiBeats({source:inputs.source,sourceOffset:range.start,context:known,settings,signal:abort.signal,singleRequest:true,onDiagnostics:value=>{diagnostics=value;},allowUnknownCharacters:true,taskPrompt:inputs.prompt,...(variant==='B'?{narrativeContext:narrative}:{})});
       if(token!==revision.current||abort.signal.aborted)return;
       const trial:BeatTrial={id:'beat-trial-'+crypto.randomUUID(),variant,createdAt:new Date().toISOString(),inputs,diagnostics,readingCheck,purposeResults,beats:beats.map(b=>({...b,chapterId,sourceSceneId:sceneId})),excluded:[],applied:[],notes:''};
@@ -105,6 +106,9 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
         <label className="pilot-check"><input type="checkbox" checked={scene.approved} disabled={!range} onChange={e=>patchChapter(c=>({...c,scenes:c.scenes.map(s=>s.id===sceneId?{...s,approved:e.target.checked}:s)}))}/>{t('Scenprosan är granskad','Scene prose reviewed')}</label>
         {!range?<p role="alert">{t('Scenen är tom, ändrad eller kan inte kopplas entydigt till manuset. Återställ/justera arbetskopian innan scenen testas.','The scene is empty, edited or cannot be mapped unambiguously to the manuscript. Review the working copy before testing this scene.')}</p>:null}
         <ReviewText sv={sv} label={t('Scenens instruktion','Scene instructions')} value={scene.instructions} onChange={instructions=>patchChapter(c=>({...c,scenes:c.scenes.map(s=>s.id===sceneId?{...s,instructions}:s)}))}/>
+        <label>{t('Fasta scensyften – ett per rad','Fixed scene purposes – one per line')}<textarea rows={5} value={scene.purposeReview?.text??scene.instructions.text.replace(/(?<=[.!?])\s+/g,'\n')} onChange={e=>{const text=e.target.value;patchChapter(c=>({...c,scenes:c.scenes.map(s=>s.id===sceneId?{...s,purposeReview:{text,approved:false,sceneInstructions:s.instructions.text}}:s)}));}}/></label>
+        <p className="quiet">{t('Formulera 1–4 separata syften från sceninstruktionen. Modellen ska bara hitta stöd för dessa. Ändringar kräver nytt godkännande.','Write 1–4 separate purposes from the scene instructions. The model will only find evidence for these. Edits require renewed approval.')}</p>
+        <label className="pilot-check"><input type="checkbox" disabled={!scene.instructions.approved||!range} checked={!!scene.purposeReview?.approved&&scene.purposeReview.sceneInstructions===scene.instructions.text} onChange={e=>{try{const text=scene.purposeReview?.text??scene.instructions.text.replace(/(?<=[.!?])\s+/g,'\n');if(e.target.checked)scenePurposeLines(text);patchChapter(c=>({...c,scenes:c.scenes.map(s=>s.id===sceneId?{...s,purposeReview:{text,approved:e.target.checked,sceneInstructions:s.instructions.text}}:s)}));setMessage('');}catch(error){setMessage(error instanceof Error?error.message:String(error));}}}/>{t('Godkänn fasta scensyften','Approve fixed scene purposes')}</label>
       </details>:null}
       <details><summary>{t('Adaption för kapitlet','Chapter adaptation')}</summary>
         <label className="pilot-check"><input type="checkbox" checked={!chapter.profile} onChange={e=>patchChapter(c=>({...c,profile:e.target.checked?undefined:structuredClone(profile)}))}/>{t('Använd albumets standard','Use album defaults')}</label>
@@ -122,7 +126,7 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
       </details>
       <div className="pilot-actions"><button type="button" disabled={!scene?.approved||!range} onClick={()=>void run('A')}>{t('Kör A – utan berättelseunderlag','Run A – without story context')}</button><button type="button" className="primary-button" disabled={!scene?.approved||!range} onClick={()=>void run('B')}>{t('Kör B – med godkänt underlag','Run B – with approved context')}</button></div>
       <button type="button" disabled={!scene?.approved||!range} onClick={()=>void run('C')}>{t('Kör C – hitta stöd för scenens syfte','Run C – find evidence for scene purposes')}</button>
-      <p className="quiet">{t('C utgår från godkänd sceninstruktion och hittar källstöd för varje del av syftet, eller visar var stöd saknas. Brief och synopsis ger bakgrund. Ett anrop; inga paneler.','C uses approved scene instructions to find source evidence for each purpose, or report missing support. Brief and synopsis provide background. One request; no panels.')}</p>
+      <p className="quiet">{t('C hittar källstöd eller luckor för vart och ett av dina godkända fasta scensyften. Brief och synopsis ger bakgrund. Ett anrop; inga paneler.','C finds source evidence or gaps for every approved fixed scene purpose. Brief and synopsis provide background. One request; no panels.')}</p>
       <p className="quiet">{project.adaptationContext?.synopsis.approved&&project.adaptationContext.synopsis.text.trim()?t('Synopsis ingår i inventeringen.','Synopsis is included in the inventory.'):t('Synopsis ingår inte. Granska och godkänn den under berättelseunderlaget om den ska vägleda inventeringen.','Synopsis is not included. Review and approve it under story context to guide the inventory.')}</p>
       <button type="button" disabled={!scene?.approved||!range} onClick={()=>void run('D')}>{t('Kör D – läsförståelse','Run D – reading comprehension')}</button>
       <p className="quiet">{t('D läser bara scenprosan: var personen är, vad som hänt tidigare och vad som förändras. Ett anrop, utan berättelseunderlag eller beatgenerering.','D reads only the scene prose: present location, earlier events and what changes. One request, without narrative context or beat generation.')}</p>
@@ -131,7 +135,7 @@ export function ChapterBeatPilot({project,chapterId,locale,settings,onUpdate}:{p
     {message?<p role="status">{message}</p>:null}
     {trials.length>1?<p className="pilot-comparison">{(()=>{const a=trials.filter(r=>r.variant==='A').at(-1),b=trials.filter(r=>r.variant==='B').at(-1);return a&&b?(sameTrialSetup(a,b)?t('Senaste A och B har samma testförutsättningar.','Latest A and B use the same test setup.'):t('Senaste A och B har olika testförutsättningar. Kör om båda innan du jämför.','Latest A and B have different setups. Rerun both before comparing.')):'';})()}</p>:null}
     <div className="pilot-results">{trials.map(trial=>{
-      const purposeEvidence=trial.inputs.selectionTask==='scene-purpose';
+      const purposeEvidence=trial.inputs.selectionTask==='scene-purpose'||trial.inputs.selectionTask==='fixed-scene-purpose';
       const inventory=trial.inputs.selectionTask==='inventory'||purposeEvidence;
       const guided=trial.variant==='C'&&!!trial.inputs.context&&typeof trial.inputs.context==='object'&&'readingTrialId' in trial.inputs.context;
       const current=trialIsCurrent(project,trial),selected=trial.beats.filter(b=>!trial.excluded.includes(b.id)&&!trial.applied.includes(b.id));

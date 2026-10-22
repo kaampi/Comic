@@ -1,4 +1,4 @@
-import { validatePurposeResults, type ScenePurposeResult } from "./adaptation/scenePurpose";
+import { validatePurposeResults, validateApprovedPurposes, type ScenePurposeResult } from "./adaptation/scenePurpose";
 import { validateReadingCheck, type ReadingCheck } from "./adaptation/readingCheck";
 import type { LocalChatDiagnostics } from "./localAi";
 import type { ComicProject } from "./project";
@@ -13,10 +13,10 @@ export type ChapterProfile = {
   instructions: string; protectedMoments: string;
 };
 export const defaultChapterProfile = (): ChapterProfile => ({fidelity:'balanced',pace:'natural',focus:{relationships:'normal',innerDevelopment:'normal',conflict:'normal',atmosphere:'normal',technical:'normal'},instructions:'',protectedMoments:''});
-export type PilotScene = { id:string; order:number; title:string; originalText:string; instructions:ReviewedText; approved:boolean };
+export type PilotScene = { id:string; order:number; title:string; originalText:string; instructions:ReviewedText; approved:boolean; purposeReview?:{text:string;approved:boolean;sceneInstructions:string} };
 export type PilotChapter = { sourceId:string; brief:ReviewedText; scenes:PilotScene[]; profile?:ChapterProfile; approvedCharacters:string[]; approvedLocations:string[] };
 export type AdaptationContext = { sourceBookId:string; exportedAt:string; synopsis:ReviewedText; chapters:PilotChapter[] };
-export type PilotInputs = { selectionTask?:'inventory'|'scene-purpose'; chapterId:string; sceneId:string; source:string; sourceOffset:number; model:string; engine:string; server:string; contextWindow:number; prompt:string; context:unknown };
+export type PilotInputs = { selectionTask?:'inventory'|'scene-purpose'|'fixed-scene-purpose'; approvedPurposes?:string[]; chapterId:string; sceneId:string; source:string; sourceOffset:number; model:string; engine:string; server:string; contextWindow:number; prompt:string; context:unknown };
 export type BeatTrial = {
   id:string; variant:'A'|'B'|'C'|'D'; createdAt:string; inputs:PilotInputs; beats:AdaptationBeat[];
   excluded:string[]; applied:string[]; notes:string; diagnostics?:LocalChatDiagnostics; error?:string; purposeResults?:ScenePurposeResult[]; readingCheck?:ReadingCheck; readingReview?:{answers:ReadingCheck;approved:boolean};
@@ -81,6 +81,14 @@ export function reviewedReading(project:ComicProject,chapterId:string,sceneId:st
   return structuredClone(trial.readingReview.answers);
 }
 
+export function scenePurposeLines(text:string):string[]{
+  const purposes=text.split(/\r?\n/).map(p=>p.trim()).filter(Boolean);validateApprovedPurposes(purposes);return purposes;
+}
+export function approvedScenePurposes(scene:PilotScene):string[]{
+  if(!scene.approved||!scene.instructions.approved||!scene.purposeReview?.approved||scene.purposeReview.sceneInstructions!==scene.instructions.text)throw new Error('Review and approve the fixed scene purposes before running C.');
+  return scenePurposeLines(scene.purposeReview.text);
+}
+
 // Validate optional additions independently so old backups remain valid.
 export function validatePilotData(project:any):void {
   const fail=()=>{throw new Error('invalid-backup');};
@@ -93,13 +101,13 @@ export function validatePilotData(project:any):void {
   const c=project.adaptationContext;
   if(c!==undefined){str(c?.sourceBookId);str(c?.exportedAt);text(c.synopsis);if(!Array.isArray(c.chapters))fail();const chapters=new Set(),scenes=new Set();
     for(const chapter of c.chapters){obj(chapter);str(chapter.sourceId);if(chapters.has(chapter.sourceId))fail();chapters.add(chapter.sourceId);text(chapter.brief);strings(chapter.approvedCharacters);strings(chapter.approvedLocations);if(chapter.profile)profile(chapter.profile);if(!Array.isArray(chapter.scenes))fail();
-      for(const s of chapter.scenes){obj(s);str(s.id);str(s.title);str(s.originalText);text(s.instructions);if(scenes.has(s.id)||!Number.isInteger(s.order)||s.order<1||typeof s.approved!=='boolean')fail();scenes.add(s.id);}
+      for(const s of chapter.scenes){obj(s);str(s.id);str(s.title);str(s.originalText);text(s.instructions);if(s.purposeReview!==undefined){str(s.purposeReview?.text);str(s.purposeReview?.sceneInstructions);if(typeof s.purposeReview.approved!=='boolean')fail();if(s.purposeReview.approved)try{scenePurposeLines(s.purposeReview.text);}catch{fail();}}if(scenes.has(s.id)||!Number.isInteger(s.order)||s.order<1||typeof s.approved!=='boolean')fail();scenes.add(s.id);}
     }
   }
   if(project.beatTrials!==undefined){if(!Array.isArray(project.beatTrials))fail();const ids=new Set();
     for(const r of project.beatTrials){obj(r);if(r.error!==undefined)str(r.error);
       if(r.diagnostics!==undefined){const d=r.diagnostics;obj(d);str(d.requestBody);try{obj(JSON.parse(d.requestBody));}catch{fail();}for(const k of ['responseBody','rawReply','finishReason'])if(d[k]!==undefined)str(d[k]);if(!Number.isInteger(d.maxOutputTokens)||d.maxOutputTokens<1||!Number.isInteger(d.contextWindow)||d.contextWindow<1024)fail();}
-      str(r.id);str(r.createdAt);str(r.notes);if(ids.has(r.id)||!['A','B','C','D'].includes(r.variant))fail();ids.add(r.id);strings(r.excluded);strings(r.applied);const i=r.inputs;obj(i);if(i.selectionTask!==undefined&&(!['inventory','scene-purpose'].includes(i.selectionTask)||r.variant!=='C'))fail();for(const k of ['chapterId','sceneId','source','model','engine','server','prompt'])str(i[k]);if(!Number.isInteger(i.sourceOffset)||i.sourceOffset<0||!Number.isInteger(i.contextWindow)||i.contextWindow<1024)fail();if(!Array.isArray(r.beats))fail();if(r.purposeResults!==undefined){if(r.variant!=='C'||i.selectionTask!=='scene-purpose')fail();try{validatePurposeResults(r.purposeResults,i.source);}catch{fail();}}if(r.readingReview!==undefined){if(r.variant!=='D'||!r.readingCheck||typeof r.readingReview?.approved!=='boolean')fail();try{validateReadingCheck(r.readingReview.answers,i.source);}catch{fail();}}if(r.readingCheck!==undefined){if(r.variant!=='D'||r.beats.length)fail();try{validateReadingCheck(r.readingCheck,i.source);}catch{fail();}}if(r.variant==='D'&&(r.beats.length||r.applied.length))fail();
+      str(r.id);str(r.createdAt);str(r.notes);if(ids.has(r.id)||!['A','B','C','D'].includes(r.variant))fail();ids.add(r.id);strings(r.excluded);strings(r.applied);const i=r.inputs;obj(i);if(i.selectionTask!==undefined&&(!['inventory','scene-purpose','fixed-scene-purpose'].includes(i.selectionTask)||r.variant!=='C'))fail();for(const k of ['chapterId','sceneId','source','model','engine','server','prompt'])str(i[k]);if(!Number.isInteger(i.sourceOffset)||i.sourceOffset<0||!Number.isInteger(i.contextWindow)||i.contextWindow<1024)fail();if(!Array.isArray(r.beats))fail();if(i.selectionTask==='fixed-scene-purpose'){try{validateApprovedPurposes(i.approvedPurposes);}catch{fail();}}if(r.purposeResults!==undefined){if(r.variant!=='C'||!['scene-purpose','fixed-scene-purpose'].includes(i.selectionTask))fail();try{validatePurposeResults(r.purposeResults,i.source);if(i.selectionTask==='fixed-scene-purpose'&&JSON.stringify(r.purposeResults.map((p:any)=>p.purpose))!==JSON.stringify(i.approvedPurposes))fail();}catch{fail();}}if(r.readingReview!==undefined){if(r.variant!=='D'||!r.readingCheck||typeof r.readingReview?.approved!=='boolean')fail();try{validateReadingCheck(r.readingReview.answers,i.source);}catch{fail();}}if(r.readingCheck!==undefined){if(r.variant!=='D'||r.beats.length)fail();try{validateReadingCheck(r.readingCheck,i.source);}catch{fail();}}if(r.variant==='D'&&(r.beats.length||r.applied.length))fail();
       for(const b of r.beats){obj(b);if(!['establishing','introduction','action','dialogue','reaction','transition','atmosphere','climax','resolution'].includes(b.beatType)||!Number.isInteger(b.targetPanelCount)||b.targetPanelCount<1||b.targetPanelCount>12)fail();for(const k of ['id','title','summary','sourceTextExcerpt','beatType'])str(b[k]);for(const k of ['sourceSceneId','adaptationReason','unresolvedLocation'])if(b[k]!==undefined)str(b[k]);strings(b.characterIds);if(b.unresolvedCharacters!==undefined)strings(b.unresolvedCharacters);if(!Number.isInteger(b.sourceStart)||!Number.isInteger(b.sourceEnd)||b.sourceStart<i.sourceOffset||b.sourceEnd>i.sourceOffset+i.source.length||b.sourceEnd<=b.sourceStart||i.source.slice(b.sourceStart-i.sourceOffset,b.sourceEnd-i.sourceOffset)!==b.sourceTextExcerpt)fail();for(const k of ['dialogueCandidates','captionCandidates','visualCandidates'])if(!Array.isArray(b[k]))fail();for(const v of b.visualCandidates){obj(v);str(v.id);str(v.description);}for(const t of [...b.dialogueCandidates,...b.captionCandidates]){obj(t);str(t.id);str(t.text);}}
     }
   }
