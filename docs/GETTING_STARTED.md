@@ -26,7 +26,7 @@ This guide describes the current beta. Some features and labels may change. The 
 
 - [Foreground images and page-wide bubbles](#foreground-images)
 
-- [Workspace navigation and room for your page](#workspace-layout)
+- [Workflow navigation and manuscript layout](#workspace-layout)
 
 - [Scenes: preserve the story before adapting it](#manuscript-scenes)
 
@@ -160,14 +160,14 @@ Use foreground images for a character, object or decoration that crosses panel b
 
 <a id="workspace-layout"></a>
 
-## Workspace navigation and room for your page
+## Workflow navigation and manuscript layout
 
-The workflow cards show your current stage; they do not mark chapters or scenes complete. Every stage remains available for manual work. Manuscript uses chapter/scene navigation on the left, source text or proposals in the center, and properties on the right.
+The workflow cards show your current stage; they do not mark chapters or scenes complete. Every stage remains available for manual work. Pages uses compact stage navigation and retains its existing editor, sidebars and reading-order list.
 
-1. On Pages, toggle Page settings and Image library & reading order to show or hide the side panels. Drag their dividers, or focus a divider and use the arrow keys, to adjust their width on a wide screen.
-2. Focus mode hides both side panels. Exit focus mode restores your previous panel visibility. Escape also exits when no dialog is open.
-3. Fit page shows the full page in the available space. Fit width fills the available width. The plus/minus controls zoom the page view relative to its fitted size; scroll to reach content outside the view. These controls never change the printed page, image crop, panel coordinates or export.
-4. Use the Reading order tab beside Image library to change ordering and panel links. New page, page navigation and Delete page remain above the canvas.
+1. Choose Manuscript & scenes, Beats, Panels or Images to work through the stages before composing pages. Each card has an icon and a brief explanation when there is room.
+2. In Manuscript, choose a chapter or scene on the left. Work with the text or review beat proposals in the center, and edit the selected scene or beat in the properties panel on the right.
+3. Open Story context for synopsis and chapter Brief. Editing a text revokes its AI-context approval until you approve it again. The chapter pilot is available under Advanced.
+4. On Pages, continue using the existing page settings, canvas, image library and reading-order controls. Export opens the existing export dialog.
 
 > A scene beat selection is a draft, not finished image direction. Review source support first, then stage the panels.
 
@@ -278,9 +278,9 @@ In Manuscript, choose a chapter and open Chapter pilot. Review its story context
 
 Add a transparent PNG above the frames, then choose Edit image and bubbles. Its text can span the whole page. Move the image alone or enable Move image and bubbles together. The top image in the list is in front.
 
-### Workspace navigation and room for your page
+### Workflow navigation and manuscript layout
 
-Move between six workflow stages. Pages has collapsible side panels, focus mode and display-only fit/zoom controls.
+Move between six workflow stages. Manuscript separates scene navigation, source or proposals, and properties.
 
 ### Scenes: preserve the story before adapting it
 

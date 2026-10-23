@@ -712,13 +712,13 @@ try {
     `[data-panel-id="${originalPanel}"]`,
   );
   assert.ok(libraryCard.querySelector("img"));
-  assert.equal(document.querySelector('.pages-library .panel-library h3').firstChild.textContent.trim(),'Bildbibliotek');
-  assert.equal(document.querySelector('.pages-library .page-list'),null);
+  assert.equal(document.querySelector('.page-sidebar .panel-library h3').firstChild.textContent.trim(),'Bildbibliotek');
+  assert.equal(document.querySelector('.page-sidebar .page-list'),null);
   assert.ok(document.querySelector('.page-canvas-header .page-new-button'));
-  assert.equal(within(document.querySelector('.pages-library')).queryByRole('button',{name:'Ny sida',exact:true}),null);
+  assert.equal(within(document.querySelector('.page-sidebar')).queryByRole('button',{name:'Ny sida',exact:true}),null);
   assert.ok(libraryCard.closest('.panel-library-beat').querySelector('h4').textContent.startsWith('Beat '));
-  assert.ok(document.querySelector('.pages-settings .page-frame-picker select'));
-  assert.equal(document.querySelector('.pages-library .panel-library select'),null);
+  assert.ok(document.querySelector('.project-sidebar .page-frame-picker select'));
+  assert.equal(document.querySelector('.page-sidebar select'),null);
 
   await user.click(document.querySelectorAll(".drawn-panel")[0]);
   await user.click(libraryCard);
@@ -1745,7 +1745,7 @@ try {
   assert.deepEqual(Array.from(workflowNav.querySelectorAll(":scope > button")).map(button=>button.getAttribute("aria-label")),["Manus & scener","Beats","Paneler","Bilder","Sidor","Export"]);
   if(!albumSections.querySelector("details").open)await user.click(within(albumSections).getByText("Verktyg",{selector:"summary"}));
   assert.equal(document.querySelector('.project-side-nav'),null);
-  const leftSettings=screen.getByRole("complementary",{name:"Sidans egenskaper",exact:true});
+  const leftSettings=screen.getByRole("complementary",{name:"Arbetsinställningar",exact:true});
   assert.ok(within(leftSettings).getByRole("region",{name:"Sidinställningar",exact:true}));
   assert.ok(leftSettings.querySelector('.grid-settings'));
   assert.equal(document.querySelector('.page-planner .grid-settings'),null);
