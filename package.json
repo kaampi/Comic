@@ -14,6 +14,7 @@
     "test:library-drop": "node scripts/test-library-drop.mjs",
     "test:chapter-pilot": "node scripts/test-chapter-pilot.mjs",
     "test:chapters": "node scripts/test-chapters.mjs",
+    "test:network-ai": "node scripts/test-network-ai.mjs",
     "test:adaptation": "node scripts/test-adaptation.mjs",
     "test:image-prompts": "node scripts/test-image-prompts.mjs",
     "test:manuscript-ui": "node scripts/test-manuscript-ui.mjs",

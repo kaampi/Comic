@@ -196,10 +196,10 @@ try {
   assert.ok(storage.has("comicbook-ai.local-text-ai"));
   assert.ok(![...storage.keys()].some(key => key.startsWith("storybook")));
   assert.equal(local.normalizeLocalBaseUrl(" http://localhost:11434/ "), "http://localhost:11434");
-  for (const url of ["http://192.168.1.20:1234", "http://10.0.0.2:8000/v1", "http://[::1]:11434", "http://ai-server.local:1234"]) {
+  for (const url of ["http://192.168.1.20:1234", "http://10.0.0.2:8000/v1", "http://[::1]:11434", "http://[fd12::1]:1234"]) {
     assert.ok(local.normalizeLocalBaseUrl(url));
   }
-  for (const url of ["https://api.openai.com", "https://example.com", "file:///tmp/server", "http://user:secret@localhost:1234"]) {
+  for (const url of ["https://api.openai.com", "https://example.com", "http://ai-server.local:1234", "file:///tmp/server", "http://user:secret@localhost:1234"]) {
     assert.throws(() => local.normalizeLocalBaseUrl(url));
   }
   const requests = [];

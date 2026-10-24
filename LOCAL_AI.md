@@ -9,14 +9,24 @@ ComicBook AI stöder samma två typer av lokala textservrar som StoryBook AI:
 
 1. Starta din lokala server och gör en textmodell tillgänglig.
 2. Öppna **Inställningar → Lokal text-AI** i ComicBook.
-3. Välj servertyp och ange serveradressen.
+3. Välj **Den här datorn** (standard) eller **Egen server i nätverket**. Välj servertyp och ange serveradressen.
 4. Klicka **Anslut / uppdatera modeller**.
 5. Välj **Modell för adaptering** ur serverns lista.
 6. Ange kontextstorlek. För Ollama kan **Läs modellens kontextgräns** fylla i modellens rapporterade gräns. Detta är modellens gräns, inte en mätning av datorns minne. För LM Studio / llama.cpp måste kontextstorleken också konfigureras i servern.
 
 Anslutningsinställningarna sparas i ComicBook. Varje servertyp har sin egen adress och sitt eget modellval. Inga inställningar eller data läses från eller skrivs till StoryBook.
 
-Servern måste tillåta anslutningar från adressen där ComicBook körs. Om anslutningen blockeras av webbläsaren, kontrollera serverns CORS-inställningar. Lokala IP-adresser och lokala värdnamn stöds. Molnadresser och URL:er med inbäddade lösenord avvisas i detta läge.
+### AI på en annan dator i ditt eget nätverk
+
+Välj **Egen server i nätverket** och ange AI-datorns privata IP-adress och port, till exempel `http://192.168.1.20:11434` för Ollama eller `http://192.168.1.20:1234` för LM Studio. Klicka **Anslut / uppdatera modeller** och välj modellen. Knappen kontrollerar anslutningen genom att hämta modellistan; ingen manustext skickas vid anslutning, inställningsändring eller när inställningarna öppnas.
+
+På AI-datorn behöver servern lyssna på nätverket, dess port vara tillåten i brandväggen för det privata nätverket och ComicBooks adress vara tillåten i serverns CORS-inställningar. Använd serverprogrammets inställningar för detta; exponera inte servern via portvidarebefordran på internet. En webbläsare kan behöva tillstånd för lokal nätverksåtkomst, och en HTTPS-sida kan blockera HTTP-anrop. Desktopappen har sin egen origin som servern behöver tillåta.
+
+**Den här datorn** tillåter bara localhost/loopback. **Egen server i nätverket** tillåter privata IPv4-adresser (`10.x.x.x`, `172.16–31.x.x`, `192.168.x.x`) samt privata IPv6-adresser (ULA och link-local). Publika IP-adresser, servernamn (även `.local`/`.lan`), inbäddade inloggningsuppgifter, frågesträngar och fragment avvisas före anropet. Använd privat IP i stället för servernamn så att namnuppslagning inte kan leda till en publik adress. HTTP-omdirigeringar följs inte. Cookies och referer skickas inte.
+
+I nätverksläget lämnar texten den egna datorn när användaren startar analysen. Den skickas med valt underlag till den valda servern i det egna nätverket. Servern ska själv köra modellen lokalt; ComicBook kontrollerar destinationsadressen men kan inte kontrollera serverns interna vidarebefordran. Text-AI-anslutningen erbjuder ingen molnleverantör eller automatisk molnreserv.
+
+Valet sparas separat för Ollama och OpenAI-kompatibel server. Byte av plats eller adress rensar modellvalet och avbryter en pågående anslutningskontroll, så att gamla serversvar inte kan välja modell på den nya servern. Vid platsbyte återgår adressfältet till localhost eller ett tomt nätverksfält. Redan sparade privata IP-anslutningar från äldre versioner känns igen som nätverksläge och bevaras. Äldre servernamn visas fortfarande men behöver ersättas med en privat IP-adress innan de kan användas. Inga ändringar görs i album eller StoryBooks inställningar.
 
 ## Föreslå beats
 
@@ -54,6 +64,7 @@ Text-AI-inställningen är separat från bildgenerering. Den här funktionen gen
 ## Kontrollera koden
 
 ```sh
+npm run test:network-ai
 npm run test:adaptation
 npm run test:manuscript-ui
 npm run typecheck

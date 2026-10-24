@@ -505,3 +505,10 @@ Sidredigeraren behåller sin tidigare layout, vänsterspalt, bildbibliotek och l
 
 ### Avgränsning till stegen före sidredigering (2026-10-23)
 Efter användarens precisering återställs själva sidredigeraren till utförandet före UI-ombyggnaden. Stegkorten, manusets scen-/egenskapsstruktur och grupperingen av panelregi/text behålls. Sparade projekt, paneler, texter och bilder ändras inte av återställningen.
+
+
+### Egen text-AI i lokalt nätverk (2026-10-24)
+
+Text-AI-inställningarna har ett explicit val per servertyp: Den här datorn (standard för nya inställningar) eller Egen server i nätverket. Samma Ollama- och OpenAI-kompatibla transport används för manusanalyser och textinstruktioner. Lokal körning tillåter bara loopback; nätverksläget tillåter privata IPv4- och IPv6-adresser. Publika adresser, servernamn, URL-inloggning, frågesträngar och fragment avvisas före modellista, kontextfråga och textanrop. Inga omdirigeringar följs och inga cookies/referer skickas. Inget automatiskt molnalternativ införs.
+
+Gränssnittet förklarar att text och valt underlag lämnar datorn till användarens valda server endast vid manuellt startad analys. Anslutningskontrollen hämtar modellistan utan manus. Adress-/platsbyte rensar modellval, avbryter pågående kontroll och ignorerar sena svar. Inställningarna sparas lokalt, separat från album. Äldre privata IP-inställningar behålls som nätverksläge; äldre värdnamn behöver ersättas av privat IP. Serverns lyssningsadress, brandvägg och CORS behöver konfigureras av användaren. Appen begränsar destinationen, inte vad användarens server själv kan vidarebefordra. Ingen ändring i StoryBook, projektformat eller bildgenerering.
