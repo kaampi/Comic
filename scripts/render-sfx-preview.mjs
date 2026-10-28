@@ -18,7 +18,7 @@ const { SFX_SHAPES, sfxPrimitives } = await import(
 const width = 900,
   rowHeight = 205,
   height = 145 + Math.ceil(SFX_SHAPES.length / 2) * rowHeight;
-let body = `<rect width="${width}" height="${height}" fill="#eee8dc"/><text x="40" y="55" font-family="DejaVu Sans" font-size="34" font-weight="bold" fill="#171411">ComicBook AI · SFX</text><text x="40" y="94" font-family="DejaVu Sans" font-size="21" fill="#675e53">14 val · Redigerbar text och fristående former</text>`;
+let body = `<rect width="${width}" height="${height}" fill="#eee8dc"/><text x="40" y="55" font-family="DejaVu Sans" font-size="34" font-weight="bold" fill="#171411">kaampi Comic · SFX</text><text x="40" y="94" font-family="DejaVu Sans" font-size="21" fill="#675e53">14 val · Redigerbar text och fristående former</text>`;
 for (const [i, shape] of SFX_SHAPES.entries()) {
   const x = 30 + (i % 2) * 440,
     y = 125 + Math.floor(i / 2) * rowHeight;

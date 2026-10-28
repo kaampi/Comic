@@ -1,4 +1,4 @@
-# ComicBook AI — Windows-prototyp med Tauri 2
+# kaampi Comic — Windows-prototyp med Tauri 2
 
 Desktopskalet kör samma React-app som webbversionen i ett eget fönster. Detta första steg behåller IndexedDB, återställningspunkter och albumbackup. Projektmappar och separata bildfiler är ett senare steg. StoryBook påverkas inte.
 

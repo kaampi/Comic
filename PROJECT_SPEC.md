@@ -1,4 +1,4 @@
-# PROJECT_SPEC.md — ComicBook AI
+# PROJECT_SPEC.md — kaampi Comic
 
 Specifikation: 0.1  
 Datum: 2026-10-01  
@@ -6,13 +6,13 @@ Status: planering; överenskomna produktgränser och föreslagen implementation.
 
 ## 1. Mål och produktgräns
 
-ComicBook AI är en fristående installerad datorapp som omvandlar egen litterär text till illustrerade serier. Författaren styr adaption, bildval, layout och text. Appen ska bevara karaktärernas visuella identitet och berättelsens läsbarhet.
+kaampi Comic är en fristående installerad datorapp som omvandlar egen litterär text till illustrerade serier. Författaren styr adaption, bildval, layout och text. Appen ska bevara karaktärernas visuella identitet och berättelsens läsbarhet.
 
 Projekt och bildresurser sparas lokalt. Molnbaserad AI är tillåten för att bildgenerering inte ska kräva en kraftfull dator hos varje användare. Vilka tjänster som stöds i första versionen är ännu inte beslutat.
 
-### 1.1 Bindande gräns mot StoryBook AI
+### 1.1 Bindande gräns mot kaampi Write
 
-**ComicBook AI får aldrig ändra något i StoryBook AI.**
+**kaampi Comic får aldrig ändra något i kaampi Write.**
 
 - Enda kopplingen är läsning av en exportfil som användaren själv väljer.
 - Import skapar en självständig kopia i ComicBook-projektet.
@@ -20,9 +20,9 @@ Projekt och bildresurser sparas lokalt. Molnbaserad AI är tillåten för att bi
 - Ingen åtkomst till StoryBooks databas, IndexedDB, inställningar eller arbetsmappar.
 - Ingen återskrivning, synkronisering, direkt API-koppling eller ändring av StoryBooks repository.
 - Alla bearbetningar och genererade resurser tillhör ComicBook-projektet.
-- Detta repository ska utvecklas oberoende av StoryBook AI.
+- Detta repository ska utvecklas oberoende av kaampi Write.
 
-StoryCore är på planeringsstadiet. Första versionen ska fungera utan StoryCore. Importmodulens gräns kan senare återanvändas av en separat StoryCore-adapter; någon sådan adapter ingår inte nu.
+kaampi Codex är på planeringsstadiet. Första versionen ska fungera utan kaampi Codex. Importmodulens gräns kan senare återanvändas av en separat kaampi Codex-adapter; någon sådan adapter ingår inte nu.
 
 ## 2. Arbetsflöde
 
@@ -77,7 +77,7 @@ Användaren ska kunna se vilket text- och bildmaterial som ska skickas till vald
 
 ## 4. StoryBook-import och källtext
 
-Första importvägen föreslås vara StoryBook AI:s JSON-backup:
+Första importvägen föreslås vara kaampi Write:s JSON-backup:
 kind = "storybook-ai.manuscript", format = 1.
 
 Befintlig struktur har kapitel, scener, fakta, profiler, media och en illustrationsstil som textsnapshot. Importadaptern översätter dessa till ComicBooks egen datamodell. Den ska validera filformat och rapportera inkompatibla versioner utan att ändra källfilen.
@@ -359,7 +359,7 @@ Datamodellerna ska ha schema-validering och migrationsväg. Stable ID:n får int
 - [ ] Fas 6: Textlager och PNG/PDF-export.
 - [ ] Fas 7: Fri sidlayout, genereringskö och CBZ.
 
-Första milstolpen är en fungerande kort serie på 1–3 sidor med ett fåtal karaktärer. StoryCore och direkt appsynkronisering ingår inte.
+Första milstolpen är en fungerande kort serie på 1–3 sidor med ett fåtal karaktärer. kaampi Codex och direkt appsynkronisering ingår inte.
 
 ## 14. Acceptanskriterier för första milstolpen
 
@@ -443,7 +443,7 @@ Endast berättarinstruktionen är redigerbar. JSON-kontrakt, källsegment, känd
 
 ### Kapitelpilot för beatförslag (2026-10-22)
 
-StoryCore-export format 1 och 2 stöds genom det uppdaterade delade kontraktet. Synopsis, kapitel-Brief och ordnade scener (originalprosa och separata instruktioner) bevaras i ComicBooks eget adaptionunderlag. Import startar ingen AI och godkänner inget automatiskt. I Manus → Kapitelpilot kan original visas, arbetskopior redigeras och respektive del godkännas för AI. Äldre album kan kompletteras med en användarvald export för samma bok, med matchande kapitel-ID:n och originalprosa, utan att ersätta manus, beats, bilder eller sidor. Full återimport/sammanfogning ingår inte.
+kaampi Codex-export format 1 och 2 stöds genom det uppdaterade delade kontraktet. Synopsis, kapitel-Brief och ordnade scener (originalprosa och separata instruktioner) bevaras i ComicBooks eget adaptionunderlag. Import startar ingen AI och godkänner inget automatiskt. I Manus → Kapitelpilot kan original visas, arbetskopior redigeras och respektive del godkännas för AI. Äldre album kan kompletteras med en användarvald export för samma bok, med matchande kapitel-ID:n och originalprosa, utan att ersätta manus, beats, bilder eller sidor. Full återimport/sammanfogning ingår inte.
 
 Kapitel ärver albumets standardprofil för manustrohet, tempo, oberoende fokusprioriteringar, instruktion och skyddade ögonblick tills användaren gör egna kapitelval. Relevanta karaktärs- och platsbeskrivningar godkänns separat; användaren granskar när fakta gäller. Profilen är en instruktion, inte en garanti för korrekt urval.
 

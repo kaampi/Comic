@@ -31,10 +31,10 @@ function entitiesOfKind(manuscript: ManuscriptExport, kind: "characters" | "loca
 }
 
 /**
- * One description string per entity, from every structured field StoryCore
+ * One description string per entity, from every structured field kaampi Codex
  * gives us — looks, personality, and every locked fact's value — instead of
  * the old guessed import's "pick the first field that happens to exist"
- * (description/summary/profile/notes/personality/looks). StoryCore has
+ * (description/summary/profile/notes/personality/looks). kaampi Codex has
  * already resolved status, visibility, and classification; nothing here
  * needs to guess at any of that again.
  */
@@ -47,8 +47,8 @@ function describeEntity(entity: ExportedBibleEntity): string {
 }
 
 /**
- * Reads a StoryBook AI export produced by its "Export for other apps"
- * button (StoryCore's `ManuscriptExportSchema`) — not StoryBook AI's own
+ * Reads a kaampi Write export produced by its "Export for other apps"
+ * button (kaampi Codex's `ManuscriptExportSchema`) — not kaampi Write's own
  * internal backup/restore format, which is a different, much larger shape
  * not meant for other apps to read directly.
  *
@@ -58,7 +58,7 @@ function describeEntity(entity: ExportedBibleEntity): string {
  * characters and locations — objects, groups, events, and concepts were
  * silently dropped — and read every fact regardless of whether the author
  * had actually approved and locked it, or hidden it from the model.
- * StoryCore's export already excludes anything not locked, visible, and
+ * kaampi Codex's export already excludes anything not locked, visible, and
  * not hidden, so none of that filtering needs reimplementing here.
  *
  * Objects/groups/events/concepts aren't surfaced into `StoryBookImport`
@@ -81,19 +81,19 @@ export function parseStoryBookExport(raw: string): StoryBookImport {
   } catch (err) {
     if (err instanceof ManuscriptExportError) {
       if (err.code === "newer-format") {
-        throw new Error("Den här exporten använder en nyare version av StoryCore-formatet än den här appen förstår än. Uppdatera ComicBook AI och försök igen.");
+        throw new Error("Den här exporten använder en nyare version av kaampi Codex-formatet än den här appen förstår än. Uppdatera kaampi Comic och försök igen.");
       }
       throw new Error(
-        "Filen är inte en StoryBook AI-export. Exportera på nytt från StoryBook AI med knappen \"Exportera för andra appar\" (bredvid Backup)."
+        "Filen är inte en kaampi Write-export. Exportera på nytt från kaampi Write med knappen \"Exportera för andra appar\" (bredvid Backup)."
       );
     }
     throw err;
   }
 
-  // Older installed StoryCore versions strip the new context fields entirely.
+  // Older installed kaampi Codex versions strip the new context fields entirely.
   // Stop before mapping scenes rather than crashing or silently losing context.
   if (manuscript.chapters.some(chapter => !Array.isArray(chapter.scenes))) {
-    throw new Error("StoryCore-installationen är för gammal. Stäng ComicBook AI, kör npm install i ComicBook-AI-mappen och starta appen igen. Läs sedan in exportfilen på nytt.");
+    throw new Error("kaampi Codex-installationen är för gammal. Stäng kaampi Comic, kör npm install i ComicBook-AI-mappen och starta appen igen. Läs sedan in exportfilen på nytt.");
   }
 
   const chapterIds=manuscript.chapters.map(c=>c.id),sceneIds=manuscript.chapters.flatMap(c=>c.scenes.map(s=>s.id));

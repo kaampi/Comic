@@ -866,8 +866,8 @@ export function App() {
       <input ref={storyBookShortcutInput} type="file" hidden accept=".json,application/json" aria-label="StoryBook export shortcut" onChange={event=>{const file=event.target.files?.[0];if(file)void readStoryBookFile(file);event.currentTarget.value="";}} />
       <header className="topbar">
         <button className="brand" type="button" onClick={goHome} aria-label={tr("goHome")}>
-          <img className="brand-logo brand-logo-light" src="/logo.png" alt="ComicBook AI" />
-          <img className="brand-logo brand-logo-dark" src="/logo-dark.png" alt="ComicBook AI" />
+          <img className="brand-logo brand-logo-light" src="/logo.png" alt="kaampi Comic" />
+          <img className="brand-logo brand-logo-dark" src="/logo-dark.png" alt="kaampi Comic" />
         </button>
         <div className="top-menu" ref={menuRef}>
           <button className="text-button" type="button" aria-expanded={projectMenuOpen} onClick={() => setProjectMenuOpen((open) => !open)}>{tr("project")}</button>

@@ -202,7 +202,7 @@ try {
   await goHome();
   await user.click(within(screen.getByRole("region",{name:"Senast öppnade"})).getByRole("button",{name:/Pages start fixture/}));
   const albumCard=()=>screen.getByRole("dialog",{name:"Pages start fixture"});
-  assert.equal(within(albumCard()).queryByText("Importerad från StoryBook AI"),null);
+  assert.equal(within(albumCard()).queryByText("Importerad från kaampi Write"),null);
   fireEvent.change(within(albumCard()).getByLabelText("Kort introduktion"),{target:{value:"A short synthetic album introduction."}});
   const context=dom.window.HTMLCanvasElement.prototype.getContext,encode=dom.window.HTMLCanvasElement.prototype.toDataURL;
   globalThis.createImageBitmap=async()=>({width:600,height:800,close(){}});
@@ -253,7 +253,7 @@ try {
   const exportObject={kind:"storycore.manuscript-export",format:1,sourceApp:"storybook-ai",exportedAt:"2026-10-19T09:00:00Z",sourceBookId:"source-fixture",title:"Imported start fixture",illustrationStyle:"",bible:[],chapters:[{id:"chapter-fixture",sequence_index:0,title:"Arrival",prose:"A traveller enters the room."}]};
   const raw=JSON.stringify(exportObject);
   let fileChooserOpens=0;document.querySelector('input[aria-label="StoryBook export shortcut"]').addEventListener("click",()=>fileChooserOpens++);
-  await start(/Importera från StoryBook AI/);
+  await start(/Importera från kaampi Write/);
   assert.equal(fileChooserOpens,1,"StoryBook start opens the file chooser immediately");
   assert.ok(within(dialog()).getByRole("button",{name:/^Nästa/}).disabled,"import cannot continue without a valid file");
   let finishReading;
@@ -264,7 +264,7 @@ try {
   await act(async()=>finishReading(raw));
   assert.equal(within(dialog()).getByRole("textbox",{name:"Projektnamn"}).value,"","a cancelled import cannot populate another new album");
   await user.click(within(dialog()).getByRole("button",{name:"Avbryt",exact:true}));
-  await start(/Importera från StoryBook AI/);
+  await start(/Importera från kaampi Write/);
   const file=new File([raw],"synthetic-export.json",{type:"application/json"});file.text=async()=>raw;
   await user.upload(within(dialog()).getByLabelText("StoryBook-export för andra appar (.json)"),file);
   await waitFor(()=>assert.equal(within(dialog()).getByRole("button",{name:/^Nästa/}).disabled,false));
@@ -281,7 +281,7 @@ try {
   await goHome();
   await start(/Öppna ett projekt/);
   await user.click(within(screen.getByRole("dialog",{name:"Öppna ett projekt"})).getByRole("button",{name:/Imported start fixture/}));
-  assert.ok(screen.getByText("Importerad från StoryBook AI"),"import provenance is derived from the saved source");
+  assert.ok(screen.getByText("Importerad från kaampi Write"),"import provenance is derived from the saved source");
   await user.keyboard("{Escape}");await start(/Öppna ett projekt/);
   const chooser=screen.getByRole("dialog",{name:"Öppna ett projekt"});
   assert.equal(within(chooser).getAllByRole("button",{name:/→/}).length,3);

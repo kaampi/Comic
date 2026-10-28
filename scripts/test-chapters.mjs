@@ -114,7 +114,7 @@ try {
 
   localStorage.clear();localStorage.setItem('comicbook-ai.locale','en');
   const user=userEvent.setup({document});render(React.createElement(App));
-  await user.click(screen.getByRole('button',{name:/Import from StoryBook AI/}));
+  await user.click(screen.getByRole('button',{name:/Import from kaampi Write/}));
   const file=new window.File([originalRaw],'synthetic-export.json',{type:'application/json'});
   file.text=()=>new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.readAsText(file);});
   await user.upload(screen.getByLabelText('StoryBook export for other apps (.json)'),file);

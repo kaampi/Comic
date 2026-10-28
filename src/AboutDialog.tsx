@@ -7,8 +7,8 @@ import "./about.css";
 
 const TEXT = {
   sv: {
-    title: "Om ComicBook AI", close: "Stäng", version: "Version",
-    intro: "ComicBook AI är en app för att skapa seriealbum med lokal projektlagring.",
+    title: "Om kaampi Comic", close: "Stäng", version: "Version",
+    intro: "kaampi Comic är en app för att skapa seriealbum med lokal projektlagring.",
     fonts: "Fonter som ingår", lead: "Dessa fonter följer med appen och fungerar offline. Länkarna till Google Fonts kräver internet.",
     ui: "Gränssnitt och manus", comic: "Bubblor, berättarrutor och ljudeffekter",
     license: "Läs hela licensen", system: "Valbara systemfonter",
@@ -18,8 +18,8 @@ const TEXT = {
     impactLink: "Fontinformation hos Microsoft", sample: "ÅÄÖ — Hej, världen!",
   },
   en: {
-    title: "About ComicBook AI", close: "Close", version: "Version",
-    intro: "ComicBook AI is an app for creating comic albums with local project storage.",
+    title: "About kaampi Comic", close: "Close", version: "Version",
+    intro: "kaampi Comic is an app for creating comic albums with local project storage.",
     fonts: "Included fonts", lead: "These fonts are bundled with the app and work offline. Google Fonts links require internet.",
     ui: "Interface and manuscript", comic: "Bubbles, captions and sound effects",
     license: "Read the full license", system: "Optional system fonts",
@@ -29,8 +29,8 @@ const TEXT = {
     impactLink: "Font information at Microsoft", sample: "ÅÄÖ — Hello, world!",
   },
   nb: {
-    title: "Om ComicBook AI", close: "Lukk", version: "Versjon",
-    intro: "ComicBook AI er en app for å lage tegneseriealbum med lokal prosjektlagring.",
+    title: "Om kaampi Comic", close: "Lukk", version: "Versjon",
+    intro: "kaampi Comic er en app for å lage tegneseriealbum med lokal prosjektlagring.",
     fonts: "Fonter som følger med", lead: "Disse fontene følger med appen og fungerer uten nett. Lenkene til Google Fonts krever internett.",
     ui: "Grensesnitt og manus", comic: "Bobler, tekstruter og lydeffekter",
     license: "Les hele lisensen", system: "Valgfrie systemfonter",

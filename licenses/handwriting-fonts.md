@@ -1,6 +1,6 @@
 # Handwriting font notices
 
-ComicBook AI bundles local webfont files for these Google Fonts families:
+kaampi Comic bundles local webfont files for these Google Fonts families:
 
 - Patrick Hand — SIL Open Font License 1.1
 - Handlee — SIL Open Font License 1.1

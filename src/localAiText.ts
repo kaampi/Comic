@@ -1,11 +1,11 @@
 import type { Locale } from "./settings";
 const en = {
-  title: "Local text AI", intro: "Connect the same type of local server as in StoryBook AI. Used to understand the manuscript and suggest beats.",
+  title: "Local text AI", intro: "Connect the same type of local server as in kaampi Write. Used to understand the manuscript and suggest beats.",
   engine: "Server type", url: "Server address", model: "Adaptation model", refresh: "Connect / refresh models", connecting: "Connecting…",
   noModels: "No models found", connected: "Connected", context: "Context size (tokens)", contextHelp: "Ollama receives this context size. For LM Studio / llama.cpp, also configure the context in the server.",
   suggestContext: "Read model context limit", unknownContext: "The server did not report a context limit.", contextLimit: "Model context limit",
   connectionHelp: "Start the server and load a text model. If the browser cannot connect, allow ComicBook's address in the server's CORS settings.",
-  localHelp: "Use localhost, a private IP address or a local network hostname. Settings are saved only in ComicBook AI.",
+  localHelp: "Use localhost, a private IP address or a local network hostname. Settings are saved only in kaampi Comic.",
   propose: "Suggest beats with AI", show: "AI beat analysis", source: "Text to analyse", selection: "Use highlighted text", whole: "Use entire manuscript",
   sourceHelp: "Highlight a passage below and click Analyse text to analyse only your selection. Without a selection, the text shown is analysed. Long texts are processed in smaller passages.",
   preview: "Sending only this passage and names of known characters/places found in it", chars: "characters", parts: "passages",
@@ -19,12 +19,12 @@ const en = {
 };
 type Text = typeof en;
 const sv: Text = {
-  title: "Lokal text-AI", intro: "Anslut samma typ av lokal server som i StoryBook AI. Används för att förstå manuset och föreslå beats.",
+  title: "Lokal text-AI", intro: "Anslut samma typ av lokal server som i kaampi Write. Används för att förstå manuset och föreslå beats.",
   engine: "Servertyp", url: "Serveradress", model: "Modell för adaptering", refresh: "Anslut / uppdatera modeller", connecting: "Ansluter…",
   noModels: "Inga modeller hittades", connected: "Ansluten", context: "Kontextstorlek (token)", contextHelp: "Ollama får denna kontextstorlek. För LM Studio / llama.cpp ställer du också in kontexten i servern.",
   suggestContext: "Läs modellens kontextgräns", unknownContext: "Servern rapporterade ingen kontextgräns.", contextLimit: "Modellens kontextgräns",
   connectionHelp: "Starta servern och ladda en textmodell. Om webbläsaren inte kan ansluta, tillåt ComicBooks adress i serverns CORS-inställningar.",
-  localHelp: "Använd localhost, en privat IP-adress eller ett värdnamn i det lokala nätverket. Inställningarna sparas endast i ComicBook AI.",
+  localHelp: "Använd localhost, en privat IP-adress eller ett värdnamn i det lokala nätverket. Inställningarna sparas endast i kaampi Comic.",
   propose: "Föreslå beats med AI", show: "AI-analys av beats", source: "Text att analysera", selection: "Använd markerad text", whole: "Använd hela manuset",
   sourceHelp: "Markera ett avsnitt nedan och klicka Analysera text för att analysera bara markeringen. Utan markering analyseras texten som visas. Långa texter bearbetas i mindre avsnitt.",
   preview: "Skickar endast detta avsnitt och namn på kända karaktärer/platser som finns i det", chars: "tecken", parts: "avsnitt",
@@ -37,13 +37,13 @@ const sv: Text = {
   imageHeading: "Bildgenerering", basic: "Extrahera beats utan AI"
 };
 const nb: Text = {
-  ...sv, title: "Lokal tekst-AI", intro: "Koble til samme type lokal server som i StoryBook AI. Brukes til å forstå manuset og foreslå beats.",
+  ...sv, title: "Lokal tekst-AI", intro: "Koble til samme type lokal server som i kaampi Write. Brukes til å forstå manuset og foreslå beats.",
   engine: "Servertype", model: "Modell for adaptering", refresh: "Koble til / oppdater modeller", connecting: "Kobler til…",
   noModels: "Ingen modeller funnet", connected: "Tilkoblet", context: "Kontekststørrelse (token)",
   contextHelp: "Ollama mottar denne kontekststørrelsen. For LM Studio / llama.cpp må konteksten også stilles inn i serveren.",
   suggestContext: "Les modellens kontekstgrense", unknownContext: "Serveren rapporterte ingen kontekstgrense.", contextLimit: "Modellens kontekstgrense",
   connectionHelp: "Start serveren og last en tekstmodell. Hvis nettleseren ikke kan koble til, tillat ComicBooks adresse i serverens CORS-innstillinger.",
-  localHelp: "Bruk localhost, en privat IP-adresse eller et lokalt vertsnavn. Innstillingene lagres bare i ComicBook AI.",
+  localHelp: "Bruk localhost, en privat IP-adresse eller et lokalt vertsnavn. Innstillingene lagres bare i kaampi Comic.",
   propose: "Foreslå beats med AI", show: "AI-analyse av beats", source: "Tekst å analysere", selection: "Bruk markert tekst", whole: "Bruk hele manuset",
   sourceHelp: "Marker et avsnitt nedenfor og klikk Analyser tekst for å analysere bare markeringen. Uten markering analyseres teksten som vises. Lange tekster behandles i mindre avsnitt.",
   preview: "Sender bare dette avsnittet og navn på kjente karakterer/steder som finnes i det", chars: "tegn", parts: "avsnitt",

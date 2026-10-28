@@ -50,9 +50,9 @@ try {
     assert.ok(notice.licenseText.includes(notice.license.startsWith("Apache") ? "TERMS AND CONDITIONS" : "SIL OPEN FONT LICENSE"));
   }
   for (const [locale, project, title, close] of [
-    ["sv", "Projekt", "Om ComicBook AI", "Stäng"],
-    ["en", "Project", "About ComicBook AI", "Close"],
-    ["nb", "Prosjekt", "Om ComicBook AI", "Lukk"],
+    ["sv", "Projekt", "Om kaampi Comic", "Stäng"],
+    ["en", "Project", "About kaampi Comic", "Close"],
+    ["nb", "Prosjekt", "Om kaampi Comic", "Lukk"],
   ]) {
     localStorage.clear();
     localStorage.setItem("comicbook-ai.locale", locale);

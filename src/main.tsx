@@ -17,7 +17,7 @@ import "./panelEditorWorkspace.css";
 installDiagnostics();
 
 const root = document.getElementById("root");
-if (!root) throw new Error("ComicBook AI kunde inte hitta appens rot.");
+if (!root) throw new Error("kaampi Comic kunde inte hitta appens rot.");
 
 createRoot(root).render(
   <React.StrictMode>

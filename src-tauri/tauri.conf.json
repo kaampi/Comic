@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "ComicBook AI",
+  "productName": "kaampi Comic",
   "version": "0.1.0",
   "identifier": "com.ocedo.comicbookai",
   "build": {
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "ComicBook AI",
+        "title": "kaampi Comic",
         "width": 1440,
         "height": 960,
         "minWidth": 1024,

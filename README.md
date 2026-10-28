@@ -1,4 +1,4 @@
-# ComicBook AI
+# kaampi Comic
 
 En fristående desktopapp som omvandlar litterär text till illustrerade serier med redigerbart manus, karaktärsreferenser, sidlayout och pratbubblor.
 
@@ -9,10 +9,10 @@ En fristående desktopapp som omvandlar litterär text till illustrerade serier 
 - Projekt, text, referensbilder och genererade bilder sparas lokalt.
 - AI-generering kan använda molntjänster. Manusmodell och bildmodell väljs separat.
 - Redigering, sidplanering och export ska fungera utan internet när projektets resurser finns lokalt.
-- StoryBook AI kopplas in enbart genom import av exportfiler.
-- **ComicBook AI får aldrig ändra StoryBook AI:s data, filer, inställningar eller repository.**
+- kaampi Write kopplas in enbart genom import av exportfiler.
+- **kaampi Comic får aldrig ändra kaampi Write:s data, filer, inställningar eller repository.**
 - Import skapar en självständig kopia. Ingen återskrivning, synkronisering eller direkt åtkomst till StoryBooks lagring.
-- StoryCore är en möjlig framtida integration, inte ett beroende för första versionen.
+- kaampi Codex är en möjlig framtida integration, inte ett beroende för första versionen.
 
 ## Getting started (English)
 

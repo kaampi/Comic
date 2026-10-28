@@ -1,5 +1,5 @@
 import { normalizeBeatPrompt } from "./aiPrompts";
-// Independent adaptation of StoryBook AI's Ollama and OpenAI-compatible transports.
+// Independent adaptation of kaampi Write's Ollama and OpenAI-compatible transports.
 export type LocalAiEngine = "ollama" | "openai-compatible";
 export type LocalAiSettings = {
   engine: LocalAiEngine;

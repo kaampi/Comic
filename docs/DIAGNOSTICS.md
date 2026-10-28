@@ -1,7 +1,7 @@
 # Diagnosing an intermittent crash
 
-1. Update ComicBook AI and reload the app.
-2. Open **Project → About ComicBook AI → Diagnostics**. This is available before opening an album.
+1. Update kaampi Comic and reload the app.
+2. Open **Project → About kaampi Comic → Diagnostics**. This is available before opening an album.
 3. Select **Enable diagnostics logging** and close the dialog.
 4. Repeat the action that causes the problem, such as typing text or dragging in the color picker.
 5. If the app crashes, reopen or reload it at the same address in the same browser.

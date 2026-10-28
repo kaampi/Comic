@@ -52,7 +52,7 @@ try {
   const oldParserModule=readFileSync(join(temporary,'storybookImport.mjs'),'utf8').replace(/import \{[^;]+from "@ocedo-apps\/storycore";/,`class ManuscriptExportError extends Error {}\nconst parseManuscriptExport = () => (${JSON.stringify(oldParsed)});`);
   writeFileSync(join(temporary,'storybookImport-old.mjs'),oldParserModule);
   const oldImporter=await local('storybookImport-old');
-  assert.throws(()=>oldImporter.parseStoryBookExport(rawSnapshot),/npm install/,'stale StoryCore installations get actionable instructions instead of a map crash');
+  assert.throws(()=>oldImporter.parseStoryBookExport(rawSnapshot),/npm install/,'stale kaampi Codex installations get actionable instructions instead of a map crash');
   assert.throws(()=>parseStoryBookExport(JSON.stringify({...raw,chapters:[{...raw.chapters[0],scenes:[raw.chapters[0].scenes[0],raw.chapters[0].scenes[0]]}]})),/Duplicate/);
   let project=createProject('Pilot fixture','storybook');project.source={type:'storybook',storyBookId:raw.sourceBookId,textSnapshot:source.text,chapters:source.chapters};project.characters=[{id:'rook',sourceId:'source-rook',name:'Rook',description:'A cautious captain.',visualIdentity:''}];
   project.adaptationContext=pilot.importedAdaptationContext(data);

@@ -15,5 +15,5 @@ pub fn run() {
 
     builder
         .run(tauri::generate_context!())
-        .expect("ComicBook AI could not start");
+        .expect("kaampi Comic could not start");
 }

@@ -9,7 +9,7 @@ export const AI_MODES: ReadonlyArray<{
   {
     id: "prompt",
     label: "Skapa prompter",
-    description: "ComicBook AI skapar färdiga bildprompter som du kan kopiera till valfri bild-AI.",
+    description: "kaampi Comic skapar färdiga bildprompter som du kan kopiera till valfri bild-AI.",
     available: true
   },
   {

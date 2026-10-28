@@ -1,6 +1,6 @@
 <!-- Generated from src/guideContent.ts. Run npm run docs:guide to update. -->
 
-# Your first comic in ComicBook AI
+# Your first comic in kaampi Comic
 
 Start with one page, three pictures and a few lines of dialogue. You can learn the editor with your own images, then explore manuscript planning and AI image prompts when you are ready.
 
@@ -47,7 +47,7 @@ For your first test, tell a simple three-panel story: someone arrives, notices s
 1. On the home screen, choose Create pages directly or Start with a manuscript. Enter the album name in the first wizard step and choose Next. You can rename the album later.
 2. Choose the illustration style in step two. Open a style group, compare three large previews per row on larger screens, and select a style. Use Enlarge and Original size to inspect an image without changing the selection. Then choose Next.
 3. In step three, click the Speech bubble, Thought bubble or Caption box example and adjust font, size, shape, colors and border. The live examples use the page renderer. Keep the defaults if you prefer. Choose Create album to save and open Pages with an empty first page, or Manuscript for a text-based album. Back keeps your choices; Cancel creates no album. All text defaults remain editable in Album settings.
-4. Import from StoryBook AI first opens the file chooser and import review, then follows the same three steps with the book name filled in. Nothing is saved until Create album. Open a project on the home screen lists local albums and offers backup restoration; clicking a saved album opens its information card, where you can add a cover and introduction. Open album for editing returns to its last workspace.
+4. Import from kaampi Write first opens the file chooser and import review, then follows the same three steps with the book name filled in. Nothing is saved until Create album. Open a project on the home screen lists local albums and offers backup restoration; clicking a saved album opens its information card, where you can add a cover and introduction. Open album for editing returns to its last workspace.
 
 > You do not need an AI account, a local model or a StoryBook project for this exercise. The style template helps build image prompts; it does not repaint pictures you upload.
 
@@ -133,7 +133,7 @@ Settings uses two scrolling columns on larger screens and a single scrolling lay
 
 ## Chapter pilot: compare beat suggestions
 
-The chapter pilot uses synopsis, chapter Briefs and scenes from an expanded StoryCore export. New imports retain that material automatically. For an existing album, Load pilot context accepts an export for the same book only when chapter IDs and original prose match; it preserves existing manuscript edits, beats, images and pages.
+The chapter pilot uses synopsis, chapter Briefs and scenes from an expanded kaampi Codex export. New imports retain that material automatically. For an existing album, Load pilot context accepts an export for the same book only when chapter IDs and original prose match; it preserves existing manuscript edits, beats, images and pages.
 
 1. Select the chapter and open Chapter pilot – context and beat suggestions. Review the synopsis and Chapter Brief. Edit ComicBook’s working copy if needed, then tick Approved for AI context for the parts you want B to receive. The imported original remains available below each field.
 2. Choose a non-empty scene, read its prose and tick Scene prose reviewed. Review and approve Scene instructions separately. Scene prose must match an unambiguous passage in the current manuscript. Edited or ambiguous scenes need review before analysis.
@@ -191,7 +191,7 @@ Scenes define story units before comic beats are selected. A StoryBook synopsis 
 
 Follow the six clickable workflow cards: Manuscript & scenes → Beats → Panels → Images → Pages → Export. Pages uses a compact navigation row to leave more room for the editor. You can return between steps without losing your work. Characters, Locations and the older editing workspaces are available under Tools. Use Manuscript to plan a longer story. A manuscript is the source text; a beat is a meaningful story moment; a panel plan describes one illustration. A page frame is where that panel is placed in the layout.
 
-1. Enter your source text in Manuscript, or create an album from a StoryBook export. Importing copies the content into ComicBook AI and does not change StoryBook. Imported books keep their chapters: choose a chapter above the manuscript or use Previous chapter and Next chapter. The original imported text remains available as a read-only reference; edits affect only the ComicBook working copy.
+1. Enter your source text in Manuscript, or create an album from a StoryBook export. Importing copies the content into kaampi Comic and does not change StoryBook. Imported books keep their chapters: choose a chapter above the manuscript or use Previous chapter and Next chapter. The original imported text remains available as a read-only reference; edits affect only the ComicBook working copy.
 2. Select a short passage in the manuscript and use the selection menu to create a beat. Choose a moment that can be shown clearly.
 3. In Beats, review the current chapter and include the story moments you need. To storyboard creates only missing panel plans; existing panels, prompts and images are retained. In Storyboard, drag the grip or use the up/down buttons to order panels. Insert a panel or use Split panel to add an empty reaction panel after the original, keeping the original content intact. Describe the visible action, framing, dialogue and captions separately. Read sequence previews the chapter one panel at a time. Remove panel keeps the authored assets and existing page placements; use Undo removal or Removed panels to restore it, including after reopening the album.
 4. If you want help suggesting beats, configure a local text model in Settings first. The model proposes visual moments with separate event summaries and drawable scene descriptions. Review and edit them before adding them to your plan. For imported books, Suggest beats for chapter analyses only the current chapter, while selection analysis uses only your marked passage.
@@ -202,7 +202,7 @@ Follow the six clickable workflow cards: Manuscript & scenes → Beats → Panel
 
 ## Prepare prompts and bring pictures back
 
-In the prompt workflow, ComicBook AI prepares the text instructions for an image tool. Creating a prompt does not create a picture. Keep dialogue out of the illustration so that it stays editable in the comic editor.
+In the prompt workflow, kaampi Comic prepares the text instructions for an image tool. Creating a prompt does not create a picture. Keep dialogue out of the illustration so that it stays editable in the comic editor.
 
 1. Open Images and select a panel. Build its image prompt, or open Adjust image prompt to refine characters, action, setting and camera choices. With a local model configured, choose Rewrite as visual scene with local AI to turn prose into one drawable moment. Review the separate proposal and choose Use visual scene before saving; camera choices and other direction are retained.
 2. Copy the prompt to the image-generation tool you use. Review the result for character identity, clothing, staging and space for text.
@@ -264,7 +264,7 @@ Automatic saving keeps the album in this browser. If another tab has changed the
 
 ### Export and read your first page
 
-Export creates files for reading or further layout work. Choose PDF, PNG, JPEG or IDML. Keep an album backup as well if you want to continue editing in ComicBook AI.
+Export creates files for reading or further layout work. Choose PDF, PNG, JPEG or IDML. Keep an album backup as well if you want to continue editing in kaampi Comic.
 
 ### AI settings and beat instructions
 

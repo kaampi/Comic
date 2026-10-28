@@ -1,14 +1,14 @@
-# Arbetsregler för ComicBook AI
+# Arbetsregler för kaampi Comic
 
 ## Produktgräns
 
-ComicBook AI är en fristående desktopapp med lokal projektlagring. AI-generering får använda molntjänster.
+kaampi Comic är en fristående desktopapp med lokal projektlagring. AI-generering får använda molntjänster.
 
-**Ändra aldrig StoryBook AI:s repository, data, filer eller inställningar som del av arbete i detta projekt.**
+**Ändra aldrig kaampi Write:s repository, data, filer eller inställningar som del av arbete i detta projekt.**
 
 Kopplingen till StoryBook är enbart skrivskyddad import av en användarvald exportfil. Importen skapar en självständig kopia. Ingen direkt åtkomst till StoryBooks lagring, synkronisering eller återskrivning får införas.
 
-StoryCore är en framtida möjlighet, inte ett implementationsberoende.
+kaampi Codex är en framtida möjlighet, inte ett implementationsberoende.
 
 ## Arbete i detta repository
 

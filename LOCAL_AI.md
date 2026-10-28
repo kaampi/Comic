@@ -1,6 +1,6 @@
 # Lokal text-AI och beats
 
-ComicBook AI stöder samma två typer av lokala textservrar som StoryBook AI:
+kaampi Comic stöder samma två typer av lokala textservrar som kaampi Write:
 
 - Ollama: normalt `http://localhost:11434`.
 - LM Studio / llama.cpp med OpenAI-kompatibelt API: normalt `http://localhost:1234`. Adresser med eller utan `/v1` stöds.

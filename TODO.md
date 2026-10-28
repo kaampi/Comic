@@ -1,4 +1,4 @@
-# ComicBook AI — aktuella uppgifter
+# kaampi Comic — aktuella uppgifter
 
 Uppdaterad 2026-10-19. Exportkontroller, albumkort och den nya startguiden finns på main.
 
