@@ -1,0 +1,84 @@
+# kaampi Comic — funktionsreferens
+
+## Sidformat och export
+
+Öppna **Albuminställningar → Sidformat** och välj A4, Letter eller eget format i millimeter, stående eller liggande. Formatet gäller alla albumets sidor och sparas i albumbackupen. Nya album börjar i A4. Äldre album behåller tidigare 3:5-proportioner som ett eget format (180 × 300 mm) tills du ändrar inställningen. Ändrade proportioner kan ändra bildbeskärningen; bilder, bubblor och rutkopplingar finns kvar.
+
+Välj **Exportera** i albummenyn:
+
+- **PDF:** en fil med de valda sidorna i sidordning och rätt fysiska mått. Sidorna rasteriseras i vald dpi med JPEG-kvalitet 98%; texten är inte sökbar.
+- **PNG:** en förlustfri bild per sida.
+- **JPEG:** en bild per sida, med valbar kvalitet 50–100%.
+- En vald bildsida laddas ner direkt. Flera PNG/JPEG-sidor samlas i en vanlig ZIP med numrerade filnamn. Detta är inte en CBZ-export.
+
+Välj hela albumet eller markera sidor individuellt, samt 72, 150, 300 eller 600 dpi. Exportens sidformat kan ändras utan att albumets inställningar ändras. Vid andra proportioner bevaras hela sidan med vita marginaler som standard; **Fyll sidan och beskär kanterna** är ett aktivt val. Exporten innehåller sidbakgrund, beskärning, textlager, bubblor, lokala fonter och SFX, utan rutnät, läsordningsnummer eller redigeringshandtag. Tomma bildrutor exporteras vita med ram.
+
+Exporten körs lokalt och kan avbrytas. En sida får ha högst 40 miljoner pixlar och högst 16 384 pixlar per kant; minska dpi för större egna format. Tryckutfall, CMYK, CBZ och EPUB ingår inte i denna första exportversion.
+
+Kontroller: `npm run test:export`, `npm run test:module-paths`, `npm run test:adaptation`, `npm run test:manuscript-ui` och `npm run build`.
+
+## Ladda upp sidbakgrund
+
+Under **Sidor → Sidans bakgrund** kan du välja **Ladda upp bakgrundsbild** direkt, utan att först öppna bildredigeraren. PNG, JPEG och WebP stöds. När sidan har en bild visas **Byt bakgrundsbild**. Bildbytet behåller bakgrundens textlager och de vanliga bildrutorna ovanpå. Öppna **Redigera bakgrund och text** för beskärning, zoom och bubblor.
+
+
+## Textstorlek i punkter
+
+Textstorlek anges i **pt** i textlagrens egenskaper och albumets standardvärden. Samma värde ger samma storlek på sidan i stora och små bildrutor och på sidbakgrunden. När du ändrar rutans eller bubblans mått behåller texten sin storlek och radbryts efter det tillgängliga utrymmet. Bokstävernas proportioner bevaras även i avlånga rutor. Sidvy och export använder samma beräkning.
+
+Äldre album och importerade säkerhetskopior räknas automatiskt om till punkter en gång. De nya siffervärdena kan därför skilja sig från de gamla; textens tidigare höjd behålls ungefärligt.
+
+Radbrytningen mäter textens faktiska bredd i valt typsnitt och vikt. **Sidmarginal (%)** lägger lika stort avstånd på vänster och höger sida. Vid vänsterjustering blir högerkanten fortfarande ojämn eftersom hela ord flyttas till nästa rad. Manuella radbrytningar behålls.
+
+## Rutor med olika former
+
+Markera en ruta under **Sidor**, välj **Rutans form** och använd **Redigera form** för hörn som fäster på ett rutnät med fyra delningar per enkelpanel i sidlayouten. Större bildrutor får fler fästpunkter. Rektangel, romb, parallellogram, trapets och triangel stöds. **Klar med formen** återgår till storleksändring. Bild och text beskärs efter konturen i sidvy, redigerare och export. Former sparas med albumet och följer med backup. Se [PAGE_LAYOUT.md](../PAGE_LAYOUT.md).
+
+## Flytta bilden i rutan
+
+Öppna bildrutans eller bakgrundens redigerare och välj **Redigera bild**. Bilden följer musen uppåt, nedåt och åt sidorna även när dess höjd eller bredd redan passar rutan. **X-position** och **Y-position** anges i procent av rutans mått; positiva värden flyttar åt höger respektive nedåt. Zoom ändrar bildens storlek utan att ändra förflyttningens känslighet. Escape eller avbruten pekardragning återställer den pågående flytten. Äldre sparade beskärningar behålls tills du ändrar bildens visning.
+
+## Dela yta mellan sneda rutor
+
+Markera rutan som ska anpassas och välj **Grannruta** under **Passa mot grannruta**. Välj vänster, höger, ovanför eller under, ange **Marginal mellan rutor (mm)** och klicka **Passa kanten**. Standardmarginalen är 2 mm. Den valda rutan utökas och klipps längs en parallell kant, så att formerna kan dela på samma enkelpanel utan att deras synliga ytor överlappar. Avståndet mäts mellan ramarna, även längs diagonaler. Bilder, text och rutans ID behålls.
+
+Passningen sparas som rutans form och ingår i export och backup. Klicka **Passa kanten** igen om grannrutan ändras. Rutor som skulle överlappa en annan synlig form tillåts inte.
+
+## Rutornas ramar
+
+I **Albuminställningar → Standardram för rutor** väljer du färg med färgväljare eller hexkod, tjocklek i punkter (pt) och om ramen ska visas. Under **Sidor**, markera en ruta och ändra **Rutans ram** för att ge just den rutan egna värden. **Använd albumets standardram** återställer ärvda värden. Rutor utan eget val följer albumstandarden när den ändras.
+
+Ramändringar flyttar inte bilder eller textlager. Färg, tjocklek och dolda ramar följer med export och backup. **Passa kanten** tar hänsyn till båda rutornas aktuella ramtjocklek; passa kanten igen efter att tjockleken ändrats för att återställa önskad marginal. Äldre album behåller sina tidigare svarta ramar tills inställningarna ändras.
+
+
+## IDML-export för InDesign och Affinity (beta)
+
+Under albumets export väljer du **IDML — InDesign / Affinity (beta)**. Exportera hela albumet eller valda sidor. Sidformat och contain/cover följer exportens inställningar; DPI-valet används inte för IDML. Bilderna behåller sin pixelupplösning.
+
+Exporten ger en ZIP med en `.idml`, `Links/` med bilderna och `README.txt` med typsnittslista. **Packa upp hela ZIP-filen innan du öppnar IDML-filen.** Om programmet frågar efter bilder, peka på `Links/`. Installera de använda typsnitten eller välj ersättare i mottagarprogrammet. Affinity sparar fortsatt redigering i sitt eget format.
+
+Dokumentet har fem lager: Text, Bubbles and SFX, Panel borders, Images och Background. Bildernas ramar och beskärning är redigerbara; själva illustrationerna är rasterbilder. Bubblor, svansar, tankemoln och SFX-former exporteras som vektorbanor. Texten ligger i separata, redigerbara textramar. Exporten ändrar inte projektet eller dess bildversioner och kräver ingen AI-tjänst eller installerad InDesign.
+
+Betaversionen behöver importtestas i InDesign och Affinity. Kontrollera särskilt radbrytning, textöverflöd, typsnitt/vikt, lagerordning, bildpositioner och sidkanter. Typsnittsfiler bäddas inte in. Textvikter översätts till tillgängliga Regular/Bold-stilar. Text och bubblor som sticker utanför en panel klipps ännu inte mot panelkonturen. Exporten har inte verifierats med faktisk import i dessa två program i utvecklingsmiljön.
+
+Ett bra testalbum innehåller en bakgrundsbild, en sned panel, en inzoomad/flyttad bild, en roterad pratbubbla med böjd svans, en tankebubbla, en berättarruta och en ljudeffekt. Jämför med PDF-export från samma album och prova att ändra en replik och flytta en bild i respektive program.
+
+Utvecklingskontroll: `npm run test:idml` kontrollerar XML, paketkopplingar, lager, sidordning, text, kurvor, bildpaketering, avbrott och att projektet inte ändras.
+
+
+## Sidmarginaler och mellanrum mellan bildrutor
+
+I **Albuminställningar → Sidmarginaler och rutmellanrum** anger du överkant, underkant, vänster och höger marginal samt mellanrum mellan kolumner och rader. Alla mått anges i millimeter och gäller albumets sidor. Noll tillåts. Värden som inte lämnar plats för alla bildrutor sparas inte; minska först marginaler eller mellanrum om du vill använda ett mindre sidformat eller tätare rutnät.
+
+Rutornas ID:n, gridplaceringar, bilder och texter behålls. Rutornas fysiska storlek ändras när marginalerna eller mellanrummen ändras, vilket kan påverka beskärning och radbrytning; textstorlek i punkter behålls. Sidbakgrunden fyller hela sidan. De nya måtten används av förhandsvisning, fästpunkter, drag/släpp, PDF/PNG/JPEG- och IDML-export och följer med albumbackupen. Äldre album utan dessa inställningar behåller sina tidigare marginaler och mellanrum.
+
+Mellanrummen gäller sidans rutnät. För fria sneda rutor används fortfarande **Passa mot grannruta** och dess marginal mellan konturerna. Passa kanten igen efter att sidmåtten ändrats. Mycket tjocka panelramar kan sträcka sig utanför rutnätets bildrutor.
+
+Kontroll: `npm run test:page-spacing`.
+
+## Lokal albumlagring
+
+Album och bilder sparas i IndexedDB, så att bilder inte behöver rymmas inom localStorage-gränsen. Befintliga sparade album överförs automatiskt och textkopian tas bort först efter verifierad databassparning. Inställningar och egna stilmallar ligger fortsatt i localStorage.
+
+Om en äldre version har visat ett sparfel: exportera en albumbackup från den öppna appen innan omladdning. Osparade ändringar finns bara i minnet och kan sedan återställas från backupen. Överföringen kan endast läsa sådant som den äldre versionen faktiskt lyckades spara. Behåll backupen tills albumet har kontrollerats.
+
