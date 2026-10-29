@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="public/logo-dark.png">
-    <img src="public/logo.png" alt="kaampi Comic" width="420">
-  </picture>
+  <img src="public/logo_kaampi_comic.svg" alt="kaampi Comic" width="420">
 </p>
 
 <p align="center">A local-first comic creation tool. Shape the story, compose the page, make it yours.</p>
