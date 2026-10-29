@@ -14,7 +14,7 @@ export function ManuscriptSceneList({project,chapterId,selectedSceneId,locale,se
   const scene=chapterScenes(project,chapterId).find(s=>s.id===selectedSceneId);
   if(!scene)return <p className="quiet">{t('Välj en scen till vänster eller skapa en från markerad manustext.','Choose a scene on the left or create one from selected manuscript text.')}</p>;
   const range=sceneRange(project,scene),beats=sceneBeats(project,scene.id),placeholder=beats.length>0&&beats.every(b=>b.scenePlaceholder);
-  return <section className="manuscript-scenes" aria-label={t('Scenens egenskaper','Scene properties')}><h3>{t('Scenens egenskaper','Scene properties')}</h3><p className="quiet">{scene.origin==='storybook'?'StoryBook':t('Skapad i ComicBook','Created in ComicBook')} · {sceneStatus(project,scene,sv)}</p><fieldset disabled={busy}>
+  return <section className="manuscript-scenes" aria-label={t('Scenens egenskaper','Scene properties')}><h3>{t('Scenens egenskaper','Scene properties')}</h3><p className="quiet">{scene.origin==='storybook'?'StoryBook':t('Skapad i kaampi Comic','Created in kaampi Comic')} · {sceneStatus(project,scene,sv)}</p><fieldset disabled={busy}>
     <section className="scene-property-group"><h4>{t('Berättelse','Story')}</h4>
       <label>{t('Scennamn','Scene name')}<input value={scene.title} onChange={e=>onUpdate(p=>patchScene(p,scene.id,{title:e.target.value}))}/></label>
       <label>{t('Vad ska scenen åstadkomma?','What should the scene accomplish?')}<textarea rows={4} value={scene.purpose} onChange={e=>onUpdate(p=>patchScene(p,scene.id,{purpose:e.target.value}))}/></label>

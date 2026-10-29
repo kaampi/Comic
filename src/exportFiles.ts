@@ -31,7 +31,7 @@ export function rasterPdf(pages: PdfRasterPage[], widthMm: number, heightMm: num
   const parts: BlobPart[] = [], offsets = [0]; let length = 0;
   function append(value: string | Uint8Array) { const data = typeof value === "string" ? bytes(value) : value; parts.push(data as BlobPart); length += data.length; }
   function object(id: number, body: string | (string | Uint8Array)[]) { offsets[id] = length; append(`${id} 0 obj\n`); for (const p of Array.isArray(body) ? body : [body]) append(p); append("\nendobj\n"); }
-  append("%PDF-1.4\n%ComicBook\n");
+  append("%PDF-1.4\n%kaampi Comic\n");
   object(1, "<< /Type /Catalog /Pages 2 0 R >>");
   object(2, `<< /Type /Pages /Count ${pages.length} /Kids [${pages.map((_, i) => `${3 + i * 3} 0 R`).join(" ")}] >>`);
   pages.forEach((page, i) => {

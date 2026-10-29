@@ -8,15 +8,15 @@ kaampi Comic stöder samma två typer av lokala textservrar som kaampi Write:
 ## Anslut och välj modell
 
 1. Starta din lokala server och gör en textmodell tillgänglig.
-2. Öppna **Inställningar → Lokal text-AI** i ComicBook.
+2. Öppna **Inställningar → Lokal text-AI** i kaampi Comic.
 3. Välj servertyp och ange serveradressen.
 4. Klicka **Anslut / uppdatera modeller**.
 5. Välj **Modell för adaptering** ur serverns lista.
 6. Ange kontextstorlek. För Ollama kan **Läs modellens kontextgräns** fylla i modellens rapporterade gräns. Detta är modellens gräns, inte en mätning av datorns minne. För LM Studio / llama.cpp måste kontextstorleken också konfigureras i servern.
 
-Anslutningsinställningarna sparas i ComicBook. Varje servertyp har sin egen adress och sitt eget modellval. Inga inställningar eller data läses från eller skrivs till StoryBook.
+Anslutningsinställningarna sparas i kaampi Comic. Varje servertyp har sin egen adress och sitt eget modellval. Inga inställningar eller data läses från eller skrivs till StoryBook.
 
-Servern måste tillåta anslutningar från adressen där ComicBook körs. Om anslutningen blockeras av webbläsaren, kontrollera serverns CORS-inställningar. Lokala IP-adresser och lokala värdnamn stöds. Molnadresser och URL:er med inbäddade lösenord avvisas i detta läge.
+Servern måste tillåta anslutningar från adressen där kaampi Comic körs. Om anslutningen blockeras av webbläsaren, kontrollera serverns CORS-inställningar. Lokala IP-adresser och lokala värdnamn stöds. Molnadresser och URL:er med inbäddade lösenord avvisas i detta läge.
 
 ## Föreslå beats
 

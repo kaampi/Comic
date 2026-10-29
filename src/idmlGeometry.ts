@@ -27,7 +27,7 @@ export function svgGeometry(d: string): GeometryPath[] {
       cubic(point(start.x+(control.x-start.x)*2/3,start.y+(control.y-start.y)*2/3),point(end.x+(control.x-end.x)*2/3,end.y+(control.y-end.y)*2/3),end);
     } else if(command==='A') {
       let rx=number(),ry=number();const rotation=number(),large=number(),sweep=number(),end=read(),start=last().anchor;
-      // All arcs currently authored by ComicBook are circles without axis rotation.
+      // All arcs currently authored by kaampi Comic are circles without axis rotation.
       if(Math.abs(rx-ry)>1e-6||rotation!==0||rx<=0)throw new Error('unsupported-artwork-arc');
       const dx=end.x-start.x,dy=end.y-start.y,len=Math.hypot(dx,dy);
       if(len<1e-9)continue;

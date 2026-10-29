@@ -95,7 +95,7 @@ export function downloadDiagnostics() {
   const blob = new Blob([JSON.stringify({ format: 1, exportedAt: new Date().toISOString(), userAgent: navigator.userAgent, enabled, entries }, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = url; link.download = 'comicbook-ai-diagnostics.json';
+  link.href = url; link.download = 'kaampi-comic-diagnostics.json';
   document.body.append(link); link.click(); link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

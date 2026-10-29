@@ -97,7 +97,7 @@ export async function renderExportPage(project: ComicProject, page: ComicProject
     return {bytes:imageDensity(new Uint8Array(await blob.arrayBuffer()),mime,options.dpi),width,height};
   } finally { URL.revokeObjectURL(url);canvas.width=canvas.height=0; }
 }
-export function exportFilename(title:string) { return title.normalize("NFC").replace(/[<>:"/\\|?*\u0000-\u001f]/g,"-").replace(/[. ]+$/g,"").trim().slice(0,100)||"comicbook"; }
+export function exportFilename(title:string) { return title.normalize("NFC").replace(/[<>:"/\\|?*\u0000-\u001f]/g,"-").replace(/[. ]+$/g,"").trim().slice(0,100)||"kaampi-comic"; }
 export async function exportAlbum(project:ComicProject,options:ExportOptions,onProgress:(done:number,total:number)=>void,signal?:AbortSignal) {
   if(options.format==="idml") { const {exportIdml}=await import("./idmlExport");return exportIdml(project,options,onProgress,signal); }
   const pages=[...project.pages].sort((a,b)=>a.number-b.number).filter(p=>options.pageIds.includes(p.id));

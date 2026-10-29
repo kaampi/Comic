@@ -165,8 +165,8 @@ export function AlbumMenu({
             ? "Backupformatet stöds inte av denna version."
             : "This backup format is not supported."
           : sv
-            ? "Filen är inte en giltig ComicBook-albumbackup."
-            : "This file is not a valid ComicBook album backup.",
+            ? "Filen är inte en giltig kaampi Comic-albumbackup."
+            : "This file is not a valid kaampi Comic album backup.",
       );
     }
   }

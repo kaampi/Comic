@@ -5,7 +5,7 @@
 3. Select **Enable diagnostics logging** and close the dialog.
 4. Repeat the action that causes the problem, such as typing text or dragging in the color picker.
 5. If the app crashes, reopen or reload it at the same address in the same browser.
-6. Open Diagnostics again and select **Download diagnostic log**. Send `comicbook-ai-diagnostics.json` with a description of the action and any browser error code shown on the crashed tab.
+6. Open Diagnostics again and select **Download diagnostic log**. Send `kaampi-comic-diagnostics.json` with a description of the action and any browser error code shown on the crashed tab.
 7. Disable logging when you have finished testing.
 
 The log records estimated serialized album sizes, serialization and database write durations, superseded save counts, input event counts, long tasks where supported, and JavaScript error types and application source locations. Every two seconds it records activity, timer intervals and JavaScript heap measurements where the browser supports them. Error messages and arbitrary rejected values are omitted because they may contain private content.

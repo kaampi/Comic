@@ -93,7 +93,7 @@ export function parseStoryBookExport(raw: string): StoryBookImport {
   // Older installed kaampi Codex versions strip the new context fields entirely.
   // Stop before mapping scenes rather than crashing or silently losing context.
   if (manuscript.chapters.some(chapter => !Array.isArray(chapter.scenes))) {
-    throw new Error("kaampi Codex-installationen är för gammal. Stäng kaampi Comic, kör npm install i ComicBook-AI-mappen och starta appen igen. Läs sedan in exportfilen på nytt.");
+    throw new Error("kaampi Codex-installationen är för gammal. Stäng kaampi Comic, kör npm install i projektmappen för kaampi Comic och starta appen igen. Läs sedan in exportfilen på nytt.");
   }
 
   const chapterIds=manuscript.chapters.map(c=>c.id),sceneIds=manuscript.chapters.flatMap(c=>c.scenes.map(s=>s.id));

@@ -15,11 +15,11 @@ Projekt och bildresurser sparas lokalt. Molnbaserad AI är tillåten för att bi
 **kaampi Comic får aldrig ändra något i kaampi Write.**
 
 - Enda kopplingen är läsning av en exportfil som användaren själv väljer.
-- Import skapar en självständig kopia i ComicBook-projektet.
+- Import skapar en självständig kopia i kaampi Comic-projektet.
 - Exportfilen får inte skrivas över, flyttas eller raderas av importen.
 - Ingen åtkomst till StoryBooks databas, IndexedDB, inställningar eller arbetsmappar.
 - Ingen återskrivning, synkronisering, direkt API-koppling eller ändring av StoryBooks repository.
-- Alla bearbetningar och genererade resurser tillhör ComicBook-projektet.
+- Alla bearbetningar och genererade resurser tillhör kaampi Comic-projektet.
 - Detta repository ska utvecklas oberoende av kaampi Write.
 
 kaampi Codex är på planeringsstadiet. Första versionen ska fungera utan kaampi Codex. Importmodulens gräns kan senare återanvändas av en separat kaampi Codex-adapter; någon sådan adapter ingår inte nu.
@@ -80,7 +80,7 @@ Användaren ska kunna se vilket text- och bildmaterial som ska skickas till vald
 Första importvägen föreslås vara kaampi Write:s JSON-backup:
 kind = "storybook-ai.manuscript", format = 1.
 
-Befintlig struktur har kapitel, scener, fakta, profiler, media och en illustrationsstil som textsnapshot. Importadaptern översätter dessa till ComicBooks egen datamodell. Den ska validera filformat och rapportera inkompatibla versioner utan att ändra källfilen.
+Befintlig struktur har kapitel, scener, fakta, profiler, media och en illustrationsstil som textsnapshot. Importadaptern översätter dessa till kaampi Comics egen datamodell. Den ska validera filformat och rapportera inkompatibla versioner utan att ändra källfilen.
 
 ### 4.1 Importurval
 
@@ -93,7 +93,7 @@ Användaren granskar och väljer:
 
 Brainstormmaterial, kasserade kapitel och versionshistorik ska inte automatiskt följa med till AI-bearbetning. Regler för dolda entiteter och fakta måste respekteras. Föreslagna eller flaggade fakta ska inte automatiskt behandlas som etablerad sanning.
 
-Behåll källans bok-, kapitel-, scen- och entitets-ID:n som proveniens. ComicBook använder egna stabila ID:n internt. Kopplingen till originaltexten ska innehålla en textsnapshot och versions- eller innehållsfingeravtryck så att senare textändringar kan upptäckas.
+Behåll källans bok-, kapitel-, scen- och entitets-ID:n som proveniens. kaampi Comic använder egna stabila ID:n internt. Kopplingen till originaltexten ska innehålla en textsnapshot och versions- eller innehållsfingeravtryck så att senare textändringar kan upptäckas.
 
 Import av ett nytt underlag får inte skriva över ett pågående serieprojekt utan ett uttryckligt val. Ingen direkt synkronisering med StoryBook ingår.
 
@@ -171,9 +171,9 @@ Create backup… / Skapa säkerhetskopia… skapar albumfilen och återställer 
 
 ### 7.2 Kapitel från StoryBook
 
-StoryBook är sanningskällan. Import av dess export för andra appar är enkelriktad och skapar en självständig arbetskopia i ComicBook. Endast ComicBooks repository och lagring ändras. Ingen anslutning till StoryBooks repository, databas eller originalfil införs och ingen återexport till StoryBook görs.
+StoryBook är sanningskällan. Import av dess export för andra appar är enkelriktad och skapar en självständig arbetskopia i kaampi Comic. Endast kaampi Comics repository och lagring ändras. Ingen anslutning till StoryBooks repository, databas eller originalfil införs och ingen återexport till StoryBook görs.
 
-Kapitel behåller rubriker, ordning enligt exportens `sequence_index`, ursprungliga kapitel-ID:n och exakt importerad originaltext inklusive radslut och tomma kapitel. Varje kapitel får även ett eget stabilt ComicBook-ID och ett intervall i arbetskopians sammanhängande text. Originaltexten förblir en skrivskyddad lokal referens; textredigering ändrar bara arbetskopian. Beats och panelplaner har kapitelkopplingar, medan deras källpositioner fortsatt är globala och stabila vid kapitelbyte.
+Kapitel behåller rubriker, ordning enligt exportens `sequence_index`, ursprungliga kapitel-ID:n och exakt importerad originaltext inklusive radslut och tomma kapitel. Varje kapitel får även ett eget stabilt kaampi Comic-ID och ett intervall i arbetskopians sammanhängande text. Originaltexten förblir en skrivskyddad lokal referens; textredigering ändrar bara arbetskopian. Beats och panelplaner har kapitelkopplingar, medan deras källpositioner fortsatt är globala och stabila vid kapitelbyte.
 
 Manusvyn visar ett kapitel åt gången med kapitelval och föregående/nästa. Beatlista och beatnavigering följer valt kapitel. Man kan analysera en markering eller uttryckligen välja Föreslå beats för kapitlet. Navigation och import startar aldrig AI. Kapitelredigering bevarar andra kapitel, käll-ID:n, originalreferenser, bilder, sparade prompter och sidlayout; senare textintervall förskjuts och ändrade beats/paneler markeras för granskning.
 
@@ -189,7 +189,7 @@ Bildstilen väljs i grupper med stora förhandsbilder och lightbox. Textsteget v
 
 ### 7.4 Albumkort
 
-Befintliga album öppnas först i ett albumkort från startsidan, projektlistan och projektmenyn. Kortet visar titel, bildstil, sidantal och en märkning för album med StoryBook som importkälla. Omslagsbild och kort introduktion kan redigeras; Spara albuminfo eller Öppna album för redigering sparar ändringarna lokalt. Omslaget visas på startsidan och i projektlistan. Informationen följer lokal lagring och albumbackup. Öppna återupptar albumets senaste arbetssteg. Ta bort album använder befintlig raderingsbekräftelse och påverkar endast den valda lokala ComicBook-kopian, aldrig StoryBooks original eller andra album.
+Befintliga album öppnas först i ett albumkort från startsidan, projektlistan och projektmenyn. Kortet visar titel, bildstil, sidantal och en märkning för album med StoryBook som importkälla. Omslagsbild och kort introduktion kan redigeras; Spara albuminfo eller Öppna album för redigering sparar ändringarna lokalt. Omslaget visas på startsidan och i projektlistan. Informationen följer lokal lagring och albumbackup. Öppna återupptar albumets senaste arbetssteg. Ta bort album använder befintlig raderingsbekräftelse och påverkar endast den valda lokala kaampi Comic-kopian, aldrig StoryBooks original eller andra album.
 
 ## 8. Sidplanerare
 
@@ -438,12 +438,12 @@ Inställningsfönstret har två kolumner med oberoende scroll på större skärm
 
 AI-kolumnens Prompter erbjuder uppgiften Föreslå beats, ett större instruktionsfält, Spara prompt och Återställ standard. Standardprompten prioriterar berättelsens förändringar, orsak–handling–reaktion, viktiga upptäckter och lågmälda reaktioner framför mekanisk meningsindelning. Ett beat kan omfatta flera rutor; en representativ teckningsbar stund anges i bildbeskrivningen. AI:n granskar sammanhang, luckor och upprepningar innan svaret.
 
-Endast berättarinstruktionen är redigerbar. JSON-kontrakt, källsegment, kända entiteter och lokal validering styrs fortsatt av appen. Egna instruktioner sparas separat från albumet i ComicBooks lokala AI-inställningar och bevaras vid appuppdateringar samt modellbyte. Utkast används först vid sparning. Återställning tar bort anpassningen så att kommande standardförbättringar används. Befintliga beats ändras inte. Öppning och redigering startar inga AI-anrop; instruktionen används först när användaren uttryckligen begär beatförslag.
+Endast berättarinstruktionen är redigerbar. JSON-kontrakt, källsegment, kända entiteter och lokal validering styrs fortsatt av appen. Egna instruktioner sparas separat från albumet i kaampi Comics lokala AI-inställningar och bevaras vid appuppdateringar samt modellbyte. Utkast används först vid sparning. Återställning tar bort anpassningen så att kommande standardförbättringar används. Befintliga beats ändras inte. Öppning och redigering startar inga AI-anrop; instruktionen används först när användaren uttryckligen begär beatförslag.
 
 
 ### Kapitelpilot för beatförslag (2026-10-22)
 
-kaampi Codex-export format 1 och 2 stöds genom det uppdaterade delade kontraktet. Synopsis, kapitel-Brief och ordnade scener (originalprosa och separata instruktioner) bevaras i ComicBooks eget adaptionunderlag. Import startar ingen AI och godkänner inget automatiskt. I Manus → Kapitelpilot kan original visas, arbetskopior redigeras och respektive del godkännas för AI. Äldre album kan kompletteras med en användarvald export för samma bok, med matchande kapitel-ID:n och originalprosa, utan att ersätta manus, beats, bilder eller sidor. Full återimport/sammanfogning ingår inte.
+kaampi Codex-export format 1 och 2 stöds genom det uppdaterade delade kontraktet. Synopsis, kapitel-Brief och ordnade scener (originalprosa och separata instruktioner) bevaras i kaampi Comics eget adaptionunderlag. Import startar ingen AI och godkänner inget automatiskt. I Manus → Kapitelpilot kan original visas, arbetskopior redigeras och respektive del godkännas för AI. Äldre album kan kompletteras med en användarvald export för samma bok, med matchande kapitel-ID:n och originalprosa, utan att ersätta manus, beats, bilder eller sidor. Full återimport/sammanfogning ingår inte.
 
 Kapitel ärver albumets standardprofil för manustrohet, tempo, oberoende fokusprioriteringar, instruktion och skyddade ögonblick tills användaren gör egna kapitelval. Relevanta karaktärs- och platsbeskrivningar godkänns separat; användaren granskar när fakta gäller. Profilen är en instruktion, inte en garanti för korrekt urval.
 

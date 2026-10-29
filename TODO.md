@@ -39,4 +39,4 @@ Uppdaterad 2026-10-19. Exportkontroller, albumkort och den nya startguiden finns
 - [ ] Tryckexport med utfall och färghantering.
 - [ ] CBZ-export.
 
-Se PROJECT_SPEC.md för produktgränser och den övergripande planen. StoryBook får endast läsas genom användarvald export och får aldrig ändras av ComicBook.
+Se PROJECT_SPEC.md för produktgränser och den övergripande planen. StoryBook får endast läsas genom användarvald export och får aldrig ändras av kaampi Comic.
