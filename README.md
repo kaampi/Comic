@@ -1,119 +1,76 @@
-# kaampi Comic
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/logo-dark.png">
+    <img src="public/logo.png" alt="kaampi Comic" width="420">
+  </picture>
+</p>
 
-En fristående desktopapp som omvandlar litterär text till illustrerade serier med redigerbart manus, karaktärsreferenser, sidlayout och pratbubblor.
+<p align="center">A local-first comic creation tool. Shape the story, compose the page, make it yours.</p>
 
-**Status:** körbar prototyp med lokal projektlagring, StoryBook-import, adaptering, sidlayout och textlager. Markera text direkt i manuset för att skapa beats eller låta lokal text-AI föreslå dem. Högerpanelen samlar beat, rutor, bildprompter och bifogade bilder; sekvenser är tills vidare borttagna ur flödet.
+kaampi Comic turns literary text into illustrated comics — from a manuscript and visual beats to panel layouts, images, dialogue, and finished pages. Start with your own text or import a kaampi Write export, bring your own pictures or generate them with AI, and keep control of the script and page.
 
-## Grundprinciper
+**Your albums stay local.** Manuscripts, reference images, and artwork are stored on your computer. Editing and export work offline once the album's resources are available locally. AI is optional: text and image models are chosen separately, and generation may use local servers or cloud services. Importing or editing a manuscript never automatically sends it to AI.
 
-- Projekt, text, referensbilder och genererade bilder sparas lokalt.
-- AI-generering kan använda molntjänster. Manusmodell och bildmodell väljs separat.
-- Redigering, sidplanering och export ska fungera utan internet när projektets resurser finns lokalt.
-- kaampi Write kopplas in enbart genom import av exportfiler.
-- **kaampi Comic får aldrig ändra kaampi Write:s data, filer, inställningar eller repository.**
-- Import skapar en självständig kopia. Ingen återskrivning, synkronisering eller direkt åtkomst till StoryBooks lagring.
-- kaampi Codex är en möjlig framtida integration, inte ett beroende för första versionen.
+**Status:** a working prototype with a Tauri desktop shell. Windows installation and desktop workflows still need verification; see [Desktop setup](DESKTOP.md) for the current build status.
 
-## Getting started (English)
+## What's inside
 
-New beta tester? Read the [getting started guide](docs/GETTING_STARTED.md), also available from **Guide** in the app. Make a first page with your own pictures, add dialogue, download an album backup and export a reading copy. No AI setup is needed for this first exercise.
+- **Manuscript → Beats → Storyboard → Images → Pages** — adapt prose into visual moments, edit the script, and connect panels to the story. Select manuscript text to create beats yourself or ask a local text model for suggestions.
+- **Characters and image prompts** — keep reference images and editable prompts alongside the artwork, with a library of visual styles.
+- **Page composition** — choose page formats, margins, and panel spacing; move and resize panels, edit their contours, and fit neighbouring angled panels together.
+- **Images and layers** — upload artwork, adjust cropping and zoom, add page backgrounds and foreground images, and keep unused panels in a panel pool.
+- **Dialogue and typography** — edit speech and thought bubbles, captions, tails, connections, and sound effects. Mix fonts, sizes, and weights within a text area.
+- **Backup and recovery** — local album storage in IndexedDB, recovery points, and downloadable album backups. Browser and desktop installations have separate storage; use backup and restore to move albums between them.
+- **Export** — PDF, PNG, and JPEG reading copies, with page selection and resolution settings. IDML export (beta) packages editable text, vector bubble shapes, and linked images for further layout work.
 
-## Dokumentation
+IDML still needs import testing in InDesign and Affinity. Text and bubbles extending beyond a panel are not yet clipped to its contour in IDML. Print bleed, CMYK, CBZ, and EPUB are not included.
 
-- [DESKTOP.md](DESKTOP.md): starta Tauri-prototypen på Windows och bygg en installationsfil; flytta album via backup.
-- [TODO.md](TODO.md): aktuella uppgifter och nästa steg.
-- [PROJECT_SPEC.md](PROJECT_SPEC.md): funktioner, arkitektur, datamodell och utvecklingsplan.
-- [AGENTS.md](AGENTS.md): regler för arbete i detta repository.
-- [PAGE_LAYOUT.md](PAGE_LAYOUT.md): markera rutor och ändra deras storlek med hörn som fäster i rutnätet.
-- [LOCAL_AI.md](LOCAL_AI.md): anslut Ollama eller LM Studio / llama.cpp, välj modell och föreslå beats.
+See the [getting started guide](docs/GETTING_STARTED.md) for a first page with your own pictures — no AI setup required — and the [feature reference](docs/FEATURE_REFERENCE.md) for detailed layout and export instructions.
 
-## Första milstolpen
+## The kaampi family
 
-Ett komplett flöde för en kort serie på 1–3 sidor: text eller StoryBook-import → redigerbart seriemanus → sidmallar → bildgenerering → textlager → export.
+kaampi Comic is one of four sibling apps:
 
-Teknikförslaget är React, TypeScript, Vite och Tauri. Val av AI-tjänster och övriga bibliotek fastställs vid implementation.
+- **[kaampi Write](https://github.com/kaampi/Write)** — long-form prose
+- **[kaampi Comic](https://github.com/kaampi/Comic)** (this app) — comic scripting and panel layout
+- **[kaampi Explore](https://github.com/kaampi/Explore)** — tabletop campaign sandbox
+- **[kaampi Codex](https://github.com/kaampi/Codex)** — local Story Bible sharing and sync for supported sibling apps
 
+Each app is independent. Comic currently imports user-selected kaampi Write / StoryBook export files as a separate copy. It never changes Write's files, settings, or source data. Direct Codex pairing is not documented as a supported Comic workflow.
 
+## Quickstart
 
-## Sidformat och export
+**Run in a browser from source:**
 
-Öppna **Albuminställningar → Sidformat** och välj A4, Letter eller eget format i millimeter, stående eller liggande. Formatet gäller alla albumets sidor och sparas i albumbackupen. Nya album börjar i A4. Äldre album behåller tidigare 3:5-proportioner som ett eget format (180 × 300 mm) tills du ändrar inställningen. Ändrade proportioner kan ändra bildbeskärningen; bilder, bubblor och rutkopplingar finns kvar.
+```bash
+npm install
+npm run dev
+```
 
-Välj **Exportera** i albummenyn:
+**Run the desktop development app** after installing the Windows prerequisites in [DESKTOP.md](DESKTOP.md):
 
-- **PDF:** en fil med de valda sidorna i sidordning och rätt fysiska mått. Sidorna rasteriseras i vald dpi med JPEG-kvalitet 98%; texten är inte sökbar.
-- **PNG:** en förlustfri bild per sida.
-- **JPEG:** en bild per sida, med valbar kvalitet 50–100%.
-- En vald bildsida laddas ner direkt. Flera PNG/JPEG-sidor samlas i en vanlig ZIP med numrerade filnamn. Detta är inte en CBZ-export.
+```bash
+npm install
+npm run desktop:dev
+```
 
-Välj hela albumet eller markera sidor individuellt, samt 72, 150, 300 eller 600 dpi. Exportens sidformat kan ändras utan att albumets inställningar ändras. Vid andra proportioner bevaras hela sidan med vita marginaler som standard; **Fyll sidan och beskär kanterna** är ett aktivt val. Exporten innehåller sidbakgrund, beskärning, textlager, bubblor, lokala fonter och SFX, utan rutnät, läsordningsnummer eller redigeringshandtag. Tomma bildrutor exporteras vita med ram.
+Tauri starts the development server on port 5176. Stop an existing web development server before starting the desktop command. To build a Windows installer, run `npm run desktop:build`.
 
-Exporten körs lokalt och kan avbrytas. En sida får ha högst 40 miljoner pixlar och högst 16 384 pixlar per kant; minska dpi för större egna format. Tryckutfall, CMYK, CBZ och EPUB ingår inte i denna första exportversion.
+Existing browser albums do not appear automatically in the desktop app. Create an album backup in the browser, restore it in the desktop app, and check its contents before continuing.
 
-Kontroller: `npm run test:export`, `npm run test:module-paths`, `npm run test:adaptation`, `npm run test:manuscript-ui` och `npm run build`.
+For optional local text AI, see [Local AI](LOCAL_AI.md) for Ollama and OpenAI-compatible servers such as LM Studio or llama.cpp.
 
-## Ladda upp sidbakgrund
+## Documentation
 
-Under **Sidor → Sidans bakgrund** kan du välja **Ladda upp bakgrundsbild** direkt, utan att först öppna bildredigeraren. PNG, JPEG och WebP stöds. När sidan har en bild visas **Byt bakgrundsbild**. Bildbytet behåller bakgrundens textlager och de vanliga bildrutorna ovanpå. Öppna **Redigera bakgrund och text** för beskärning, zoom och bubblor.
+- [Getting started](docs/GETTING_STARTED.md) — create a first page, add dialogue, back up, and export
+- [Desktop setup](DESKTOP.md) — Windows prerequisites, development, installer builds, and moving albums
+- [Local AI](LOCAL_AI.md) — connect a local text model and propose beats
+- [Page layout](PAGE_LAYOUT.md) — panel geometry, contours, and placement
+- [Feature reference](docs/FEATURE_REFERENCE.md) — detailed image, typography, storage, and export instructions
+- [Current tasks](TODO.md) — completed work, verification, and next steps
+- [Project specification](PROJECT_SPEC.md) — product scope, architecture, and data model
+- [Repository rules](AGENTS.md) — guidance for contributors
 
+## Development checks
 
-## Textstorlek i punkter
-
-Textstorlek anges i **pt** i textlagrens egenskaper och albumets standardvärden. Samma värde ger samma storlek på sidan i stora och små bildrutor och på sidbakgrunden. När du ändrar rutans eller bubblans mått behåller texten sin storlek och radbryts efter det tillgängliga utrymmet. Bokstävernas proportioner bevaras även i avlånga rutor. Sidvy och export använder samma beräkning.
-
-Äldre album och importerade säkerhetskopior räknas automatiskt om till punkter en gång. De nya siffervärdena kan därför skilja sig från de gamla; textens tidigare höjd behålls ungefärligt.
-
-Radbrytningen mäter textens faktiska bredd i valt typsnitt och vikt. **Sidmarginal (%)** lägger lika stort avstånd på vänster och höger sida. Vid vänsterjustering blir högerkanten fortfarande ojämn eftersom hela ord flyttas till nästa rad. Manuella radbrytningar behålls.
-
-## Rutor med olika former
-
-Markera en ruta under **Sidor**, välj **Rutans form** och använd **Redigera form** för hörn som fäster på ett rutnät med fyra delningar per enkelpanel i sidlayouten. Större bildrutor får fler fästpunkter. Rektangel, romb, parallellogram, trapets och triangel stöds. **Klar med formen** återgår till storleksändring. Bild och text beskärs efter konturen i sidvy, redigerare och export. Former sparas med albumet och följer med backup. Se [PAGE_LAYOUT.md](PAGE_LAYOUT.md).
-
-## Flytta bilden i rutan
-
-Öppna bildrutans eller bakgrundens redigerare och välj **Redigera bild**. Bilden följer musen uppåt, nedåt och åt sidorna även när dess höjd eller bredd redan passar rutan. **X-position** och **Y-position** anges i procent av rutans mått; positiva värden flyttar åt höger respektive nedåt. Zoom ändrar bildens storlek utan att ändra förflyttningens känslighet. Escape eller avbruten pekardragning återställer den pågående flytten. Äldre sparade beskärningar behålls tills du ändrar bildens visning.
-
-## Dela yta mellan sneda rutor
-
-Markera rutan som ska anpassas och välj **Grannruta** under **Passa mot grannruta**. Välj vänster, höger, ovanför eller under, ange **Marginal mellan rutor (mm)** och klicka **Passa kanten**. Standardmarginalen är 2 mm. Den valda rutan utökas och klipps längs en parallell kant, så att formerna kan dela på samma enkelpanel utan att deras synliga ytor överlappar. Avståndet mäts mellan ramarna, även längs diagonaler. Bilder, text och rutans ID behålls.
-
-Passningen sparas som rutans form och ingår i export och backup. Klicka **Passa kanten** igen om grannrutan ändras. Rutor som skulle överlappa en annan synlig form tillåts inte.
-
-## Rutornas ramar
-
-I **Albuminställningar → Standardram för rutor** väljer du färg med färgväljare eller hexkod, tjocklek i punkter (pt) och om ramen ska visas. Under **Sidor**, markera en ruta och ändra **Rutans ram** för att ge just den rutan egna värden. **Använd albumets standardram** återställer ärvda värden. Rutor utan eget val följer albumstandarden när den ändras.
-
-Ramändringar flyttar inte bilder eller textlager. Färg, tjocklek och dolda ramar följer med export och backup. **Passa kanten** tar hänsyn till båda rutornas aktuella ramtjocklek; passa kanten igen efter att tjockleken ändrats för att återställa önskad marginal. Äldre album behåller sina tidigare svarta ramar tills inställningarna ändras.
-
-
-## IDML-export för InDesign och Affinity (beta)
-
-Under albumets export väljer du **IDML — InDesign / Affinity (beta)**. Exportera hela albumet eller valda sidor. Sidformat och contain/cover följer exportens inställningar; DPI-valet används inte för IDML. Bilderna behåller sin pixelupplösning.
-
-Exporten ger en ZIP med en `.idml`, `Links/` med bilderna och `README.txt` med typsnittslista. **Packa upp hela ZIP-filen innan du öppnar IDML-filen.** Om programmet frågar efter bilder, peka på `Links/`. Installera de använda typsnitten eller välj ersättare i mottagarprogrammet. Affinity sparar fortsatt redigering i sitt eget format.
-
-Dokumentet har fem lager: Text, Bubbles and SFX, Panel borders, Images och Background. Bildernas ramar och beskärning är redigerbara; själva illustrationerna är rasterbilder. Bubblor, svansar, tankemoln och SFX-former exporteras som vektorbanor. Texten ligger i separata, redigerbara textramar. Exporten ändrar inte projektet eller dess bildversioner och kräver ingen AI-tjänst eller installerad InDesign.
-
-Betaversionen behöver importtestas i InDesign och Affinity. Kontrollera särskilt radbrytning, textöverflöd, typsnitt/vikt, lagerordning, bildpositioner och sidkanter. Typsnittsfiler bäddas inte in. Textvikter översätts till tillgängliga Regular/Bold-stilar. Text och bubblor som sticker utanför en panel klipps ännu inte mot panelkonturen. Exporten har inte verifierats med faktisk import i dessa två program i utvecklingsmiljön.
-
-Ett bra testalbum innehåller en bakgrundsbild, en sned panel, en inzoomad/flyttad bild, en roterad pratbubbla med böjd svans, en tankebubbla, en berättarruta och en ljudeffekt. Jämför med PDF-export från samma album och prova att ändra en replik och flytta en bild i respektive program.
-
-Utvecklingskontroll: `npm run test:idml` kontrollerar XML, paketkopplingar, lager, sidordning, text, kurvor, bildpaketering, avbrott och att projektet inte ändras.
-
-
-## Sidmarginaler och mellanrum mellan bildrutor
-
-I **Albuminställningar → Sidmarginaler och rutmellanrum** anger du överkant, underkant, vänster och höger marginal samt mellanrum mellan kolumner och rader. Alla mått anges i millimeter och gäller albumets sidor. Noll tillåts. Värden som inte lämnar plats för alla bildrutor sparas inte; minska först marginaler eller mellanrum om du vill använda ett mindre sidformat eller tätare rutnät.
-
-Rutornas ID:n, gridplaceringar, bilder och texter behålls. Rutornas fysiska storlek ändras när marginalerna eller mellanrummen ändras, vilket kan påverka beskärning och radbrytning; textstorlek i punkter behålls. Sidbakgrunden fyller hela sidan. De nya måtten används av förhandsvisning, fästpunkter, drag/släpp, PDF/PNG/JPEG- och IDML-export och följer med albumbackupen. Äldre album utan dessa inställningar behåller sina tidigare marginaler och mellanrum.
-
-Mellanrummen gäller sidans rutnät. För fria sneda rutor används fortfarande **Passa mot grannruta** och dess marginal mellan konturerna. Passa kanten igen efter att sidmåtten ändrats. Mycket tjocka panelramar kan sträcka sig utanför rutnätets bildrutor.
-
-Kontroll: `npm run test:page-spacing`.
-
-## Lokal albumlagring
-
-Album och bilder sparas i IndexedDB, så att bilder inte behöver rymmas inom localStorage-gränsen. Befintliga sparade album överförs automatiskt och textkopian tas bort först efter verifierad databassparning. Inställningar och egna stilmallar ligger fortsatt i localStorage.
-
-Om en äldre version har visat ett sparfel: exportera en albumbackup från den öppna appen innan omladdning. Osparade ändringar finns bara i minnet och kan sedan återställas från backupen. Överföringen kan endast läsa sådant som den äldre versionen faktiskt lyckades spara. Behåll backupen tills albumet har kontrollerats.
-
+Run `npm run typecheck` and `npm run build`. Feature checks are listed in `package.json`, including `npm run test:export`, `npm run test:idml`, and `npm run test:project-storage`. Desktop verification is tracked separately in [DESKTOP.md](DESKTOP.md).
