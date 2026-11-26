@@ -155,6 +155,7 @@ try {
   cleanup();
   const {IDBFactory}=await import('fake-indexeddb');Object.defineProperty(globalThis,'indexedDB',{value:new IDBFactory(),configurable:true});
   const {saveProjectCollection,loadProjectCollection}=await import(pathToFileURL(join(temporary,'projectDatabase.mjs')));
+  await loadProjectCollection();
   await saveProjectCollection([composed]);assert.deepEqual((await loadProjectCollection())[0].pages[0].foregrounds,page.foregrounds);
   // Raster exports share this SVG composition. PNG data remains RGBA and all
   // text is painted after the foreground image passes.
