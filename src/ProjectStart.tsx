@@ -1,5 +1,5 @@
 import { AlbumCover } from "./AlbumCard";
-import type { ComicProject } from "./project";
+import { summarizeAlbum, type LocalAlbum } from "./albumSummary";
 import type { Locale } from "./settings";
 import type { AlbumSection } from "./AlbumMenu";
 import "./projectStart.css";
@@ -19,7 +19,7 @@ export function recordRecentVisit(visits: RecentVisit[], id: string, section: Al
   try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* A failed convenience preference must not block album editing. */ }
   return next;
 }
-export function recentAlbums(projects: ComicProject[], visits: RecentVisit[]) {
+export function recentAlbums(projects: LocalAlbum[], visits: RecentVisit[]) {
   const byId = new Map(projects.map(p => [p.id, p]));
   const visited = visits.flatMap(v => { const p = byId.get(v.id); byId.delete(v.id); return p ? [p] : []; });
   return [...visited, ...[...byId.values()].sort((a,b) => b.updatedAt.localeCompare(a.updatedAt))];
@@ -30,7 +30,7 @@ export function StartIcon({ kind }: { kind: "pages" | "manus" | "storybook" | "o
   </svg>;
 }
 export function ProjectStart({ projects, locale, onStart, onOpen, onBrowse, onRecovery }: {
-  projects: ComicProject[]; locale: Locale; onStart: (route: StartRoute) => void; onOpen: (id: string) => void; onBrowse: () => void; onRecovery?: () => void;
+  projects: LocalAlbum[]; locale: Locale; onStart: (route: StartRoute) => void; onOpen: (id: string) => void; onBrowse: () => void; onRecovery?: () => void;
 }) {
   const sv = locale === "sv", nb = locale === "nb", tr = (s: string, e: string, n = e) => sv ? s : nb ? n : e;
   const cards: { kind: StartRoute | "open"; title: string; text: string; action: string }[] = [
@@ -45,15 +45,15 @@ export function ProjectStart({ projects, locale, onStart, onOpen, onBrowse, onRe
       <span className="project-start-icon"><StartIcon kind={card.kind} /></span><span className="project-start-card-copy"><strong>{card.title}</strong><span>{card.text}</span><span className="project-start-action">{card.action}<StartIcon kind="arrow" /></span></span>
     </button>)}</div>
     <section className="project-start-recent" aria-labelledby="project-start-recent-title"><header><h2 id="project-start-recent-title">{tr("Senast öppnade", "Recently opened", "Sist åpnet")}</h2><button type="button" className="text-button" onClick={onBrowse}>{tr("Visa alla projekt", "Show all projects", "Vis alle prosjekter")} →</button></header>
-      {projects.length ? <div className="project-start-recent-list">{projects.slice(0,4).map(project => <button type="button" key={project.id} onClick={() => onOpen(project.id)}><AlbumCover project={project} /><span className="project-start-recent-title"><strong>{project.title}</strong>{project.introduction && <span className="album-intro">{project.introduction}</span>}{project.source.type === "storybook" && <span className="album-source-tag">kaampi Write</span>}<small>{project.style.name} · {project.pages.length} {tr("sidor", "pages", "sider")}</small></span><StartIcon kind="arrow" /></button>)}</div> : <p className="quiet">{tr("Dina album visas här när du har skapat eller öppnat dem.", "Your albums appear here after you create or open them.", "Albumene vises her når du har opprettet eller åpnet dem.")}</p>}
+      {projects.length ? <div className="project-start-recent-list">{projects.slice(0,4).map(summarizeAlbum).map(project => <button type="button" key={project.id} onClick={() => onOpen(project.id)}><AlbumCover project={project} /><span className="project-start-recent-title"><strong>{project.title}</strong>{project.introduction && <span className="album-intro">{project.introduction}</span>}{project.sourceType === "storybook" && <span className="album-source-tag">kaampi Write</span>}<small>{project.styleName} · {project.pageCount} {tr("sidor", "pages", "sider")}</small></span><StartIcon kind="arrow" /></button>)}</div> : <p className="quiet">{tr("Dina album visas här när du har skapat eller öppnat dem.", "Your albums appear here after you create or open them.", "Albumene vises her når du har opprettet eller åpnet dem.")}</p>}
     </section>{onRecovery?<button type="button" className="text-button" onClick={onRecovery}>{tr("Lokala återställningspunkter", "Local recovery points")}</button>:null}<footer className="project-start-footer"><span><StartIcon kind="local" />{tr("Dina projekt sparas lokalt på din dator.", "Your projects are saved locally on your computer.", "Prosjektene lagres lokalt på datamaskinen din.")}</span><span>kaampi Comic</span></footer>
   </section>;
 }
 
-export function ProjectChooser({ projects, locale, onOpen, onRestore, onRecovery }: { projects: ComicProject[]; locale: Locale; onOpen: (id: string) => void; onRestore: () => void; onRecovery?: () => void }) {
+export function ProjectChooser({ projects, locale, onOpen, onRestore, onRecovery }: { projects: LocalAlbum[]; locale: Locale; onOpen: (id: string) => void; onRestore: () => void; onRecovery?: () => void }) {
   const sv = locale === "sv", tr = (s: string, e: string) => sv ? s : e;
   return <div className="project-chooser"><p className="eyebrow">{tr("Dina projekt", "Your projects")}</p><h1 id="project-chooser-title">{tr("Öppna ett projekt", "Open a project")}</h1>
-    {projects.length ? <div className="project-chooser-list">{projects.map(project => <button type="button" key={project.id} onClick={() => onOpen(project.id)}><AlbumCover project={project} /><span className="project-chooser-copy"><strong>{project.title}</strong><small>{project.style.name} · {project.pages.length} {tr("sidor", "pages")}</small></span><span>{tr("Öppna", "Open")} →</span></button>)}</div> : <p className="quiet">{tr("Inga sparade album ännu. Skapa ett album eller återställ en backup.", "No saved albums yet. Create an album or restore a backup.")}</p>}
+    {projects.length ? <div className="project-chooser-list">{projects.map(summarizeAlbum).map(project => <button type="button" key={project.id} onClick={() => onOpen(project.id)}><AlbumCover project={project} /><span className="project-chooser-copy"><strong>{project.title}</strong><small>{project.styleName} · {project.pageCount} {tr("sidor", "pages")}</small></span><span>{tr("Öppna", "Open")} →</span></button>)}</div> : <p className="quiet">{tr("Inga sparade album ännu. Skapa ett album eller återställ en backup.", "No saved albums yet. Create an album or restore a backup.")}</p>}
     {onRecovery?<button className="text-button" type="button" onClick={onRecovery}>{tr("Lokala återställningspunkter", "Local recovery points")}</button>:null}
     <section className="project-chooser-backup"><h2>{tr("Har du en albumbackup?", "Have an album backup?")}</h2><p className="quiet">{tr("Återställ backupen som ett nytt album. Dina befintliga projekt finns kvar.", "Restore the backup as a new album. Your existing projects are retained.")}</p><button type="button" className="primary-button" onClick={onRestore}>{tr("Återställ säkerhetskopia…", "Restore backup…")}</button></section>
   </div>;

@@ -39,7 +39,7 @@ try {
   const { default: userEvent } = await import("@testing-library/user-event");
   const { App } = await import(pathToFileURL(join(temporary, "App.mjs")));
   const { createProject } = await import(pathToFileURL(join(temporary, "project.mjs")));
-  const { loadProjectCollection, saveProjectCollection, ProjectStorageError } = await import(pathToFileURL(join(temporary, "projectDatabase.mjs")));
+  const { loadProjectCollection, loadProjectCatalog, loadCatalogAlbum, saveProjectCollection, ProjectStorageError } = await import(pathToFileURL(join(temporary, "projectDatabase.mjs")));
   const legacyKey = "comicbook-ai.projects";
   const setFactory = () => Object.defineProperty(globalThis, "indexedDB", { value: new IDBFactory(), configurable: true });
   const originalPut = IDBObjectStore.prototype.put;
@@ -112,6 +112,42 @@ try {
   await assert.rejects(loadProjectCollection(), ProjectStorageError);
   assert.equal(localStorage.getItem(legacyKey), "{corrupt");
   console.log("PASS: failed migration and corrupt input retain legacy data and never create an empty replacement");
+
+  setFactory();
+  const companion = { ...project, id: "another-album", title: "Another album" };
+  const multiple = JSON.stringify([project, companion]);
+  localStorage.setItem(legacyKey, multiple);
+  let staged = 0;
+  IDBObjectStore.prototype.put = function (...args) {
+    const request = originalPut.apply(this, args);
+    if (this.name === "albums" && ++staged === 2) this.transaction.abort();
+    return request;
+  };
+  await assert.rejects(loadProjectCatalog(), ProjectStorageError);
+  assert.equal(localStorage.getItem(legacyKey), multiple, "interruption preserves source data");
+  staged = 0;
+  IDBObjectStore.prototype.put = function (...args) {
+    if (this.name === "albums") staged++;
+    return originalPut.apply(this, args);
+  };
+  const catalog = await loadProjectCatalog();
+  IDBObjectStore.prototype.put = originalPut;
+  assert.equal(staged, 1, "retry stages only the unfinished album");
+  assert.equal(catalog.length, 2);
+  assert.equal(catalog[0].pages, undefined, "catalog has no full album state");
+  assert.deepEqual(catalog[0].cover, project.cover);
+  assert.deepEqual((await loadCatalogAlbum(companion.id)).unplacedPanels, companion.unplacedPanels);
+  const db = await new Promise(resolve => {
+    const pending = indexedDB.open("comicbook-ai.album-records");
+    pending.onsuccess = () => resolve(pending.result);
+  });
+  const count = await new Promise(resolve => {
+    const pending = db.transaction("assets").objectStore("assets").count();
+    pending.onsuccess = () => resolve(pending.result);
+  });
+  db.close();
+  assert.equal(count, 1, "identical bytes share one Blob across projects and media aliases");
+  console.log("PASS: migration resumes after a per-album interruption, keeps the source, deduplicates bytes and loads album contents on demand");
 
   // A load failure blocks editing; retry loads the existing collection instead of overwriting it.
   localStorage.clear();localStorage.setItem("comicbook-ai.locale", "en");

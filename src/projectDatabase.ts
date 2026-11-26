@@ -1,3 +1,4 @@
+import { isOpenAlbum, type LocalAlbum } from "./albumSummary";
 import { createAlbumStorage, type AlbumCatalog, type AlbumStorage } from "./albumStorage";
 import { recordDiagnostic, diagnosticErrorName } from "./diagnostics";
 import { normalizeStoredProjects, readProjects, saveProjects, type ComicProject } from "./project";
@@ -8,11 +9,12 @@ const LEGACY_KEY = "comicbook-ai.projects";
 export type RecoveryPoint = { id: string; savedAt: string; albums: number };
 type RecoverySnapshot = RecoveryPoint & { serialized: string };
 
-type CapturedProject = { project: ComicProject; snapshot: ComicProject };
+type CapturedProject = { project: LocalAlbum; snapshot: LocalAlbum };
 type PendingSave = { captured: CapturedProject[]; promise: Promise<void>; superseded: number };
 type Session = {
   storage: AlbumStorage;
   catalog?: AlbumCatalog;
+  known?: boolean;
   projects: Map<string, ComicProject>;
   writes: Promise<unknown>;
   pending?: PendingSave;
@@ -117,6 +119,7 @@ export async function loadProjectCollection(): Promise<ComicProject[]> {
         (catalog?.albums ?? []).map(album => state.storage.openAlbum(album)),
       ));
       state.catalog = catalog;
+      state.known = true;
       state.projects = new Map(projects.map(project => [project.id, project]));
       recordDiagnostic("storage-loaded", { albums: projects.length, backend: "indexedDB" });
       return projects;
@@ -124,6 +127,34 @@ export async function loadProjectCollection(): Promise<ComicProject[]> {
   } catch (error) {
     throw new ProjectStorageError(classifyProjectSaveError(error, "storage", "indexedDB"));
   }
+}
+
+export async function loadProjectCatalog(): Promise<LocalAlbum[]> {
+  if (!hasProjectDatabase()) return readProjects();
+  const state = session();
+  try {
+    return await queue(state, async () => {
+      const catalog = await state.storage.catalog() ?? await migrateLegacy(state);
+      const summaries = catalog ? await state.storage.summaries(catalog) : [];
+      state.catalog = catalog;
+      state.known = true;
+      state.projects.clear();
+      return summaries;
+    });
+  } catch (error) {
+    throw new ProjectStorageError(classifyProjectSaveError(error, "storage", "indexedDB"));
+  }
+}
+
+export async function loadCatalogAlbum(id: string): Promise<ComicProject> {
+  const state = session();
+  return queue(state, async () => {
+    const album = state.catalog?.albums.find(album => album.id === id);
+    if (!album) throw new Error("Album no longer exists");
+    const [project] = normalizeStoredProjects([await state.storage.openAlbum(album)]);
+    state.projects.set(id, project);
+    return project;
+  });
 }
 
 export async function listRecoveryPoints(): Promise<RecoveryPoint[]> {
@@ -168,9 +199,9 @@ export async function readRecoveryPoint(id: string): Promise<ComicProject[]> {
   return decode(raw);
 }
 
-export function saveProjectCollection(projects: ComicProject[]): Promise<void> {
+export function saveProjectCollection(projects: LocalAlbum[]): Promise<void> {
   if (!hasProjectDatabase()) {
-    return saveProjects(projects) ? Promise.resolve() : Promise.reject(new ProjectStorageError(getProjectSaveFailure()!));
+    return saveProjects(projects.filter(isOpenAlbum)) ? Promise.resolve() : Promise.reject(new ProjectStorageError(getProjectSaveFailure()!));
   }
   const state = session();
   const captured = projects.map(project => ({ project, snapshot: { ...project } }));
@@ -187,10 +218,17 @@ export function saveProjectCollection(projects: ComicProject[]): Promise<void> {
     const start = performance.now();
     recordDiagnostic("save-start", { albums: batch.captured.length, superseded: batch.superseded });
     try {
+      if (!state.known && !await state.storage.catalog()) {
+        const old = await readLegacyDatabase();
+        if (old.collection !== undefined || localStorage.getItem(LEGACY_KEY) !== null) {
+          throw new DOMException("Load older albums before saving", "CollectionConflictError");
+        }
+      }
       const input = batch.captured.map(({ project, snapshot }) =>
         state.projects.get(project.id) === project ? project : snapshot);
       state.catalog = await state.storage.save(input, state.catalog, state.projects);
-      state.projects = new Map(batch.captured.map(({ project }) => [project.id, project]));
+      state.known = true;
+      state.projects = new Map(batch.captured.map(({ project }) => project).filter(isOpenAlbum).map(project => [project.id, project]));
       recordDiagnostic("save-complete", { durationMs: Math.round(performance.now() - start) });
     } catch (error) {
       recordDiagnostic("save-error", { name: diagnosticErrorName(error), durationMs: Math.round(performance.now() - start) });

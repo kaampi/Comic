@@ -1,3 +1,4 @@
+import { isOpenAlbum, summarizeAlbum, type AlbumSummary, type LocalAlbum } from "./albumSummary";
 import { createAssetPacker, unpackAlbum } from "./albumAssets";
 import type { ComicProject } from "./project";
 
@@ -6,7 +7,7 @@ const MANIFEST = "collection";
 const MIGRATION = "migration";
 const HISTORY = "history";
 const STORES = ["catalog", "albums", "assets"];
-type AlbumPointer = { id: string; title: string; updatedAt: string; revision: string };
+type AlbumPointer = Omit<AlbumSummary, "cover"> & { revision: string; cover?: unknown; coverHashes: string[] };
 type Manifest = { revision: string; albums: AlbumPointer[] };
 type StoredAlbum = { json: string; hashes: string[] };
 type Checkpoint = { id: string; savedAt: string; albums: AlbumPointer[] };
@@ -15,8 +16,9 @@ export type AlbumCatalog = Readonly<Manifest>;
 
 export interface AlbumStorage {
   catalog(): Promise<AlbumCatalog | undefined>;
+  summaries(catalog: AlbumCatalog): Promise<AlbumSummary[]>;
   openAlbum(album: AlbumPointer): Promise<ComicProject>;
-  save(projects: readonly ComicProject[], base: AlbumCatalog | undefined, previous: ReadonlyMap<string, ComicProject>): Promise<AlbumCatalog>;
+  save(projects: readonly LocalAlbum[], base: AlbumCatalog | undefined, previous: ReadonlyMap<string, ComicProject>): Promise<AlbumCatalog>;
   migrate(projects: readonly ComicProject[], fingerprint: string): Promise<AlbumCatalog>;
   checkpoints(): Promise<Checkpoint[]>;
 }
@@ -71,8 +73,11 @@ export function createAlbumStorage(factory: IDBFactory): AlbumStorage {
 
   async function prepare(project: ComicProject) {
     const packed = await pack(project);
+    const { cover: _cover, ...summary } = summarizeAlbum(project);
+    const cover = JSON.parse(packed.json).cover;
+    const coverHash = cover?.dataUrl?.$comicBinary;
     const pointer: AlbumPointer = {
-      id: project.id, title: project.title, updatedAt: project.updatedAt, revision: crypto.randomUUID(),
+      ...summary, revision: crypto.randomUUID(), cover, coverHashes: coverHash ? [coverHash] : [],
     };
     return { pointer, packed };
   }
@@ -112,6 +117,22 @@ export function createAlbumStorage(factory: IDBFactory): AlbumStorage {
   return {
     catalog,
     openAlbum,
+    async summaries(catalog) {
+      const assets = await transact(["assets"], "readonly", async store => {
+        const hashes = new Set(catalog.albums.flatMap(album => album.coverHashes));
+        return new Map(await Promise.all([...hashes].map(async hash =>
+          [hash, await request<Blob | undefined>(store("assets").get(hash))] as const)));
+      });
+      return Promise.all(catalog.albums.map(async ({ revision: _revision, cover, coverHashes, ...summary }) => {
+        try {
+          const preview = await unpackAlbum(JSON.stringify({ cover }), coverHashes, async hash => assets.get(hash));
+          return { ...summary, cover: preview.cover };
+        } catch {
+          // A missing thumbnail must not hide its album or prevent access to recovery.
+          return summary;
+        }
+      }));
+    },
     checkpoints: () => transact(["catalog"], "readonly", async store => await request(store("catalog").get(HISTORY)) ?? []),
     async save(projects, base, previous) {
       const old = new Map(base?.albums.map(album => [album.id, album]));
@@ -119,10 +140,11 @@ export function createAlbumStorage(factory: IDBFactory): AlbumStorage {
       const albums: AlbumPointer[] = [];
       for (const project of projects) {
         const pointer = old.get(project.id);
-        if (pointer && previous.get(project.id) === project) {
+        if (pointer && (!isOpenAlbum(project) || previous.get(project.id) === project)) {
           albums.push(pointer);
           continue;
         }
+        if (!isOpenAlbum(project)) throw conflict();
         const prepared = await prepare(project);
         changes.push(prepared);
         albums.push(prepared.pointer);

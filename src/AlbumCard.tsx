@@ -5,7 +5,7 @@ import { optimizeStylePreview } from "./stylePreview";
 import "./albumCard.css";
 
 export type AlbumInfo = Pick<ComicProject, "introduction" | "cover">;
-export function AlbumCover({ project }: { project: ComicProject }) {
+export function AlbumCover({ project }: { project: Pick<ComicProject, "cover"> }) {
   return <span className="album-cover">{project.cover ? <img src={project.cover.dataUrl} alt="" /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><rect x="3" y="2" width="18" height="20" rx="2" /><path d="M7 7h10M7 11h10M7 15h6" /></svg>}</span>;
 }
 export function AlbumCard({ project, locale, onSave, onOpen, onDelete }: {
