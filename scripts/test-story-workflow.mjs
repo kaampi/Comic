@@ -132,7 +132,7 @@ try {
   assert.ok(screen.getByRole("dialog",{name:"Justera bildprompt"}));
   await user.click(within(screen.getByRole("dialog",{name:"Justera bildprompt"})).getByRole("button",{name:"Stäng",exact:true}));
   const upload=screen.getByLabelText("Välj bild");
-  await user.upload(upload,new File(["synthetic"],"new.png",{type:"image/png"}));
+  await user.upload(upload,new File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],"new.png",{type:"image/png"}));
   const {waitFor}=await import("@testing-library/react");
   await waitFor(()=>assert.ok(working.adaptations[0].panelPlans.some(p=>p.image?.name==="new.png")));
   await user.click(screen.getByRole("button",{name:/Departure/}));

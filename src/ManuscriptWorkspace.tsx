@@ -1,3 +1,4 @@
+import { readRasterFile } from "./mediaValidation";
 import { ManuscriptContext } from "./ManuscriptContext";
 import { mergeBeatProposals } from "./mergeBeatProposals";
 import { ManuscriptSceneList, ManuscriptSceneNavigation } from "./ManuscriptSceneList";
@@ -376,22 +377,13 @@ export function ManuscriptWorkspace({
         ),
       });
     });
-  const loadImage = (planId: string, file: File) => {
-    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+  const loadImage = async (planId: string, file: File) => {
+    try {
+      const dataUrl = await readRasterFile(file);
+      onUpdate(p => patchBeatPanel(p, planId, { image: { name: file.name, dataUrl } }));
+    } catch {
       setMessage(t.readError);
-      return;
     }
-    const reader = new FileReader();
-    reader.onerror = () => setMessage(t.readError);
-    reader.onload = () => {
-      if (typeof reader.result === "string")
-        onUpdate((p) =>
-          patchBeatPanel(p, planId, {
-            image: { name: file.name, dataUrl: reader.result as string },
-          }),
-        );
-    };
-    reader.readAsDataURL(file);
   };
   const insertText = (text: string) => {
     const selection = window.getSelection();

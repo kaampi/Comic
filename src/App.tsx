@@ -1,3 +1,5 @@
+import { downloadAlbumBackup, rememberEmergencyAlbums } from "./emergencyBackup";
+import { readRasterFile } from "./mediaValidation";
 import { prepareManuscriptScenes } from "./manuscriptScenes";
 import { importedAdaptationContext } from "./chapterPilot";
 import { PromptSettings } from "./PromptSettings";
@@ -267,7 +269,7 @@ export function App() {
   const saveAlbumInfo = async (id: string, info: AlbumInfo) => {
     if(!projectsRef.current.some(project=>project.id===id))return false;
     const next=projectsRef.current.map(project=>project.id===id?{...project,...info,updatedAt:new Date().toISOString()}:project);
-    projectsRef.current=next;setProjects(next);
+    replaceProjects(next);
     return !(await persistProjects(next));
   };
   const showRecovery = () => {projectDialogTrigger.current=document.activeElement as HTMLElement;setPanel("storage-recovery");setProjectMenuOpen(false);};
@@ -313,6 +315,7 @@ export function App() {
       return failure;
     } finally { if (revision === saveRevision.current) setSaving(false); }
   };
+  const [emergencyFeedback, setEmergencyFeedback] = useState("");
   const saveErrorMessage = saveFailure ? projectSaveErrorText(saveFailure, locale) : undefined;
   useEffect(() => {
     if (!saveFailure && !saving) return;
@@ -321,7 +324,19 @@ export function App() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [saveFailure, saving]);
   const projectsRef = useRef(projects);
-  projectsRef.current = projects;
+  const replaceProjects = (next: ComicProject[]) => {
+    projectsRef.current = next;
+    rememberEmergencyAlbums(next);
+    setProjects(next);
+  };
+  rememberEmergencyAlbums(projectsRef.current);
+  const emergencyBackup = (project: ComicProject) => {
+    try {
+      setEmergencyFeedback(downloadAlbumBackup(project, true));
+    } catch {
+      setEmergencyFeedback(locale === "sv" ? "Nödbackupen kunde inte skapas." : "Could not create the emergency backup.");
+    }
+  };
   const loadRevision = useRef(0);
   const loadStoredProjects = async () => {
     const revision = ++loadRevision.current;
@@ -329,8 +344,7 @@ export function App() {
     try {
       const loaded = await loadProjectCollection();
       if (revision !== loadRevision.current) return;
-      projectsRef.current = loaded;
-      setProjects(loaded);
+      replaceProjects(loaded);
       setProjectsReady(true);
     } catch (error) {
       if (revision === loadRevision.current) setLoadFailure(error instanceof ProjectStorageError ? error.failure : classifyProjectSaveError(error, "storage", "indexedDB"));
@@ -345,8 +359,7 @@ export function App() {
   const updateActiveProject = (update: (project: ComicProject) => ComicProject) => {
     if (!activeProjectId) return;
     const next = projectsRef.current.map(project => project.id === activeProjectId ? { ...(panelEditor&&project.pages.some(p=>p.id===panelEditor.pageId&&p.foregrounds?.some(l=>l.id===panelEditor.placementId))?editPageForeground(project,panelEditor.pageId,panelEditor.placementId,update):panelEditor&&project.pages.some(p=>p.id===panelEditor.pageId&&p.background?.id===panelEditor.placementId)?editPageBackground(project,panelEditor.pageId,update):update(project)), updatedAt: new Date().toISOString() } : project);
-    projectsRef.current = next;
-    setProjects(next);
+    replaceProjects(next);
     persistProjects(next);
   };
   const changePool=(update:(project:ComicProject)=>ComicProject)=>updateActiveProject(project=>{const next=update(project);if(next!==project)setPoolUndoState(poolUndo(project,next));return next;});
@@ -612,24 +625,22 @@ export function App() {
     return true;
   };
   const setPlacementBorder=(pageId:string,placementId:string,panelBorder:PanelBorderStyle|undefined)=>updateActiveProject(project=>({...project,pages:project.pages.map(page=>page.id!==pageId?page:{...page,placements:page.placements.map(layer=>layer.id===placementId?{...layer,panelBorder}:layer)})}));
-  const addForegroundImage=(pageId:string,file:File)=>{
-    const projectId=activeProjectId;if(!projectId||!["image/png","image/webp","image/jpeg"].includes(file.type)){setImportError(foregroundText(locale).uploadError);return;}
-    const reader=new FileReader();reader.onerror=()=>setImportError(foregroundText(locale).uploadError);
-    reader.onload=()=>{
-      const dataUrl=reader.result;if(typeof dataUrl!=="string")return;
+  const addForegroundImage=async (pageId:string,file:File)=>{
+    const projectId=activeProjectId;
+    if(!projectId)return;
+    try {
+      const dataUrl=await readRasterFile(file);
       const owner=projectsRef.current.find(p=>p.id===projectId),page=owner?.pages.find(p=>p.id===pageId);if(!page)return;
       const layer=createForeground(page,file.name,dataUrl);
       const next=projectsRef.current.map(p=>p.id!==projectId?p:{...p,updatedAt:new Date().toISOString(),pages:p.pages.map(pg=>pg.id!==pageId?pg:{...pg,foregrounds:[...(pg.foregrounds??[]),layer]})});
-      projectsRef.current=next;setProjects(next);void persistProjects(next);
-    };reader.readAsDataURL(file);
+      replaceProjects(next);void persistProjects(next);
+    } catch { setImportError(foregroundText(locale).uploadError); }
   };
-  const loadPlacementImage=(pageId:string,placementId:string,file:File,background=false)=>{
-    if(!file.type.startsWith("image/"))return;
-    const reader=new FileReader();
-    reader.onload=()=>{
-      if(typeof reader.result!=="string")return;
+  const loadPlacementImage=async (pageId:string,placementId:string,file:File,background=false)=>{
+    try {
+      const dataUrl=await readRasterFile(file);
       const foreground=projectsRef.current.find(p=>p.id===activeProjectId)?.pages.find(p=>p.id===pageId)?.foregrounds?.some(l=>l.id===placementId);
-      const image={name:file.name,dataUrl:reader.result,zoom:1,offsetX:0,offsetY:0,positionMode:"frame" as const,fit:foreground?"contain" as const:"cover" as const};
+      const image={name:file.name,dataUrl,zoom:1,offsetX:0,offsetY:0,positionMode:"frame" as const,fit:foreground?"contain" as const:"cover" as const};
       updateActiveProject((project)=>{
         const source=background?ensurePageBackground(project,pageId):project;
         return {...source,pages:source.pages.map((page)=>page.id!==pageId?page:{
@@ -638,8 +649,7 @@ export function App() {
           placements:page.placements.map((p)=>p.id===placementId?{...p,image}:p)
         })};
       });
-    };
-    reader.readAsDataURL(file);
+    } catch { setImportError(foregroundText(locale).uploadError); }
   };
   const updatePlacementImageView=(pageId:string,placementId:string,patch:{flipX?:boolean;flipY?:boolean;zoom?:number;rotation?:number;offsetX?:number;offsetY?:number;fit?:"cover"|"contain";positionMode?:"frame"},restore=false)=>{
     const stage=document.querySelector<HTMLElement>(".panel-editor-stage");
@@ -841,13 +851,13 @@ export function App() {
       locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:""})):[],
       scenes:storyBookImport.chapters.filter((chapter)=>chapter.text).map((chapter)=>({id:"scene-"+crypto.randomUUID(),title:chapter.title,sourceText:chapter.text,panelIds:[]}))
     };
-    const next=[prepareManuscriptScenes(project),...projects];projectsRef.current=next;setProjects(next);persistProjects(next);setActiveProjectId(project.id);setProjectTab("manus");setSelectedPageId(null);setSelectedSceneId(null);setPanelEditor(null);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
+    const next=[prepareManuscriptScenes(project),...projects];replaceProjects(next);persistProjects(next);setActiveProjectId(project.id);setProjectTab("manus");setSelectedPageId(null);setSelectedSceneId(null);setPanelEditor(null);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
   };
   const deleteProject = (projectId:string) => {
     const project=projects.find((item)=>item.id===projectId);
     if(!project || !window.confirm(locale==="sv"?`Radera projektet "${project.title}" från projektlistan? En tidigare version kan finnas i lokala återställningspunkter. StoryBook-filer påverkas inte.`:`Delete "${project.title}" from the project list? An earlier version may remain in local recovery points. StoryBook files are not affected.`)) return;
     const next=projects.filter((item)=>item.id!==projectId);
-    projectsRef.current=next;setProjects(next); persistProjects(next);
+    replaceProjects(next); persistProjects(next);
     if(activeProjectId===projectId){setActiveProjectId(null);setSelectedSceneId(null);setSelectedPageId(null);setLayoutStart(null);setProjectTab("manus");}
     setProjectMenuOpen(false);if(albumCardId===projectId){setAlbumCardId(null);setPanel(null);}
   };
@@ -856,7 +866,7 @@ export function App() {
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
     const base = createProject(newTitle, newSource, style);
     const project: ComicProject = {...base,overlayDefaults:structuredClone(newTextDefaults),pageDefaults:{...appPageGrid},pages:newDestination === "pages" ? [{id:"page-"+crypto.randomUUID(),number:1,gridColumns:appPageGrid.gridColumns,gridRows:appPageGrid.gridRows,gridMode:"preset",placements:[]}] : []};
-    const next = [project, ...projects]; projectsRef.current=next;setProjects(next); persistProjects(next); setActiveProjectId(project.id);setProjectTab(newDestination);setSelectedPageId(project.pages[0]?.id??null);setSelectedSceneId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);
+    const next = [project, ...projects]; replaceProjects(next); persistProjects(next); setActiveProjectId(project.id);setProjectTab(newDestination);setSelectedPageId(project.pages[0]?.id??null);setSelectedSceneId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);
     setNewTitle(""); setNewSource("blank"); setPanel(null); setProjectMenuOpen(false);
   };
 
@@ -892,9 +902,10 @@ export function App() {
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? tr("dark") : tr("light")}</button>
         </div>
       </header>
-      {saveErrorMessage ? <div role="alert" className="import-error"><p>{saveErrorMessage}</p><button type="button" className="text-button" onClick={() => persistProjects(projectsRef.current)}>{locale === "sv" ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button>{activeProject ? <button type="button" className="text-button" onClick={() => setAlbumTool("backup")}>{locale === "sv" ? "Skapa säkerhetskopia…" : locale === "nb" ? "Opprett sikkerhetskopi…" : "Create backup…"}</button> : null}</div> : null}
+      {saveErrorMessage ? <div role="alert" className="import-error"><p>{saveErrorMessage}</p><button type="button" className="text-button" onClick={() => persistProjects(projectsRef.current)}>{locale === "sv" ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button>{activeProject ? <button type="button" className="text-button" onClick={() => emergencyBackup(activeProject)}>{locale === "sv" ? "Skapa nödbackup" : "Create emergency backup"}</button> : null}</div> : null}
 
-      <AlbumMenu onInspectExportIssue={issue=>{setAlbumTool(null);setProjectTab("pages");setSelectedPageId(issue.pageId||null);setPanelEditor(issue.kind==="unplaced-panel"?null:{pageId:issue.pageId,placementId:issue.layerId});setSelectedOverlayId(issue.overlayId??null);setImageEditPlacementId(null);setInlineTextEdit(null);}} section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} saving={saving} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={async (project, importedOrganization)=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];const error=await persistProjects(next);if(error)throw new Error(projectSaveErrorText(error,locale));if(importedOrganization)updateOrganization(mergeOrganization(organization, importedOrganization));projectsRef.current=next;setProjects(next);markBackupCreated(restored);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
+      {saveErrorMessage && emergencyFeedback && <p role="status">{emergencyFeedback}</p>}
+      <AlbumMenu onInspectExportIssue={issue=>{setAlbumTool(null);setProjectTab("pages");setSelectedPageId(issue.pageId||null);setPanelEditor(issue.kind==="unplaced-panel"?null:{pageId:issue.pageId,placementId:issue.layerId});setSelectedOverlayId(issue.overlayId??null);setImageEditPlacementId(null);setInlineTextEdit(null);}} section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} saving={saving} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={async (project, importedOrganization)=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];const error=await persistProjects(next);if(error)throw new Error(projectSaveErrorText(error,locale));if(importedOrganization)updateOrganization(mergeOrganization(organization, importedOrganization));replaceProjects(next);markBackupCreated(restored);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
       <main className="home">
         {activeProject ? <section className={`project-shell album-workspace-shell ${["manus","beats","storyboard","images"].includes(projectTab)?"workflow-shell":""}`}>
           <aside className="project-sidebar" aria-label={locale==="sv"?"Arbetsinställningar":"Workspace settings"}>

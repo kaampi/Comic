@@ -535,7 +535,7 @@ try {
     screen.getByLabelText("Bildprompt").value.includes("Ink illustration."),
   );
   const imageInput = document.querySelector(".beat-image-drop input");
-  const file = new window.File(["panel-image"], "panel.png", {
+  const file = new window.File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')], "panel.png", {
     type: "image/png",
   });
   fireEvent.change(imageInput, { target: { files: [file] } });
@@ -548,7 +548,7 @@ try {
   fireEvent.change(imageInput, {
     target: {
       files: [
-        new window.File(["new-image"], "replacement.png", {
+        new window.File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", 'base64')], "replacement.png", {
           type: "image/png",
         }),
       ],
@@ -1231,7 +1231,7 @@ try {
   const framesBeforeBackground = saved().pages[0].placements;
   await user.click(document.querySelector(".page-background-controls summary"));
   assert.equal(saved().pages[0].background,undefined);
-  await user.upload(screen.getByLabelText("Ladda upp bakgrundsbild",{exact:true,selector:"input"}),new window.File(["direct background"],"direct-background.png",{type:"image/png"}));
+  await user.upload(screen.getByLabelText("Ladda upp bakgrundsbild",{exact:true,selector:"input"}),new window.File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],"direct-background.png",{type:"image/png"}));
   await screen.findByLabelText("Byt bakgrundsbild",{exact:true,selector:"input"});
   const directBackgroundId=saved().pages[0].background.id;
   assert.equal(saved().pages[0].background.image.name,"direct-background.png");
@@ -1351,7 +1351,7 @@ try {
   assert.deepEqual(saved().pages[0].background.overlays,directBackgroundOverlays,'deleting connected bubble preserves partner and clears links');
 
   await user.click(within(directEditor.querySelector("header")).getByRole("button",{name:"Stäng",exact:true}));
-  await user.upload(screen.getByLabelText("Byt bakgrundsbild",{exact:true,selector:"input"}),new window.File(["replacement background"],"replacement.png",{type:"image/png"}));
+  await user.upload(screen.getByLabelText("Byt bakgrundsbild",{exact:true,selector:"input"}),new window.File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],"replacement.png",{type:"image/png"}));
   await waitFor(()=>assert.equal(saved().pages[0].background.image.name,"replacement.png"));
   assert.equal(saved().pages[0].background.id,directBackgroundId);
   assert.deepEqual(saved().pages[0].background.overlays,directBackgroundOverlays);
@@ -1380,13 +1380,13 @@ try {
   // Panels preserved in the pool are no longer available as duplicate library images.
   // A remaining text-only library entry can receive its own background image.
   if(!saved().pages[0].background.image){
-    await user.upload(backgroundEditor.querySelector('input[type="file"]'),new window.File(["synthetic image"],"background-seed.png",{type:"image/png"}));
+    await user.upload(backgroundEditor.querySelector('input[type="file"]'),new window.File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],"background-seed.png",{type:"image/png"}));
     await waitFor(()=>assert.ok(saved().pages[0].background.image));
   }
   await user.click(within(backgroundEditor.querySelector('.panel-image-controls')).getByRole('button',{name:'Ta bort bild',exact:true}));
   const backgroundUpload = backgroundEditor.querySelector('input[type="file"]');
   assert.ok(backgroundUpload);
-  await user.upload(backgroundUpload,new window.File(["synthetic image"],"background.png",{type:"image/png"}));
+  await user.upload(backgroundUpload,new window.File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],"background.png",{type:"image/png"}));
   await screen.findByRole("button",{name:"Lägg till SFX",exact:true});
   await new Promise(resolve=>setTimeout(resolve,20));
   assert.equal(saved().pages[0].background.image.name,"background.png");
@@ -1456,7 +1456,7 @@ try {
   // Replace the image so the following download/restore checks cover it too.
   await user.click(screen.getByRole("button",{name:"Redigera bakgrund och text",exact:true}));
   backgroundEditor=document.querySelector(".panel-editor-modal");
-  await user.upload(backgroundEditor.querySelector('input[type="file"]'),new window.File(["synthetic image"],"backup-background.png",{type:"image/png"}));
+  await user.upload(backgroundEditor.querySelector('input[type="file"]'),new window.File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],"backup-background.png",{type:"image/png"}));
   await new Promise(resolve=>setTimeout(resolve,20));
   await user.click(within(backgroundEditor.querySelector("header")).getByRole("button",{name:"Stäng",exact:true}));
   // Shape presets and 4×4 handles edit geometry without replacing frame contents.
@@ -1470,7 +1470,7 @@ try {
   }
   fireEvent.doubleClick(document.querySelector('.drawn-panel'));
   const shapeInitialEditor=document.querySelector('.panel-editor-modal');
-  await user.upload(shapeInitialEditor.querySelector('input[type="file"]'),new window.File(['initial shape image'],'shape-initial.png',{type:'image/png'}));
+  await user.upload(shapeInitialEditor.querySelector('input[type="file"]'),new window.File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],'shape-initial.png',{type:'image/png'}));
   await waitFor(()=>assert.equal(saved().pages[0].placements[0].image.name,'shape-initial.png'));
   await user.click(within(shapeInitialEditor.querySelector('.panel-editor-add-actions')).getByRole('button',{name:'Lägg till textruta',exact:true}));
   const bubbleBeforeShape=structuredClone(saved().pages[0].placements[0].overlays.at(-1));
@@ -1713,7 +1713,7 @@ try {
   assert.deepEqual(saved().pages[0].placements[0].overlays,beforeShapeImage.overlays,'removing the image preserves bubbles');
   assert.deepEqual(saved().pages[0].placements[0].shapePoints,beforeShapeImage.shapePoints,'removing the image preserves the frame');
   assert.ok(shapedEditor.querySelector('.panel-editor-dropzone'),'empty frame offers image upload');
-  await user.upload(shapedEditor.querySelector('input[type="file"]'),new window.File(['image'],'shaped.png',{type:'image/png'}));
+  await user.upload(shapedEditor.querySelector('input[type="file"]'),new window.File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],'shaped.png',{type:'image/png'}));
   await waitFor(()=>assert.equal(saved().pages[0].placements[0].image.name,'shaped.png'));
   assert.equal(saved().pages[0].placements[0].image.fit,'cover','replacement starts filling the panel');
   assert.equal(saved().pages[0].placements[0].image.zoom,1);

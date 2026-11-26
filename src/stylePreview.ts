@@ -1,5 +1,6 @@
+import { readRasterFile } from "./mediaValidation";
 export async function optimizeStylePreview(file: File): Promise<string> {
-  if (!file.type.startsWith("image/")) throw new Error("Unsupported image file");
+  await readRasterFile(file);
 
   const bitmap = await createImageBitmap(file);
   const maxWidth = 960;

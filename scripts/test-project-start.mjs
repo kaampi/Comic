@@ -207,7 +207,7 @@ try {
   globalThis.createImageBitmap=async()=>({width:600,height:800,close(){}});
   dom.window.HTMLCanvasElement.prototype.getContext=()=>({drawImage(){}});
   dom.window.HTMLCanvasElement.prototype.toDataURL=()=>"data:image/webp;base64,AAAA";
-  await user.upload(within(albumCard()).getByLabelText("Välj omslagsbild"),new File(["fixture"],"synthetic-cover.png",{type:"image/png"}));
+  await user.upload(within(albumCard()).getByLabelText("Välj omslagsbild"),new File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],"synthetic-cover.png",{type:"image/png"}));
   await waitFor(()=>assert.ok(albumCard().querySelector('.album-cover img')));
   dom.window.HTMLCanvasElement.prototype.getContext=context;dom.window.HTMLCanvasElement.prototype.toDataURL=encode;
   assert.equal(stored()[0].cover,undefined,"editing card fields remains a draft until saved or opened");
