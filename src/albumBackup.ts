@@ -63,6 +63,10 @@ function image(value: unknown) {
   if (value.positionMode !== undefined && value.positionMode !== "frame") throw new Error("invalid-backup");
   string(value.name);
   string(value.dataUrl);
+  // Backups are portable raster snapshots. Never allow active SVG or remote URLs
+  // to enter an album through a restored image field.
+  if (!/^data:image\/(?:png|jpeg|webp|gif);base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/i.test(value.dataUrl))
+    throw new Error("invalid-backup");
   for(const key of ["rotation","zoom","offsetX","offsetY"])if(value[key]!==undefined)number(value[key]);
   if(value.zoom!==undefined&&value.zoom<=0)throw new Error("invalid-backup");
   for (const key of ["flipX", "flipY"]) if (value[key] !== undefined && typeof value[key] !== "boolean") throw new Error("invalid-backup");
@@ -76,7 +80,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   if (p.format !== 1) throw new Error("unsupported-backup");
   for (const key of ["id", "title", "createdAt", "updatedAt"]) string(p[key]);
   if(p.introduction !== undefined) string(p.introduction);
-  if(p.cover !== undefined){record(p.cover);string(p.cover.name);string(p.cover.dataUrl);if(!/^data:image\/(png|jpeg|webp|gif);base64,/i.test(p.cover.dataUrl))throw new Error("invalid-backup");}
+  if(p.cover !== undefined) image(p.cover);
   validatePilotData(p);
   record(p.source);
   if (!["blank", "text", "storybook"].includes(p.source.type))
@@ -298,6 +302,7 @@ export function restoredAlbumCopy(project: ComicProject): ComicProject {
     updatedAt: now,
   };
 }
+
 
 
 
