@@ -5,6 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "test": "node scripts/run-tests.mjs",
     "dev": "vite",
     "start": "vite --open",
     "build": "tsc -b && vite build",
@@ -63,3 +64,4 @@
     "vite": "^6.4.3"
   }
 }
+
