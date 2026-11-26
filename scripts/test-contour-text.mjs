@@ -1,13 +1,12 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import {pathToFileURL} from 'node:url';
+import fs from 'node:fs';import path from 'node:path';import {pathToFileURL} from 'node:url';
 import ts from 'typescript';import {JSDOM} from 'jsdom';
 const dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'http://localhost'});
 for(const name of ['window','document','HTMLElement','SVGElement','Node','MutationObserver'])globalThis[name]=dom.window[name];
 Object.defineProperty(globalThis,'navigator',{value:dom.window.navigator,configurable:true});
 window.PointerEvent=window.MouseEvent;
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
-const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-contour-text-'));
-fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform==='win32'?'junction':'dir');
+const dir=fs.mkdtempSync(path.join(process.cwd(),'.comicbook-contour-text-'));
 function compile(root='src',target=dir){for(const entry of fs.readdirSync(root,{withFileTypes:true})){const from=path.join(root,entry.name),to=path.join(target,entry.name.replace(/\.tsx?$/,'.mjs'));if(entry.isDirectory()){fs.mkdirSync(to);compile(from,to);}else if(/\.tsx?$/.test(from))fs.writeFileSync(to,ts.transpileModule(fs.readFileSync(from,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"').replace(/import\("(\.[^"]+)"\)/g,'import("$1.mjs")'));}}
 try{
   compile();

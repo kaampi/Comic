@@ -6,10 +6,8 @@ import {
   mkdirSync,
   mkdtempSync,
   rmSync,
-  symlinkSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
-import { tmpdir } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 import { JSDOM } from "jsdom";
@@ -40,12 +38,7 @@ globalThis.PointerEvent = window.MouseEvent;
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const sourceRoot = join(projectRoot, "src");
-const compiledRoot = mkdtempSync(join(tmpdir(), "comicbook-ui-"));
-symlinkSync(
-  join(projectRoot, "node_modules"),
-  join(compiledRoot, "node_modules"),
-  process.platform === "win32" ? "junction" : "dir",
-);
+const compiledRoot = mkdtempSync(join(projectRoot, ".comicbook-ui-"));
 function compile(directory = "") {
   for (const entry of readdirSync(join(sourceRoot, directory), {
     withFileTypes: true,

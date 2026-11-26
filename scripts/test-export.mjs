@@ -1,11 +1,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
 import ts from 'typescript';
 import { pathToFileURL } from 'node:url';
-const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
-fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
+const dir=fs.mkdtempSync(path.join(process.cwd(),'.comicbook-export-'));
 try {
   for(const name of ['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','pageBackground.ts','exportFiles.ts','albumExport.tsx','bubbleShape.ts','SvgOverlay.tsx','contourText.ts','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');

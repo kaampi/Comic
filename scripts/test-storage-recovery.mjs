@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
@@ -15,7 +15,6 @@ for (const key of ["window", "document", "navigator", "localStorage", "HTMLEleme
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let networkRequests = 0;
 globalThis.fetch = async () => { networkRequests++; throw new Error("offline"); };
-symlinkSync(join(root, "node_modules"), join(temporary, "node_modules"), process.platform === "win32" ? "junction" : "dir");
 
 function compile(directory = "") {
   for (const entry of readdirSync(join(root, "src", directory), { withFileTypes: true })) {

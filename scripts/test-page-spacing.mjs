@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
@@ -9,7 +9,6 @@ const dom=new JSDOM("<!doctype html><html><body></body></html>",{url:"http://loc
 for(const key of ["window","document","navigator","localStorage","HTMLElement","Node","Event","MouseEvent"])Object.defineProperty(globalThis,key,{value:dom.window[key],configurable:true});
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 let requests=0;globalThis.fetch=async()=>{requests++;throw new Error("offline");};
-symlinkSync(join(root,"node_modules"),join(temporary,"node_modules"),process.platform==="win32"?"junction":"dir");
 function compile(directory="") {
   for(const entry of readdirSync(join(root,"src",directory),{withFileTypes:true})) {
     const path=join(directory,entry.name);if(entry.isDirectory()){compile(path);continue;}if(!/\.tsx?$/.test(entry.name)||entry.name==="main.tsx")continue;

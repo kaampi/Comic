@@ -8,6 +8,7 @@
     "dev": "vite",
     "start": "vite --open",
     "build": "tsc -b && vite build",
+    "test": "node scripts/run-tests.mjs",
     "typecheck": "tsc --noEmit",
     "test:module-paths": "node scripts/test-module-paths.mjs",
     "test:about": "node scripts/test-about.mjs",
