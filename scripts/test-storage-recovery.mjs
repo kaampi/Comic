@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
@@ -15,7 +15,6 @@ for (const key of ["window", "document", "navigator", "localStorage", "HTMLEleme
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let networkRequests = 0;
 globalThis.fetch = async () => { networkRequests++; throw new Error("offline"); };
-symlinkSync(join(root, "node_modules"), join(temporary, "node_modules"), process.platform === "win32" ? "junction" : "dir");
 
 function compile(directory = "") {
   for (const entry of readdirSync(join(root, "src", directory), { withFileTypes: true })) {
@@ -82,8 +81,8 @@ try {
   cleanup();console.log("PASS: real app surfaces save conflicts, preserves unsaved text and keeps the newer external album intact");
 
   // Downloading recovery data is read-only, including when the primary record is corrupt.
-  const rawDb=await new Promise((resolve,reject)=>{const request=indexedDB.open("comicbook-ai.albums",1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
-  await new Promise((resolve,reject)=>{const tx=rawDb.transaction("snapshots","readwrite");tx.objectStore("snapshots").put("{broken","collection");tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});rawDb.close();
+  const rawDb=await new Promise((resolve,reject)=>{const request=indexedDB.open("comicbook-ai.album-records",1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+  await new Promise((resolve,reject)=>{const tx=rawDb.transaction("catalog","readwrite");tx.objectStore("catalog").put("{broken","collection");tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});rawDb.close();
   await assert.rejects(tabA.loadProjectCollection());
   assert.ok((await tabA.listRecoveryPoints()).length>0,"checkpoints remain readable after primary corruption");
   const {LocalRecovery}=await local("LocalRecovery");

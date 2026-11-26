@@ -1334,3 +1334,8 @@ h2 { margin: 0; font-size: 1.05rem; }
 
 
 
+
+.local-save-status {
+  margin: .4rem 1rem;
+  text-align: right;
+}

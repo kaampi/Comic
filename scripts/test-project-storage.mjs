@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
@@ -15,7 +15,6 @@ for (const key of ["window", "document", "navigator", "localStorage", "HTMLEleme
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let networkRequests = 0;
 globalThis.fetch = async () => { networkRequests++; throw new Error("offline"); };
-symlinkSync(join(root, "node_modules"), join(temporary, "node_modules"), process.platform === "win32" ? "junction" : "dir");
 
 function compile(directory = "") {
   for (const entry of readdirSync(join(root, "src", directory), { withFileTypes: true })) {
@@ -40,7 +39,7 @@ try {
   const { default: userEvent } = await import("@testing-library/user-event");
   const { App } = await import(pathToFileURL(join(temporary, "App.mjs")));
   const { createProject } = await import(pathToFileURL(join(temporary, "project.mjs")));
-  const { loadProjectCollection, saveProjectCollection, ProjectStorageError } = await import(pathToFileURL(join(temporary, "projectDatabase.mjs")));
+  const { loadProjectCollection, loadProjectCatalog, loadCatalogAlbum, saveProjectCollection, ProjectStorageError } = await import(pathToFileURL(join(temporary, "projectDatabase.mjs")));
   const legacyKey = "comicbook-ai.projects";
   const setFactory = () => Object.defineProperty(globalThis, "indexedDB", { value: new IDBFactory(), configurable: true });
   const originalPut = IDBObjectStore.prototype.put;
@@ -56,9 +55,9 @@ try {
   assert.deepEqual(migrated[0].unplacedPanels,project.unplacedPanels,"held panel content and destination survive migration");
   assert.equal(migrated[0].introduction,project.introduction);assert.deepEqual(migrated[0].cover,project.cover);
   assert.deepEqual(JSON.parse(JSON.stringify(migrated[0].pages[0].placements[0])), project.pages[0].placements[0]);
-  assert.equal(localStorage.getItem(legacyKey), null);
+  assert.equal(localStorage.getItem(legacyKey), legacy);
   assert.equal((await loadProjectCollection())[0].id, project.id);
-  console.log("PASS: committed, verified migration retains IDs, images and geometry and releases legacy text quota");
+  console.log("PASS: committed, verified migration retains IDs, images and geometry and keeps the legacy data available for recovery");
 
   const huge = { ...project, title: "Large album", source: { ...project.source, textSnapshot: "x".repeat(6_000_000) } };
   dom.window.Storage.prototype.setItem = function(key, value) {
@@ -70,13 +69,13 @@ try {
   assert.equal((await loadProjectCollection())[0].source.textSnapshot.length, 6_000_000);
   assert.deepEqual((await loadProjectCollection())[0].unplacedPanels,project.unplacedPanels,"held panel content persists in IndexedDB");
   assert.deepEqual((await loadProjectCollection())[0].cover,project.cover);assert.equal((await loadProjectCollection())[0].introduction,project.introduction);
-  assert.equal(localStorage.getItem(legacyKey), null);
+  assert.equal(localStorage.getItem(legacyKey), legacy);
   await Promise.all(["Revision one", "Revision two", "Newest revision"].map(title => saveProjectCollection([{ ...project, title }])));
   assert.equal((await loadProjectCollection())[0].title, "Newest revision");
   console.log("PASS: projects larger than the reported 10.76 MiB persist with localStorage writes blocked; rapid saves retain newest revision");
 
   let burstWrites = 0;
-  IDBObjectStore.prototype.put = function(...args) { burstWrites++; return originalPut.apply(this, args); };
+  IDBObjectStore.prototype.put = function(...args) { if (this.name === "catalog" && args[1] === "collection") burstWrites++; return originalPut.apply(this, args); };
   const firstSave = saveProjectCollection([{ ...project, title: "Active revision" }]);
   await Promise.resolve(); // Start the active write, leaving IndexedDB pending.
   const burst = Array.from({ length: 250 }, (_, index) => saveProjectCollection([{ ...project, title: "Burst " + index }]));
@@ -108,11 +107,47 @@ try {
   assert.equal(localStorage.getItem(legacyKey), legacy);
   IDBObjectStore.prototype.put = originalPut;
   assert.equal((await loadProjectCollection())[0].id, project.id);
-  assert.equal(localStorage.getItem(legacyKey), null);
+  assert.equal(localStorage.getItem(legacyKey), legacy);
   setFactory();localStorage.setItem(legacyKey, "{corrupt");
   await assert.rejects(loadProjectCollection(), ProjectStorageError);
   assert.equal(localStorage.getItem(legacyKey), "{corrupt");
   console.log("PASS: failed migration and corrupt input retain legacy data and never create an empty replacement");
+
+  setFactory();
+  const companion = { ...project, id: "another-album", title: "Another album" };
+  const multiple = JSON.stringify([project, companion]);
+  localStorage.setItem(legacyKey, multiple);
+  let staged = 0;
+  IDBObjectStore.prototype.put = function (...args) {
+    const request = originalPut.apply(this, args);
+    if (this.name === "albums" && ++staged === 2) this.transaction.abort();
+    return request;
+  };
+  await assert.rejects(loadProjectCatalog(), ProjectStorageError);
+  assert.equal(localStorage.getItem(legacyKey), multiple, "interruption preserves source data");
+  staged = 0;
+  IDBObjectStore.prototype.put = function (...args) {
+    if (this.name === "albums") staged++;
+    return originalPut.apply(this, args);
+  };
+  const catalog = await loadProjectCatalog();
+  IDBObjectStore.prototype.put = originalPut;
+  assert.equal(staged, 1, "retry stages only the unfinished album");
+  assert.equal(catalog.length, 2);
+  assert.equal(catalog[0].pages, undefined, "catalog has no full album state");
+  assert.deepEqual(catalog[0].cover, project.cover);
+  assert.deepEqual((await loadCatalogAlbum(companion.id)).unplacedPanels, companion.unplacedPanels);
+  const db = await new Promise(resolve => {
+    const pending = indexedDB.open("comicbook-ai.album-records");
+    pending.onsuccess = () => resolve(pending.result);
+  });
+  const count = await new Promise(resolve => {
+    const pending = db.transaction("assets").objectStore("assets").count();
+    pending.onsuccess = () => resolve(pending.result);
+  });
+  db.close();
+  assert.equal(count, 1, "identical bytes share one Blob across projects and media aliases");
+  console.log("PASS: migration resumes after a per-album interruption, keeps the source, deduplicates bytes and loads album contents on demand");
 
   // A load failure blocks editing; retry loads the existing collection instead of overwriting it.
   localStorage.clear();localStorage.setItem("comicbook-ai.locale", "en");

@@ -1,4 +1,5 @@
 import React from "react";
+import { AppErrorBoundary } from "./AppErrorBoundary";
 import { installDiagnostics } from "./diagnostics";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
@@ -21,7 +22,7 @@ if (!root) throw new Error("kaampi Comic kunde inte hitta appens rot.");
 
 createRoot(root).render(
   <React.StrictMode>
-    <App />
+    <AppErrorBoundary><App /></AppErrorBoundary>
   </React.StrictMode>
 );
 

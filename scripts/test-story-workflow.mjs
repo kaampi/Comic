@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
@@ -18,7 +18,6 @@ dom.window.confirm=()=>true;
 let networkRequests = 0;
 const nativeFetch=globalThis.fetch;
 globalThis.fetch = async url => { if(String(url).startsWith('data:'))return nativeFetch(url); networkRequests++; throw new Error("offline"); };
-symlinkSync(join(root, "node_modules"), join(temporary, "node_modules"), process.platform === "win32" ? "junction" : "dir");
 
 function compile(directory = "") {
   for (const entry of readdirSync(join(root, "src", directory), { withFileTypes: true })) {
@@ -133,7 +132,7 @@ try {
   assert.ok(screen.getByRole("dialog",{name:"Justera bildprompt"}));
   await user.click(within(screen.getByRole("dialog",{name:"Justera bildprompt"})).getByRole("button",{name:"Stäng",exact:true}));
   const upload=screen.getByLabelText("Välj bild");
-  await user.upload(upload,new File(["synthetic"],"new.png",{type:"image/png"}));
+  await user.upload(upload,new File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],"new.png",{type:"image/png"}));
   const {waitFor}=await import("@testing-library/react");
   await waitFor(()=>assert.ok(working.adaptations[0].panelPlans.some(p=>p.image?.name==="new.png")));
   await user.click(screen.getByRole("button",{name:/Departure/}));

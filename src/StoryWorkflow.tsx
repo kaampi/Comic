@@ -1,3 +1,4 @@
+import { readRasterFile } from "./mediaValidation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ComicProject } from "./project";
@@ -63,7 +64,7 @@ export function StoryWorkflow({ project, locale, settings, stage, chapterId, onC
   const [reader, setReader] = useState(false), [promptId, setPromptId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [removedId,setRemovedId] = useState<string|null>(null);
-  const drag = useRef<string | null>(null), requests = useRef(new Set<FileReader>());
+  const drag = useRef<string | null>(null), requests = useRef(new Set<AbortController>());
   const promptPanel = panels.find(p => p.id === promptId);
   useEffect(() => { setSelected(null); setPromptId(null); setReader(false); setNotice(""); setRemovedId(null); drag.current = null; }, [scopeId]);
   useEffect(() => () => { for (const r of requests.current) r.abort(); requests.current.clear(); }, []);
@@ -75,13 +76,19 @@ export function StoryWorkflow({ project, locale, settings, stage, chapterId, onC
     setNotice(reaction ? tr("En ny reaktionsruta har lagts efter originalet. Fördela handling och repliker mellan rutorna.", "A reaction panel was added after the original. Distribute action and dialogue between them.") : "");
   };
   const move = (id: string, target: string) => onUpdate(p => moveStoryboardPanel(p, id, target, scopeId));
-  const upload = (file: File, id: string) => {
-    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { setNotice(tr("Välj en PNG-, JPEG- eller WebP-bild.", "Choose a PNG, JPEG or WebP image.")); return; }
-    const r = new FileReader(); requests.current.add(r);
-    r.onload = () => { requests.current.delete(r); onUpdate(p => patchBeatPanel(p, id, { image: { name: file.name, dataUrl: String(r.result) } })); setNotice(""); };
-    r.onerror = () => { requests.current.delete(r); setNotice(tr("Bilden kunde inte läsas. Försök igen.", "Could not read image. Try again.")); };
-    r.onabort = () => requests.current.delete(r);
-    r.readAsDataURL(file);
+  const upload = async (file: File, id: string) => {
+    const request = new AbortController();
+    requests.current.add(request);
+    try {
+      const dataUrl = await readRasterFile(file);
+      if (request.signal.aborted) return;
+      onUpdate(p => patchBeatPanel(p, id, { image: { name: file.name, dataUrl } }));
+      setNotice("");
+    } catch {
+      if (!request.signal.aborted) setNotice(tr("Bilden kunde inte läsas. Försök igen.", "Could not read image. Try again."));
+    } finally {
+      requests.current.delete(request);
+    }
   };
   const shotOptions: [ShotType, string][] = [["establishing-wide", tr("Etableringsbild", "Establishing shot")], ["wide", tr("Vid bild", "Wide")], ["full-shot", tr("Helbild", "Full shot")], ["medium", tr("Halvbild", "Medium")], ["medium-close", tr("Tät halvbild", "Medium close-up")], ["close-up", tr("Närbild", "Close-up")], ["extreme-close-up", tr("Extrem närbild", "Extreme close-up")], ["over-shoulder", tr("Över axeln", "Over shoulder")], ["reaction", tr("Reaktion", "Reaction")], ["insert", tr("Detaljbild", "Insert")]];
   const next = () => { if (stage === "beats") { onUpdate(p => ensureBeatPanels(p, scopeId)); onStage("storyboard"); } else onStage(stage === "storyboard" ? "images" : "pages"); };

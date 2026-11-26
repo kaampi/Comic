@@ -1,3 +1,4 @@
+import { isRasterDataUrl, readBlobDataUrl, validatedFont } from "./mediaValidation";
 import { pageLayers, isPageWideLayer } from "./pageBackground";
 import { textPieces } from "./richText";
 import { panelBorderStyle, panelBorderWidth } from "./panelBorder";
@@ -20,7 +21,6 @@ function check(signal?: AbortSignal) { if (signal?.aborted) throw new DOMExcepti
 async function loadImage(url: string): Promise<HTMLImageElement> {
   const image = new Image(); image.src = url; await image.decode(); return image;
 }
-async function blobData(blob: Blob) { return new Promise<string>((resolve,reject) => { const r = new FileReader(); r.onload=()=>resolve(String(r.result)); r.onerror=()=>reject(new Error("image-read-failed")); r.readAsDataURL(blob); }); }
 async function embeddedFonts(families: Set<string>, signal?: AbortSignal) {
   let result = "";
   for (const sheet of Array.from(document.styleSheets)) {
@@ -33,8 +33,8 @@ async function embeddedFonts(families: Set<string>, signal?: AbortSignal) {
       if (!match) continue;
       const url = new URL(match[1], sheet.href ?? location.href);
       if (url.origin !== location.origin) throw new Error("font-load-failed");
-      const response=await fetch(url, {signal}); if(!response.ok) throw new Error("font-load-failed");
-      const data=await blobData(await response.blob());
+      const response=await fetch(url, {signal, redirect: "error"}); if(!response.ok) throw new Error("font-load-failed");
+      const data=await readBlobDataUrl(await validatedFont(await response.blob()));
       result += `@font-face{font-family:"${family}";font-style:normal;font-weight:${face.style.getPropertyValue("font-weight") || "400"};src:url("${data}")}\n`;
     }
   }
@@ -63,8 +63,8 @@ export async function pageSvg(project: ComicProject, page: ComicProject["pages"]
     if(paint.art&&shaped)body.push(`<polygon points="${polygon}" fill="#fffdf7"/>`);
     if(paint.art&&layer.image) {
       let url=layer.image.dataUrl;
-      if(url.startsWith("blob:"))url=await blobData(await (await fetch(url)).blob());
-      if(!url.startsWith("data:image/"))throw new Error("image-load-failed");
+      if(url.startsWith("blob:"))url=await readBlobDataUrl(await (await fetch(url)).blob());
+      if(!isRasterDataUrl(url))throw new Error("image-load-failed");
       const image=await loadImage(url),placed=imagePlacement(layer.image,w,h,image.naturalWidth,image.naturalHeight);
       const cx=x+placed.x+placed.width/2,cy=y+placed.y+placed.height/2;
       const transform=[layer.image.rotation ? `rotate(${layer.image.rotation} ${cx} ${cy})` : "", layer.image.flipX || layer.image.flipY ? `translate(${cx} ${cy}) scale(${layer.image.flipX?-1:1} ${layer.image.flipY?-1:1}) translate(${-cx} ${-cy})` : ""].filter(Boolean).join(" ");

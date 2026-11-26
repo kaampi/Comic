@@ -1,15 +1,13 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 import { JSDOM } from "jsdom";
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/" });
 for (const key of ["window", "document", "navigator", "localStorage", "HTMLElement", "HTMLInputElement", "HTMLTextAreaElement", "Event", "MouseEvent", "Node", "NodeFilter", "FileReader"]) Object.defineProperty(globalThis, key, { value: dom.window[key], configurable: true });
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-const root = fileURLToPath(new URL("../", import.meta.url)), compiled = mkdtempSync(join(tmpdir(), "comic-prompts-"));
-symlinkSync(join(root, "node_modules"), join(compiled, "node_modules"), process.platform === "win32" ? "junction" : "dir");
+const root = fileURLToPath(new URL("../", import.meta.url)), compiled = mkdtempSync(join(root, ".comic-prompts-"));
 function compile(dir = "") {
   for (const entry of readdirSync(join(root, "src", dir), { withFileTypes: true })) {
     const path = join(dir, entry.name);

@@ -1,3 +1,7 @@
+import { createAutosave } from "./autosave";
+import { isOpenAlbum, type LocalAlbum } from "./albumSummary";
+import { downloadAlbumBackup, rememberEmergencyAlbums } from "./emergencyBackup";
+import { readRasterFile } from "./mediaValidation";
 import { prepareManuscriptScenes } from "./manuscriptScenes";
 import { importedAdaptationContext } from "./chapterPilot";
 import { PromptSettings } from "./PromptSettings";
@@ -67,7 +71,7 @@ import { manuscriptText } from "./manuscriptText";
 import { useEffect, useRef, useState } from "react";
 import { AI_MODES, type AiMode } from "./ai";
 import { applyLocale, applyTheme, LOCALES, readLocale, readTheme, readPageGridDefaults, savePageGridDefaults, type Locale, type Theme } from "./settings";
-import { hasProjectDatabase, loadProjectCollection, saveProjectCollection, ProjectStorageError } from "./projectDatabase";
+import { hasProjectDatabase, loadProjectCatalog, loadCatalogAlbum, saveProjectCollection, ProjectStorageError } from "./projectDatabase";
 import { classifyProjectSaveError, projectSaveErrorText, type ProjectSaveFailure } from "./projectSaveStatus";
 import { ColorModeSelect } from "./ColorModeSelect";
 import { renderOptionsForStyle, resolveColorMode, supportedColorModes, stylePromptForMode } from "./styleColorMode";
@@ -113,9 +117,11 @@ export function App() {
   const [styleQuery, setStyleQuery] = useState("");
   const [customStyles, setCustomStyles] = useState<IllustrationStyle[]>(readCustomStyles);
   const [styleDraft, setStyleDraft] = useState<StyleDraft | null>(null);
-  const [projects, setProjects] = useState<ComicProject[]>(() => hasProjectDatabase() ? [] : readProjects());
+  const [projects, setProjects] = useState<LocalAlbum[]>(() => hasProjectDatabase() ? [] : readProjects());
   const [projectsReady, setProjectsReady] = useState(() => !hasProjectDatabase());
   const [loadFailure, setLoadFailure] = useState<ProjectSaveFailure | null>(null);
+  const albumReadRevision = useRef(0);
+  const [albumOpenError, setAlbumOpenError] = useState(false);
   const [albumCardId,setAlbumCardId] = useState<string|null>(null);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
@@ -250,7 +256,7 @@ export function App() {
     const rect = layerRect(page, placement, format);
     return Math.max(1, rect.width - 2 * PANEL_BORDER) / Math.max(1, rect.height - 2 * PANEL_BORDER);
   };
-  const closePanel = () => {importReadRevision.current++;setPanel(null);};
+  const closePanel = () => {albumReadRevision.current++;importReadRevision.current++;setPanel(null);};
   const startNewProject = (route: StartRoute) => {
     importReadRevision.current++;projectDialogTrigger.current=document.activeElement as HTMLElement;
     setNewTextDefaults({});setNewTitle(""); setNewSource(route === "storybook" ? "storybook" : route === "manus" ? "text" : "blank");
@@ -263,16 +269,32 @@ export function App() {
     setActiveProjectId(id);setProjectTab(recentVisits.find(v=>v.id===id)?.section ?? "manus");
     setSelectedPageId(null);setSelectedSceneId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setAlbumTool(null);setPanel(null);setProjectMenuOpen(false);
   };
-  const showAlbumCard = (id: string) => {if(panel!=="open-project")projectDialogTrigger.current=document.activeElement as HTMLElement;setAlbumCardId(id);setPanel("album-details");setProjectMenuOpen(false);};
+  const showAlbumCard = async (id: string) => {
+    if (panel !== "open-project") projectDialogTrigger.current = document.activeElement as HTMLElement;
+    const request = ++albumReadRevision.current;
+    setAlbumOpenError(false);
+    setAlbumCardId(id);
+    setPanel("album-details");
+    setProjectMenuOpen(false);
+    const selected = projectsRef.current.find(project => project.id === id);
+    if (!selected || isOpenAlbum(selected)) return;
+    try {
+      const project = await loadCatalogAlbum(id);
+      if (request !== albumReadRevision.current) return;
+      replaceProjects(projectsRef.current.map(item => item === selected ? project : item));
+    } catch {
+      if (request === albumReadRevision.current) setAlbumOpenError(true);
+    }
+  };
   const saveAlbumInfo = async (id: string, info: AlbumInfo) => {
     if(!projectsRef.current.some(project=>project.id===id))return false;
     const next=projectsRef.current.map(project=>project.id===id?{...project,...info,updatedAt:new Date().toISOString()}:project);
-    projectsRef.current=next;setProjects(next);
+    replaceProjects(next);
     return !(await persistProjects(next));
   };
   const showRecovery = () => {projectDialogTrigger.current=document.activeElement as HTMLElement;setPanel("storage-recovery");setProjectMenuOpen(false);};
   const showProjectChooser = () => {projectDialogTrigger.current=document.activeElement as HTMLElement;setPanel("open-project");setProjectMenuOpen(false);};
-  const goHome = () => {importReadRevision.current++;setActiveProjectId(null);setPanel(null);setAlbumTool(null);setPanelEditor(null);setProjectMenuOpen(false);};
+  const goHome = () => {albumReadRevision.current++;importReadRevision.current++;setActiveProjectId(null);setPanel(null);setAlbumTool(null);setPanelEditor(null);setProjectMenuOpen(false);};
   const allStyles = [...BUILTIN_STYLES, ...customStyles];
   const styleCategories = Array.from(new Set(allStyles.map((style) => style.genre))).sort((a,b) => a.localeCompare(b));
   const visibleStyles = allStyles.filter((style) => {
@@ -300,11 +322,12 @@ export function App() {
   const [saveFailure, setSaveFailure] = useState<ProjectSaveFailure | null>(null);
   const [saving, setSaving] = useState(false);
   const saveRevision = useRef(0);
-  const persistProjects = async (next: ComicProject[]): Promise<ProjectSaveFailure | null> => {
+  const [autosave] = useState(() => createAutosave(saveProjectCollection));
+  const persistProjects = async (next: LocalAlbum[], debounce = false): Promise<ProjectSaveFailure | null> => {
     const revision = ++saveRevision.current;
     setSaving(true);
     try {
-      await saveProjectCollection(next);
+      await (debounce && hasProjectDatabase() ? autosave.schedule(next) : autosave.flush(next));
       if (revision === saveRevision.current) setSaveFailure(null);
       return null;
     } catch (error) {
@@ -313,6 +336,7 @@ export function App() {
       return failure;
     } finally { if (revision === saveRevision.current) setSaving(false); }
   };
+  const [emergencyFeedback, setEmergencyFeedback] = useState("");
   const saveErrorMessage = saveFailure ? projectSaveErrorText(saveFailure, locale) : undefined;
   useEffect(() => {
     if (!saveFailure && !saving) return;
@@ -320,17 +344,36 @@ export function App() {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [saveFailure, saving]);
+  useEffect(() => {
+    const flush = () => { if (document.visibilityState === "hidden") void autosave.flush()?.catch(() => undefined); };
+    document.addEventListener("visibilitychange", flush);
+    return () => {
+      document.removeEventListener("visibilitychange", flush);
+      void autosave.flush()?.catch(() => undefined);
+    };
+  }, [autosave]);
   const projectsRef = useRef(projects);
-  projectsRef.current = projects;
+  const replaceProjects = (next: LocalAlbum[]) => {
+    projectsRef.current = next;
+    rememberEmergencyAlbums(next.filter(isOpenAlbum));
+    setProjects(next);
+  };
+  rememberEmergencyAlbums(projectsRef.current.filter(isOpenAlbum));
+  const emergencyBackup = (project: ComicProject) => {
+    try {
+      setEmergencyFeedback(downloadAlbumBackup(project, true));
+    } catch {
+      setEmergencyFeedback(locale === "sv" ? "Nödbackupen kunde inte skapas." : "Could not create the emergency backup.");
+    }
+  };
   const loadRevision = useRef(0);
   const loadStoredProjects = async () => {
     const revision = ++loadRevision.current;
     setLoadFailure(null);
     try {
-      const loaded = await loadProjectCollection();
+      const loaded = await loadProjectCatalog();
       if (revision !== loadRevision.current) return;
-      projectsRef.current = loaded;
-      setProjects(loaded);
+      replaceProjects(loaded);
       setProjectsReady(true);
     } catch (error) {
       if (revision === loadRevision.current) setLoadFailure(error instanceof ProjectStorageError ? error.failure : classifyProjectSaveError(error, "storage", "indexedDB"));
@@ -340,14 +383,13 @@ export function App() {
     if (hasProjectDatabase()) void loadStoredProjects();
     return () => { loadRevision.current++; saveRevision.current++; };
   }, []);
-  const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
+  const activeProject = projects.filter(isOpenAlbum).find(project => project.id === activeProjectId) ?? null;
   const activeAdaptation = activeProject?.adaptations?.[0] ?? null;
   const updateActiveProject = (update: (project: ComicProject) => ComicProject) => {
     if (!activeProjectId) return;
-    const next = projectsRef.current.map(project => project.id === activeProjectId ? { ...(panelEditor&&project.pages.some(p=>p.id===panelEditor.pageId&&p.foregrounds?.some(l=>l.id===panelEditor.placementId))?editPageForeground(project,panelEditor.pageId,panelEditor.placementId,update):panelEditor&&project.pages.some(p=>p.id===panelEditor.pageId&&p.background?.id===panelEditor.placementId)?editPageBackground(project,panelEditor.pageId,update):update(project)), updatedAt: new Date().toISOString() } : project);
-    projectsRef.current = next;
-    setProjects(next);
-    persistProjects(next);
+    const next = projectsRef.current.map(project => project.id === activeProjectId && isOpenAlbum(project) ? { ...(panelEditor&&project.pages.some(p=>p.id===panelEditor.pageId&&p.foregrounds?.some(l=>l.id===panelEditor.placementId))?editPageForeground(project,panelEditor.pageId,panelEditor.placementId,update):panelEditor&&project.pages.some(p=>p.id===panelEditor.pageId&&p.background?.id===panelEditor.placementId)?editPageBackground(project,panelEditor.pageId,update):update(project)), updatedAt: new Date().toISOString() } : project);
+    replaceProjects(next);
+    void persistProjects(next, true);
   };
   const changePool=(update:(project:ComicProject)=>ComicProject)=>updateActiveProject(project=>{const next=update(project);if(next!==project)setPoolUndoState(poolUndo(project,next));return next;});
   const newPoolPage=(project:ComicProject)=>({id:"page-"+crypto.randomUUID(),number:project.pages.length+1,...project.pageDefaults,gridMode:"preset" as const,placements:[]});
@@ -359,7 +401,7 @@ export function App() {
   const retargetPool=(id:string,target?:string)=>changePool(project=>{const added=target==="__new__"?newPoolPage(project):null;const prepared=added?{...project,pages:[...project.pages,added]}:project;const destination=added?.id??target;if(destination)setSelectedPageId(destination);return retargetPooledPanel(prepared,id,destination);});
   const placeFromPool=(id:string,pageId:string,x:number,y:number)=>changePool(project=>{const next=placePooledPanel(project,id,pageId,x,y);if(next!==project){setSelectedLayoutPlacement({pageId,placementId:id});setSelectedPageId(pageId);}return next;});
   const pooledTargetAt=(event:React.DragEvent<HTMLDivElement>,pageId:string)=>{
-    const source=poolDragSource.current,project=projectsRef.current.find(project=>project.id===activeProjectId);
+    const source=poolDragSource.current,project=projectsRef.current.filter(isOpenAlbum).find(project=>project.id===activeProjectId);
     if(!source||!project||source.projectId!==project.id||!Array.from(event.dataTransfer.types).includes(POOL_DRAG_TYPE))return null;
     const item=project.unplacedPanels?.find(item=>item.layer.id===source.layerId),page=project.pages.find(page=>page.id===pageId),grid=event.currentTarget.querySelector<HTMLElement>(".layout-panels");if(!item||!page||!grid)return null;
     const box=grid.getBoundingClientRect(),metrics=pageGridMetrics(page,albumPageFormat(project)),scale=box.width/metrics.width;
@@ -523,7 +565,7 @@ export function App() {
   const updateAppGrid = (gridColumns:number, gridRows:number) => { const value={gridColumns,gridRows}; setAppPageGrid(value); savePageGridDefaults(value); };
   const libraryTargetAt=(event:React.DragEvent<HTMLDivElement>,pageId:string)=>{
     const source=libraryDragSource.current;
-    const project=projectsRef.current.find(project=>project.id===activeProjectId);
+    const project=projectsRef.current.filter(isOpenAlbum).find(project=>project.id===activeProjectId);
     if(!source||!project||source.projectId!==project.id||!Array.from(event.dataTransfer.types).includes(LIBRARY_DRAG_TYPE))return null;
     const grid=event.currentTarget.querySelector<HTMLElement>(".layout-panels");if(!grid)return null;
     const box=grid.getBoundingClientRect(),page=project.pages.find(p=>p.id===pageId);if(!page)return null;
@@ -604,7 +646,7 @@ export function App() {
     })}));
   };
   const fitPlacementEdge=(pageId:string,placementId:string,neighborId:string,side:PanelSide,margin:number)=>{
-    const project=projectsRef.current.find(p=>p.id===activeProjectId),page=project?.pages.find(p=>p.id===pageId);
+    const project=projectsRef.current.filter(isOpenAlbum).find(p=>p.id===activeProjectId),page=project?.pages.find(p=>p.id===pageId);
     const layer=page?.placements.find(p=>p.id===placementId),neighbor=page?.placements.find(p=>p.id===neighborId);
     if(!project||!page||!layer||!neighbor)return false;
     const fitted=fitPanelToNeighbor(page,layer,neighbor,side,margin,albumPageFormat(project),project.panelBorderDefaults);if(!fitted)return false;
@@ -612,24 +654,22 @@ export function App() {
     return true;
   };
   const setPlacementBorder=(pageId:string,placementId:string,panelBorder:PanelBorderStyle|undefined)=>updateActiveProject(project=>({...project,pages:project.pages.map(page=>page.id!==pageId?page:{...page,placements:page.placements.map(layer=>layer.id===placementId?{...layer,panelBorder}:layer)})}));
-  const addForegroundImage=(pageId:string,file:File)=>{
-    const projectId=activeProjectId;if(!projectId||!["image/png","image/webp","image/jpeg"].includes(file.type)){setImportError(foregroundText(locale).uploadError);return;}
-    const reader=new FileReader();reader.onerror=()=>setImportError(foregroundText(locale).uploadError);
-    reader.onload=()=>{
-      const dataUrl=reader.result;if(typeof dataUrl!=="string")return;
-      const owner=projectsRef.current.find(p=>p.id===projectId),page=owner?.pages.find(p=>p.id===pageId);if(!page)return;
+  const addForegroundImage=async (pageId:string,file:File)=>{
+    const projectId=activeProjectId;
+    if(!projectId)return;
+    try {
+      const dataUrl=await readRasterFile(file);
+      const owner=projectsRef.current.filter(isOpenAlbum).find(p=>p.id===projectId),page=owner?.pages.find(p=>p.id===pageId);if(!page)return;
       const layer=createForeground(page,file.name,dataUrl);
-      const next=projectsRef.current.map(p=>p.id!==projectId?p:{...p,updatedAt:new Date().toISOString(),pages:p.pages.map(pg=>pg.id!==pageId?pg:{...pg,foregrounds:[...(pg.foregrounds??[]),layer]})});
-      projectsRef.current=next;setProjects(next);void persistProjects(next);
-    };reader.readAsDataURL(file);
+      const next=projectsRef.current.map(p=>p.id!==projectId||!isOpenAlbum(p)?p:{...p,updatedAt:new Date().toISOString(),pages:p.pages.map(pg=>pg.id!==pageId?pg:{...pg,foregrounds:[...(pg.foregrounds??[]),layer]})});
+      replaceProjects(next);void persistProjects(next);
+    } catch { setImportError(foregroundText(locale).uploadError); }
   };
-  const loadPlacementImage=(pageId:string,placementId:string,file:File,background=false)=>{
-    if(!file.type.startsWith("image/"))return;
-    const reader=new FileReader();
-    reader.onload=()=>{
-      if(typeof reader.result!=="string")return;
-      const foreground=projectsRef.current.find(p=>p.id===activeProjectId)?.pages.find(p=>p.id===pageId)?.foregrounds?.some(l=>l.id===placementId);
-      const image={name:file.name,dataUrl:reader.result,zoom:1,offsetX:0,offsetY:0,positionMode:"frame" as const,fit:foreground?"contain" as const:"cover" as const};
+  const loadPlacementImage=async (pageId:string,placementId:string,file:File,background=false)=>{
+    try {
+      const dataUrl=await readRasterFile(file);
+      const foreground=projectsRef.current.filter(isOpenAlbum).find(p=>p.id===activeProjectId)?.pages.find(p=>p.id===pageId)?.foregrounds?.some(l=>l.id===placementId);
+      const image={name:file.name,dataUrl,zoom:1,offsetX:0,offsetY:0,positionMode:"frame" as const,fit:foreground?"contain" as const:"cover" as const};
       updateActiveProject((project)=>{
         const source=background?ensurePageBackground(project,pageId):project;
         return {...source,pages:source.pages.map((page)=>page.id!==pageId?page:{
@@ -638,8 +678,7 @@ export function App() {
           placements:page.placements.map((p)=>p.id===placementId?{...p,image}:p)
         })};
       });
-    };
-    reader.readAsDataURL(file);
+    } catch { setImportError(foregroundText(locale).uploadError); }
   };
   const updatePlacementImageView=(pageId:string,placementId:string,patch:{flipX?:boolean;flipY?:boolean;zoom?:number;rotation?:number;offsetX?:number;offsetY?:number;fit?:"cover"|"contain";positionMode?:"frame"},restore=false)=>{
     const stage=document.querySelector<HTMLElement>(".panel-editor-stage");
@@ -841,13 +880,13 @@ export function App() {
       locations:importLocations?storyBookImport.locations.map((item)=>({id:"location-"+crypto.randomUUID(),sourceId:item.id,name:item.name,description:item.description,visualIdentity:""})):[],
       scenes:storyBookImport.chapters.filter((chapter)=>chapter.text).map((chapter)=>({id:"scene-"+crypto.randomUUID(),title:chapter.title,sourceText:chapter.text,panelIds:[]}))
     };
-    const next=[prepareManuscriptScenes(project),...projects];projectsRef.current=next;setProjects(next);persistProjects(next);setActiveProjectId(project.id);setProjectTab("manus");setSelectedPageId(null);setSelectedSceneId(null);setPanelEditor(null);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
+    const next=[prepareManuscriptScenes(project),...projects];replaceProjects(next);persistProjects(next);setActiveProjectId(project.id);setProjectTab("manus");setSelectedPageId(null);setSelectedSceneId(null);setPanelEditor(null);setStoryBookImport(null);setStoryBookCards(null);setImportError("");setPanel(null);setProjectMenuOpen(false);
   };
   const deleteProject = (projectId:string) => {
     const project=projects.find((item)=>item.id===projectId);
     if(!project || !window.confirm(locale==="sv"?`Radera projektet "${project.title}" från projektlistan? En tidigare version kan finnas i lokala återställningspunkter. StoryBook-filer påverkas inte.`:`Delete "${project.title}" from the project list? An earlier version may remain in local recovery points. StoryBook files are not affected.`)) return;
     const next=projects.filter((item)=>item.id!==projectId);
-    projectsRef.current=next;setProjects(next); persistProjects(next);
+    replaceProjects(next); persistProjects(next);
     if(activeProjectId===projectId){setActiveProjectId(null);setSelectedSceneId(null);setSelectedPageId(null);setLayoutStart(null);setProjectTab("manus");}
     setProjectMenuOpen(false);if(albumCardId===projectId){setAlbumCardId(null);setPanel(null);}
   };
@@ -856,7 +895,7 @@ export function App() {
     const style = allStyles.find((item) => item.id === newStyleId) ?? BUILTIN_STYLES[0];
     const base = createProject(newTitle, newSource, style);
     const project: ComicProject = {...base,overlayDefaults:structuredClone(newTextDefaults),pageDefaults:{...appPageGrid},pages:newDestination === "pages" ? [{id:"page-"+crypto.randomUUID(),number:1,gridColumns:appPageGrid.gridColumns,gridRows:appPageGrid.gridRows,gridMode:"preset",placements:[]}] : []};
-    const next = [project, ...projects]; projectsRef.current=next;setProjects(next); persistProjects(next); setActiveProjectId(project.id);setProjectTab(newDestination);setSelectedPageId(project.pages[0]?.id??null);setSelectedSceneId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);
+    const next = [project, ...projects]; replaceProjects(next); persistProjects(next); setActiveProjectId(project.id);setProjectTab(newDestination);setSelectedPageId(project.pages[0]?.id??null);setSelectedSceneId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);
     setNewTitle(""); setNewSource("blank"); setPanel(null); setProjectMenuOpen(false);
   };
 
@@ -892,9 +931,13 @@ export function App() {
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? tr("dark") : tr("light")}</button>
         </div>
       </header>
-      {saveErrorMessage ? <div role="alert" className="import-error"><p>{saveErrorMessage}</p><button type="button" className="text-button" onClick={() => persistProjects(projectsRef.current)}>{locale === "sv" ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button>{activeProject ? <button type="button" className="text-button" onClick={() => setAlbumTool("backup")}>{locale === "sv" ? "Skapa säkerhetskopia…" : locale === "nb" ? "Opprett sikkerhetskopi…" : "Create backup…"}</button> : null}</div> : null}
+      {activeProject && !saveErrorMessage && <p className="quiet local-save-status" role="status">{saving
+        ? (locale === "sv" ? "Sparar lokalt…" : locale === "nb" ? "Lagrer lokalt…" : "Saving locally…")
+        : (locale === "sv" ? "Sparat lokalt" : locale === "nb" ? "Lagret lokalt" : "Saved locally")}</p>}
+      {saveErrorMessage ? <div role="alert" className="import-error"><p>{saveErrorMessage}</p><button type="button" className="text-button" onClick={() => persistProjects(projectsRef.current)}>{locale === "sv" ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button>{activeProject ? <button type="button" className="text-button" onClick={() => emergencyBackup(activeProject)}>{locale === "sv" ? "Skapa nödbackup" : "Create emergency backup"}</button> : null}</div> : null}
 
-      <AlbumMenu onInspectExportIssue={issue=>{setAlbumTool(null);setProjectTab("pages");setSelectedPageId(issue.pageId||null);setPanelEditor(issue.kind==="unplaced-panel"?null:{pageId:issue.pageId,placementId:issue.layerId});setSelectedOverlayId(issue.overlayId??null);setImageEditPlacementId(null);setInlineTextEdit(null);}} section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} saving={saving} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={async (project, importedOrganization)=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];const error=await persistProjects(next);if(error)throw new Error(projectSaveErrorText(error,locale));if(importedOrganization)updateOrganization(mergeOrganization(organization, importedOrganization));projectsRef.current=next;setProjects(next);markBackupCreated(restored);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
+      {saveErrorMessage && emergencyFeedback && <p role="status">{emergencyFeedback}</p>}
+      <AlbumMenu onInspectExportIssue={issue=>{setAlbumTool(null);setProjectTab("pages");setSelectedPageId(issue.pageId||null);setPanelEditor(issue.kind==="unplaced-panel"?null:{pageId:issue.pageId,placementId:issue.layerId});setSelectedOverlayId(issue.overlayId??null);setImageEditPlacementId(null);setInlineTextEdit(null);}} section={projectTab} onSection={setProjectTab} saveError={saveErrorMessage} saving={saving} onRetrySave={() => persistProjects(projectsRef.current)} project={activeProject} locale={locale} mode={albumTool} onMode={setAlbumTool} styles={[...BUILTIN_STYLES,...customStyles]} onUpdate={updateActiveProject} onClose={()=>{setActiveProjectId(null);setAlbumTool(null);}} onRestore={async (project, importedOrganization)=>{const restored=restoredAlbumCopy(project),next=[restored,...projectsRef.current];const error=await persistProjects(next);if(error)throw new Error(projectSaveErrorText(error,locale));if(importedOrganization)updateOrganization(mergeOrganization(organization, importedOrganization));replaceProjects(next);markBackupCreated(restored);setActiveProjectId(restored.id);setSaveFailure(null);setSelectedPageId(null);setSelectedLayoutPlacement(null);setPanelEditor(null);setProjectTab("manus");}} />
       <main className="home">
         {activeProject ? <section className={`project-shell album-workspace-shell ${["manus","beats","storyboard","images"].includes(projectTab)?"workflow-shell":""}`}>
           <aside className="project-sidebar" aria-label={locale==="sv"?"Arbetsinställningar":"Workspace settings"}>
@@ -1217,7 +1260,7 @@ export function App() {
         <article className={`guide-card${panel==="new-project"?" new-album-dialog":panel==="album-details"?" album-details-dialog":panel==="settings"?" settings-dialog":""}`} role="dialog" aria-modal="true" aria-labelledby={panel==="new-project"?"new-project-title":panel==="open-project"?"project-chooser-title":panel==="album-details"?"album-card-title":panel==="storage-recovery"?"local-recovery-title":panel==="settings"?"settings-title":undefined}>
           <div className="guide-actions"><button className="text-button" type="button" onClick={closePanel}>{tr("close")}</button></div>
           {panel === "storage-recovery"?<LocalRecovery locale={locale}/>:null}
-          {panel === "album-details" && (()=>{const project=projects.find(p=>p.id===albumCardId);return project ? <AlbumCard key={project.id} project={project} locale={locale} onSave={info=>saveAlbumInfo(project.id,info)} onOpen={()=>openProject(project.id)} onDelete={()=>deleteProject(project.id)} /> : null;})()}
+          {panel === "album-details" && (()=>{const project=projects.filter(isOpenAlbum).find(p=>p.id===albumCardId);return project ? <AlbumCard key={project.id} project={project} locale={locale} onSave={info=>saveAlbumInfo(project.id,info)} onOpen={()=>openProject(project.id)} onDelete={()=>deleteProject(project.id)} /> : <p id="album-card-title" role={albumOpenError ? "alert" : "status"}>{albumOpenError ? (locale === "sv" ? "Albumet kunde inte läsas." : "Could not read this album.") : (locale === "sv" ? "Läser albumet." : "Loading album.")}</p>;})()}
           {panel === "open-project" ? <ProjectChooser onRecovery={showRecovery} projects={recentAlbums(projects,recentVisits)} locale={locale} onOpen={showAlbumCard} onRestore={()=>{setPanel(null);setAlbumTool("backup");}} /> : null}
           {panel === "new-project" ? <NewAlbumWizard pageGrid={appPageGrid} locale={locale} source={newSource} name={newTitle} onName={setNewTitle} styles={allStyles} styleId={newStyleId} onStyle={setNewStyleId} defaults={newTextDefaults} onDefaults={setNewTextDefaults} importReady={Boolean(storyBookImport)} importReview={<div className="storybook-import"><div className="storybook-export-picker"><p className="quiet">{tr("storybookExportHelp")}</p><label className="file-picker">{tr("storybookExportFile")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookFile(file);}} /></label></div>{storyBookImport ? <label className="file-picker">{tr("storybookCardsOptional")}<input type="file" accept=".json,application/json" onChange={(e)=>{const file=e.target.files?.[0];if(file)void readStoryBookCardsFile(file);}} /></label> : null}{importError ? <p className="import-error">{importError}</p> : null}{storyBookImport ? <div className="import-review"><p className="eyebrow">{tr("reviewImport")}</p><strong>{storyBookImport.title}</strong>{storyBookImport.synopsis||storyBookImport.chapters.some(c=>c.brief||c.scenes?.length)?<p className="quiet">{locale==="sv"?"Synopsis, Briefs och scenunderlag sparas för granskning i Manus → Kapitelpilot. Inget används som AI-underlag före godkännande.":"Synopsis, Briefs and scenes are retained for review in Manuscript → Chapter pilot. Context is not used by AI before approval."}</p>:null}<span>{storyBookImport.text.length} tecken · {storyBookImport.chapters.length} kapitel · {storyBookImport.characters.length} karaktärer · {storyBookImport.locations.length} platser</span>{storyBookCards ? <span>{storyBookCards.characters.filter((card)=>!storyBookImport.sourceBookId||cardMatchesBook(card,storyBookImport.sourceBookId)).length} Cards-karaktärer hittade · porträtt kopieras lokalt</span> : <span className="quiet">{tr("storybookCardsHelp")}</span>}<label><input type="checkbox" checked={importCharacters} onChange={(e)=>setImportCharacters(e.target.checked)} /> {tr("copyCharacters")}</label><label><input type="checkbox" checked={importLocations} onChange={(e)=>setImportLocations(e.target.checked)} /> {tr("copyLocations")}</label><p className="quiet">{tr("importIndependent")}</p></div> : null}</div>} onCancel={closePanel} onCreate={newSource==="storybook"?createFromStoryBook:createNewProject} /> : null}
           {panel === "styles" ? <div className="style-library">

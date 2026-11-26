@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
@@ -9,7 +9,6 @@ const dom=new JSDOM("<!doctype html><html><body></body></html>",{url:"http://loc
 for(const key of ["window","document","navigator","localStorage","HTMLElement","Node","Event","MouseEvent"])Object.defineProperty(globalThis,key,{value:dom.window[key],configurable:true});
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 let requests=0;globalThis.fetch=async()=>{requests++;throw new Error("offline");};
-symlinkSync(join(root,"node_modules"),join(temporary,"node_modules"),process.platform==="win32"?"junction":"dir");
 function compile(directory="") {
   for(const entry of readdirSync(join(root,"src",directory),{withFileTypes:true})) {
     const path=join(directory,entry.name);if(entry.isDirectory()){compile(path);continue;}if(!/\.tsx?$/.test(entry.name)||entry.name==="main.tsx")continue;
@@ -47,7 +46,7 @@ try {
   const grid=f.pageGridMetrics(page,zero);assert.deepEqual(libraryDropTarget({...project,pageFormat:zero,pages:[page]},"page",grid.cellWidth+1,20,{width:grid.width,height:grid.height,gapX:0,gapY:0,border:3}),{kind:"new",x:1,y:0});
   const React=await import("react"),{render,screen,cleanup}=await import("@testing-library/react"),{default:userEvent}=await import("@testing-library/user-event"),{App}=await load("App");
   localStorage.setItem("comicbook-ai.locale","sv");saveProjects([project]);const user=userEvent.setup({document});render(React.createElement(App));
-  await user.click(screen.getByRole("button",{name:/Spacing fixture/}));await user.click(screen.getByRole("button",{name:"Albuminställningar",exact:true}));
+  await user.click(screen.getByRole("button",{name:/Spacing fixture/}));await user.click(screen.getByRole("button",{name:/Öppna album för redigering/}));await user.click(screen.getByRole("button",{name:"Albuminställningar",exact:true}));
   const saved=()=>JSON.parse(localStorage.getItem("comicbook-ai.projects"))[0];const originalPages=JSON.parse(JSON.stringify(readProjects()[0].pages));
   const top=screen.getByLabelText("Överkant (mm)");await user.clear(top);await user.type(top,"15");close(saved().pageFormat.spacing.topMm,15);
   const gap=screen.getByLabelText("Mellan kolumner (mm)");await user.clear(gap);await user.type(gap,"0");assert.equal(saved().pageFormat.spacing.columnGapMm,0);

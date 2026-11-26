@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
@@ -18,7 +18,6 @@ dom.window.confirm=()=>true;
 let networkRequests = 0;
 const nativeFetch=globalThis.fetch;
 globalThis.fetch = async url => { if(String(url).startsWith('data:'))return nativeFetch(url); networkRequests++; throw new Error("offline"); };
-symlinkSync(join(root, "node_modules"), join(temporary, "node_modules"), process.platform === "win32" ? "junction" : "dir");
 
 function compile(directory = "") {
   for (const entry of readdirSync(join(root, "src", directory), { withFileTypes: true })) {
@@ -208,7 +207,7 @@ try {
   globalThis.createImageBitmap=async()=>({width:600,height:800,close(){}});
   dom.window.HTMLCanvasElement.prototype.getContext=()=>({drawImage(){}});
   dom.window.HTMLCanvasElement.prototype.toDataURL=()=>"data:image/webp;base64,AAAA";
-  await user.upload(within(albumCard()).getByLabelText("Välj omslagsbild"),new File(["fixture"],"synthetic-cover.png",{type:"image/png"}));
+  await user.upload(within(albumCard()).getByLabelText("Välj omslagsbild"),new File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=", 'base64')],"synthetic-cover.png",{type:"image/png"}));
   await waitFor(()=>assert.ok(albumCard().querySelector('.album-cover img')));
   dom.window.HTMLCanvasElement.prototype.getContext=context;dom.window.HTMLCanvasElement.prototype.toDataURL=encode;
   assert.equal(stored()[0].cover,undefined,"editing card fields remains a draft until saved or opened");

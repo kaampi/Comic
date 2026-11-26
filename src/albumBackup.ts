@@ -1,3 +1,5 @@
+import { isPortableRasterUrl } from "./mediaValidation";
+import { BUILTIN_STYLES } from "./stylesLibrary";
 import { validateManuscriptScenes } from "./manuscriptSceneTypes";
 import { validatePilotData } from "./chapterPilot";
 import { validBubbleShape } from "./bubbleShape";
@@ -9,6 +11,8 @@ import { normalizeProjectTypography } from "./pageTypography";
 import { validPageFormat, spacingFitsAlbum } from "./pageFormat";
 import { pageLayers } from "./pageBackground";
 import type { ComicProject } from "./project";
+const bundledStyleImages = new Set(BUILTIN_STYLES.flatMap(style => [style.previewImage, style.linePreviewImage]).filter(Boolean));
+
 export const ALBUM_BACKUP_KIND = "comicbook-ai.album";
 export function packAlbumBackup(
   project: ComicProject,
@@ -62,7 +66,7 @@ function image(value: unknown) {
   record(value);
   if (value.positionMode !== undefined && value.positionMode !== "frame") throw new Error("invalid-backup");
   string(value.name);
-  string(value.dataUrl);
+  if (!isPortableRasterUrl(value.dataUrl)) throw new Error("invalid-backup");
   for(const key of ["rotation","zoom","offsetX","offsetY"])if(value[key]!==undefined)number(value[key]);
   if(value.zoom!==undefined&&value.zoom<=0)throw new Error("invalid-backup");
   for (const key of ["flipX", "flipY"]) if (value[key] !== undefined && typeof value[key] !== "boolean") throw new Error("invalid-backup");
@@ -76,7 +80,7 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   if (p.format !== 1) throw new Error("unsupported-backup");
   for (const key of ["id", "title", "createdAt", "updatedAt"]) string(p[key]);
   if(p.introduction !== undefined) string(p.introduction);
-  if(p.cover !== undefined){record(p.cover);string(p.cover.name);string(p.cover.dataUrl);if(!/^data:image\/(png|jpeg|webp|gif);base64,/i.test(p.cover.dataUrl))throw new Error("invalid-backup");}
+  if (p.cover !== undefined) image(p.cover);
   validatePilotData(p);
   record(p.source);
   if (!["blank", "text", "storybook"].includes(p.source.type))
@@ -90,7 +94,19 @@ export function parseAlbumBackup(input: unknown): ComicProject {
   for(const item of Array.isArray(p.panels)?p.panels:[])if(item && item.chapterId!==undefined&&(typeof item.chapterId!=="string"||(p.source.chapters!==undefined&&!chapterIds.has(item.chapterId))))throw new Error("invalid-backup");
   validateManuscriptScenes(p.manuscriptScenes,p.source.textSnapshot??'');
   for(const scene of p.manuscriptScenes??[])if(p.source.chapters!==undefined&&scene.chapterId!==undefined&&!chapterIds.has(scene.chapterId))throw new Error('invalid-backup');
+  if (p.references !== undefined) {
+    record(p.references);
+    if (p.references.characterPortraits !== undefined) {
+      record(p.references.characterPortraits);
+      for (const url of Object.values(p.references.characterPortraits)) {
+        if (!isPortableRasterUrl(url)) throw new Error("invalid-backup");
+      }
+    }
+  }
   record(p.style);
+  for (const preview of [p.style.previewImage, p.style.linePreviewImage]) {
+    if (preview !== undefined && !isPortableRasterUrl(preview) && !bundledStyleImages.has(preview)) throw new Error("invalid-backup");
+  }
   for (const key of ["id", "name", "promptText"]) string(p.style[key]);
   if (p.style.promptModules !== undefined) {
     record(p.style.promptModules);

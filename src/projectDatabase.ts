@@ -1,171 +1,239 @@
+import { isOpenAlbum, type LocalAlbum } from "./albumSummary";
+import { createAlbumStorage, type AlbumCatalog, type AlbumStorage } from "./albumStorage";
 import { recordDiagnostic, diagnosticErrorName } from "./diagnostics";
 import { normalizeStoredProjects, readProjects, saveProjects, type ComicProject } from "./project";
 import { classifyProjectSaveError, getProjectSaveFailure, type ProjectSaveFailure } from "./projectSaveStatus";
 
-const DATABASE = 'comicbook-ai.albums';
-const STORE = 'snapshots';
-const KEY = 'collection';
-const LEGACY_KEY = 'comicbook-ai.projects';
-const RECOVERY_KEY = 'recovery-snapshots';
+const LEGACY_DATABASE = "comicbook-ai.albums";
+const LEGACY_KEY = "comicbook-ai.projects";
 export type RecoveryPoint = { id: string; savedAt: string; albums: number };
 type RecoverySnapshot = RecoveryPoint & { serialized: string };
-type Session = { known: boolean; snapshot?: string; ids: string[]; checkpointAt: number };
-const sessions = new WeakMap<object, Session>();
+
+type CapturedProject = { project: LocalAlbum; snapshot: LocalAlbum };
+type PendingSave = { captured: CapturedProject[]; promise: Promise<void>; superseded: number };
+type Session = {
+  storage: AlbumStorage;
+  catalog?: AlbumCatalog;
+  known?: boolean;
+  projects: Map<string, ComicProject>;
+  writes: Promise<unknown>;
+  pending?: PendingSave;
+};
+
+const sessions = new WeakMap<IDBFactory, Session>();
+
 function session(): Session {
-  let value=sessions.get(indexedDB);
-  if(!value){value={known:false,ids:[],checkpointAt:0};sessions.set(indexedDB,value);}
+  let value = sessions.get(indexedDB);
+  if (!value) {
+    value = { storage: createAlbumStorage(indexedDB), projects: new Map(), writes: Promise.resolve() };
+    sessions.set(indexedDB, value);
+  }
   return value;
 }
-function remember(snapshot: string | undefined, projects: ComicProject[]) {
-  Object.assign(session(),{known:true,snapshot,ids:projects.map(project=>project.id)});
+
+export function hasProjectDatabase(): boolean {
+  return typeof indexedDB !== "undefined";
 }
-function recoveryList(value: unknown): RecoverySnapshot[] {
-  return Array.isArray(value)?value.filter(item=>item&&typeof item.id==='string'&&typeof item.savedAt==='string'&&typeof item.serialized==='string'&&typeof item.albums==='number').slice(0,3):[];
-}
-let writes: Promise<unknown> = Promise.resolve();
-export function hasProjectDatabase(): boolean { return typeof indexedDB !== 'undefined'; }
+
 export class ProjectStorageError extends Error {
-  constructor(public readonly failure: ProjectSaveFailure) { super(failure.errorName); this.name = 'ProjectStorageError'; }
+  constructor(public readonly failure: ProjectSaveFailure) {
+    super(failure.errorName);
+    this.name = "ProjectStorageError";
+  }
 }
-function queue<T>(work: () => Promise<T>): Promise<T> {
-  const result = writes.then(work, work);
-  writes = result.catch(() => undefined);
+
+function queue<T>(state: Session, work: () => Promise<T>): Promise<T> {
+  const result = state.writes.then(work, work);
+  state.writes = result.catch(() => undefined);
   return result;
 }
-function open(): Promise<IDBDatabase> {
+
+function readLegacyDatabase(): Promise<{ collection?: string; checkpoints: RecoverySnapshot[] }> {
   return new Promise((resolve, reject) => {
-    let settled = false;
-    const request = indexedDB.open(DATABASE, 1);
-    request.onupgradeneeded = () => { if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE); };
-    request.onsuccess = () => { if (settled) request.result.close(); else { settled = true; resolve(request.result); } };
-    request.onerror = () => { settled = true; reject(request.error); };
-    request.onblocked = () => { settled = true; reject(new DOMException('Close other app tabs and retry', 'InvalidStateError')); };
-  });
-}
-async function read(): Promise<string | undefined> {
-  const db = await open();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const request = tx.objectStore(STORE).get(KEY);
-    let value: unknown;
-    request.onsuccess = () => { value = request.result; };
-    tx.oncomplete = () => { db.close(); typeof value === 'string' || value === undefined ? resolve(value) : reject(new TypeError('Invalid saved collection')); };
-    tx.onabort = () => { db.close(); reject(tx.error ?? request.error ?? new DOMException('Read aborted', 'AbortError')); };
-  });
-}
-async function write(serialized: string, onlyIfMissing = false, ids: string[] = []): Promise<string> {
-  const state=session(),db = await open();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite'),store=tx.objectStore(STORE);
-    let chosen=serialized, failure: Error | undefined, checkpointAt=state.checkpointAt;
-    const request=store.get(KEY);
-    request.onsuccess=()=>{
-      const current=request.result;
-      if(current!==undefined&&typeof current!=='string'){failure=new TypeError('Invalid saved collection');tx.abort();return;}
-      if(onlyIfMissing&&current!==undefined){chosen=current;return;}
-      if(!onlyIfMissing&&((state.known&&current!==state.snapshot)||(!state.known&&current!==undefined))){
-        failure=new DOMException('Saved collection changed; reload before writing','CollectionConflictError');tx.abort();return;
+    const pending = indexedDB.open(LEGACY_DATABASE, 1);
+    let missing = false;
+    let blocked = false;
+    pending.onupgradeneeded = event => {
+      if (event.oldVersion === 0) {
+        missing = true;
+        pending.transaction?.abort();
       }
-      const removed=state.ids.some(id=>!ids.includes(id));
-      const shouldCheckpoint=onlyIfMissing||!!current&&(removed||Date.now()-state.checkpointAt>=120_000);
-      if(shouldCheckpoint){
-        const previous=onlyIfMissing?serialized:current;
-        let albums=onlyIfMissing?JSON.parse(serialized).length:state.ids.length;
-        if(previous&&albums){
-          const history=store.get(RECOVERY_KEY);
-          history.onsuccess=()=>{
-            const old=recoveryList(history.result);
-            if(old[0]?.serialized!==previous)store.put([{id:crypto.randomUUID(),savedAt:new Date().toISOString(),albums,serialized:previous},...old].slice(0,3),RECOVERY_KEY);
-          };
-          checkpointAt=Date.now();
-        }
-      }
-      store.put(serialized,KEY);
     };
-    // Compare, checkpoint and replace within one transaction, including across tabs.
-    tx.oncomplete=()=>{db.close();state.known=true;state.snapshot=chosen;state.checkpointAt=checkpointAt;if(!onlyIfMissing)state.ids=ids;resolve(chosen);};
-    tx.onabort=()=>{db.close();reject(failure??tx.error??new DOMException('Save aborted','AbortError'));};
+    pending.onblocked = () => {
+      blocked = true;
+      reject(new DOMException("Close other windows and retry", "InvalidStateError"));
+    };
+    pending.onerror = () => missing ? resolve({ checkpoints: [] }) : reject(pending.error);
+    pending.onsuccess = () => {
+      const db = pending.result;
+      if (blocked) {
+        db.close();
+        return;
+      }
+      const tx = db.transaction("snapshots", "readonly");
+      const store = tx.objectStore("snapshots");
+      const collection = store.get("collection");
+      const checkpoints = store.get("recovery-snapshots");
+      tx.onabort = () => { db.close(); reject(tx.error); };
+      tx.oncomplete = () => {
+        db.close();
+        const value: unknown = collection.result;
+        if (value !== undefined && typeof value !== "string") {
+          reject(new TypeError("Invalid legacy collection"));
+          return;
+        }
+        const history = Array.isArray(checkpoints.result) ? checkpoints.result.filter(item =>
+          item && typeof item.id === "string" && typeof item.savedAt === "string" &&
+          typeof item.serialized === "string" && typeof item.albums === "number") : [];
+        resolve({ collection: value, checkpoints: history });
+      };
+    };
   });
 }
-export async function listRecoveryPoints(): Promise<RecoveryPoint[]> {
-  let snapshots:RecoverySnapshot[]=[], readFailure:unknown;
-  if(hasProjectDatabase())try{
-    const db=await open();
-    snapshots=await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),request=tx.objectStore(STORE).get(RECOVERY_KEY);tx.oncomplete=()=>{db.close();resolve(recoveryList(request.result));};tx.onabort=()=>{db.close();reject(tx.error);};});
-  }catch(error){readFailure=error;}
-  try{const raw=localStorage.getItem(LEGACY_KEY);if(raw){const projects=decode(raw);if(projects.length)snapshots.push({id:'legacy-localStorage',savedAt:'',albums:projects.length,serialized:raw});}}catch{/* Malformed legacy data is retained, never overwritten. */}
-  if(!snapshots.length&&readFailure)throw readFailure;
-  return snapshots.map(({serialized,...point})=>point);
-}
-export async function readRecoveryPoint(id:string): Promise<ComicProject[]> {
-  if(id==='legacy-localStorage'){const raw=localStorage.getItem(LEGACY_KEY);if(!raw)throw new Error('recovery-missing');return decode(raw);}
-  const db=await open();
-  const snapshots:RecoverySnapshot[]=await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),request=tx.objectStore(STORE).get(RECOVERY_KEY);tx.oncomplete=()=>{db.close();resolve(recoveryList(request.result));};tx.onabort=()=>{db.close();reject(tx.error);};});
-  const snapshot=snapshots.find(item=>item.id===id);if(!snapshot)throw new Error('recovery-missing');return decode(snapshot.serialized);
-}
+
 function decode(serialized: string): ComicProject[] {
   const data: unknown = JSON.parse(serialized);
-  if (!Array.isArray(data) || data.some(p => !p || p.format !== 1 || typeof p.id !== 'string' || !p.style || typeof p.style.promptText !== 'string')) throw new TypeError('Invalid project collection');
+  if (!Array.isArray(data) || data.some(p => !p || p.format !== 1 || typeof p.id !== "string" || !p.style || typeof p.style.promptText !== "string")) {
+    throw new TypeError("Invalid project collection");
+  }
   return normalizeStoredProjects(data);
+}
+
+async function migrateLegacy(state: Session): Promise<AlbumCatalog | undefined> {
+  const { collection } = await readLegacyDatabase();
+  const raw = collection ?? localStorage.getItem(LEGACY_KEY);
+  if (raw === null) return;
+  const projects = decode(raw);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
+  const fingerprint = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+  return state.storage.migrate(projects, fingerprint);
 }
 
 export async function loadProjectCollection(): Promise<ComicProject[]> {
   if (!hasProjectDatabase()) return readProjects();
+  const state = session();
   try {
-    await writes;
-    const existing = await read();
-    if (existing !== undefined) {const projects=decode(existing);remember(existing,projects);recordDiagnostic('storage-loaded',{albums:projects.length,bytes:existing.length*2,backend:'indexedDB'});return projects;}
-    const legacy = localStorage.getItem(LEGACY_KEY);
-    if (legacy === null) {remember(undefined,[]);recordDiagnostic("storage-empty",{backend:"indexedDB"});return [];}
-    // Validate before migration; malformed data must never become an empty collection.
-    decode(legacy);
-    const migrated = await queue(() => write(legacy, true));
-    const projects = decode(migrated);remember(migrated,projects);
-    // Release the small text quota only after a committed copy has been read back.
-    if (migrated === legacy && await read() === legacy) {
-      try { if (localStorage.getItem(LEGACY_KEY) === legacy) localStorage.removeItem(LEGACY_KEY); } catch { /* The durable copy is still valid. */ }
-    }
-    return projects;
-  } catch (error) { throw new ProjectStorageError(classifyProjectSaveError(error, 'storage', 'indexedDB')); }
+    return await queue(state, async () => {
+      const catalog = await state.storage.catalog() ?? await migrateLegacy(state);
+      const projects = normalizeStoredProjects(await Promise.all(
+        (catalog?.albums ?? []).map(album => state.storage.openAlbum(album)),
+      ));
+      state.catalog = catalog;
+      state.known = true;
+      state.projects = new Map(projects.map(project => [project.id, project]));
+      recordDiagnostic("storage-loaded", { albums: projects.length, backend: "indexedDB" });
+      return projects;
+    });
+  } catch (error) {
+    throw new ProjectStorageError(classifyProjectSaveError(error, "storage", "indexedDB"));
+  }
 }
 
-type PendingSave = { serialized: string; ids: string[]; promise: Promise<void>; superseded: number };
-let pendingSave: PendingSave | undefined;
+export async function loadProjectCatalog(): Promise<LocalAlbum[]> {
+  if (!hasProjectDatabase()) return readProjects();
+  const state = session();
+  try {
+    return await queue(state, async () => {
+      const catalog = await state.storage.catalog() ?? await migrateLegacy(state);
+      const summaries = catalog ? await state.storage.summaries(catalog) : [];
+      state.catalog = catalog;
+      state.known = true;
+      state.projects.clear();
+      return summaries;
+    });
+  } catch (error) {
+    throw new ProjectStorageError(classifyProjectSaveError(error, "storage", "indexedDB"));
+  }
+}
 
-export function saveProjectCollection(projects: ComicProject[]): Promise<void> {
-  if (!hasProjectDatabase()) {
-    return saveProjects(projects) ? Promise.resolve() : Promise.reject(new ProjectStorageError(getProjectSaveFailure()!));
-  }
-  let serialized: string;
-  const started = performance.now();
-  try { serialized = JSON.stringify(projects); }
-  catch (error) { recordDiagnostic('serialization-error', { name: diagnosticErrorName(error) }); return Promise.reject(new ProjectStorageError(classifyProjectSaveError(error, 'serialization', 'indexedDB'))); }
-  recordDiagnostic('save-serialize', { durationMs: Math.round(performance.now() - started), bytes: serialized.length * 2, albums: projects.length });
-  // Keep at most one active snapshot and one pending snapshot. All callers in a
-  // pending batch settle only when its newest revision has atomically committed.
-  // Capture as text now so later in-memory mutation cannot change the snapshot.
-  if (pendingSave) {
-    pendingSave.serialized = serialized;pendingSave.ids=projects.map(project=>project.id);
-    pendingSave.superseded++;
-    return pendingSave.promise;
-  }
-  const batch: PendingSave = { serialized, ids:projects.map(project=>project.id), superseded: 0, promise: Promise.resolve() };
-  pendingSave = batch;
-  batch.promise = queue(async () => {
-    pendingSave = undefined;
-    const snapshot = batch.serialized;
-    batch.serialized = '';
-    const bytes = snapshot.length * 2;
-    const start = performance.now();
-    recordDiagnostic('save-start', { bytes, superseded: batch.superseded });
+export async function loadCatalogAlbum(id: string): Promise<ComicProject> {
+  const state = session();
+  return queue(state, async () => {
+    const album = state.catalog?.albums.find(album => album.id === id);
+    if (!album) throw new Error("Album no longer exists");
+    const [project] = normalizeStoredProjects([await state.storage.openAlbum(album)]);
+    state.projects.set(id, project);
+    return project;
+  });
+}
+
+export async function listRecoveryPoints(): Promise<RecoveryPoint[]> {
+  const points: RecoveryPoint[] = [];
+  let readFailure: unknown;
+  if (hasProjectDatabase()) {
     try {
-      await write(snapshot,false,batch.ids);
-      recordDiagnostic('save-complete', { bytes, durationMs: Math.round(performance.now() - start) });
+      for (const point of await session().storage.checkpoints()) {
+        points.push({ ...point, albums: point.albums.length });
+      }
+    } catch (error) { readFailure = error; }
+    try {
+      const old = await readLegacyDatabase();
+      for (const { serialized: _serialized, ...point } of old.checkpoints) points.push(point);
+      if (old.collection) {
+        const projects = decode(old.collection);
+        if (projects.length) points.push({ id: "legacy-indexedDB", savedAt: "", albums: projects.length });
+      }
+    } catch (error) { readFailure ??= error; }
+  }
+  try {
+    const raw = localStorage.getItem(LEGACY_KEY);
+    const projects = raw ? decode(raw) : [];
+    if (projects.length) points.push({ id: "legacy-localStorage", savedAt: "", albums: projects.length });
+  } catch { /* Keep the original text even when it is not readable. */ }
+  if (!points.length && readFailure) throw readFailure;
+  return points;
+}
+
+export async function readRecoveryPoint(id: string): Promise<ComicProject[]> {
+  if (id === "legacy-localStorage") {
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if (raw === null) throw new Error("recovery-missing");
+    return decode(raw);
+  }
+  const { storage } = session();
+  const current = (await storage.checkpoints().catch(() => [])).find(point => point.id === id);
+  if (current) return normalizeStoredProjects(await Promise.all(current.albums.map(storage.openAlbum)));
+  const old = await readLegacyDatabase();
+  const raw = id === "legacy-indexedDB" ? old.collection : old.checkpoints.find(point => point.id === id)?.serialized;
+  if (raw === undefined) throw new Error("recovery-missing");
+  return decode(raw);
+}
+
+export function saveProjectCollection(projects: LocalAlbum[]): Promise<void> {
+  if (!hasProjectDatabase()) {
+    return saveProjects(projects.filter(isOpenAlbum)) ? Promise.resolve() : Promise.reject(new ProjectStorageError(getProjectSaveFailure()!));
+  }
+  const state = session();
+  const captured = projects.map(project => ({ project, snapshot: { ...project } }));
+  if (state.pending) {
+    state.pending.captured = captured;
+    state.pending.superseded++;
+    return state.pending.promise;
+  }
+
+  const batch: PendingSave = { captured, superseded: 0, promise: Promise.resolve() };
+  state.pending = batch;
+  batch.promise = queue(state, async () => {
+    state.pending = undefined;
+    const start = performance.now();
+    recordDiagnostic("save-start", { albums: batch.captured.length, superseded: batch.superseded });
+    try {
+      if (!state.known && !await state.storage.catalog()) {
+        const old = await readLegacyDatabase();
+        if (old.collection !== undefined || localStorage.getItem(LEGACY_KEY) !== null) {
+          throw new DOMException("Load older albums before saving", "CollectionConflictError");
+        }
+      }
+      const input = batch.captured.map(({ project, snapshot }) =>
+        state.projects.get(project.id) === project ? project : snapshot);
+      state.catalog = await state.storage.save(input, state.catalog, state.projects);
+      state.known = true;
+      state.projects = new Map(batch.captured.map(({ project }) => project).filter(isOpenAlbum).map(project => [project.id, project]));
+      recordDiagnostic("save-complete", { durationMs: Math.round(performance.now() - start) });
     } catch (error) {
-      recordDiagnostic('save-error', { name: diagnosticErrorName(error), bytes, durationMs: Math.round(performance.now() - start) });
-      throw new ProjectStorageError(classifyProjectSaveError(error, 'storage', 'indexedDB', bytes));
+      recordDiagnostic("save-error", { name: diagnosticErrorName(error), durationMs: Math.round(performance.now() - start) });
+      throw new ProjectStorageError(classifyProjectSaveError(error, "storage", "indexedDB"));
     }
   });
   return batch.promise;
 }
-

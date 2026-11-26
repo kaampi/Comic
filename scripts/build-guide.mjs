@@ -14,6 +14,6 @@ lines.push("## Contextual help reference", "These short texts come from the same
 const output = lines.join("\n\n") + "\n";
 const destination = new URL("../docs/GETTING_STARTED.md", import.meta.url);
 if (process.argv.includes("--check")) {
-  if (readFileSync(destination, "utf8") !== output) throw new Error("Guide documentation is out of date. Run npm run docs:guide.");
+  if (readFileSync(destination, "utf8").replace(/\r\n/g, "\n") !== output) throw new Error("Guide documentation is out of date. Run npm run docs:guide.");
   console.log("Guide documentation matches the shared help content.");
 } else { writeFileSync(destination, output); console.log("Updated docs/GETTING_STARTED.md"); }

@@ -1,13 +1,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
 import ts from 'typescript';
 import { pathToFileURL } from 'node:url';
-const dir=fs.mkdtempSync(path.join(os.tmpdir(),'comicbook-export-'));
-fs.symlinkSync(path.resolve('node_modules'),path.join(dir,'node_modules'),process.platform === 'win32'?'junction':'dir');
+const dir=fs.mkdtempSync(path.join(process.cwd(),'.comicbook-export-'));
 try {
-  for(const name of ['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','pageBackground.ts','exportFiles.ts','albumExport.tsx','bubbleShape.ts','SvgOverlay.tsx','contourText.ts','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
+  for(const name of ['handDrawnBorder.ts','panelBorder.ts','panelGeometry.ts','imageView.ts','panelShape.ts','pageFormat.ts','pageTypography.ts','pageBackground.ts','exportFiles.ts','albumExport.tsx','mediaValidation.ts','bubbleShape.ts','SvgOverlay.tsx','contourText.ts','richText.ts','ConnectedBubbles.tsx','bubbleConnections.ts','idmlGeometry.ts','SfxArtwork.tsx','sfxShapes.ts','thoughtBubble.ts','overlayTypography.ts']) {
     const source=fs.readFileSync(new URL(`../src/${name}`,import.meta.url),'utf8');
     const output=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/from "(\.[^"]+)"/g,'from "$1.mjs"');
     fs.writeFileSync(path.join(dir,name.replace(/\.tsx?$/,'.mjs')),output);
@@ -379,7 +377,7 @@ try {
   const previousImage=globalThis.Image;
   globalThis.Image=class{async decode(){this.naturalWidth=200;this.naturalHeight=100;}};
   try {
-    const exportImage={...moving,rotation:30,name:'position.png',dataUrl:'data:image/png;base64,eA=='};
+    const exportImage={...moving,rotation:30,name:'position.png',dataUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII='};
     const positionedPage={...page,placements:[{...layer,image:exportImage}]};
     const svg=await pageSvg(project,positionedPage,'',1);
     const imageTag=svg.match(/<image [^>]+/)[0];
