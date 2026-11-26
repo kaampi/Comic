@@ -81,8 +81,8 @@ try {
   cleanup();console.log("PASS: real app surfaces save conflicts, preserves unsaved text and keeps the newer external album intact");
 
   // Downloading recovery data is read-only, including when the primary record is corrupt.
-  const rawDb=await new Promise((resolve,reject)=>{const request=indexedDB.open("comicbook-ai.albums",1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
-  await new Promise((resolve,reject)=>{const tx=rawDb.transaction("snapshots","readwrite");tx.objectStore("snapshots").put("{broken","collection");tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});rawDb.close();
+  const rawDb=await new Promise((resolve,reject)=>{const request=indexedDB.open("comicbook-ai.album-records",1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+  await new Promise((resolve,reject)=>{const tx=rawDb.transaction("catalog","readwrite");tx.objectStore("catalog").put("{broken","collection");tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});rawDb.close();
   await assert.rejects(tabA.loadProjectCollection());
   assert.ok((await tabA.listRecoveryPoints()).length>0,"checkpoints remain readable after primary corruption");
   const {LocalRecovery}=await local("LocalRecovery");

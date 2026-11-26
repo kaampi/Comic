@@ -55,9 +55,9 @@ try {
   assert.deepEqual(migrated[0].unplacedPanels,project.unplacedPanels,"held panel content and destination survive migration");
   assert.equal(migrated[0].introduction,project.introduction);assert.deepEqual(migrated[0].cover,project.cover);
   assert.deepEqual(JSON.parse(JSON.stringify(migrated[0].pages[0].placements[0])), project.pages[0].placements[0]);
-  assert.equal(localStorage.getItem(legacyKey), null);
+  assert.equal(localStorage.getItem(legacyKey), legacy);
   assert.equal((await loadProjectCollection())[0].id, project.id);
-  console.log("PASS: committed, verified migration retains IDs, images and geometry and releases legacy text quota");
+  console.log("PASS: committed, verified migration retains IDs, images and geometry and keeps the legacy data available for recovery");
 
   const huge = { ...project, title: "Large album", source: { ...project.source, textSnapshot: "x".repeat(6_000_000) } };
   dom.window.Storage.prototype.setItem = function(key, value) {
@@ -69,13 +69,13 @@ try {
   assert.equal((await loadProjectCollection())[0].source.textSnapshot.length, 6_000_000);
   assert.deepEqual((await loadProjectCollection())[0].unplacedPanels,project.unplacedPanels,"held panel content persists in IndexedDB");
   assert.deepEqual((await loadProjectCollection())[0].cover,project.cover);assert.equal((await loadProjectCollection())[0].introduction,project.introduction);
-  assert.equal(localStorage.getItem(legacyKey), null);
+  assert.equal(localStorage.getItem(legacyKey), legacy);
   await Promise.all(["Revision one", "Revision two", "Newest revision"].map(title => saveProjectCollection([{ ...project, title }])));
   assert.equal((await loadProjectCollection())[0].title, "Newest revision");
   console.log("PASS: projects larger than the reported 10.76 MiB persist with localStorage writes blocked; rapid saves retain newest revision");
 
   let burstWrites = 0;
-  IDBObjectStore.prototype.put = function(...args) { burstWrites++; return originalPut.apply(this, args); };
+  IDBObjectStore.prototype.put = function(...args) { if (this.name === "catalog" && args[1] === "collection") burstWrites++; return originalPut.apply(this, args); };
   const firstSave = saveProjectCollection([{ ...project, title: "Active revision" }]);
   await Promise.resolve(); // Start the active write, leaving IndexedDB pending.
   const burst = Array.from({ length: 250 }, (_, index) => saveProjectCollection([{ ...project, title: "Burst " + index }]));
@@ -107,7 +107,7 @@ try {
   assert.equal(localStorage.getItem(legacyKey), legacy);
   IDBObjectStore.prototype.put = originalPut;
   assert.equal((await loadProjectCollection())[0].id, project.id);
-  assert.equal(localStorage.getItem(legacyKey), null);
+  assert.equal(localStorage.getItem(legacyKey), legacy);
   setFactory();localStorage.setItem(legacyKey, "{corrupt");
   await assert.rejects(loadProjectCollection(), ProjectStorageError);
   assert.equal(localStorage.getItem(legacyKey), "{corrupt");
