@@ -1,3 +1,4 @@
+import { desktopLocalAi } from "./desktopLocalAi";
 import { normalizeBeatPrompt } from "./aiPrompts";
 // Independent adaptation of kaampi Write's Ollama and OpenAI-compatible transports.
 export type LocalAiEngine = "ollama" | "openai-compatible";
@@ -66,10 +67,16 @@ function endpoint(settings: LocalAiSettings, ollama: string, openai: string): st
   const base = normalizeLocalBaseUrl(settings.servers[settings.engine].baseUrl);
   return settings.engine === "ollama" ? base + ollama : base.replace(/\/v1$/, "") + "/v1" + openai;
 }
-async function requestJson(url: string, init: RequestInit, fetchImpl = globalThis.fetch.bind(globalThis)): Promise<any> {
-  const response = await fetchImpl(url, { ...init, redirect: "error" });
-  if (!response.ok) throw new Error("Local AI: HTTP " + response.status + " " + response.statusText);
-  const data = await response.json();
+async function requestJson(url: string, init: RequestInit, fetchImpl?: typeof fetch): Promise<any> {
+  let data: any;
+  const native = fetchImpl ? undefined : desktopLocalAi();
+  if (native) {
+    data = await native(url, init);
+  } else {
+    const response = await (fetchImpl ?? globalThis.fetch)(url, { ...init, redirect: "error" });
+    if (!response.ok) throw new Error("Local AI: HTTP " + response.status + " " + response.statusText);
+    data = await response.json();
+  }
   if (typeof data?.error === "string") throw new Error("Local AI: " + data.error);
   return data;
 }

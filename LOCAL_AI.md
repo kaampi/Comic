@@ -61,3 +61,9 @@ npm run build
 ```
 
 Regressionstesterna använder simulerade serversvar. Verifiera också anslutningen och resultatens kvalitet med din egen lokala modell.
+
+## Local AI on desktop
+
+The Tauri desktop app uses a native JSON transport for the existing Ollama and OpenAI-compatible text-model operations. Enter a URL with an explicit port. Desktop accepts `localhost`, loopback addresses, RFC 1918 IPv4 addresses and IPv6 unique-local addresses. Use the service root, or `/v1` with an OpenAI-compatible server. For a service listening exclusively on IPv6 loopback, enter `http://[::1]:PORT`. HTTP and HTTPS are supported. HTTPS uses ordinary certificate verification.
+
+The desktop transport limits requests to the existing model-list, model-info and completion routes, disables proxies and redirects, and bounds request and response sizes. Cancelling in the editor discards the response immediately. The native request can continue until its timeout. The web app keeps its browser transport and its existing server and CORS settings.

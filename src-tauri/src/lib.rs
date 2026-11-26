@@ -1,3 +1,5 @@
+mod local_ai;
+
 use tauri::Manager;
 
 pub fn run() {
@@ -14,6 +16,7 @@ pub fn run() {
     }));
 
     builder
+        .invoke_handler(tauri::generate_handler![local_ai::local_ai_json])
         .run(tauri::generate_context!())
         .expect("kaampi Comic could not start");
 }

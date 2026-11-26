@@ -22,3 +22,19 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
+
+  desktop:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Resolve the pinned StoryCore dependency over HTTPS
+        run: git config --global url.https://github.com/.insteadOf ssh://git@github.com/
+      - run: npm ci
+      - run: npm run build
+      - run: cargo fmt --check --manifest-path src-tauri/Cargo.toml
+      - run: cargo check --manifest-path src-tauri/Cargo.toml
+      - run: cargo test --manifest-path src-tauri/Cargo.toml --lib local_ai::tests
