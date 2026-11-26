@@ -97,6 +97,41 @@ try {
   assert.ok(dialog.textContent.includes("Changes are saved automatically"));
   assert.ok(JSON.parse(localStorage.getItem("comicbook-ai.projects"))[0].title.endsWith(" edited"));
   cleanup();
+  const { AppErrorBoundary } = await import(pathToFileURL(join(temporary, "AppErrorBoundary.mjs")));
+  const { rememberEmergencyAlbums } = await import(pathToFileURL(join(temporary, "emergencyBackup.mjs")));
+  const { parseAlbumBackup } = await import(pathToFileURL(join(temporary, "albumBackup.mjs")));
+  const unsaved = { ...project, title: "Latest in-memory album" };
+  rememberEmergencyAlbums([unsaved]);
+  fail("SecurityError");
+  const savedBeforeCrash = localStorage.getItem("comicbook-ai.projects");
+  const create = URL.createObjectURL;
+  const revoke = URL.revokeObjectURL;
+  const click = dom.window.HTMLAnchorElement.prototype.click;
+  const originalConsoleError = console.error;
+  const downloads = [];
+  try {
+    URL.createObjectURL = blob => { downloads.push(blob); return "blob:emergency-fixture"; };
+    URL.revokeObjectURL = () => undefined;
+    dom.window.HTMLAnchorElement.prototype.click = () => undefined;
+    console.error = () => undefined;
+    function BrokenEditor() { throw new Error("Synthetic render failure"); }
+    render(React.createElement(AppErrorBoundary, null, React.createElement(BrokenEditor)));
+    console.error = originalConsoleError;
+    await user.click(screen.getByRole("button", { name: /Emergency backup.*Latest in-memory album/ }));
+    assert.equal(downloads.length, 1);
+    const decoded = parseAlbumBackup(JSON.parse(await downloads[0].text()));
+    assert.equal(decoded.id, project.id);
+    assert.equal(decoded.title, unsaved.title);
+    assert.equal(localStorage.getItem("comicbook-ai.projects"), savedBeforeCrash);
+    console.log("PASS: render failures can download the unsaved album as a restore-compatible file while project writes are blocked.");
+  } finally {
+    console.error = originalConsoleError;
+    URL.createObjectURL = create;
+    URL.revokeObjectURL = revoke;
+    dom.window.HTMLAnchorElement.prototype.click = click;
+    dom.window.Storage.prototype.setItem = originalSetItem;
+    cleanup();
+  }
   assert.equal(networkRequests, 0);
   console.log("PASS: actual quota, blocked access, unknown and serialization errors; previous save preserved; honest UI status and retry preserves unsaved edits");
 } finally {
