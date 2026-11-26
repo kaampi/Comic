@@ -47,7 +47,9 @@ try {
   const grid=f.pageGridMetrics(page,zero);assert.deepEqual(libraryDropTarget({...project,pageFormat:zero,pages:[page]},"page",grid.cellWidth+1,20,{width:grid.width,height:grid.height,gapX:0,gapY:0,border:3}),{kind:"new",x:1,y:0});
   const React=await import("react"),{render,screen,cleanup}=await import("@testing-library/react"),{default:userEvent}=await import("@testing-library/user-event"),{App}=await load("App");
   localStorage.setItem("comicbook-ai.locale","sv");saveProjects([project]);const user=userEvent.setup({document});render(React.createElement(App));
-  await user.click(screen.getByRole("button",{name:/Spacing fixture/}));await user.click(screen.getByRole("button",{name:"Albuminställningar",exact:true}));
+  await user.click(screen.getByRole("button",{name:/Spacing fixture/}));
+  await user.click(screen.getByRole("button",{name:/Öppna album för redigering/}));
+  await user.click(screen.getByRole("button",{name:"Albuminställningar",exact:true}));
   const saved=()=>JSON.parse(localStorage.getItem("comicbook-ai.projects"))[0];const originalPages=JSON.parse(JSON.stringify(readProjects()[0].pages));
   const top=screen.getByLabelText("Överkant (mm)");await user.clear(top);await user.type(top,"15");close(saved().pageFormat.spacing.topMm,15);
   const gap=screen.getByLabelText("Mellan kolumner (mm)");await user.clear(gap);await user.type(gap,"0");assert.equal(saved().pageFormat.spacing.columnGapMm,0);
@@ -58,3 +60,4 @@ try {
   assert.equal(requests,0,'local editing does not access network');cleanup();
   console.log("PASS: physical margins/gaps, legacy layout, zero spacing, spanning panels, landscape, preview/export geometry, unchanged point sizes/content, backup validation/round trip, persistence and settings UI.");
 }finally{dom.window.close();rmSync(temporary,{recursive:true,force:true});}
+
