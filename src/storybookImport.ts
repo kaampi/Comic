@@ -1,3 +1,4 @@
+import { isRasterDataUrl } from "./mediaValidation";
 import { ManuscriptExportError, parseManuscriptExport, type ManuscriptExport } from "@ocedo-apps/storycore";
 
 export type StoryBookImport = {
@@ -136,7 +137,7 @@ export function parseStoryBookCards(raw: string): StoryBookCardsImport {
     .map((item) => {
       const pronoun = str(item?.pronoun) || undefined;
       const approximateAge = num(item?.approximateAge);
-      const portraitDataUrl = str(item?.portraitDataUrl) || undefined;
+      const portraitDataUrl = isRasterDataUrl(item?.portraitDataUrl) ? item.portraitDataUrl : undefined;
       return {
         id: str(item?.id),
         name: str(item?.name),

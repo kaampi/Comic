@@ -15,8 +15,13 @@ function validBase64(value: string, maxBytes: number) {
   return value.length / 4 * 3 - padding <= maxBytes && !/[^A-Za-z0-9+/]/.test(value.slice(0, value.length - padding));
 }
 
+export function isPortableRasterUrl(url: unknown): url is string {
+  return typeof url === "string" && /^data:image\/(?:png|jpeg|webp|gif);base64,/i.test(url) &&
+    url.length <= Math.ceil(RASTER_LIMIT / 3) * 4 + 32;
+}
+
 export function isRasterDataUrl(url: unknown): url is string {
-  if (typeof url !== "string") return false;
+  if (!isPortableRasterUrl(url)) return false;
   const comma = url.indexOf(",");
   if (comma < 0 || comma > 32) return false;
   const type = /^data:(image\/(?:png|jpeg|webp|gif));base64$/i.exec(url.slice(0, comma))?.[1].toLowerCase();
@@ -37,6 +42,14 @@ export async function readRasterFile(file: File): Promise<string> {
   if (file.size > RASTER_LIMIT || !/^image\/(?:png|jpeg|webp|gif)$/.test(file.type)) throw new Error("invalid-image");
   const dataUrl = await readBlobDataUrl(file);
   if (!isRasterDataUrl(dataUrl)) throw new Error("invalid-image");
+  if (typeof createImageBitmap === "function") {
+    const bitmap = await createImageBitmap(file);
+    try {
+      if (!bitmap.width || !bitmap.height || bitmap.width * bitmap.height > 100_000_000) throw new Error("invalid-image-size");
+    } finally {
+      bitmap.close();
+    }
+  }
   return dataUrl;
 }
 
@@ -53,6 +66,9 @@ export async function validatedFont(blob: Blob): Promise<Blob> {
   } else {
     const tables = view.getUint16(4);
     if (!tables || 12 + tables * 16 > blob.size) throw new Error("font-load-failed");
+  }
+  if (typeof FontFace === "function") {
+    await new FontFace("ComicExportValidation", await blob.arrayBuffer()).load();
   }
   return new Blob([blob], { type: mime });
 }
