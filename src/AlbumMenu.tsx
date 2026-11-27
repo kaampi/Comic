@@ -16,10 +16,9 @@ import { renderOptionsForStyle } from "./styleColorMode";
 import { albumStyleModules, styleGroupLabel, type IllustrationStyle } from "./stylesLibrary";
 import { OverlayDefaultsEditor } from "./OverlayDefaultsEditor";
 import {
-  albumBackupFilename,
-  packAlbumBackup,
   parseAlbumBackup,
 } from "./albumBackup";
+import { downloadEmergencyBackup } from "./emergencyBackup";
 import "./AlbumMenu.css";
 import { uiText } from "./i18n";
 export type AlbumTool = "settings" | "backup" | "export" | null;
@@ -114,20 +113,7 @@ export function AlbumMenu({
   function backup() {
     if (!project) return;
     try {
-      const date = new Date().toISOString(),
-        filename = albumBackupFilename(project, date),
-        blob = new Blob(
-          [JSON.stringify(packAlbumBackup(project, date), null, 2)],
-          { type: "application/json" },
-        ),
-        url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const filename = downloadEmergencyBackup(project);
       backupReminder.created();
       setDownload(filename);
       setError("");
@@ -409,6 +395,7 @@ export function AlbumMenu({
     </>
   );
 }
+
 
 
 
