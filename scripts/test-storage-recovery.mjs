@@ -82,6 +82,7 @@ try {
   const emergencyBlobs=[];const previousCreate=URL.createObjectURL,previousRevoke=URL.revokeObjectURL;
   URL.createObjectURL=blob=>{emergencyBlobs.push(blob);return "blob:emergency-test";};URL.revokeObjectURL=()=>{};
   const previousClick=dom.window.HTMLAnchorElement.prototype.click;dom.window.HTMLAnchorElement.prototype.click=function(){};
+  await appUser.click(screen.getByRole("button",{name:"Create backup…"}));
   await appUser.click(screen.getByRole("button",{name:"Download emergency backup"}));
   assert.equal(emergencyBlobs.length,1);
   const emergency=parseAlbumBackup(JSON.parse(await emergencyBlobs[0].text()));
