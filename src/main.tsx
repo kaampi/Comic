@@ -2,6 +2,7 @@ import React from "react";
 import { installDiagnostics } from "./diagnostics";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { ErrorBoundary } from "./ErrorBoundary";
 import "./styles.css";
 import "./panelEditorOverrides.css";
 import "./typography.css";
@@ -21,9 +22,10 @@ if (!root) throw new Error("kaampi Comic kunde inte hitta appens rot.");
 
 createRoot(root).render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary><App /></ErrorBoundary>
   </React.StrictMode>
 );
+
 
 
 

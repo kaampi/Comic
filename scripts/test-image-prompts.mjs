@@ -37,7 +37,7 @@ try {
   project.characters = [{ id: "knut", name: "Knut", description: "Farmer", visualIdentity: "65-year-old man with round glasses" }, { id: "robot", name: "Robot", description: "Metal robot", visualIdentity: "Giant metal robot with a blue eye" }];
   project = addManualBeat(project, { start: 0, end: project.source.textSnapshot.length }).project;
   let plan = activeManuscriptAdaptation(project).panelPlans[0];
-  project = patchBeatPanel(project, plan.id, { characterIds: ["knut", "robot"], image: { name: "current.png", dataUrl: "data:image/png;base64,current" }, imageVersions: [{ name: "old.png", dataUrl: "data:image/png;base64,old" }] });
+  project = patchBeatPanel(project, plan.id, { characterIds: ["knut", "robot"], image: { name: "current.png", dataUrl: "data:image/png;base64,Y3VycmVudA==" }, imageVersions: [{ name: "old.png", dataUrl: "data:image/png;base64,b2xk" }] });
   project = generateBeatPanelPrompt(project, plan.id);
   const original = structuredClone(project);
   const {defaultLocalAiSettings} = await local("localAi");
@@ -217,4 +217,5 @@ try {
   console.log('PASS: local visual rewrite uses only selected sources, rejects copied/invalid output, preserves direction/images, requires review/apply/save and handles failure, abort and late replies');
 
 } finally { cleanup(); rmSync(compiled, { recursive: true, force: true }); dom.window.close(); }
+
 
