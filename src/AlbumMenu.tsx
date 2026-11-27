@@ -381,6 +381,7 @@ export function AlbumMenu({
             {saveError && (
               <div role="alert" className="import-error">
                 <p>{saveError}</p>
+                <button className="text-button" type="button" onClick={backup}>{sv ? "Ladda ned nödbackup" : locale === "nb" ? "Last ned nødbackup" : "Download emergency backup"}</button>
                 {onRetrySave ? <button className="text-button" type="button" onClick={onRetrySave}>{sv ? "Försök spara igen" : locale === "nb" ? "Prøv å lagre igjen" : "Retry save"}</button> : null}
               </div>
             )}
