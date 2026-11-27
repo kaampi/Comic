@@ -79,6 +79,16 @@ try {
   await waitFor(()=>assert.ok(screen.getAllByRole("alert").some(alert=>alert.textContent.includes("has not overwritten"))));
   assert.equal(screen.getByLabelText("Album title").value,"Unsaved current tab","conflict keeps unsaved user edits visible for backup");
   assert.equal((await tabA.loadProjectCollection())[0].title,"Newer external album");
+  const emergencyBlobs=[];const previousCreate=URL.createObjectURL,previousRevoke=URL.revokeObjectURL;
+  URL.createObjectURL=blob=>{emergencyBlobs.push(blob);return "blob:emergency-test";};URL.revokeObjectURL=()=>{};
+  const previousClick=dom.window.HTMLAnchorElement.prototype.click;dom.window.HTMLAnchorElement.prototype.click=function(){};
+  await appUser.click(screen.getByRole("button",{name:"Download emergency backup"}));
+  assert.equal(emergencyBlobs.length,1);
+  const emergency=parseAlbumBackup(JSON.parse(await emergencyBlobs[0].text()));
+  assert.equal(emergency.title,"Unsaved current tab","emergency backup contains unsaved in-memory edits");
+  assert.deepEqual(emergency.unplacedPanels,project.unplacedPanels,"emergency backup retains image-bearing pool state");
+  assert.equal((await tabA.loadProjectCollection())[0].title,"Newer external album","emergency backup never writes the database");
+  URL.createObjectURL=previousCreate;URL.revokeObjectURL=previousRevoke;dom.window.HTMLAnchorElement.prototype.click=previousClick;
   cleanup();console.log("PASS: real app surfaces save conflicts, preserves unsaved text and keeps the newer external album intact");
 
   // Downloading recovery data is read-only, including when the primary record is corrupt.
@@ -100,3 +110,4 @@ try {
   assert.equal((await tabA.readRecoveryPoint("legacy-localStorage"))[0].id,project.id);
   assert.equal(networkRequests,0);console.log("PASS: recovery download produces valid backups without overwriting current data; corrupt primary and surviving legacy storage remain recoverable offline");
 } finally {rmSync(temporary,{recursive:true,force:true});dom.window.close();}
+
